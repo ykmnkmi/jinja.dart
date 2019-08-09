@@ -34,27 +34,58 @@ class RenderWrapper {
 /// the environment constructor but it's not possible to specify a loader.
 class Template extends Node {
   // TODO: compile template
-  static Future<TemplateModule> compile(String source,
-          {Environment environment}) =>
-      Future.value();
 
-  factory Template.parse(String source, {Environment environment}) =>
-      Parser(environment ?? Environment(), source).parse();
+  factory Template(
+    String source, {
+    String blockStart = '{%',
+    String blockEnd = '%}',
+    String variableStart = '{{',
+    String variableEnd = '}}',
+    String commentStart = '{#',
+    String commentEnd = '#}',
+    bool trimBlocks = false,
+    bool leftStripBlocks = false,
+  }) =>
+      Parser(
+        Environment(
+          blockStart: blockStart,
+          blockEnd: blockEnd,
+          variableStart: variableStart,
+          variableEnd: variableEnd,
+          commentStart: commentStart,
+          commentEnd: commentEnd,
+          trimBlocks: trimBlocks,
+          leftStripBlocks: leftStripBlocks,
+        ),
+        source,
+      ).parse();
 
-  Template({
+  Template.from({
     @required this.body,
     @required this.environment,
     this.path,
   }) {
-    _testRender = RenderWrapper(([Map<String, Object> data]) => render(data));
+    _renderWr = RenderWrapper(([Map<String, Object> data]) => render(data));
   }
 
   final Node body;
   final Environment environment;
   final String path;
 
-  dynamic _testRender;
-  dynamic get testRender => _testRender;
+  dynamic _renderWr;
+  /** 
+   * This is function.
+   * For debug.
+   * Calls a render function with named arguments:
+   *
+   *     tmpl.renderWr(key: value, key2: value2)
+   *
+   * equal
+   *
+   *     tmpl.render({'key': value, 'key2': value2})
+   *
+   */
+  dynamic get renderWr => _renderWr;
 
   @override
   void accept(StringBuffer buffer, Context context) {
@@ -84,5 +115,3 @@ class Template extends Node {
   @override
   String toString() => 'Template($path, $body)';
 }
-
-class TemplateModule extends Template {}

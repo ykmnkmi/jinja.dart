@@ -4,8 +4,8 @@ import '../core.dart';
 
 class IfStatement extends Statement {
   static IfStatement parse(Parser parser) {
-    final elseReg = parser.getBlockEndReg('else');
-    final endIfReg = parser.getBlockEndReg('endif');
+    final elseReg = parser.getBlockEndRegFor('else');
+    final endIfReg = parser.getBlockEndRegFor('endif');
 
     final pairs = <Expression, Node>{};
     Node orElse;

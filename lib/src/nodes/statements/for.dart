@@ -5,8 +5,8 @@ import '../core.dart';
 
 class ForStatement extends Statement {
   static ForStatement parse(Parser parser) {
-    final elseReg = parser.getBlockEndReg('else');
-    final endForReg = parser.getBlockEndReg('endfor');
+    final elseReg = parser.getBlockEndRegFor('else');
+    final endForReg = parser.getBlockEndRegFor('endfor');
 
     final targets = parser.parseAssignTarget();
 

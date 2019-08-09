@@ -5,7 +5,7 @@ import '../expressions/filter.dart';
 
 abstract class SetStatement extends Statement {
   static SetStatement parse(Parser parser) {
-    final endsetReg = parser.getBlockEndReg('endset');
+    final endsetReg = parser.getBlockEndRegFor('endset');
 
     parser.scanner.expect(Parser.nameReg);
 

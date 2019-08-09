@@ -19,59 +19,77 @@ dynamic _defaultFinalizer(dynamic value) => value ?? '';
 @immutable
 class Environment {
   Environment({
-    this.commentStart = '{#',
-    this.commentEnd = '#}',
     this.blockStart = '{%',
     this.blockEnd = '%}',
     this.variableStart = '{{',
     this.variableEnd = '}}',
+    this.commentStart = '{#',
+    this.commentEnd = '#}',
+    this.trimBlocks = false,
+    this.leftStripBlocks = false,
     this.finalize = _defaultFinalizer,
     this.loader,
     this.optimize = true,
     this.undefined = const Undefined(),
     Map<String, ParserCallback> extensions = const <String, ParserCallback>{},
-    List<String> keywords = const <String>[],
     Map<String, dynamic> globals = const <String, dynamic>{},
     Map<String, Function> filters = const <String, Function>{},
     Map<String, Function> tests = const <String, Function>{},
-  })  : extensions = Map<String, ParserCallback>.of(defaultExtensions)
-          ..addAll(extensions),
-        keywords = List.of(defaultKeywords)..addAll(keywords),
+  })  : extensions = Map.of(defaultExtensions)..addAll(extensions),
         globalContext = Map.of(defaultContext)..addAll(globals),
         filters = Map.of(defaultFilters)..addAll(filters),
         tests = Map.of(defaultTests)..addAll(tests),
-        templates = <String, Template>{} {
+        templates = <String, Template>{},
+        keywords = List.of(defaultKeywords) {
     if (loader != null) loader.load(this);
   }
 
-  /// The string marking the beginning of a comment.
-  final String commentStart;
-  /// The string marking the end of a comment.
-  final String commentEnd;
-  /// The string marking the beginning of a variable statement.
-  final String variableStart;
-  /// The string marking the end of a variable statement.
-  final String variableEnd;
   /// The string marking the beginning of a statement.
   final String blockStart;
+
   /// The string marking the end of a statement.
   final String blockEnd;
+
+  /// The string marking the beginning of a variable statement.
+  final String variableStart;
+
+  /// The string marking the end of a variable statement.
+  final String variableEnd;
+
+  /// The string marking the beginning of a comment.
+  final String commentStart;
+
+  /// The string marking the end of a comment.
+  final String commentEnd;
+
+  /// If this is set to `true` the first newline after a block is removed.
+  final bool trimBlocks;
+
+  /// If this is set to `true` leading spaces and tabs are stripped
+  /// from the start of a line to a block
+  final bool leftStripBlocks;
+
   /// A callable that can be used to process the result of a variable
   /// expression before it is output. For example one can convert `null`
   /// implicitly into an empty string here.
   final Finalizer finalize;
+
   /// The template loader for this environment
   final Loader loader;
+
   /// Undefined or a subclass of it that is used to represent undefined
   /// values in the template.
   final Undefined undefined;
+
   /// Map of Jinja global variables and functions to use.
   final Map<String, dynamic> globalContext;
+
   /// Map of Jinja filters to use.
   final Map<String, Function> filters;
+
   /// Map of Jinja tests to use.
   final Map<String, Function> tests;
-  
+
   final bool optimize;
   final Map<String, ParserCallback> extensions;
   final List<String> keywords;
@@ -80,7 +98,7 @@ class Environment {
   /// Load a template from a string. This parses the source given and
   /// returns a Template object.
   ///
-  /// If `path` key is not `null` template stored on environment cache.
+  /// If `path` key is not `null` template stored in environment cache.
   Template fromSource(String source, {String path}) {
     final template = Parser(this, source, path: path).parse();
     if (path != null) templates[path] = template;

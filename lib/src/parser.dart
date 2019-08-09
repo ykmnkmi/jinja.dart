@@ -8,7 +8,7 @@ typedef T ParserCallback<T extends Node>(Parser parser);
 
 class Parser {
   static String getBeginRule(String rule) {
-    String eRule = RegExp.escape(rule);
+    final eRule = RegExp.escape(rule);
     return '(?:\\s*$eRule\\-|$eRule)\\s*';
   }
 
@@ -17,32 +17,42 @@ class Parser {
     return '\\s*(?:\\-$eRule\\s*|$eRule)';
   }
 
+  static RegExp getBlockStartReg(Environment environment) {
+    final blockStart = RegExp.escape(environment.blockStart);
+    final lStrip = environment.leftStripBlocks ? '^\\s*' : '';
+    return RegExp('(?:\\s*$blockStart\\-|$lStrip$blockStart)\\s*', multiLine: true);
+  }
+
+  static RegExp getBlockEndReg(Environment environment) {
+    final blockEnd = RegExp.escape(environment.blockEnd);
+    final trimBlocks = environment.trimBlocks ? '\n' : '';
+    return RegExp('\\s*(?:\\-$blockEnd\\s*|$blockEnd)$trimBlocks');
+  }
+
   Parser(this.environment, String source, {this.path})
       : scanner = SpanScanner(source, sourceUrl: path),
-        commentBeginReg = RegExp(getBeginRule(environment.commentStart)),
-        commentReg = RegExp('.*' + getEndRule(environment.commentEnd)),
-        variableBeginReg = RegExp(
-            RegExp.escape(environment.variableStart) + inlineSpaceReg.pattern),
-        variableEndReg = RegExp(
-            inlineSpaceReg.pattern + RegExp.escape(environment.variableEnd)),
-        blockBeginReg = RegExp(getBeginRule(environment.blockStart)),
-        blockEndReg = RegExp(getEndRule(environment.blockEnd));
+        blockStartReg = getBlockStartReg(environment),
+        blockEndReg = getBlockEndReg(environment),
+        variableStartReg = RegExp(getBeginRule(environment.variableStart)),
+        variableEndReg = RegExp(getEndRule(environment.variableEnd)),
+        commentStartReg = RegExp(getBeginRule(environment.commentStart)),
+        commentEndReg = RegExp('.*' + getEndRule(environment.commentEnd));
 
   final Environment environment;
   final String path;
   final SpanScanner scanner;
 
-  final RegExp commentBeginReg;
-  final RegExp commentReg;
-  final RegExp variableBeginReg;
-  final RegExp variableEndReg;
-  final RegExp blockBeginReg;
+  final RegExp blockStartReg;
   final RegExp blockEndReg;
+  final RegExp variableStartReg;
+  final RegExp variableEndReg;
+  final RegExp commentStartReg;
+  final RegExp commentEndReg;
 
   final List<List<Pattern>> endRulesStack = <List<Pattern>>[];
   final List<String> tagsStack = <String>[];
 
-  RegExp getBlockEndReg(String rule) {
+  RegExp getBlockEndRegFor(String rule) {
     return RegExp(RegExp.escape(rule) + blockEndReg.pattern);
   }
 
@@ -61,7 +71,7 @@ class Parser {
   }
 
   Template parse() {
-    return Template(
+    return Template.from(
       body: Interpolation(subParse()),
       environment: environment,
       path: path,
@@ -83,17 +93,17 @@ class Parser {
 
     try {
       while (!scanner.isDone) {
-        if (scanner.scan(blockBeginReg)) {
+        if (scanner.scan(blockStartReg)) {
           flush();
           if (endRules.isNotEmpty && testAll(endRules)) return body;
           body.add(parseStatement());
-        } else if (scanner.scan(variableBeginReg)) {
+        } else if (scanner.scan(variableStartReg)) {
           flush();
           body.add(parseExpression());
           scanner.expect(variableEndReg);
-        } else if (scanner.scan(commentBeginReg)) {
+        } else if (scanner.scan(commentStartReg)) {
           flush();
-          scanner.expect(commentReg);
+          scanner.expect(commentEndReg);
         } else {
           buffer.writeCharCode(scanner.readChar());
         }
@@ -468,7 +478,7 @@ class Parser {
       }
     }
 
-    if (environment.optimize && !isTuple) {
+    if (!isTuple) {
       if (args.isNotEmpty) return args.single;
       if (!explicitParentheses) error('expected an expression');
     }

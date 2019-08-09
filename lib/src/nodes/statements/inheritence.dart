@@ -5,7 +5,7 @@ import '../expressions/primary.dart';
 
 class BlockStatement extends Statement {
   static BlockStatement parse(Parser parser) {
-    final endBlockReg = parser.getBlockEndReg('endblock');
+    final endBlockReg = parser.getBlockEndRegFor('endblock');
 
     if (parser.scanner.matches(parser.blockEndReg)) {
       parser.error('block name expected');
@@ -36,9 +36,9 @@ class BlockStatement extends Statement {
 
   @override
   void accept(StringBuffer buffer, Context context) {
-    final blockContext = context[BlockContext.contextKey] as BlockContext;
+    final blockContext = context[BlockContext.contextKey];
 
-    if (blockContext != null && blockContext.has(name)) {
+    if (toBool(blockContext) && (blockContext  as BlockContext).has(name)) {
       final child = blockContext.pop(name);
 
       if (child != null) {

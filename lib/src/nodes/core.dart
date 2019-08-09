@@ -6,7 +6,7 @@ export '../utils.dart';
 abstract class Node {
   void accept(StringBuffer buffer, Context context);
 
-  String toDebugString([int level = 0]) => ' ' * level + toString();
+  String toDebugString([int level = 0]);
 }
 
 abstract class Statement extends Node {}

@@ -1,12 +1,10 @@
 [![Pub](https://img.shields.io/pub/v/jinja.svg)](https://pub.dartlang.org/packages/jinja)
 
-#### [Jinja](http://jinja.pocoo.org) 2 server-side template engine port for Dart 2. Variables, expressions, control structures and template inheritance.
+#### [Jinja 2](http://jinja.pocoo.org) server-side template engine port for Dart 2. Variables, expressions, control structures and template inheritance.
 
 **Draft**
 
 All variables and literals used in the template are **dart objects** with their own fields and methods.
-
-_Docs is comming_
 
 ## Done
 - Loaders
@@ -22,12 +20,12 @@ _Docs is comming_
   - *in*
   - *is* tests
   - *|* filters
-  - *()* call callable
-  - *(\*iter)* call callable
+  - *(args, kwargs, *args, **kwargs)* call callable
   - *.*/*[]* object attribute (*.* for field, *[]* for map)
   - *... if ... else ...* condition expression
   - *~* concat
 - Filters
+    - abs
     - attr
     - capitalize
     - center
@@ -35,13 +33,16 @@ _Docs is comming_
     - default, d
     - escape, e
     - first
+    - float
     - forceescape
+    - int
     - join
     - last
     - list
     - lower
     - random
     - string
+    - sum
     - trim
     - upper
 - Tests
@@ -49,8 +50,7 @@ _Docs is comming_
   - For (without recursive)
   - If
   - Set
-  - Template Inheritance
-    - Block
-      - Super
-    - Extends
-    - Inlcude
+  - Inlcude
+  - Extends
+  - Block
+    - Super
