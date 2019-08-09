@@ -1,33 +1,57 @@
-import 'dart:math';
 import 'dart:mirrors';
 
-import 'runtime.dart';
+import 'undefined.dart';
 
-bool asBool(value) {
-  if (value is Undefined) return false;
+Iterable<int> range(int n) sync* {
+  for (var i = 0; i < n; i++) yield i;
+}
+
+dynamic getField(dynamic value, dynamic field) {
+  try {
+    return reflect(value)
+        .getField(field is Symbol ? field : Symbol('$field'))
+        .reflectee;
+  } catch (_) {
+    return null;
+  }
+}
+
+dynamic getItem(dynamic value, dynamic key) {
+  if (value is Map) {
+    return value[key];
+  }
+
+  return null;
+}
+
+bool toBool(dynamic value) {
+  if (value is Undefined || value == null) return false;
   if (value is bool) return value;
   if (value is num) return value != 0.0;
   if (value is String) return value.isNotEmpty;
   if (value is Iterable) return value.isNotEmpty;
   if (value is Map) return value.isNotEmpty;
-  return value != null;
+  return true;
 }
 
-getAttr(value, String attributes) {
-  var attributeValue = value;
-  for (final attribute in attributes.split('.'))
-    if (attributeValue is Map)
-      attributeValue = attributeValue[attribute];
-    else
-      attributeValue =
-          reflect(attributeValue).getField(Symbol(attribute)).reflectee;
-  return attributeValue;
+String repr(dynamic object) {
+  if (object is Iterable) {
+    final buffer = StringBuffer();
+    buffer.write('[');
+    buffer.write(object.map((item) => repr(item)).join(', '));
+    buffer.write(']');
+    return buffer.toString();
+  } else if (object is Map) {
+    final buffer = StringBuffer();
+    buffer.write('{');
+    buffer.write(object.entries
+        .map((entry) => '${repr(entry.key)}: ${repr(entry.value)}')
+        .join(', '));
+    buffer.write('}');
+    return buffer.toString();
+  } else if (object is String) {
+    return '\'${object.replaceAll('\'', '\\\'').replaceAll('\n', '\\n')}\'';
+  } else {
+    return object.toString();
+  }
 }
-
-bool isNull(value) => value == null;
-
-List<int> range(int n) => List<int>.generate(n, (i) => i);
-
-int randomInt(int max) => Random(DateTime.now().microsecond).nextInt(max);
-
-String rprint(value) => value.toString().replaceAll(RegExp(r'\r\n|\n'), r'\n');

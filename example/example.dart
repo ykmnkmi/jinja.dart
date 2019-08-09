@@ -10,8 +10,8 @@ void main() {
 
   print(template.render({
     'users': [
-      {'fullname': 'Jhon Doe', 'email': 'jhondoe@unknown.dev'},
-      {'fullname': 'Jane Doe', 'email': 'janedoe@unknown.dev'},
+      {'fullname': 'Jhon Doe', 'email': 'jhondoe@dev.py'},
+      {'fullname': 'Jane Doe', 'email': 'janedoe@dev.py'},
     ]
   }));
 }
