@@ -8,10 +8,8 @@ void main() {
   final env = Environment();
   final template = env.fromSource(source, path: 'index.html');
 
-  print(template.render({
-    'users': [
-      {'fullname': 'Jhon Doe', 'email': 'jhondoe@dev.py'},
-      {'fullname': 'Jane Doe', 'email': 'janedoe@dev.py'},
-    ]
-  }));
+  print(template.renderWr(users: [
+    {'fullname': 'Jhon Doe', 'email': 'jhondoe@dev.py'},
+    {'fullname': 'Jane Doe', 'email': 'janedoe@dev.py'},
+  ]));
 }

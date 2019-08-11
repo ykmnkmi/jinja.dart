@@ -1,15 +1,23 @@
 import 'core.dart';
 
-class Interpolation extends Statement {
+class Interpolation extends Statement implements MultiChildNode {
+  static Node orNode(List<Node> nodes) {
+    // TODO: update exception
+    if (nodes.isEmpty) throw Exception('nodes empty');
+    if (nodes.length == 1) return nodes.first;
+    return Interpolation(nodes);
+  }
+
   Interpolation(this.nodes);
 
+  @override
   final List<Node> nodes;
 
   @override
   void accept(StringBuffer buffer, Context context) {
-    nodes.forEach((node) {
+    for (var node in nodes) {
       node.accept(buffer, context);
-    });
+    }
   }
 
   @override

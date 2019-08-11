@@ -5,8 +5,7 @@ import '../core.dart';
 class IfStatement extends Statement {
   static IfStatement parse(Parser parser) {
     final elseReg = parser.getBlockEndRegFor('else');
-    final endIfReg = parser.getBlockEndRegFor('endif');
-
+    final ifEndReg = parser.getBlockEndRegFor('endif');
     final pairs = <Expression, Node>{};
     Node orElse;
 
@@ -16,10 +15,8 @@ class IfStatement extends Statement {
       }
 
       final condition = parser.parseExpression();
-
       parser.scanner.expect(parser.blockEndReg);
-
-      final body = parser.parseStatements(['elif', elseReg, endIfReg]);
+      final body = parser.parseStatements(['elif', elseReg, ifEndReg]);
 
       if (parser.scanner.scan('elif')) {
         parser.scanner.scan(Parser.spaceReg);
@@ -27,7 +24,7 @@ class IfStatement extends Statement {
         continue;
       } else if (parser.scanner.scan(elseReg)) {
         pairs[condition] = body;
-        orElse = parser.parseStatements([endIfReg]);
+        orElse = parser.parseStatements([ifEndReg]);
       } else {
         pairs[condition] = body;
       }
@@ -35,7 +32,7 @@ class IfStatement extends Statement {
       break;
     }
 
-    parser.scanner.expect(endIfReg);
+    parser.scanner.expect(ifEndReg);
 
     return IfStatement(pairs, orElse);
   }

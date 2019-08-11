@@ -5,10 +5,8 @@ import '../expressions/filter.dart';
 
 abstract class SetStatement extends Statement {
   static SetStatement parse(Parser parser) {
-    final endsetReg = parser.getBlockEndRegFor('endset');
-
+    final setEndReg = parser.getBlockEndRegFor('endset');
     parser.scanner.expect(Parser.nameReg);
-
     // TODO: namespace with field
     final target = parser.scanner.lastMatch[1];
 
@@ -18,9 +16,7 @@ abstract class SetStatement extends Statement {
       }
 
       final value = parser.parseExpression(withCondition: false);
-
       parser.scanner.expect(parser.blockEndReg);
-
       return SetInlineStatement(target, value);
     }
 
@@ -36,9 +32,9 @@ abstract class SetStatement extends Statement {
 
     parser.scanner.expect(parser.blockEndReg);
 
-    final body = parser.parseStatements([endsetReg]);
+    final body = parser.parseStatements([setEndReg]);
 
-    parser.scanner.expect(endsetReg);
+    parser.scanner.expect(setEndReg);
 
     return SetBlockStatement(target, body, filter);
   }

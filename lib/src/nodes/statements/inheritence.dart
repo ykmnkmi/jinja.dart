@@ -1,69 +1,8 @@
 import '../../context.dart';
 import '../../parser.dart';
+import '../../undefined.dart';
 import '../core.dart';
 import '../expressions/primary.dart';
-
-class BlockStatement extends Statement {
-  static BlockStatement parse(Parser parser) {
-    final endBlockReg = parser.getBlockEndRegFor('endblock');
-
-    if (parser.scanner.matches(parser.blockEndReg)) {
-      parser.error('block name expected');
-    }
-
-    final nameExpr = parser.parsePrimary();
-
-    if (nameExpr is Name) {
-      final name = nameExpr.name;
-
-      parser.scanner.expect(parser.blockEndReg);
-
-      final body = parser.parseStatements(<Pattern>[endBlockReg]);
-
-      parser.scanner.expect(endBlockReg);
-
-      return BlockStatement(name, parser.path, body);
-    } else {
-      parser.error('got ${nameExpr.runtimeType} expect name');
-    }
-  }
-
-  BlockStatement(this.name, this.path, this.body);
-
-  final String name;
-  final String path;
-  final Node body;
-
-  @override
-  void accept(StringBuffer buffer, Context context) {
-    final blockContext = context[BlockContext.contextKey];
-
-    if (toBool(blockContext) && (blockContext  as BlockContext).has(name)) {
-      final child = blockContext.pop(name);
-
-      if (child != null) {
-        final childContext = <String, Object>{
-          'super': () {
-            accept(buffer, context);
-          },
-        };
-
-        context.apply(childContext, (context) {
-          child.accept(buffer, context);
-        });
-      }
-    } else {
-      body.accept(buffer, context);
-    }
-  }
-
-  @override
-  String toDebugString([int level = 0]) =>
-      ' ' * level + 'block $name\n${body.toDebugString(level + 1)}';
-
-  @override
-  String toString() => 'Block($name, $path, $body)';
-}
 
 class ExtendsStatement extends Statement {
   static ExtendsStatement parse(Parser parser) {
@@ -89,9 +28,9 @@ class ExtendsStatement extends Statement {
 
     if (path is String) {
       final template = context.environment.getTemplate(path);
-      var blockContext = context[BlockContext.contextKey] as BlockContext;
+      var blockContext = context[BlockContext.contextKey];
 
-      if (blockContext != null) {
+      if (blockContext != null && blockContext is! Undefined) {
         for (var name in blocks.keys) {
           blockContext.push(name, blocks[name]);
         }
@@ -99,13 +38,11 @@ class ExtendsStatement extends Statement {
         blockContext = BlockContext(blocks);
       }
 
-      context.apply(<String, dynamic>{
-        BlockContext.contextKey: blockContext,
-      }, (context) {
+      context.apply({BlockContext.contextKey: blockContext}, (context) {
         template.accept(buffer, context);
       });
     } else {
-      // Подробный текст проблемы: путь должен быть строкой
+      // TODO: full path
       throw Exception(path.runtimeType);
     }
   }
@@ -114,16 +51,88 @@ class ExtendsStatement extends Statement {
   String toDebugString([int level = 0]) {
     final buffer = StringBuffer(' ' * level);
     buffer.write('# extends: ${path.toDebugString()}');
-
     blocks.values.forEach((block) {
       buffer.write('\n${block.toDebugString(level)}');
     });
-
     return buffer.toString();
   }
 
   @override
   String toString() => 'Extends($path)';
+}
+
+class BlockStatement extends Statement {
+  static BlockStatement parse(Parser parser) {
+    final blockEndReg = parser.getBlockEndRegFor('endblock');
+
+    if (parser.scanner.matches(parser.blockEndReg)) {
+      parser.error('block name expected');
+    }
+
+    final nameExpr = parser.parsePrimary();
+
+    if (nameExpr is Name) {
+      final name = nameExpr.name;
+      var hasSuper = false;
+      parser.scanner.expect(parser.blockEndReg);
+      parser.notAssignable.add('super');
+      final subscription = parser.onParseName.listen((node) {
+        if (node.name == 'super') hasSuper = true;
+      });
+      final body = parser.parseStatements([blockEndReg]);
+      subscription.cancel();
+      parser.notAssignable.remove('super');
+      parser.scanner.expect(blockEndReg);
+      return BlockStatement(name, parser.path, body, hasSuper);
+    } else {
+      parser.error('got ${nameExpr.runtimeType} expect name');
+    }
+  }
+
+  BlockStatement(this.name, this.path, this.body, [this.hasSuper = false]);
+
+  final String name;
+  final String path;
+  final Node body;
+  final bool hasSuper;
+
+  @override
+  void accept(StringBuffer buffer, Context context) {
+    final blockContext = context[BlockContext.contextKey];
+
+    if (blockContext != null &&
+        blockContext is BlockContext &&
+        blockContext.has(name)) {
+      final child = blockContext.pop(name);
+
+      if (child != null) {
+        if (child.hasSuper) {
+          final childContext = this.childContext(context);
+          context.apply(childContext, (context) {
+            child.accept(buffer, context);
+          });
+        } else {
+          child.accept(buffer, context);
+        }
+      }
+    } else {
+      body.accept(buffer, context);
+    }
+  }
+
+  Map<String, dynamic> childContext(Context context) {
+    final buffer = StringBuffer();
+    accept(buffer, context);
+    final superContent = buffer.toString();
+    return {'super': () => superContent};
+  }
+
+  @override
+  String toDebugString([int level = 0]) =>
+      ' ' * level + 'block $name\n${body.toDebugString(level + 1)}';
+
+  @override
+  String toString() => 'Block($name, $path, $body)';
 }
 
 class BlockContext {
@@ -149,11 +158,7 @@ class BlockContext {
   BlockStatement pop(String name) {
     if (blocks.containsKey(name)) {
       final block = blocks[name].removeAt(0);
-
-      if (blocks[name].isEmpty) {
-        blocks.remove(name);
-      }
-
+      if (blocks[name].isEmpty) blocks.remove(name);
       return block;
     }
 

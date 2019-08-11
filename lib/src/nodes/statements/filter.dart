@@ -5,7 +5,7 @@ import '../expressions/filter.dart';
 
 class FilterBlockStatement extends Statement {
   static FilterBlockStatement parse(Parser parser) {
-    final endFilterReg = parser.getBlockEndRegFor('endfilter');
+    final filterEndReg = parser.getBlockEndRegFor('endfilter');
 
     if (parser.scanner.matches(parser.blockEndReg)) {
       parser.error('filter expected');
@@ -18,11 +18,8 @@ class FilterBlockStatement extends Statement {
     }
 
     parser.scanner.expect(parser.blockEndReg);
-
-    final body = parser.parseStatements([endFilterReg]);
-
-    parser.scanner.expect(endFilterReg);
-
+    final body = parser.parseStatements([filterEndReg]);
+    parser.scanner.expect(filterEndReg);
     return FilterBlockStatement(filter, body);
   }
 

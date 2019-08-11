@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:meta/meta.dart';
 import 'package:string_scanner/string_scanner.dart';
 
@@ -6,6 +8,7 @@ import 'environment.dart';
 
 typedef T ParserCallback<T extends Node>(Parser parser);
 
+// TODO: TokenStream
 class Parser {
   static String getBeginRule(String rule) {
     final eRule = RegExp.escape(rule);
@@ -17,28 +20,30 @@ class Parser {
     return '\\s*(?:\\-$eRule\\s*|$eRule)';
   }
 
-  static RegExp getBlockStartReg(Environment environment) {
-    final blockStart = RegExp.escape(environment.blockStart);
-    final lStrip = environment.leftStripBlocks ? '^\\s*' : '';
-    return RegExp('(?:\\s*$blockStart\\-|$lStrip$blockStart)\\s*', multiLine: true);
+  static RegExp getBlockStartReg(String rule, [bool leftStripBlocks = false]) {
+    final blockStart = RegExp.escape(rule);
+    final strip = leftStripBlocks ? '^[ \\t]*' : '';
+    return RegExp('(?:\\s*$blockStart\\-|$strip$blockStart)\\s*',
+        multiLine: true);
   }
 
-  static RegExp getBlockEndReg(Environment environment) {
-    final blockEnd = RegExp.escape(environment.blockEnd);
-    final trimBlocks = environment.trimBlocks ? '\n' : '';
-    return RegExp('\\s*(?:\\-$blockEnd\\s*|$blockEnd)$trimBlocks');
+  static RegExp getBlockEndReg(String rule, [bool trimBlocks = false]) {
+    final blockEnd = RegExp.escape(rule);
+    final trim = trimBlocks ? '\n?' : '';
+    return RegExp('\\s*(?:\\-$blockEnd\\s*|$blockEnd$trim)');
   }
 
-  Parser(this.environment, String source, {this.path})
+  Parser(this.env, String source, {this.path})
       : scanner = SpanScanner(source, sourceUrl: path),
-        blockStartReg = getBlockStartReg(environment),
-        blockEndReg = getBlockEndReg(environment),
-        variableStartReg = RegExp(getBeginRule(environment.variableStart)),
-        variableEndReg = RegExp(getEndRule(environment.variableEnd)),
-        commentStartReg = RegExp(getBeginRule(environment.commentStart)),
-        commentEndReg = RegExp('.*' + getEndRule(environment.commentEnd));
+        blockStartReg = getBlockStartReg(env.blockStart, env.leftStripBlocks),
+        blockEndReg = getBlockEndReg(env.blockEnd, env.trimBlocks),
+        variableStartReg = RegExp(getBeginRule(env.variableStart)),
+        variableEndReg = RegExp(getEndRule(env.variableEnd)),
+        commentStartReg = RegExp(getBeginRule(env.commentStart)),
+        commentEndReg = RegExp('.*' + getEndRule(env.commentEnd)),
+        notAssignable = Set.of(env.keywords);
 
-  final Environment environment;
+  final Environment env;
   final String path;
   final SpanScanner scanner;
 
@@ -49,21 +54,36 @@ class Parser {
   final RegExp commentStartReg;
   final RegExp commentEndReg;
 
+  final Set<String> notAssignable;
+
   final List<List<Pattern>> endRulesStack = <List<Pattern>>[];
   final List<String> tagsStack = <String>[];
+  final Map<String, dynamic> context = <String, dynamic>{};
 
-  RegExp getBlockEndRegFor(String rule) {
+  final StreamController<Node> controller =
+      StreamController<Node>.broadcast(sync: true);
+  Stream<Name> get onParseName =>
+      controller.stream.where(((node) => node is Name)).cast<Name>();
+
+  RegExp getBlockEndRegFor(String rule, [bool withStart = false]) {
+    if (withStart) {
+      return RegExp(
+          blockStartReg.pattern + RegExp.escape(rule) + blockEndReg.pattern,
+          multiLine: true);
+    }
+
     return RegExp(RegExp.escape(rule) + blockEndReg.pattern);
   }
 
   @alwaysThrows
   void error(String message) {
-    throw TemplateSyntaxError(
-        message, scanner.state.line, scanner.state.position);
+    // throw TemplateSyntaxError(
+    //     message, scanner.state.line, scanner.state.position);
+    scanner.error(message);
   }
 
   bool testAll(List<Pattern> endRules) {
-    for (Pattern rule in endRules) {
+    for (var rule in endRules) {
       if (scanner.matches(rule)) return true;
     }
 
@@ -71,9 +91,10 @@ class Parser {
   }
 
   Template parse() {
+    final nodes = subParse();
     return Template.from(
-      body: Interpolation(subParse()),
-      environment: environment,
+      body: env.optimize ? Interpolation.orNode(nodes) : Interpolation(nodes),
+      env: env,
       path: path,
     );
   }
@@ -131,11 +152,11 @@ class Parser {
 
     tagsStack.add(tagName);
 
-    scanner.expect(spacePlusReg);
+    scanner.expect(spaceReg);
 
     try {
-      if (environment.extensions.containsKey(tagName)) {
-        return environment.extensions[tagName](this);
+      if (env.extensions.containsKey(tagName)) {
+        return env.extensions[tagName](this);
       }
 
       tagsStack.removeLast();
@@ -173,7 +194,7 @@ class Parser {
       target = Name(scanner.lastMatch[1]);
     }
 
-    if (target.keys.any(environment.keywords.contains)) {
+    if (target.keys.any(notAssignable.contains)) {
       error('expected identifer got keyword');
     }
 
@@ -403,6 +424,7 @@ class Parser {
     } else if (scanner.scan(nameReg)) {
       final name = scanner.lastMatch[1];
       expr = Name(name);
+      controller.add(expr);
     } else if (scanner.scan(stringStartReg)) {
       String body;
 
@@ -488,7 +510,6 @@ class Parser {
 
   Expression parseList() {
     scanner.expect(lBracketReg);
-
     final items = <Expression>[];
 
     while (!scanner.scan(rBracketReg)) {
@@ -497,7 +518,7 @@ class Parser {
       items.add(parseExpression());
     }
 
-    if (environment.optimize && items.every((item) => item is Literal)) {
+    if (env.optimize && items.every((item) => item is Literal)) {
       return Literal(
           items.map((item) => (item as Literal).value).toList(growable: false));
     }
@@ -507,7 +528,6 @@ class Parser {
 
   Expression parseMap() {
     scanner.expect(lBraceReg);
-
     final items = <Expression, Expression>{};
 
     while (!scanner.scan(rBraceReg)) {
@@ -517,7 +537,7 @@ class Parser {
       items[key] = parseExpression();
     }
 
-    if (environment.optimize &&
+    if (env.optimize &&
         items.entries
             .every((item) => item.key is Literal && item.value is Literal)) {
       return Literal(items.map((key, value) =>
@@ -574,11 +594,9 @@ class Parser {
 
   Call parseCall({Expression expr}) {
     scanner.expect(lParenReg);
-
     final args = <Expression>[];
     final kwargs = <String, Expression>{};
     Expression argsDyn, kwargsDyn;
-
     var requireComma = false;
 
     while (!scanner.scan(rParenReg)) {
@@ -620,7 +638,6 @@ class Parser {
 
     do {
       scanner.expect(nameReg, name: 'filter name');
-
       final name = scanner.lastMatch[1];
 
       if (scanner.matches(lParenReg)) {
@@ -638,13 +655,9 @@ class Parser {
     final args = <Expression>[];
     final kwargs = <String, Expression>{};
     bool negated = false;
-
     scanner.scan(isReg);
-
     if (scanner.scan(notReg)) negated = true;
-
     scanner.expect(nameReg, name: 'test name');
-
     final name = scanner.lastMatch[1];
 
     if (scanner.matches(lParenReg)) {
@@ -655,7 +668,6 @@ class Parser {
         !testAll(
             <Pattern>[elseReg, orReg, andReg, variableEndReg, blockEndReg])) {
       scanner.scan(spacePlusReg);
-
       final arg = parsePrimary();
 
       if (arg is Name) {
@@ -718,10 +730,10 @@ class Parser {
   static final RegExp nameReg = RegExp('([a-zA-Z][a-zA-Z0-9]*)');
 }
 
-class TemplateSyntaxError extends Error {
-  TemplateSyntaxError(this.message, this.line, this.possition);
+// class TemplateSyntaxException implements Exception {
+//   TemplateSyntaxException(this.message, this.line, this.possition);
 
-  final String message;
-  final int line;
-  final int possition;
-}
+//   final String message;
+//   final int line;
+//   final int possition;
+// }

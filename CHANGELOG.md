@@ -1,21 +1,24 @@
 ## 0.1.0 on work
-- Rendering time improved by 10%
+- Little speed up
+- New statements:
+  - filter
+  - set
+  - raw
+- Add *args, **kwargs in calls (not in filters and tests)
+- Add renderWr function to Template: renderWr(kv1: ..., kv2: ...) calls render({'kv1': ..., 'kv2': ...})
 - Environment
   - add leftStrip and trimBlocks
-  - add optimize
   - add extensions
   - rename:
-    - stmtOpen to blockStart,
-    - stmtClose to blockEnd,
-    - varOpen to variableStart,
-    - varClose to variableEnd,
-    - commentOpen to commentStart,
-    - commentClose to commentEnd,
+    - stmtOpen to blockStart
+    - stmtClose to blockEnd
+    - varOpen to variableStart
+    - varClose to variableEnd
+    - commentOpen to commentStart
+    - commentClose to commentEnd
   - move autoReload to FileSystemLoader
   - remove getFilter and getTest
 - Update context and parser
-- Add *args, **kwargs in calls (not in filters and tests)
-- Add renderWr function to Template: renderWr(kv1: ..., kv2: ...) calls render({'kv1': ..., 'kv2': ...})
 - Custom tags support
 - Removed filters:
   - batch

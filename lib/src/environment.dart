@@ -31,6 +31,7 @@ class Environment {
     this.loader,
     this.optimize = true,
     this.undefined = const Undefined(),
+    List<String> keywords = const <String>[],
     Map<String, ParserCallback> extensions = const <String, ParserCallback>{},
     Map<String, dynamic> globals = const <String, dynamic>{},
     Map<String, Function> filters = const <String, Function>{},
@@ -39,8 +40,8 @@ class Environment {
         globalContext = Map.of(defaultContext)..addAll(globals),
         filters = Map.of(defaultFilters)..addAll(filters),
         tests = Map.of(defaultTests)..addAll(tests),
-        templates = <String, Template>{},
-        keywords = List.of(defaultKeywords) {
+        keywords = List.of(defaultKeywords)..addAll(keywords),
+        templates = <String, Template>{} {
     if (loader != null) loader.load(this);
   }
 
@@ -77,7 +78,7 @@ class Environment {
   /// The template loader for this environment
   final Loader loader;
 
-  /// Undefined or a subclass of it that is used to represent undefined
+  /// `Undefined` or a subclass of it that is used to represent undefined
   /// values in the template.
   final Undefined undefined;
 

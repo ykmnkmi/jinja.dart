@@ -1,4 +1,4 @@
-import '../core.dart';
+import 'core.dart';
 
 class Text extends Node {
   Text(this.text);
@@ -14,5 +14,5 @@ class Text extends Node {
   String toDebugString([int level = 0]) => ' ' * level + repr(text);
 
   @override
-  String toString() => 'Text($text})';
+  String toString() => 'Text($text)';
 }

@@ -62,14 +62,14 @@ class Template extends Node {
 
   Template.from({
     @required this.body,
-    @required this.environment,
+    @required this.env,
     this.path,
   }) {
     _renderWr = RenderWrapper(([Map<String, Object> data]) => render(data));
   }
 
   final Node body;
-  final Environment environment;
+  final Environment env;
   final String path;
 
   dynamic _renderWr;
@@ -94,7 +94,7 @@ class Template extends Node {
 
   /// If no arguments are given the context will be empty.
   String render([Map<String, Object> data]) {
-    final context = Context(context: data, environment: environment);
+    final context = Context(context: data, environment: env);
     final buffer = StringBuffer();
     body.accept(buffer, context);
     return '$buffer';

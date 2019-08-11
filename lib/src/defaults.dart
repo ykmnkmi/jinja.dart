@@ -11,6 +11,7 @@ const Map<String, ParserCallback> defaultExtensions = <String, ParserCallback>{
   'for': ForStatement.parse,
   'if': IfStatement.parse,
   'include': IncludeStatement.parse,
+  'raw': RawStatement.parse,
   'set': SetStatement.parse,
 };
 
@@ -22,9 +23,6 @@ const List<String> defaultKeywords = <String>[
   'if',
   'is',
   'in',
-
-  // Statements
-  'loop',
 ];
 
 const Map<String, dynamic> defaultContext = <String, dynamic>{

@@ -7,18 +7,18 @@ class Concat extends Expression {
 
   @override
   void accept(StringBuffer buffer, Context context) {
-    exprs.forEach((expr) {
+    for (var expr in exprs) {
       expr.accept(buffer, context);
-    });
+    }
   }
 
   @override
   String resolve(Context context) {
     final buffer = StringBuffer();
 
-    exprs.forEach((expr) {
+    for (var expr in exprs) {
       expr.accept(buffer, context);
-    });
+    }
 
     return buffer.toString();
   }

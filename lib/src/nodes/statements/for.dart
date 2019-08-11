@@ -6,14 +6,11 @@ import '../core.dart';
 class ForStatement extends Statement {
   static ForStatement parse(Parser parser) {
     final elseReg = parser.getBlockEndRegFor('else');
-    final endForReg = parser.getBlockEndRegFor('endfor');
-
+    final forEndReg = parser.getBlockEndRegFor('endfor');
     final targets = parser.parseAssignTarget();
-
     parser.scanner.expect(Parser.spacePlusReg);
     parser.scanner.expect('in');
     parser.scanner.expect(Parser.spacePlusReg);
-
     final iterable = parser.parseExpression(withCondition: false);
     Expression filter;
 
@@ -22,16 +19,14 @@ class ForStatement extends Statement {
     }
 
     parser.scanner.expect(parser.blockEndReg);
-
-    final body = parser.parseStatements([elseReg, endForReg]);
+    final body = parser.parseStatements([elseReg, forEndReg]);
     Node orElse;
 
     if (parser.scanner.scan(elseReg)) {
-      orElse = parser.parseStatements([endForReg]);
+      orElse = parser.parseStatements([forEndReg]);
     }
 
-    parser.scanner.expect(endForReg);
-
+    parser.scanner.expect(forEndReg);
     return filter != null
         ? ForStatementWithFilter(targets, iterable, body, filter,
             orElse: orElse)
@@ -45,7 +40,7 @@ class ForStatement extends Statement {
   final Expression iterable;
   final Node body;
   final Node orElse;
-
+  
   final int _targetsLen;
 
   void unpack(Map<String, dynamic> data, dynamic current) {
@@ -131,7 +126,6 @@ class ForStatement extends Statement {
   @override
   void accept(StringBuffer buffer, Context context) {
     final iterable = this.iterable.resolve(context);
-
     if (iterable == null) throw ArgumentError.notNull();
 
     if (iterable is Iterable && iterable.isNotEmpty) {
