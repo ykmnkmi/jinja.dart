@@ -4,6 +4,8 @@ import 'markup.dart';
 import 'undefined.dart';
 import 'utils.dart';
 
+num doAbs(num n) => n.abs();
+
 dynamic doAttr(dynamic value, String attribute) =>
     getItem(value, attribute) ?? getField(value, attribute);
 
@@ -35,14 +37,24 @@ Markup doEscape(value) =>
 
 dynamic doFirst(List values) => values.first;
 
+double doFloat(dynamic value, [double $default = 0.0]) {
+  if (value is num) return value.toDouble();
+  return double.tryParse(value.toString()) ?? $default;
+}
+
 Markup doForceEscape(value) => Markup.escape(value.toString());
 
-String doJoin(Iterable values, [String separator = '', String attribute]) {
+int doInt(dynamic value, [int $default = 0, int base = 10]) {
+  if (value is num) return value.toInt();
+  return int.tryParse(value.toString(), radix: base) ?? $default;
+}
+
+String doJoin(Iterable values, [String d = '', String attribute]) {
   if (attribute != null) {
-    return values.map((value) => doAttr(value, attribute)).join(separator);
+    return values.map((value) => doAttr(value, attribute)).join(d);
   }
 
-  return values.join(separator);
+  return values.join(d);
 }
 
 dynamic doLast(List values) => values.last;
@@ -53,29 +65,34 @@ List doList(dynamic value) {
   return [value];
 }
 
-String doLower(value) => value.toString().toLowerCase();
+String doLower(dynamic value) => value.toString().toLowerCase();
 
 dynamic doRandom(List values) {
   final length = values.length;
   return values[Random(DateTime.now().millisecondsSinceEpoch).nextInt(length)];
 }
 
-String doString(value) => value.toString();
+String doString(dynamic value) => value.toString();
 
-String doTrim(value) => value.toString().trim();
+num doSum(Iterable values, {String attribute, num start = 0}) {
+  if (attribute != null) {
+    values = values.map((val) => doAttr(val, attribute));
+  }
 
-String doUpper(value) => value.toString().toUpperCase();
+  return values.cast<num>().fold(start, (s, n) => s + n);
+}
+
+String doTrim(dynamic value) => value.toString().trim();
+
+String doUpper(dynamic value) => value.toString().toUpperCase();
 
 const Map<String, Function> filters = <String, Function>{
-  // 'abs': doAbs,
   // 'batch': doBatch,
   // 'dictsort': doDictSort,
   // 'filesizeformat': doFileSizeFormat,
-  // 'float': doFloat,
   // 'format': doFormat,
   // 'groupby': doGroupBy,
   // 'indent': doIndent,
-  // 'int': doInt,
   // 'map': doMap,
   // 'max': doMax,
   // 'min': doMin,
@@ -91,7 +108,6 @@ const Map<String, Function> filters = <String, Function>{
   // 'slice': doSlice,
   // 'sort': doSort,
   // 'striptags': doStripTags,
-  // 'sum': doSum,
   // 'title': doTitle,
   // 'tojson': doToJson,
   // 'truncate': doTruncate,
@@ -102,6 +118,7 @@ const Map<String, Function> filters = <String, Function>{
   // 'wordwrap': doWordwrap,
   // 'xmlattr': doXMLAttr,
 
+  'abs': doAbs,
   'attr': doAttr,
   'capitalize': doCapitalize,
   'center': doCenter,
@@ -111,7 +128,9 @@ const Map<String, Function> filters = <String, Function>{
   'e': doEscape,
   'escape': doEscape,
   'first': doFirst,
+  'float': doFloat,
   'forceescape': doForceEscape,
+  'int': doInt,
   'join': doJoin,
   'last': doLast,
   'length': doCount,
@@ -119,6 +138,7 @@ const Map<String, Function> filters = <String, Function>{
   'lower': doLower,
   'random': doRandom,
   'string': doString,
+  'sum': doSum,
   'trim': doTrim,
   'upper': doUpper,
 };
