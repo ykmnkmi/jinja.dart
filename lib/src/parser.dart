@@ -7,6 +7,7 @@ import 'nodes.dart';
 import 'environment.dart';
 
 typedef T ParserCallback<T extends Node>(Parser parser);
+typedef void TemplateModifier(Template template);
 
 // TODO: TokenStream
 class Parser {
@@ -46,24 +47,17 @@ class Parser {
   final Environment env;
   final String path;
   final SpanScanner scanner;
-
   final RegExp blockStartReg;
   final RegExp blockEndReg;
   final RegExp variableStartReg;
   final RegExp variableEndReg;
   final RegExp commentStartReg;
   final RegExp commentEndReg;
-
   final Set<String> notAssignable;
 
   final List<List<Pattern>> endRulesStack = <List<Pattern>>[];
   final List<String> tagsStack = <String>[];
   final Map<String, dynamic> context = <String, dynamic>{};
-
-  final StreamController<Node> controller =
-      StreamController<Node>.broadcast(sync: true);
-  Stream<Name> get onParseName =>
-      controller.stream.where(((node) => node is Name)).cast<Name>();
 
   RegExp getBlockEndRegFor(String rule, [bool withStart = false]) {
     if (withStart) {
@@ -75,10 +69,20 @@ class Parser {
     return RegExp(RegExp.escape(rule) + blockEndReg.pattern);
   }
 
+  final StreamController<Node> controller =
+      StreamController<Node>.broadcast(sync: true);
+
+  Stream<Name> get onParseName =>
+      controller.stream.where(((node) => node is Name)).cast<Name>();
+
+  final List<TemplateModifier> _templateModifiers = <TemplateModifier>[];
+
+  void addTemplateModifier(TemplateModifier modifier) {
+    _templateModifiers.add(modifier);
+  }
+
   @alwaysThrows
   void error(String message) {
-    // throw TemplateSyntaxError(
-    //     message, scanner.state.line, scanner.state.position);
     scanner.error(message);
   }
 
@@ -92,11 +96,17 @@ class Parser {
 
   Template parse() {
     final nodes = subParse();
-    return Template.from(
+    final template = Template.from(
       body: env.optimize ? Interpolation.orNode(nodes) : Interpolation(nodes),
       env: env,
       path: path,
     );
+
+    for (var modifier in _templateModifiers) {
+      modifier(template);
+    }
+
+    return template;
   }
 
   List<Node> subParse([List<Pattern> endRules = const <Pattern>[]]) {

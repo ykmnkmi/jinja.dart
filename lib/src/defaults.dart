@@ -19,7 +19,7 @@ const List<String> defaultKeywords = <String>[
   // Expressions
   'and',
   'or',
-  'not'
+  'not',
   'if',
   'is',
   'in',

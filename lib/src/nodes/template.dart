@@ -3,6 +3,7 @@ import 'dart:mirrors';
 import 'package:meta/meta.dart';
 
 import '../environment.dart';
+import '../namespace.dart';
 import '../parser.dart';
 
 import 'core.dart';
@@ -64,13 +65,15 @@ class Template extends Node {
     @required this.body,
     @required this.env,
     this.path,
-  }) {
+    Map<String, dynamic> context,
+  }) : nameSpace = NameSpace(context) {
     _renderWr = RenderWrapper(([Map<String, Object> data]) => render(data));
   }
 
   final Node body;
   final Environment env;
   final String path;
+  final NameSpace nameSpace;
 
   dynamic _renderWr;
   /** 
@@ -92,9 +95,14 @@ class Template extends Node {
     body.accept(buffer, context);
   }
 
-  /// If no arguments are given the context will be empty.
+  Context getContext(Map<String, Object> data) {
+    data ??= <String, dynamic>{};
+    data['self'] = nameSpace;
+    return Context(context: data, env: env);
+  }
+
   String render([Map<String, Object> data]) {
-    final context = Context(context: data, environment: env);
+    final context = getContext(data);
     final buffer = StringBuffer();
     body.accept(buffer, context);
     return '$buffer';

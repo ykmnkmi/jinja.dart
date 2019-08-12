@@ -5,11 +5,11 @@ typedef ContextFn = void Function(Context context);
 class Context {
   Context({
     Map<String, dynamic> context,
-    Environment environment,
+    Environment env,
   })  : this.contexts = context != null ? [context] : [<String, dynamic>{}],
-        this.environment = environment ?? Environment();
+        this.env = env ?? Environment();
 
-  final Environment environment;
+  final Environment env;
   final List<Map<String, dynamic>> contexts;
 
   dynamic operator [](String key) {
@@ -17,11 +17,11 @@ class Context {
       if (context.containsKey(key)) return context[key];
     }
 
-    if (environment.globalContext.containsKey(key)) {
-      return environment.globalContext[key];
+    if (env.globalContext.containsKey(key)) {
+      return env.globalContext[key];
     }
 
-    return environment.undefined;
+    return env.undefined;
   }
 
   void operator []=(String key, dynamic value) {

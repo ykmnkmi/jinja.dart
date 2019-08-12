@@ -1,6 +1,6 @@
 import 'core.dart';
 
-class Interpolation extends Statement implements MultiChildNode {
+class Interpolation extends Statement {
   static Node orNode(List<Node> nodes) {
     // TODO: update exception
     if (nodes.isEmpty) throw Exception('nodes empty');

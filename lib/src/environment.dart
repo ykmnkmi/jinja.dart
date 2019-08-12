@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:meta/meta.dart';
 
 import 'defaults.dart';
@@ -45,70 +47,35 @@ class Environment {
     if (loader != null) loader.load(this);
   }
 
-  /// The string marking the beginning of a statement.
   final String blockStart;
-
-  /// The string marking the end of a statement.
   final String blockEnd;
-
-  /// The string marking the beginning of a variable statement.
   final String variableStart;
-
-  /// The string marking the end of a variable statement.
   final String variableEnd;
-
-  /// The string marking the beginning of a comment.
   final String commentStart;
-
-  /// The string marking the end of a comment.
   final String commentEnd;
-
-  /// If this is set to `true` the first newline after a block is removed.
   final bool trimBlocks;
-
-  /// If this is set to `true` leading spaces and tabs are stripped
-  /// from the start of a line to a block
   final bool leftStripBlocks;
-
-  /// A callable that can be used to process the result of a variable
-  /// expression before it is output. For example one can convert `null`
-  /// implicitly into an empty string here.
   final Finalizer finalize;
-
-  /// The template loader for this environment
-  final Loader loader;
-
-  /// `Undefined` or a subclass of it that is used to represent undefined
-  /// values in the template.
   final Undefined undefined;
-
-  /// Map of Jinja global variables and functions to use.
   final Map<String, dynamic> globalContext;
-
-  /// Map of Jinja filters to use.
   final Map<String, Function> filters;
-
-  /// Map of Jinja tests to use.
   final Map<String, Function> tests;
-
   final bool optimize;
+  final Loader loader;
   final Map<String, ParserCallback> extensions;
   final List<String> keywords;
   final Map<String, Template> templates;
 
-  /// Load a template from a string. This parses the source given and
-  /// returns a Template object.
-  ///
-  /// If `path` key is not `null` template stored in environment cache.
+  Future<void> compileTemplats() async {}
+
+  /// If `path` is not `null` template stored in environment cache.
   Template fromSource(String source, {String path}) {
     final template = Parser(this, source, path: path).parse();
     if (path != null) templates[path] = template;
     return template;
   }
 
-  /// Get template by `path`.
-  ///
-  /// If path not found throws `Exception`.
+  /// If [path] not found throws `Exception`.
   Template getTemplate(String path) {
     if (!templates.containsKey(path)) {
       throw Exception('Template not found: $path');
@@ -117,9 +84,7 @@ class Environment {
     return templates[path];
   }
 
-  /// Call filter by `name`.
-  ///
-  /// If filter not found throws `Exception`.
+  /// If filter not found throws [Exception].
   dynamic callFilter(
     String name, {
     List args = const [],
@@ -132,9 +97,7 @@ class Environment {
     return Function.apply(filters[name], args, kwargs);
   }
 
-  /// Call test by `name`.
-  ///
-  /// If test not found throws `Exception`.
+  /// If test not found throws [Exception].
   bool callTest(
     String name, {
     List args = const [],

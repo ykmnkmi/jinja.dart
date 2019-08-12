@@ -1,38 +1,41 @@
 import '../../context.dart';
+import '../../namespace.dart';
 import '../../parser.dart';
 import '../../undefined.dart';
 import '../core.dart';
 import '../expressions/primary.dart';
 
 class ExtendsStatement extends Statement {
+  static const String contextKey = '_extended';
+
   static ExtendsStatement parse(Parser parser) {
     final path = parser.parsePrimary();
 
     parser.scanner.expect(parser.blockEndReg);
 
     final nodes = parser.subParse();
-    final blocks = Map.fromEntries(nodes
-        .whereType<BlockStatement>()
-        .map((node) => MapEntry(node.name, node)));
+    final blocks = nodes.whereType<BlockStatement>().toList(growable: false);
+
+    parser.context[contextKey] = null;
     return ExtendsStatement(path, blocks);
   }
 
   ExtendsStatement(this.path, this.blocks);
 
   final Expression path;
-  final Map<String, BlockStatement> blocks;
+  final List<BlockStatement> blocks;
 
   @override
   void accept(StringBuffer buffer, Context context) {
     final path = this.path.resolve(context);
 
     if (path is String) {
-      final template = context.environment.getTemplate(path);
+      final template = context.env.getTemplate(path);
       var blockContext = context[BlockContext.contextKey];
 
       if (blockContext != null && blockContext is! Undefined) {
-        for (var name in blocks.keys) {
-          blockContext.push(name, blocks[name]);
+        for (var block in blocks) {
+          blockContext.push(block.name, block);
         }
       } else {
         blockContext = BlockContext(blocks);
@@ -51,9 +54,11 @@ class ExtendsStatement extends Statement {
   String toDebugString([int level = 0]) {
     final buffer = StringBuffer(' ' * level);
     buffer.write('# extends: ${path.toDebugString()}');
-    blocks.values.forEach((block) {
+
+    blocks.forEach((block) {
       buffer.write('\n${block.toDebugString(level)}');
     });
+
     return buffer.toString();
   }
 
@@ -62,6 +67,12 @@ class ExtendsStatement extends Statement {
 }
 
 class BlockStatement extends Statement {
+  static const String contextKey = '_blocks';
+
+  static void addBlock(NameSpace nameSpace, BlockStatement block) {
+    nameSpace[block.name] = block.render;
+  }
+
   static BlockStatement parse(Parser parser) {
     final blockEndReg = parser.getBlockEndRegFor('endblock');
 
@@ -74,16 +85,32 @@ class BlockStatement extends Statement {
     if (nameExpr is Name) {
       final name = nameExpr.name;
       var hasSuper = false;
+
       parser.scanner.expect(parser.blockEndReg);
+
       parser.notAssignable.add('super');
+
       final subscription = parser.onParseName.listen((node) {
         if (node.name == 'super') hasSuper = true;
       });
+
       final body = parser.parseStatements([blockEndReg]);
+
       subscription.cancel();
+
       parser.notAssignable.remove('super');
+
       parser.scanner.expect(blockEndReg);
-      return BlockStatement(name, parser.path, body, hasSuper);
+
+      final block = BlockStatement(name, parser.path, body, hasSuper);
+
+      if (!parser.context.containsKey(ExtendsStatement.contextKey)) {
+        parser.addTemplateModifier((template) {
+          addBlock(template.nameSpace, block);
+        });
+      }
+
+      return block;
     } else {
       parser.error('got ${nameExpr.runtimeType} expect name');
     }
@@ -108,6 +135,7 @@ class BlockStatement extends Statement {
       if (child != null) {
         if (child.hasSuper) {
           final childContext = this.childContext(context);
+
           context.apply(childContext, (context) {
             child.accept(buffer, context);
           });
@@ -127,6 +155,12 @@ class BlockStatement extends Statement {
     return {'super': () => superContent};
   }
 
+  String render([Context context]) {
+    final buffer = StringBuffer();
+    accept(buffer, context ?? Context());
+    return buffer.toString();
+  }
+
   @override
   String toDebugString([int level = 0]) =>
       ' ' * level + 'block $name\n${body.toDebugString(level + 1)}';
@@ -136,12 +170,12 @@ class BlockStatement extends Statement {
 }
 
 class BlockContext {
-  static const String contextKey = '_blockContext';
+  static const String contextKey = '_block_context';
 
-  BlockContext(Map<String, BlockStatement> blocks)
-      : blocks = blocks.map((key, value) =>
+  BlockContext(List<BlockStatement> blocks)
+      : blocks = Map.fromEntries(blocks.map((block) =>
             MapEntry<String, List<BlockStatement>>(
-                key, <BlockStatement>[value]));
+                block.name, <BlockStatement>[block])));
 
   final Map<String, List<BlockStatement>> blocks;
 

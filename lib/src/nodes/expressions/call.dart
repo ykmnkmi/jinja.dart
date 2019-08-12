@@ -1,5 +1,3 @@
-import 'dart:mirrors';
-
 import '../core.dart';
 
 class Call extends Expression {
@@ -46,7 +44,7 @@ class Call extends Expression {
       }
     }
 
-    return reflect(expr.resolve(context)).invoke(#call, args, kwargs).reflectee;
+    return Function.apply(expr.resolve(context).call as Function, args, kwargs);
   }
 
   @override

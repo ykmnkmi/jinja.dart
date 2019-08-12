@@ -109,4 +109,15 @@ void main() {
     final template = env.getTemplate('c');
     expect(template.render(), equals('--INTRO--|BEFORE|[(INNER)]|AFTER'));
   });
+
+  test('working', () {
+    final template = env.getTemplate('working');
+    expect(template, isNotNull);
+  });
+
+  test('reuse blocks', () {
+    final template = env.fromSource('{{ self.foo() }}|{% block foo %}42'
+        '{% endblock %}|{{ self.foo() }}');
+    expect(template.render(), equals('42|42|42'));
+  });
 }

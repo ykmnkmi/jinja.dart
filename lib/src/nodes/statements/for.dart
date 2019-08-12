@@ -8,9 +8,11 @@ class ForStatement extends Statement {
     final elseReg = parser.getBlockEndRegFor('else');
     final forEndReg = parser.getBlockEndRegFor('endfor');
     final targets = parser.parseAssignTarget();
+    
     parser.scanner.expect(Parser.spacePlusReg);
     parser.scanner.expect('in');
     parser.scanner.expect(Parser.spacePlusReg);
+    
     final iterable = parser.parseExpression(withCondition: false);
     Expression filter;
 
@@ -19,6 +21,7 @@ class ForStatement extends Statement {
     }
 
     parser.scanner.expect(parser.blockEndReg);
+    
     final body = parser.parseStatements([elseReg, forEndReg]);
     Node orElse;
 
@@ -27,6 +30,7 @@ class ForStatement extends Statement {
     }
 
     parser.scanner.expect(forEndReg);
+    
     return filter != null
         ? ForStatementWithFilter(targets, iterable, body, filter,
             orElse: orElse)
@@ -40,7 +44,7 @@ class ForStatement extends Statement {
   final Expression iterable;
   final Node body;
   final Node orElse;
-  
+
   final int _targetsLen;
 
   void unpack(Map<String, dynamic> data, dynamic current) {
@@ -99,7 +103,7 @@ class ForStatement extends Statement {
 
   void render(List list, Context context, StringBuffer buffer) {
     for (var i = 0; i < list.length; i++) {
-      final data = getDataForContext(list, i, context.environment.undefined);
+      final data = getDataForContext(list, i, context.env.undefined);
       context.apply(data, (context) {
         body.accept(buffer, context);
       });
@@ -180,7 +184,7 @@ class ForStatementWithFilter extends ForStatement {
     final filteredList = [];
 
     for (var i = 0; i < list.length; i++) {
-      final data = getDataForContext(list, i, context.environment.undefined);
+      final data = getDataForContext(list, i, context.env.undefined);
       context.apply(data, (context) {
         if (toBool(filter.resolve(context))) filteredList.add(list[i]);
       });

@@ -8,24 +8,20 @@ import 'environment.dart';
 /// Subclass this and override [getSource], [listSources] and [load]
 /// to implement a custom loading mechanism.
 abstract class Loader {
-  /// Get the template source.
   String getSource(String path) {
-    throw Exception('Template not found: $path');
+    throw Exception('template not found: $path');
   }
 
-  /// If set to `false` it indicates that the loader cannot provide access
-  /// to the source of templates.
   bool get hasSourceAccess => true;
 
   /// Iterates over all templates.
   List<String> listSources() {
-    throw Exception('This loader cannot iterate over all templates');
+    throw Exception('this loader cannot iterate over all templates');
   }
 
-  /// Loads a template to environment cache.
-  void load(Environment environment) {
+  void load(Environment env) {
     for (var path in listSources()) {
-      environment.fromSource(getSource(path), path: path);
+      env.fromSource(getSource(path), path: path);
     }
   }
 
@@ -51,8 +47,9 @@ class FileSystemLoader extends Loader {
     String path = '/templates',
     this.followLinks = true,
   }) : directory = Directory(path) {
-    if (!directory.existsSync())
-      throw ArgumentError.value(path, 'path', 'Wrong path');
+    if (!directory.existsSync()) {
+      throw Exception('wrong path: $path');
+    }
   }
 
   final bool autoReload;
@@ -66,7 +63,7 @@ class FileSystemLoader extends Loader {
     final templateFile = File(templatePath);
 
     if (!templateFile.existsSync()) {
-      throw Exception('Template not found: $path');
+      throw Exception('template not found: $path');
     }
 
     return templateFile.readAsStringSync();
@@ -75,14 +72,14 @@ class FileSystemLoader extends Loader {
   @override
   List<String> listSources() => directory
       .listSync(recursive: true, followLinks: followLinks)
-      .map<String>(
-          (entity) => _path.relative(entity.path, from: directory.path))
+      .map((entity) => _path.relative(entity.path, from: directory.path))
       .where((path) => extensions.contains(_path.extension(path).substring(1)))
-      .toList();
+      .toList(growable: false);
 
   @override
   void load(Environment env) {
     super.load(env);
+
     if (autoReload) {
       directory
           .watch(recursive: true)
@@ -120,7 +117,7 @@ class MapLoader extends Loader {
   @override
   String getSource(String path) {
     if (dict.containsKey(path)) return dict[path];
-    throw Exception('Template not found: $path');
+    throw Exception('template not found: $path');
   }
 
   @override

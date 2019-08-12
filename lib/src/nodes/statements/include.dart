@@ -18,7 +18,7 @@ class IncludeStatement extends Statement {
     final path = this.path.resolve(context);
 
     if (path is String) {
-      final template = context.environment.getTemplate(path);
+      final template = context.env.getTemplate(path);
       template.accept(buffer, context);
     } else {
       // Подробный текст проблемы: путь должен быть строкой

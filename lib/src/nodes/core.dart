@@ -16,7 +16,7 @@ abstract class Expression extends Node {
 
   @override
   void accept(StringBuffer buffer, Context context) {
-    buffer.write(context.environment.finalize(resolve(context)));
+    buffer.write(context.env.finalize(resolve(context)));
   }
 }
 
@@ -42,8 +42,4 @@ abstract class BinaryExpression extends Expression {
 abstract class Assignable {
   List<String> get keys;
   bool get canAssign => false;
-}
-
-abstract class MultiChildNode {
-  List<Node> get nodes;
 }

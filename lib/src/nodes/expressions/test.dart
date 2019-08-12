@@ -16,13 +16,12 @@ class Test extends Expression {
   @override
   bool resolve(Context context) => test(context, expr.resolve(context));
 
-  bool test(Context context, dynamic value) =>
-      context.environment.callTest(name,
-          args: [value]
-              .followedBy(args.map((arg) => arg.resolve(context)))
-              .toList(growable: false),
-          kwargs: kwargs.map((key, value) =>
-              MapEntry<Symbol, dynamic>(Symbol(key), value.resolve(context))));
+  bool test(Context context, dynamic value) => context.env.callTest(name,
+      args: [value]
+          .followedBy(args.map((arg) => arg.resolve(context)))
+          .toList(growable: false),
+      kwargs: kwargs.map((key, value) =>
+          MapEntry<Symbol, dynamic>(Symbol(key), value.resolve(context))));
 
   @override
   String toDebugString([int level = 0]) {
