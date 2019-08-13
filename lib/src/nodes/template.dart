@@ -7,6 +7,9 @@ import '../namespace.dart';
 import '../parser.dart';
 
 import 'core.dart';
+import 'statements/inheritence.dart';
+
+typedef void ContextModifier(Context context);
 
 class RenderWrapper {
   RenderWrapper(this.function);
@@ -61,51 +64,43 @@ class Template extends Node {
         source,
       ).parse();
 
-  Template.from({
-    @required this.body,
-    @required this.env,
-    this.path,
-    Map<String, dynamic> context,
-  }) : nameSpace = NameSpace(context) {
+  Template.from({@required this.body, @required this.env, this.path})
+      : blocks = <String, BlockStatement>{} {
     _renderWr = RenderWrapper(([Map<String, Object> data]) => render(data));
   }
 
   final Node body;
   final Environment env;
   final String path;
-  final NameSpace nameSpace;
+  final Map<String, BlockStatement> blocks;
 
   dynamic _renderWr;
-  /** 
-   * This is function.
-   * For debug.
-   * Calls a render function with named arguments:
-   *
-   *     tmpl.renderWr(key: value, key2: value2)
-   *
-   * equal
-   *
-   *     tmpl.render({'key': value, 'key2': value2})
-   *
-   */
   dynamic get renderWr => _renderWr;
+
+  void pushBlocks(StringBuffer buffer, Context context) {
+    final self = NameSpace();
+
+    for (var blockEntry in blocks.entries) {
+      self.data[blockEntry.key] = () {
+        blockEntry.value.accept(buffer, context);
+      };
+    }
+
+    context.contexts.first['self'] = self;
+  }
 
   @override
   void accept(StringBuffer buffer, Context context) {
+    pushBlocks(buffer, context);
     body.accept(buffer, context);
-  }
-
-  Context getContext(Map<String, Object> data) {
-    data ??= <String, dynamic>{};
-    data['self'] = nameSpace;
-    return Context(context: data, env: env);
   }
 
   String render([Map<String, Object> data]) {
-    final context = getContext(data);
     final buffer = StringBuffer();
+    final context = Context(data: data, env: env);
+    pushBlocks(buffer, context);
     body.accept(buffer, context);
-    return '$buffer';
+    return buffer.toString();
   }
 
   @override

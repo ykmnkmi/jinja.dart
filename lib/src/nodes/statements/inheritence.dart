@@ -1,12 +1,11 @@
 import '../../context.dart';
-import '../../namespace.dart';
 import '../../parser.dart';
-import '../../undefined.dart';
 import '../core.dart';
 import '../expressions/primary.dart';
+import '../template.dart';
 
 class ExtendsStatement extends Statement {
-  static const String contextKey = '_extended';
+  static const String key = 'extended';
 
   static ExtendsStatement parse(Parser parser) {
     final path = parser.parsePrimary();
@@ -15,45 +14,41 @@ class ExtendsStatement extends Statement {
 
     final nodes = parser.subParse();
     final blocks = nodes.whereType<BlockStatement>().toList(growable: false);
-
-    parser.context[contextKey] = null;
+    parser.context[key] = null;
     return ExtendsStatement(path, blocks);
   }
 
-  ExtendsStatement(this.path, this.blocks);
+  ExtendsStatement(this.pathOrTemplate, this.blocks);
 
-  final Expression path;
+  final Expression pathOrTemplate;
   final List<BlockStatement> blocks;
 
   @override
   void accept(StringBuffer buffer, Context context) {
-    final path = this.path.resolve(context);
+    final pathOrTemplate = this.pathOrTemplate.resolve(context);
 
-    if (path is String) {
-      final template = context.env.getTemplate(path);
-      var blockContext = context[BlockContext.contextKey];
+    Template template;
 
-      if (blockContext != null && blockContext is! Undefined) {
-        for (var block in blocks) {
-          blockContext.push(block.name, block);
-        }
-      } else {
-        blockContext = BlockContext(blocks);
-      }
-
-      context.apply({BlockContext.contextKey: blockContext}, (context) {
-        template.accept(buffer, context);
-      });
+    if (pathOrTemplate is String) {
+      template = context.env.getTemplate(pathOrTemplate);
+    } else if (pathOrTemplate is Template) {
+      template = pathOrTemplate;
     } else {
       // TODO: full path
-      throw Exception(path.runtimeType);
+      throw Exception(pathOrTemplate.runtimeType);
     }
+
+    for (var block in blocks) {
+      context.blockContext.push(block.name, block);
+    }
+
+    template.accept(buffer, context);
   }
 
   @override
   String toDebugString([int level = 0]) {
     final buffer = StringBuffer(' ' * level);
-    buffer.write('# extends: ${path.toDebugString()}');
+    buffer.write('# extends: ${pathOrTemplate.toDebugString()}');
 
     blocks.forEach((block) {
       buffer.write('\n${block.toDebugString(level)}');
@@ -63,16 +58,10 @@ class ExtendsStatement extends Statement {
   }
 
   @override
-  String toString() => 'Extends($path)';
+  String toString() => 'Extends($pathOrTemplate)';
 }
 
 class BlockStatement extends Statement {
-  static const String contextKey = '_blocks';
-
-  static void addBlock(NameSpace nameSpace, BlockStatement block) {
-    nameSpace[block.name] = block.render;
-  }
-
   static BlockStatement parse(Parser parser) {
     final blockEndReg = parser.getBlockEndRegFor('endblock');
 
@@ -104,9 +93,9 @@ class BlockStatement extends Statement {
 
       final block = BlockStatement(name, parser.path, body, hasSuper);
 
-      if (!parser.context.containsKey(ExtendsStatement.contextKey)) {
+      if (!parser.context.containsKey(ExtendsStatement.key)) {
         parser.addTemplateModifier((template) {
-          addBlock(template.nameSpace, block);
+          template.blocks[block.name] = block;
         });
       }
 
@@ -125,11 +114,9 @@ class BlockStatement extends Statement {
 
   @override
   void accept(StringBuffer buffer, Context context) {
-    final blockContext = context[BlockContext.contextKey];
+    final blockContext = context.blockContext;
 
-    if (blockContext != null &&
-        blockContext is BlockContext &&
-        blockContext.has(name)) {
+    if (blockContext.has(name)) {
       final child = blockContext.pop(name);
 
       if (child != null) {
@@ -155,12 +142,6 @@ class BlockStatement extends Statement {
     return {'super': () => superContent};
   }
 
-  String render([Context context]) {
-    final buffer = StringBuffer();
-    accept(buffer, context ?? Context());
-    return buffer.toString();
-  }
-
   @override
   String toDebugString([int level = 0]) =>
       ' ' * level + 'block $name\n${body.toDebugString(level + 1)}';
@@ -170,16 +151,10 @@ class BlockStatement extends Statement {
 }
 
 class BlockContext {
-  static const String contextKey = '_block_context';
+  final Map<String, List<BlockStatement>> blocks =
+      <String, List<BlockStatement>>{};
 
-  BlockContext(List<BlockStatement> blocks)
-      : blocks = Map.fromEntries(blocks.map((block) =>
-            MapEntry<String, List<BlockStatement>>(
-                block.name, <BlockStatement>[block])));
-
-  final Map<String, List<BlockStatement>> blocks;
-
-  bool has(String name) => blocks.containsKey(name) && blocks[name].isNotEmpty;
+  bool has(String name) => blocks.containsKey(name);
 
   void push(String name, BlockStatement block) {
     if (blocks.containsKey(name)) {

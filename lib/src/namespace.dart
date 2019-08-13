@@ -25,7 +25,7 @@ class NameSpace {
       if (invocation.isGetter) return data[name];
 
       if (invocation.isMethod) {
-        return Function.apply(data[name] as Function,
+        return Function.apply(data[name].call as Function,
             invocation.positionalArguments, invocation.namedArguments);
       }
     }

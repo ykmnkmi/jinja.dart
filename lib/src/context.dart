@@ -1,16 +1,21 @@
 import 'environment.dart';
+import 'nodes.dart';
 
 typedef ContextFn = void Function(Context context);
 
 class Context {
   Context({
-    Map<String, dynamic> context,
+    Map<String, dynamic> data,
     Environment env,
-  })  : this.contexts = context != null ? [context] : [<String, dynamic>{}],
-        this.env = env ?? Environment();
+  })  : contexts = data != null ? [data] : [<String, dynamic>{}],
+        env = env ?? Environment(),
+        blockContext = BlockContext();
 
   final Environment env;
   final List<Map<String, dynamic>> contexts;
+  final BlockContext blockContext;
+
+  bool has(String name) => contexts.any((context) => context.containsKey(name));
 
   dynamic operator [](String key) {
     for (var context in contexts.reversed) {

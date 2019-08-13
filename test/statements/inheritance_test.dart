@@ -120,4 +120,16 @@ void main() {
         '{% endblock %}|{{ self.foo() }}');
     expect(template.render(), equals('42|42|42'));
   });
+
+  test('preserve blocks', () {
+    final env = Environment(
+      loader: MapLoader({
+        'a': '{% if false %}{% block x %}A{% endblock %}'
+            '{% endif %}{{ self.x() }}',
+        'b': '{% extends "a" %}{% block x %}B{{ super() }}{% endblock %}',
+      }),
+    );
+    final template = env.getTemplate('b');
+    expect(template.render(), equals('BA'));
+  });
 }

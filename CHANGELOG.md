@@ -4,8 +4,7 @@
   - filter
   - set
   - raw
-- Add *args, **kwargs in calls (not in filters and tests)
-- Add renderWr function to Template: renderWr(kv1: ..., kv2: ...) calls render({'kv1': ..., 'kv2': ...})
+- Add NameSpace
 - Environment
   - add leftStrip and trimBlocks
   - add extensions
@@ -19,7 +18,14 @@
   - move autoReload to FileSystemLoader
   - remove getFilter and getTest
 - Update context and parser
-- Custom tags support
+- Parser:
+  - parsing *args, **kwargs in calls (not in filters and tests)
+  - custom tags support
+  - context
+  - onParseName
+- Template:
+  - add renderWr function to Template: renderWr(kv1: ..., kv2: ...) calls render({'kv1': ..., 'kv2': ...})
+  - add self.blockName callback ref in context
 - Removed filters:
   - batch
   - filesizeformat
