@@ -59,6 +59,8 @@ class Parser {
   final List<String> tagsStack = <String>[];
   final Map<String, dynamic> context = <String, dynamic>{};
 
+  int deep = 0;
+
   RegExp getBlockEndRegFor(String rule, [bool withStart = false]) {
     if (withStart) {
       return RegExp(
@@ -97,7 +99,7 @@ class Parser {
   Template parse() {
     final nodes = subParse();
     final template = Template.from(
-      body: env.optimize ? Interpolation.orNode(nodes) : Interpolation(nodes),
+      nodes: nodes,
       env: env,
       path: path,
     );
@@ -117,7 +119,7 @@ class Parser {
 
     void flush() {
       if (buffer.isNotEmpty) {
-        body.add(Text('$buffer'));
+        body.add(Text(buffer.toString()));
         buffer.clear();
       }
     }
@@ -177,9 +179,11 @@ class Parser {
     }
   }
 
-  Node parseStatements(List<Pattern> endRules) {
+  Node parseStatementBody(List<Pattern> endRules) {
+    deep++;
     final nodes = subParse(endRules);
     if (scanner.isDone) error('scanner is done');
+    deep--;
     return Interpolation(nodes);
   }
 

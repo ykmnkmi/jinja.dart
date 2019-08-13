@@ -5,23 +5,36 @@ import '../expressions/primary.dart';
 import '../template.dart';
 
 class ExtendsStatement extends Statement {
-  static const String key = 'extended';
+  static const String containerKey = '__ext-cnt';
+  static const String levelKey = '__ext-last-lvl';
 
   static ExtendsStatement parse(Parser parser) {
     final path = parser.parsePrimary();
-
     parser.scanner.expect(parser.blockEndReg);
 
-    final nodes = parser.subParse();
-    final blocks = nodes.whereType<BlockStatement>().toList(growable: false);
-    parser.context[key] = null;
-    return ExtendsStatement(path, blocks);
+    final extendsStatement = ExtendsStatement(path);
+
+    if (parser.context.containsKey(containerKey)) {
+      parser.context[containerKey].add(extendsStatement);
+    } else {
+      parser.context[containerKey] = [extendsStatement];
+    }
+
+    parser.addTemplateModifier((template) {
+      final nodes = template.nodes.toList(growable: false);
+      template.nodes
+        ..clear()
+        ..addAll(nodes.sublist(0, 1));
+    });
+
+    return extendsStatement;
   }
 
-  ExtendsStatement(this.pathOrTemplate, this.blocks);
+  ExtendsStatement(this.pathOrTemplate);
 
   final Expression pathOrTemplate;
-  final List<BlockStatement> blocks;
+
+  final List<BlockStatement> blocks = <BlockStatement>[];
 
   @override
   void accept(StringBuffer buffer, Context context) {
@@ -58,7 +71,7 @@ class ExtendsStatement extends Statement {
   }
 
   @override
-  String toString() => 'Extends($pathOrTemplate)';
+  String toString() => 'Extends($pathOrTemplate, $blocks)';
 }
 
 class BlockStatement extends Statement {
@@ -83,7 +96,7 @@ class BlockStatement extends Statement {
         if (node.name == 'super') hasSuper = true;
       });
 
-      final body = parser.parseStatements([blockEndReg]);
+      final body = parser.parseStatementBody([blockEndReg]);
 
       subscription.cancel();
 
@@ -93,7 +106,13 @@ class BlockStatement extends Statement {
 
       final block = BlockStatement(name, parser.path, body, hasSuper);
 
-      if (!parser.context.containsKey(ExtendsStatement.key)) {
+      if (parser.context.containsKey(ExtendsStatement.containerKey)) {
+        for (var extendsStatement
+            in (parser.context[ExtendsStatement.containerKey]
+                as List<ExtendsStatement>)) {
+          extendsStatement.blocks.add(block);
+        }
+      } else {
         parser.addTemplateModifier((template) {
           template.blocks[block.name] = block;
         });
@@ -121,7 +140,7 @@ class BlockStatement extends Statement {
 
       if (child != null) {
         if (child.hasSuper) {
-          final childContext = this.childContext(context);
+          final childContext = this.childContext(buffer, context);
 
           context.apply(childContext, (context) {
             child.accept(buffer, context);
@@ -135,11 +154,13 @@ class BlockStatement extends Statement {
     }
   }
 
-  Map<String, dynamic> childContext(Context context) {
-    final buffer = StringBuffer();
-    accept(buffer, context);
-    final superContent = buffer.toString();
-    return {'super': () => superContent};
+  Map<String, dynamic> childContext(StringBuffer buffer, Context context) {
+    return {
+      'super': () {
+        context.removeLast('super');
+        accept(buffer, context);
+      }
+    };
   }
 
   @override
@@ -166,7 +187,7 @@ class BlockContext {
 
   BlockStatement pop(String name) {
     if (blocks.containsKey(name)) {
-      final block = blocks[name].removeAt(0);
+      final block = blocks[name].removeLast();
       if (blocks[name].isEmpty) blocks.remove(name);
       return block;
     }

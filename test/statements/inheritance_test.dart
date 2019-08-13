@@ -106,6 +106,7 @@ void main() {
             '%}[{{ super() }}]{% endblock %}',
       }),
     );
+
     final template = env.getTemplate('c');
     expect(template.render(), equals('--INTRO--|BEFORE|[(INNER)]|AFTER'));
   });
@@ -129,7 +130,45 @@ void main() {
         'b': '{% extends "a" %}{% block x %}B{{ super() }}{% endblock %}',
       }),
     );
+
     final template = env.getTemplate('b');
     expect(template.render(), equals('BA'));
   });
+
+  test('dynamic inheritance', () {
+    final env = Environment(
+      loader: MapLoader({
+        'master1': 'MASTER1{% block x %}{% endblock %}',
+        'master2': 'MASTER2{% block x %}{% endblock %}',
+        'child': '{% extends master %}{% block x %}CHILD{% endblock %}',
+      }),
+    );
+
+    final template = env.getTemplate('child');
+
+    for (var i in [1, 2]) {
+      expect(template.renderWr(master: 'master$i'), equals('MASTER${i}CHILD'));
+    }
+  });
+
+  test('multi inheritance', () {
+    final env = Environment(
+      loader: MapLoader({
+        'master1': 'MASTER1{% block x %}{% endblock %}',
+        'master2': 'MASTER2{% block x %}{% endblock %}',
+        'child': '''{% if master %}{% extends master %}{% else %}{% extends
+                'master1' %}{% endif %}{% block x %}CHILD{% endblock %}''',
+      }),
+    );
+
+    final template = env.getTemplate('child');
+    expect(template.renderWr(master: 'master1'), equals('MASTER1CHILD'));
+    expect(template.renderWr(master: 'master2'), equals('MASTER2CHILD'));
+    expect(template.render(), equals('MASTER1CHILD'));
+  });
+
+  // TODO: test scoped block
+  // TODO: test super in scoped block
+  // TODO: test scoped block after inheritance
+  // TODO: test fixed macro scoping bug
 }

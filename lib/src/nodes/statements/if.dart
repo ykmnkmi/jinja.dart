@@ -16,7 +16,7 @@ class IfStatement extends Statement {
 
       final condition = parser.parseExpression();
       parser.scanner.expect(parser.blockEndReg);
-      final body = parser.parseStatements(['elif', elseReg, ifEndReg]);
+      final body = parser.parseStatementBody(['elif', elseReg, ifEndReg]);
 
       if (parser.scanner.scan('elif')) {
         parser.scanner.scan(Parser.spaceReg);
@@ -24,7 +24,7 @@ class IfStatement extends Statement {
         continue;
       } else if (parser.scanner.scan(elseReg)) {
         pairs[condition] = body;
-        orElse = parser.parseStatements([ifEndReg]);
+        orElse = parser.parseStatementBody([ifEndReg]);
       } else {
         pairs[condition] = body;
       }

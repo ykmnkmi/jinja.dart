@@ -18,7 +18,7 @@ class FilterBlockStatement extends Statement {
     }
 
     parser.scanner.expect(parser.blockEndReg);
-    final body = parser.parseStatements([filterEndReg]);
+    final body = parser.parseStatementBody([filterEndReg]);
     parser.scanner.expect(filterEndReg);
     return FilterBlockStatement(filter, body);
   }

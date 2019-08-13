@@ -32,7 +32,7 @@ abstract class SetStatement extends Statement {
 
     parser.scanner.expect(parser.blockEndReg);
 
-    final body = parser.parseStatements([setEndReg]);
+    final body = parser.parseStatementBody([setEndReg]);
 
     parser.scanner.expect(setEndReg);
 

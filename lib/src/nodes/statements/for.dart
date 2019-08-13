@@ -22,11 +22,11 @@ class ForStatement extends Statement {
 
     parser.scanner.expect(parser.blockEndReg);
     
-    final body = parser.parseStatements([elseReg, forEndReg]);
+    final body = parser.parseStatementBody([elseReg, forEndReg]);
     Node orElse;
 
     if (parser.scanner.scan(elseReg)) {
-      orElse = parser.parseStatements([forEndReg]);
+      orElse = parser.parseStatementBody([forEndReg]);
     }
 
     parser.scanner.expect(forEndReg);

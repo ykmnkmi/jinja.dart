@@ -17,6 +17,17 @@ class Context {
 
   bool has(String name) => contexts.any((context) => context.containsKey(name));
 
+  bool removeLast(String name) {
+    for (var context in contexts.reversed) {
+      if (context.containsKey(name)) {
+        context.remove(name);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   dynamic operator [](String key) {
     for (var context in contexts.reversed) {
       if (context.containsKey(key)) return context[key];

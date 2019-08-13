@@ -64,12 +64,12 @@ class Template extends Node {
         source,
       ).parse();
 
-  Template.from({@required this.body, @required this.env, this.path})
+  Template.from({@required this.nodes, @required this.env, this.path})
       : blocks = <String, BlockStatement>{} {
     _renderWr = RenderWrapper(([Map<String, Object> data]) => render(data));
   }
 
-  final Node body;
+  final List<Node> nodes;
   final Environment env;
   final String path;
   final Map<String, BlockStatement> blocks;
@@ -92,14 +92,21 @@ class Template extends Node {
   @override
   void accept(StringBuffer buffer, Context context) {
     pushBlocks(buffer, context);
-    body.accept(buffer, context);
+
+    for (var node in nodes) {
+      node.accept(buffer, context);
+    }
   }
 
   String render([Map<String, Object> data]) {
     final buffer = StringBuffer();
     final context = Context(data: data, env: env);
     pushBlocks(buffer, context);
-    body.accept(buffer, context);
+
+    for (var node in nodes) {
+      node.accept(buffer, context);
+    }
+
     return buffer.toString();
   }
 
@@ -111,10 +118,13 @@ class Template extends Node {
       buffer.writeln(' ' * level + '# template: ${repr(path)}');
     }
 
-    buffer.write(body.toDebugString(level));
+    for (var node in nodes) {
+      buffer.write(node.toDebugString(level));
+    }
+
     return buffer.toString();
   }
 
   @override
-  String toString() => 'Template($path, $body)';
+  String toString() => 'Template($path, $nodes)';
 }
