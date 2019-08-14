@@ -1,42 +1,7 @@
 import '../../context.dart';
-import '../../parser.dart';
 import '../core.dart';
 
 class IfStatement extends Statement {
-  static IfStatement parse(Parser parser) {
-    final elseReg = parser.getBlockEndRegFor('else');
-    final ifEndReg = parser.getBlockEndRegFor('endif');
-    final pairs = <Expression, Node>{};
-    Node orElse;
-
-    while (true) {
-      if (parser.scanner.matches(parser.blockEndReg)) {
-        parser.error('expect statement body');
-      }
-
-      final condition = parser.parseExpression();
-      parser.scanner.expect(parser.blockEndReg);
-      final body = parser.parseStatementBody(['elif', elseReg, ifEndReg]);
-
-      if (parser.scanner.scan('elif')) {
-        parser.scanner.scan(Parser.spaceReg);
-        pairs[condition] = body;
-        continue;
-      } else if (parser.scanner.scan(elseReg)) {
-        pairs[condition] = body;
-        orElse = parser.parseStatementBody([ifEndReg]);
-      } else {
-        pairs[condition] = body;
-      }
-
-      break;
-    }
-
-    parser.scanner.expect(ifEndReg);
-
-    return IfStatement(pairs, orElse);
-  }
-
   IfStatement(this.pairs, [this.orElse]);
 
   final Map<Expression, Node> pairs;

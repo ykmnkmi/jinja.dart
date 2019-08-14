@@ -4,6 +4,63 @@ import 'markup.dart';
 import 'undefined.dart';
 import 'utils.dart';
 
+const Map<String, Function> filters = <String, Function>{
+  'abs': doAbs,
+  'attr': doAttr,
+  'capitalize': doCapitalize,
+  'center': doCenter,
+  'count': doCount,
+  'd': doDefault,
+  'default': doDefault,
+  'e': doEscape,
+  'escape': doEscape,
+  'first': doFirst,
+  'float': doFloat,
+  'forceescape': doForceEscape,
+  'int': doInt,
+  'join': doJoin,
+  'last': doLast,
+  'length': doCount,
+  'list': doList,
+  'lower': doLower,
+  'random': doRandom,
+  'string': doString,
+  'sum': doSum,
+  'trim': doTrim,
+  'upper': doUpper,
+
+  // 'batch': doBatch,
+  // 'dictsort': doDictSort,
+  // 'filesizeformat': doFileSizeFormat,
+  // 'format': doFormat,
+  // 'groupby': doGroupBy,
+  // 'indent': doIndent,
+  // 'map': doMap,
+  // 'max': doMax,
+  // 'min': doMin,
+  // 'pprint': doPPrint,
+  // 'reject': doReject,
+  // 'rejectattr': doRejectAttr,
+  // 'replace': doReplace,
+  // 'reverse': doReverse,
+  // 'round': doRound,
+  // 'safe': doMarkSafe,
+  // 'select': doSelect,
+  // 'selectattr': doSelectAttr,
+  // 'slice': doSlice,
+  // 'sort': doSort,
+  // 'striptags': doStripTags,
+  // 'title': doTitle,
+  // 'tojson': doToJson,
+  // 'truncate': doTruncate,
+  // 'unique': doUnique,
+  // 'urlencode': doURLEncode,
+  // 'urlize': doURLize,
+  // 'wordcount': doWordCount,
+  // 'wordwrap': doWordwrap,
+  // 'xmlattr': doXMLAttr,
+};
+
 num doAbs(num n) => n.abs();
 
 dynamic doAttr(dynamic value, String attribute) =>
@@ -65,14 +122,14 @@ List doList(dynamic value) {
   return [value];
 }
 
-String doLower(dynamic value) => value.toString().toLowerCase();
+String doLower(dynamic value) => repr(value, false).toLowerCase();
 
 dynamic doRandom(List values) {
   final length = values.length;
   return values[Random(DateTime.now().millisecondsSinceEpoch).nextInt(length)];
 }
 
-String doString(dynamic value) => value.toString();
+String doString(dynamic value) => repr(value, false);
 
 num doSum(Iterable values, {String attribute, num start = 0}) {
   if (attribute != null) {
@@ -82,63 +139,6 @@ num doSum(Iterable values, {String attribute, num start = 0}) {
   return values.cast<num>().fold(start, (s, n) => s + n);
 }
 
-String doTrim(dynamic value) => value.toString().trim();
+String doTrim(dynamic value) => repr(value, false).trim();
 
-String doUpper(dynamic value) => value.toString().toUpperCase();
-
-const Map<String, Function> filters = <String, Function>{
-  // 'batch': doBatch,
-  // 'dictsort': doDictSort,
-  // 'filesizeformat': doFileSizeFormat,
-  // 'format': doFormat,
-  // 'groupby': doGroupBy,
-  // 'indent': doIndent,
-  // 'map': doMap,
-  // 'max': doMax,
-  // 'min': doMin,
-  // 'pprint': doPPrint,
-  // 'reject': doReject,
-  // 'rejectattr': doRejectAttr,
-  // 'replace': doReplace,
-  // 'reverse': doReverse,
-  // 'round': doRound,
-  // 'safe': doMarkSafe,
-  // 'select': doSelect,
-  // 'selectattr': doSelectAttr,
-  // 'slice': doSlice,
-  // 'sort': doSort,
-  // 'striptags': doStripTags,
-  // 'title': doTitle,
-  // 'tojson': doToJson,
-  // 'truncate': doTruncate,
-  // 'unique': doUnique,
-  // 'urlencode': doURLEncode,
-  // 'urlize': doURLize,
-  // 'wordcount': doWordCount,
-  // 'wordwrap': doWordwrap,
-  // 'xmlattr': doXMLAttr,
-
-  'abs': doAbs,
-  'attr': doAttr,
-  'capitalize': doCapitalize,
-  'center': doCenter,
-  'count': doCount,
-  'd': doDefault,
-  'default': doDefault,
-  'e': doEscape,
-  'escape': doEscape,
-  'first': doFirst,
-  'float': doFloat,
-  'forceescape': doForceEscape,
-  'int': doInt,
-  'join': doJoin,
-  'last': doLast,
-  'length': doCount,
-  'list': doList,
-  'lower': doLower,
-  'random': doRandom,
-  'string': doString,
-  'sum': doSum,
-  'trim': doTrim,
-  'upper': doUpper,
-};
+String doUpper(dynamic value) => repr(value, false).toUpperCase();

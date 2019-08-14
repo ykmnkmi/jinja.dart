@@ -34,7 +34,7 @@ bool toBool(dynamic value) {
   return true;
 }
 
-String repr(dynamic object) {
+String repr(dynamic object, [bool reprString = true]) {
   if (object is Iterable) {
     final buffer = StringBuffer();
     buffer.write('[');
@@ -49,7 +49,7 @@ String repr(dynamic object) {
         .join(', '));
     buffer.write('}');
     return buffer.toString();
-  } else if (object is String) {
+  } else if (reprString && object is String) {
     return '\'${object.replaceAll('\'', '\\\'').replaceAll('\n', '\\n')}\'';
   } else {
     return object.toString();

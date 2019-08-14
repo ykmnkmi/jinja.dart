@@ -29,20 +29,22 @@ class Environment {
     this.commentEnd = '#}',
     this.trimBlocks = false,
     this.leftStripBlocks = false,
-    this.finalize = _defaultFinalizer,
+    Finalizer finalize = _defaultFinalizer,
     this.loader,
     this.optimize = true,
     this.undefined = const Undefined(),
-    List<String> keywords = const <String>[],
-    Map<String, ParserCallback> extensions = const <String, ParserCallback>{},
+    this.extensions = const <String, ParserCallback>{},
     Map<String, dynamic> globals = const <String, dynamic>{},
     Map<String, Function> filters = const <String, Function>{},
     Map<String, Function> tests = const <String, Function>{},
-  })  : extensions = Map.of(defaultExtensions)..addAll(extensions),
+  })  : finalize = ((value) {
+          value = finalize(value);
+          if (value is! String) return repr(value, false);
+          return value;
+        }),
         globalContext = Map.of(defaultContext)..addAll(globals),
         filters = Map.of(defaultFilters)..addAll(filters),
         tests = Map.of(defaultTests)..addAll(tests),
-        keywords = List.of(defaultKeywords)..addAll(keywords),
         templates = <String, Template>{} {
     if (loader != null) loader.load(this);
   }
@@ -63,7 +65,6 @@ class Environment {
   final bool optimize;
   final Loader loader;
   final Map<String, ParserCallback> extensions;
-  final List<String> keywords;
   final Map<String, Template> templates;
 
   Future<void> compileTemplats() async {}
@@ -84,7 +85,7 @@ class Environment {
     return templates[path];
   }
 
-  /// If filter not found throws [Exception].
+  /// If [name] not found throws [Exception].
   dynamic callFilter(
     String name, {
     List args = const [],
@@ -97,7 +98,7 @@ class Environment {
     return Function.apply(filters[name], args, kwargs);
   }
 
-  /// If test not found throws [Exception].
+  /// If [name] not found throws [Exception].
   bool callTest(
     String name, {
     List args = const [],

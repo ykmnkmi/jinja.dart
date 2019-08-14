@@ -1,6 +1,35 @@
 import 'markup.dart';
 import 'utils.dart';
 
+const Map<String, Function> tests = <String, Function>{
+  'callable': istCallable,
+  'defined': isDefined,
+  'divisibleby': isDivisibleBy,
+  'eq': eq,
+  'equalto': eq,
+  'escaped': isEscaped,
+  'even': isEven,
+  'ge': ge,
+  'greaterthan': gt,
+  'gt': gt,
+  'in': isIn,
+  'iterable': isIterable,
+  'le': le,
+  'lessthan': lt,
+  'lower': isLower,
+  'lt': lt,
+  'mapping': isMapping,
+  'ne': ne,
+  'none': isNone,
+  'number': isNumber,
+  'odd': isOdd,
+  'sameas': isSameAs,
+  'sequence': isSequence,
+  'string': isString,
+  'undefined': isUndefined,
+  'upper': isUpper,
+};
+
 bool eq(dynamic value, dynamic other) => value == other;
 bool ge(dynamic value, dynamic other) => (value >= other) as bool;
 bool gt(dynamic value, dynamic other) => (value > other) as bool;
@@ -55,32 +84,3 @@ bool isString(dynamic value) => value is String;
 bool isUndefined(dynamic value) => !toBool(value);
 
 bool isUpper(String value) => value == value.toUpperCase();
-
-const Map<String, Function> tests = <String, Function>{
-  'callable': istCallable,
-  'defined': isDefined,
-  'divisibleby': isDivisibleBy,
-  'eq': eq,
-  'equalto': eq,
-  'escaped': isEscaped,
-  'even': isEven,
-  'ge': ge,
-  'greaterthan': gt,
-  'gt': gt,
-  'in': isIn,
-  'iterable': isIterable,
-  'le': le,
-  'lessthan': lt,
-  'lower': isLower,
-  'lt': lt,
-  'mapping': isMapping,
-  'ne': ne,
-  'none': isNone,
-  'number': isNumber,
-  'odd': isOdd,
-  'sameas': isSameAs,
-  'sequence': isSequence,
-  'string': isString,
-  'undefined': isUndefined,
-  'upper': isUpper,
-};

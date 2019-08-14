@@ -1,14 +1,7 @@
 import '../../context.dart';
-import '../../parser.dart';
 import '../core.dart';
 
 class IncludeStatement extends Statement {
-  static IncludeStatement parse(Parser parser) {
-    final path = parser.parsePrimary();
-    parser.scanner.expect(parser.blockEndReg);
-    return IncludeStatement(path);
-  }
-
   IncludeStatement(this.path);
 
   final Expression path;

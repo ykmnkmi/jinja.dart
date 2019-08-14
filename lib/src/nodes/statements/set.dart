@@ -1,44 +1,8 @@
 import '../../context.dart';
-import '../../parser.dart';
 import '../core.dart';
 import '../expressions/filter.dart';
 
-abstract class SetStatement extends Statement {
-  static SetStatement parse(Parser parser) {
-    final setEndReg = parser.getBlockEndRegFor('endset');
-    parser.scanner.expect(Parser.nameReg);
-    // TODO: namespace with field
-    final target = parser.scanner.lastMatch[1];
-
-    if (parser.scanner.scan(Parser.assignReg)) {
-      if (parser.scanner.matches(parser.blockEndReg)) {
-        parser.error('expression expected');
-      }
-
-      final value = parser.parseExpression(withCondition: false);
-      parser.scanner.expect(parser.blockEndReg);
-      return SetInlineStatement(target, value);
-    }
-
-    Filter filter;
-
-    if (parser.scanner.matches(Parser.pipeReg)) {
-      filter = parser.parseFilter(hasLeadingPipe: false);
-
-      if (filter == null) {
-        parser.error('filter expected but got ${filter.runtimeType}');
-      }
-    }
-
-    parser.scanner.expect(parser.blockEndReg);
-
-    final body = parser.parseStatementBody([setEndReg]);
-
-    parser.scanner.expect(setEndReg);
-
-    return SetBlockStatement(target, body, filter);
-  }
-}
+abstract class SetStatement extends Statement {}
 
 class SetInlineStatement extends SetStatement {
   SetInlineStatement(this.target, this.value);

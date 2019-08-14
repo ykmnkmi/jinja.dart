@@ -16,7 +16,7 @@ All variables and literals used in the template are **dart objects** with their 
 - Filters
 - Tests
 - Statements
-  - Filter
+  - Filter (not all))
   - For (without recursive)
   - If
   - Set
@@ -24,4 +24,3 @@ All variables and literals used in the template are **dart objects** with their 
   - Inlcude
   - Extends
   - Block
-    - Super

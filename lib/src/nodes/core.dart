@@ -9,14 +9,25 @@ abstract class Node {
   String toDebugString([int level = 0]);
 }
 
-abstract class Statement extends Node {}
+class EmptyNode implements Node {
+  const EmptyNode();
 
-abstract class Expression extends Node {
-  dynamic resolve(Context context);
+  @override
+  void accept(StringBuffer buffer, Context context) {}
+
+  @override
+  String toDebugString([int level = 0]) => 'empty';
+}
+
+abstract class Statement implements Node {}
+
+abstract class Expression implements Node {
+  dynamic resolve(Context context) => null;
 
   @override
   void accept(StringBuffer buffer, Context context) {
-    buffer.write(context.env.finalize(resolve(context)));
+    final value = resolve(context);
+    buffer.write(context.env.finalize(value));
   }
 }
 

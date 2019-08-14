@@ -1,42 +1,8 @@
 import '../../context.dart';
-import '../../parser.dart';
 import '../../undefined.dart';
 import '../core.dart';
 
 class ForStatement extends Statement {
-  static ForStatement parse(Parser parser) {
-    final elseReg = parser.getBlockEndRegFor('else');
-    final forEndReg = parser.getBlockEndRegFor('endfor');
-    final targets = parser.parseAssignTarget();
-    
-    parser.scanner.expect(Parser.spacePlusReg);
-    parser.scanner.expect('in');
-    parser.scanner.expect(Parser.spacePlusReg);
-    
-    final iterable = parser.parseExpression(withCondition: false);
-    Expression filter;
-
-    if (parser.scanner.scan(Parser.ifReg)) {
-      filter = parser.parseExpression(withCondition: false);
-    }
-
-    parser.scanner.expect(parser.blockEndReg);
-    
-    final body = parser.parseStatementBody([elseReg, forEndReg]);
-    Node orElse;
-
-    if (parser.scanner.scan(elseReg)) {
-      orElse = parser.parseStatementBody([forEndReg]);
-    }
-
-    parser.scanner.expect(forEndReg);
-    
-    return filter != null
-        ? ForStatementWithFilter(targets, iterable, body, filter,
-            orElse: orElse)
-        : ForStatement(targets, iterable, body, orElse: orElse);
-  }
-
   ForStatement(this.targets, this.iterable, this.body, {this.orElse})
       : _targetsLen = targets.length;
 

@@ -41,134 +41,140 @@ var doubleextends = '''{% extends "layout" %}
 {% endblock %}''';
 
 void main() {
-  final env = Environment(
-    loader: MapLoader({
-      'layout': layout,
-      'level1': level1,
-      'level2': level2,
-      'level3': level3,
-      'level4': level4,
-      'working': working,
-      'doublee': doubleextends,
-    }),
-    trimBlocks: true,
-  );
-
-  test('layout', () {
-    final template = env.getTemplate('layout');
-    expect(
-        template.renderWr(),
-        equals('|block 1 from layout|block 2 from '
-            'layout|nested block 4 from layout|'));
-  });
-
-  test('level1', () {
-    final template = env.getTemplate('level1');
-    expect(
-        template.renderWr(),
-        equals('|block 1 from level1|block 2 from '
-            'layout|nested block 4 from layout|'));
-  });
-
-  test('level2', () {
-    final template = env.getTemplate('level2');
-    expect(
-        template.renderWr(),
-        equals('|block 1 from level1|nested block 5 from '
-            'level2|nested block 4 from layout|'));
-  });
-
-  test('level3', () {
-    final template = env.getTemplate('level3');
-    expect(
-        template.renderWr(),
-        equals('|block 1 from level1|block 5 from level3|'
-            'block 4 from level3|'));
-  });
-
-  test('level4', () {
-    final template = env.getTemplate('level4');
-    expect(
-        template.renderWr(),
-        equals('|block 1 from level1|block 5 from '
-            'level3|block 3 from level4|'));
-  });
-
-  test('super', () {
+  group('inheritance', () {
     final env = Environment(
       loader: MapLoader({
-        'a': '{% block intro %}INTRO{% endblock %}|'
-            'BEFORE|{% block data %}INNER{% endblock %}|AFTER',
-        'b': '{% extends "a" %}{% block data %}({{ '
-            'super() }}){% endblock %}',
-        'c': '{% extends "b" %}{% block intro %}--{{ '
-            'super() }}--{% endblock %}\n{% block data '
-            '%}[{{ super() }}]{% endblock %}',
+        'layout': layout,
+        'level1': level1,
+        'level2': level2,
+        'level3': level3,
+        'level4': level4,
+        'working': working,
       }),
+      trimBlocks: true,
     );
 
-    final template = env.getTemplate('c');
-    expect(template.render(), equals('--INTRO--|BEFORE|[(INNER)]|AFTER'));
-  });
+    test('layout', () {
+      final template = env.getTemplate('layout');
+      expect(
+          template.render(),
+          equals('|block 1 from layout|block 2 from '
+              'layout|nested block 4 from layout|'));
+    });
 
-  test('working', () {
-    final template = env.getTemplate('working');
-    expect(template, isNotNull);
-  });
+    test('level1', () {
+      final template = env.getTemplate('level1');
+      expect(
+          template.render(),
+          equals('|block 1 from level1|block 2 from '
+              'layout|nested block 4 from layout|'));
+    });
 
-  test('reuse blocks', () {
-    final template = env.fromSource('{{ self.foo() }}|{% block foo %}42'
-        '{% endblock %}|{{ self.foo() }}');
-    expect(template.render(), equals('42|42|42'));
-  });
+    test('level2', () {
+      final template = env.getTemplate('level2');
+      expect(
+          template.render(),
+          equals('|block 1 from level1|nested block 5 from '
+              'level2|nested block 4 from layout|'));
+    });
 
-  test('preserve blocks', () {
-    final env = Environment(
-      loader: MapLoader({
-        'a': '{% if false %}{% block x %}A{% endblock %}'
-            '{% endif %}{{ self.x() }}',
-        'b': '{% extends "a" %}{% block x %}B{{ super() }}{% endblock %}',
-      }),
-    );
+    test('level3', () {
+      final template = env.getTemplate('level3');
+      expect(
+          template.render(),
+          equals('|block 1 from level1|block 5 from level3|'
+              'block 4 from level3|'));
+    });
 
-    final template = env.getTemplate('b');
-    expect(template.render(), equals('BA'));
-  });
+    test('level4', () {
+      final template = env.getTemplate('level4');
+      expect(
+          template.render(),
+          equals('|block 1 from level1|block 5 from '
+              'level3|block 3 from level4|'));
+    });
 
-  test('dynamic inheritance', () {
-    final env = Environment(
-      loader: MapLoader({
-        'master1': 'MASTER1{% block x %}{% endblock %}',
-        'master2': 'MASTER2{% block x %}{% endblock %}',
-        'child': '{% extends master %}{% block x %}CHILD{% endblock %}',
-      }),
-    );
+    test('super', () {
+      final env = Environment(
+        loader: MapLoader({
+          'a': '{% block intro %}INTRO{% endblock %}|'
+              'BEFORE|{% block data %}INNER{% endblock %}|AFTER',
+          'b': '{% extends "a" %}{% block data %}({{ '
+              'super() }}){% endblock %}',
+          'c': '{% extends "b" %}{% block intro %}--{{ '
+              'super() }}--{% endblock %}\n{% block data '
+              '%}[{{ super() }}]{% endblock %}',
+        }),
+      );
 
-    final template = env.getTemplate('child');
+      final template = env.getTemplate('c');
+      expect(template.render(), equals('--INTRO--|BEFORE|[(INNER)]|AFTER'));
+    });
 
-    for (var i in [1, 2]) {
-      expect(template.renderWr(master: 'master$i'), equals('MASTER${i}CHILD'));
-    }
-  });
+    test('working', () {
+      final template = env.getTemplate('working');
+      expect(template, isNotNull);
+    });
 
-  test('multi inheritance', () {
-    final env = Environment(
-      loader: MapLoader({
-        'master1': 'MASTER1{% block x %}{% endblock %}',
-        'master2': 'MASTER2{% block x %}{% endblock %}',
-        'child': '''{% if master %}{% extends master %}{% else %}{% extends
+    test('reuse blocks', () {
+      final template = env.fromSource('{{ self.foo() }}|{% block foo %}42'
+          '{% endblock %}|{{ self.foo() }}');
+      expect(template.render(), equals('42|42|42'));
+    });
+
+    test('preserve blocks', () {
+      final env = Environment(
+        loader: MapLoader({
+          'a': '{% if false %}{% block x %}A{% endblock %}'
+              '{% endif %}{{ self.x() }}',
+          'b': '{% extends "a" %}{% block x %}B{{ super() }}{% endblock %}',
+        }),
+      );
+
+      final template = env.getTemplate('b');
+      expect(template.render(), equals('BA'));
+    });
+
+    test('dynamic inheritance', () {
+      final env = Environment(
+        loader: MapLoader({
+          'master1': 'MASTER1{% block x %}{% endblock %}',
+          'master2': 'MASTER2{% block x %}{% endblock %}',
+          'child': '{% extends master %}{% block x %}CHILD{% endblock %}',
+        }),
+      );
+
+      final template = env.getTemplate('child');
+
+      for (var i in [1, 2]) {
+        expect(
+            template.renderWr(master: 'master$i'), equals('MASTER${i}CHILD'));
+      }
+    });
+
+    test('multi inheritance', () {
+      final env = Environment(
+        loader: MapLoader({
+          'master1': 'MASTER1{% block x %}{% endblock %}',
+          'master2': 'MASTER2{% block x %}{% endblock %}',
+          'child': '''{% if master %}{% extends master %}{% else %}{% extends
                 'master1' %}{% endif %}{% block x %}CHILD{% endblock %}''',
-      }),
-    );
+        }),
+      );
 
-    final template = env.getTemplate('child');
-    expect(template.renderWr(master: 'master1'), equals('MASTER1CHILD'));
-    expect(template.renderWr(master: 'master2'), equals('MASTER2CHILD'));
-    expect(template.render(), equals('MASTER1CHILD'));
+      final template = env.getTemplate('child');
+      expect(template.renderWr(master: 'master1'), equals('MASTER1CHILD'));
+      expect(template.renderWr(master: 'master2'), equals('MASTER2CHILD'));
+      expect(template.render(), equals('MASTER1CHILD'));
+    });
+
+    // TODO: test scoped block
+    // TODO: test super in scoped block
+    // TODO: test scoped block after inheritance
+    // TODO: test fixed macro scoping bug
+
+    test('double extends', () {
+      expect(() => Template(doubleextends), throwsException);
+    });
   });
-
-  // TODO: test scoped block
-  // TODO: test super in scoped block
-  // TODO: test scoped block after inheritance
-  // TODO: test fixed macro scoping bug
 }

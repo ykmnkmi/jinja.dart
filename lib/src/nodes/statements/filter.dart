@@ -1,28 +1,8 @@
 import '../../context.dart';
-import '../../parser.dart';
 import '../core.dart';
 import '../expressions/filter.dart';
 
 class FilterBlockStatement extends Statement {
-  static FilterBlockStatement parse(Parser parser) {
-    final filterEndReg = parser.getBlockEndRegFor('endfilter');
-
-    if (parser.scanner.matches(parser.blockEndReg)) {
-      parser.error('filter expected');
-    }
-
-    final filter = parser.parseFilter(hasLeadingPipe: false);
-
-    if (filter is! Filter) {
-      parser.error('filter expected but got ${filter.runtimeType}');
-    }
-
-    parser.scanner.expect(parser.blockEndReg);
-    final body = parser.parseStatementBody([filterEndReg]);
-    parser.scanner.expect(filterEndReg);
-    return FilterBlockStatement(filter, body);
-  }
-
   FilterBlockStatement(this.filter, this.body);
 
   final Filter filter;

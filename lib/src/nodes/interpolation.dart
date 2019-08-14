@@ -3,14 +3,13 @@ import 'core.dart';
 class Interpolation extends Statement {
   static Node orNode(List<Node> nodes) {
     // TODO: update exception
-    if (nodes.isEmpty) throw Exception('nodes empty');
+    if (nodes.isEmpty) return const EmptyNode();
     if (nodes.length == 1) return nodes.first;
     return Interpolation(nodes);
   }
 
   Interpolation(this.nodes);
 
-  @override
   final List<Node> nodes;
 
   @override
