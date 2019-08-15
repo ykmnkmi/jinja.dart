@@ -1,3 +1,5 @@
+// TODO: TokenStream
+
 import 'dart:async';
 
 import 'package:meta/meta.dart';
@@ -9,7 +11,6 @@ import 'environment.dart';
 typedef T ParserCallback<T extends Node>(Parser parser);
 typedef void TemplateModifier(Template template);
 
-// TODO: TokenStream
 class Parser {
   static String getBeginRule(String rule) {
     final eRule = RegExp.escape(rule);
@@ -113,7 +114,6 @@ class Parser {
   Node parseBody([List<Pattern> endRules = const <Pattern>[]]) {
     deep++;
     final nodes = subParse(endRules);
-    // if (scanner.isDone) error('scanner is done');
     deep--;
     return env.optimize ? Interpolation.orNode(nodes) : Interpolation(nodes);
   }
@@ -222,12 +222,24 @@ class Parser {
 
     addTemplateModifier((template) {
       final body = template.body;
+      Node first;
 
       if (body is Interpolation) {
-        final nodes = body.nodes.toList(growable: false);
+        first = body.nodes.first;
+
+        if (body.nodes.sublist(1).any((node) => node is ExtendsStatement)) {
+          error('only one extends statement in template');
+        }
+
         body.nodes
           ..clear()
-          ..addAll(nodes.sublist(0, 1));
+          ..add(first);
+      }
+
+      if (first is IfStatement &&
+          (first.pairs.values.any((node) => node is! ExtendsStatement) ||
+              first.orElse is! ExtendsStatement)) {
+        error('not extends statement in dynamic exntends');
       }
     });
 
