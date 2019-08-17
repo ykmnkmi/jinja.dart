@@ -168,7 +168,22 @@ void main() {
       expect(template.render(), equals('MASTER1CHILD'));
     });
 
-    // TODO: test scoped block
+    test('scoped block', () {
+      final env = Environment(
+        loader: MapLoader({
+          'master.html': '{% for item in seq %}[{% block item scoped %}'
+              '{% endblock %}]{% endfor %}',
+        }),
+      );
+
+      final template =
+          env.fromSource('{% extends "master.html" %}{% block item %}'
+              '{{ item }}{% endblock %}');
+      expect(
+          template.renderWr(seq: [0, 1, 2]), equals('[0][1][2]'));
+      // expect(
+      // template.renderWr(seq: [0, 1, 2, 3, 4]), equals('[0][1][2][3][4]'));
+    });
     // TODO: test super in scoped block
     // TODO: test scoped block after inheritance
     // TODO: test fixed macro scoping bug

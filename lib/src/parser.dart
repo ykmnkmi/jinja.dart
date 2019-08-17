@@ -253,43 +253,44 @@ class Parser {
       error('block name expected');
     }
 
-    final nameExpr = parsePrimary();
+    scanner.expect(nameReg, name: 'block name');
 
-    if (nameExpr is Name) {
-      final name = nameExpr.name;
-      var hasSuper = false;
+    final name = scanner.lastMatch[1];
+    var scoped = false;
+    var hasSuper = false;
 
-      scanner.expect(this.blockEndReg);
-
-      notAssignable.add('super');
-
-      final subscription = onParseName.listen((node) {
-        if (node.name == 'super') hasSuper = true;
-      });
-
-      final body = parseBody([blockEndReg]);
-      subscription.cancel();
-      notAssignable.remove('super');
-
-      scanner.expect(blockEndReg);
-
-      final block = BlockStatement(name, path, body, hasSuper);
-
-      if (context.containsKey(ExtendsStatement.containerKey)) {
-        for (var extendsStatement in (context[ExtendsStatement.containerKey]
-            as List<ExtendsStatement>)) {
-          extendsStatement.blocks.add(block);
-        }
-      } else {
-        addTemplateModifier((template) {
-          template.blocks[block.name] = block;
-        });
-      }
-
-      return block;
-    } else {
-      error('got ${nameExpr.runtimeType} expect name');
+    if (scanner.scan(spacePlusReg) && scanner.scan('scoped')) {
+      scoped = true;
     }
+
+    scanner.expect(this.blockEndReg);
+
+    notAssignable.add('super');
+
+    final subscription = onParseName.listen((node) {
+      if (node.name == 'super') hasSuper = true;
+    });
+
+    final body = parseBody([blockEndReg]);
+    subscription.cancel();
+    notAssignable.remove('super');
+
+    scanner.expect(blockEndReg);
+
+    final block = BlockStatement(name, path, body, hasSuper);
+
+    if (context.containsKey(ExtendsStatement.containerKey)) {
+      for (var extendsStatement in (context[ExtendsStatement.containerKey]
+          as List<ExtendsStatement>)) {
+        extendsStatement.blocks.add(block);
+      }
+    } else {
+      addTemplateModifier((template) {
+        template.blocks[block.name] = block;
+      });
+    }
+
+    return block;
   }
 
   IncludeStatement parseInlcude() {

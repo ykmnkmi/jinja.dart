@@ -61,6 +61,7 @@ class BlockStatement extends Statement {
   @override
   void accept(StringBuffer buffer, Context context) {
     final blockContext = context.blockContext;
+    print(blockContext);
 
     if (blockContext.has(name)) {
       final child = blockContext.pop(name);
@@ -72,11 +73,14 @@ class BlockStatement extends Statement {
           context.apply(childContext, (context) {
             child.accept(buffer, context);
           });
+
+          blockContext.push(name, child);
         } else {
           child.accept(buffer, context);
         }
       }
     } else {
+      // print('$name, $path, ${context.contexts}');
       body.accept(buffer, context);
     }
   }
