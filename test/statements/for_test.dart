@@ -124,7 +124,13 @@ void main() {
       expect(template.renderWr(table: ['ab', 'cd']), '[1|1][1|2][2|1][2|2]');
     });
 
-    // TODO: test reversed bug
+    test('reversed bug', () {
+      final template = env.fromSource('{% for i in items %}{{ i }}'
+          '{% if not loop.last %}'
+          ',{% endif %}{% endfor %}');
+      expect(template.renderWr(items: [3, 2, 1].reversed), '1,2,3');
+    });
+
     // TODO: test loop errors
 
     test('loop filter', () {
@@ -138,8 +144,24 @@ void main() {
     });
 
     // TODO: test loop unassignable
-    // TODO: test scoped special var
-    // TODO: test scoped loop var
+
+    test('scoped special var', () {
+      final template =
+          env.fromSource('{% for s in seq %}[{{ loop.first }}{% for c in s %}'
+              '|{{ loop.first }}{% endfor %}]{% endfor %}');
+      expect(template.renderWr(seq: ['ab', 'cd']),
+          '[true|true|false][false|true|false]');
+    });
+
+    test('scoped loop var', () {
+      var template = env.fromSource('{% for x in seq %}{{ loop.first }}'
+          '{% for y in seq %}{% endfor %}{% endfor %}');
+      expect(template.renderWr(seq: 'ab'), 'truefalse');
+      template = env.fromSource('{% for x in seq %}{% for y in seq %}'
+          '{{ loop.first }}{% endfor %}{% endfor %}');
+      expect(template.renderWr(seq: 'ab'), 'truefalsetruefalse');
+    });
+
     // TODO: test recursive empty loop iter
     // TODO: test call in loop
     // TODO: test scoping bug

@@ -1,4 +1,5 @@
 import 'package:jinja/jinja.dart';
+import 'package:jinja/src/utils.dart';
 import 'package:test/test.dart';
 
 var layout = '''|{% block block1 %}block 1 from layout{% endblock %}
@@ -179,12 +180,24 @@ void main() {
       final template =
           env.fromSource('{% extends "master.html" %}{% block item %}'
               '{{ item }}{% endblock %}');
-      expect(
-          template.renderWr(seq: [0, 1, 2]), equals('[0][1][2]'));
-      // expect(
-      // template.renderWr(seq: [0, 1, 2, 3, 4]), equals('[0][1][2][3][4]'));
+      expect(template.renderWr(seq: range(5)), equals('[0][1][2][3][4]'));
     });
-    // TODO: test super in scoped block
+
+    test('super in scoped block', () {
+      final env = Environment(
+        loader: MapLoader({
+          'master.html': '{% for item in seq %}[{% block item scoped %}'
+              '{{ item }}{% endblock %}]{% endfor %}',
+        }),
+      );
+
+      final template =
+          env.fromSource('{% extends "master.html" %}{% block item %}'
+              '{{ super() }}|{{ item * 2 }}{% endblock %}');
+      expect(template.renderWr(seq: range(5)),
+          equals('[0|0][1|2][2|4][3|6][4|8]'));
+    });
+
     // TODO: test scoped block after inheritance
     // TODO: test fixed macro scoping bug
 

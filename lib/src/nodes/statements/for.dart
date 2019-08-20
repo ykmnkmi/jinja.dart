@@ -237,7 +237,7 @@ class CycleWrapper {
 
   final dynamic Function(List) function;
 
-  dynamic call(List args) => function(args);
+  dynamic call();
 
   @override
   dynamic noSuchMethod(Invocation invocation) {

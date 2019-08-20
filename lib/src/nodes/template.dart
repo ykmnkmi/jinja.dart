@@ -5,6 +5,7 @@ import 'package:meta/meta.dart';
 import '../environment.dart';
 import '../namespace.dart';
 import '../parser.dart';
+import '../utils.dart';
 
 import 'core.dart';
 import 'statements/inheritence.dart';
@@ -29,7 +30,7 @@ class RenderWrapper {
   }
 }
 
-/// The central template object. This class represents a compiled template
+/// The central `Template` object. This class represents a compiled template
 /// and is used to evaluate it.
 ///
 /// Normally the template is generated from `Environment` but
@@ -65,22 +66,23 @@ class Template extends Node {
       ).parse();
 
   Template.from({@required this.body, @required this.env, this.path})
-      : blocks = <String, BlockStatement>{} {
+      : module = NameSpace() {
     _renderWr = RenderWrapper(([Map<String, Object> data]) => render(data));
   }
 
   final Node body;
   final Environment env;
   final String path;
-  final Map<String, BlockStatement> blocks;
+  final NameSpace module;
 
   dynamic _renderWr;
   dynamic get renderWr => _renderWr;
 
-  void pushBlocks(StringBuffer buffer, Context context) {
-    final self = NameSpace();
+  void setContext(StringBuffer buffer, Context context) {
+    final self = module.copy();
 
-    for (var blockEntry in blocks.entries) {
+    for (var blockEntry
+        in self.data.entries.where((entry) => entry.value is BlockStatement)) {
       self.data[blockEntry.key] = () {
         blockEntry.value.accept(buffer, context);
       };
@@ -91,14 +93,14 @@ class Template extends Node {
 
   @override
   void accept(StringBuffer buffer, Context context) {
-    pushBlocks(buffer, context);
+    setContext(buffer, context);
     body.accept(buffer, context);
   }
 
   String render([Map<String, Object> data]) {
     final buffer = StringBuffer();
     final context = Context(data: data, env: env);
-    pushBlocks(buffer, context);
+    setContext(buffer, context);
     body.accept(buffer, context);
     return buffer.toString();
   }

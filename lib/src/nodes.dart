@@ -1,6 +1,7 @@
 export 'nodes/core.dart';
 export 'nodes/expressions/and.dart';
 export 'nodes/expressions/call.dart';
+export 'nodes/expressions/collections.dart';
 export 'nodes/expressions/compare.dart';
 export 'nodes/expressions/concat.dart';
 export 'nodes/expressions/condition.dart';
@@ -10,7 +11,6 @@ export 'nodes/expressions/math2.dart';
 export 'nodes/expressions/not.dart';
 export 'nodes/expressions/or.dart';
 export 'nodes/expressions/pow.dart';
-export 'nodes/expressions/primary.dart';
 export 'nodes/expressions/subscript.dart';
 export 'nodes/expressions/test.dart';
 export 'nodes/expressions/unary.dart';

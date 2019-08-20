@@ -1,41 +1,5 @@
 import '../core.dart';
 
-class Name extends Expression implements Assignable {
-  Name(this.name);
-
-  final String name;
-
-  @override
-  dynamic resolve(Context context) => context[name];
-
-  @override
-  bool get canAssign => true;
-
-  @override
-  List<String> get keys => <String>[name];
-
-  @override
-  String toDebugString([int level = 0]) => ' ' * level + name;
-
-  @override
-  String toString() => 'Name($name)';
-}
-
-class Literal extends Expression {
-  Literal(this.value);
-
-  final dynamic value;
-
-  @override
-  dynamic resolve(Context context) => value;
-
-  @override
-  String toDebugString([int level = 0]) => ' ' * level + repr(value);
-
-  @override
-  String toString() => 'Literal($value)';
-}
-
 class ListExpression extends Expression {
   ListExpression(this.values);
 
@@ -80,7 +44,7 @@ class MapExpression extends Expression {
   String toString() => 'MapExpression($values)';
 }
 
-class TupleExpression extends Expression implements Assignable {
+class TupleExpression extends Expression implements CanAssign {
   TupleExpression(this.items);
 
   final List<Expression> items;

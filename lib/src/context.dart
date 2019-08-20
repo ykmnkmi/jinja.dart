@@ -9,11 +9,11 @@ class Context {
     Environment env,
   })  : contexts = data != null ? [data] : [<String, dynamic>{}],
         env = env ?? Environment(),
-        blockContext = BlockContext();
+        blockContext = ExtendedBlockContext();
 
   final Environment env;
   final List<Map<String, dynamic>> contexts;
-  final BlockContext blockContext;
+  final ExtendedBlockContext blockContext;
 
   bool has(String name) => contexts.any((context) => context.containsKey(name));
 

@@ -4,7 +4,6 @@
   - filter
   - set
   - raw
-- Add NameSpace
 - Environment
   - add leftStrip and trimBlocks
   - add extensions
@@ -25,6 +24,7 @@
   - onParseName
 - Template:
   - add renderWr function to Template: renderWr(kv1: ..., kv2: ...) calls render({'kv1': ..., 'kv2': ...})
+  - add simple module
   - add self.blockName callback ref in context
 - Removed filters:
   - batch

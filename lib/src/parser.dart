@@ -277,18 +277,23 @@ class Parser {
 
     scanner.expect(blockEndReg);
 
-    final block = BlockStatement(name, path, body, hasSuper);
-
     if (context.containsKey(ExtendsStatement.containerKey)) {
+      final block = ExtendedBlockStatement(name, path, body,
+          scoped: scoped, hasSuper: hasSuper);
+
       for (var extendsStatement in (context[ExtendsStatement.containerKey]
           as List<ExtendsStatement>)) {
         extendsStatement.blocks.add(block);
       }
-    } else {
-      addTemplateModifier((template) {
-        template.blocks[block.name] = block;
-      });
+
+      return block;
     }
+
+    final block = BlockStatement(name, path, body, scoped);
+
+    addTemplateModifier((template) {
+      template.module[block.name] = block;
+    });
 
     return block;
   }
@@ -447,13 +452,13 @@ class Parser {
     bool withTuple = true,
     List<Pattern> extraEndRules = const <Pattern>[],
   }) {
-    Assignable target;
+    CanAssign target;
 
     if (withTuple) {
       final dynamic tuple =
           parseTuple(simplified: true, extraEndRules: extraEndRules);
 
-      if (tuple is Assignable) {
+      if (tuple is CanAssign) {
         target = tuple;
       } else {
         error('can\'t assign to "${target.runtimeType}"');

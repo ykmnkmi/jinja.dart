@@ -1,5 +1,7 @@
 import '../context.dart';
 
+import '../utils.dart';
+
 export '../context.dart';
 export '../utils.dart';
 
@@ -50,7 +52,49 @@ abstract class BinaryExpression extends Expression {
       ' ' * level + '${left.toDebugString()} $symbol ${right.toDebugString()}';
 }
 
-abstract class Assignable {
+abstract class CanAssign {
   List<String> get keys;
   bool get canAssign => false;
+}
+
+abstract class CanConst {
+  bool canConst;
+
+  Literal asConst();
+}
+
+class Name extends Expression implements CanAssign {
+  Name(this.name);
+
+  final String name;
+
+  @override
+  dynamic resolve(Context context) => context[name];
+
+  @override
+  bool get canAssign => true;
+
+  @override
+  List<String> get keys => <String>[name];
+
+  @override
+  String toDebugString([int level = 0]) => ' ' * level + name;
+
+  @override
+  String toString() => 'Name($name)';
+}
+
+class Literal extends Expression {
+  Literal(this.value);
+
+  final dynamic value;
+
+  @override
+  dynamic resolve(Context context) => value;
+
+  @override
+  String toDebugString([int level = 0]) => ' ' * level + repr(value);
+
+  @override
+  String toString() => 'Literal($value)';
 }

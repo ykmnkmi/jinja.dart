@@ -11,11 +11,14 @@ class NameSpace {
     data[key] = value;
   }
 
+  NameSpace copy() => NameSpace(Map.from(data));
+
   @override
   dynamic noSuchMethod(Invocation invocation) {
     var name = MirrorSystem.getName(invocation.memberName);
 
     if (invocation.isSetter) {
+      // 'name='
       name = name.substring(0, name.length - 1);
       data[name] = invocation.positionalArguments.first;
       return null;

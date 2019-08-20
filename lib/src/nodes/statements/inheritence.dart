@@ -10,7 +10,7 @@ class ExtendsStatement extends Statement {
 
   final Expression pathOrTemplate;
 
-  final List<BlockStatement> blocks = <BlockStatement>[];
+  final List<ExtendedBlockStatement> blocks = <ExtendedBlockStatement>[];
 
   @override
   void accept(StringBuffer buffer, Context context) {
@@ -51,20 +51,79 @@ class ExtendsStatement extends Statement {
 }
 
 class BlockStatement extends Statement {
-  BlockStatement(this.name, this.path, this.body, [this.hasSuper = false]);
+  BlockStatement(this.name, this.path, this.body, [this.scoped = false]);
 
   final String name;
   final String path;
   final Node body;
+  final bool scoped;
+
+  @override
+  void accept(StringBuffer buffer, Context context) {
+    final blockContext = context.blockContext;
+
+    if (blockContext.has(name)) {
+      final child = blockContext.blocks[name].last;
+
+      if (child.hasSuper) {
+        final childContext = this.childContext(buffer, context);
+
+        context.apply(childContext, (context) {
+          child.accept(buffer, context);
+        });
+      } else {
+        child.accept(buffer, context);
+      }
+    } else {
+      body.accept(buffer, context);
+    }
+  }
+
+  Map<String, dynamic> childContext(StringBuffer buffer, Context context) {
+    return {
+      'super': () {
+        context.removeLast('super');
+        body.accept(buffer, context);
+      }
+    };
+  }
+
+  @override
+  String toDebugString([int level = 0]) {
+    final buffer = StringBuffer(' ' * level);
+    buffer.write('block $name');
+
+    if (scoped) {
+      buffer.writeln('scoped');
+    } else {
+      buffer.writeln('scoped');
+    }
+
+    buffer.write(body.toDebugString(level + 1));
+    return buffer.toString();
+  }
+
+  @override
+  String toString() => 'Block($name, $path, $body)';
+}
+
+class ExtendedBlockStatement extends BlockStatement {
+  ExtendedBlockStatement(
+    String name,
+    String path,
+    Node body, {
+    bool scoped = false,
+    this.hasSuper = false,
+  }) : super(name, path, body, scoped);
+
   final bool hasSuper;
 
   @override
   void accept(StringBuffer buffer, Context context) {
     final blockContext = context.blockContext;
-    print(blockContext);
 
     if (blockContext.has(name)) {
-      final child = blockContext.pop(name);
+      final child = blockContext.child(this);
 
       if (child != null) {
         if (child.hasSuper) {
@@ -74,24 +133,15 @@ class BlockStatement extends Statement {
             child.accept(buffer, context);
           });
 
-          blockContext.push(name, child);
-        } else {
-          child.accept(buffer, context);
+          return;
         }
-      }
-    } else {
-      // print('$name, $path, ${context.contexts}');
-      body.accept(buffer, context);
-    }
-  }
 
-  Map<String, dynamic> childContext(StringBuffer buffer, Context context) {
-    return {
-      'super': () {
-        context.removeLast('super');
-        accept(buffer, context);
+        child.accept(buffer, context);
+        return;
       }
-    };
+    }
+
+    body.accept(buffer, context);
   }
 
   @override
@@ -102,25 +152,41 @@ class BlockStatement extends Statement {
   String toString() => 'Block($name, $path, $body)';
 }
 
-class BlockContext {
-  final Map<String, List<BlockStatement>> blocks =
-      <String, List<BlockStatement>>{};
+class ExtendedBlockContext {
+  final Map<String, List<ExtendedBlockStatement>> blocks =
+      <String, List<ExtendedBlockStatement>>{};
 
   bool has(String name) => blocks.containsKey(name);
 
-  void push(String name, BlockStatement block) {
+  void push(String name, ExtendedBlockStatement block) {
     if (blocks.containsKey(name)) {
       blocks[name].add(block);
     } else {
-      blocks[name] = <BlockStatement>[block];
+      blocks[name] = <ExtendedBlockStatement>[block];
     }
   }
 
-  BlockStatement pop(String name) {
-    if (blocks.containsKey(name)) {
-      final block = blocks[name].removeLast();
-      if (blocks[name].isEmpty) blocks.remove(name);
-      return block;
+  ExtendedBlockStatement parent(ExtendedBlockStatement current) {
+    if (blocks.containsKey(current.name)) {
+      final blocks = this.blocks[current.name];
+      final ci = blocks.indexOf(current);
+
+      if (ci >= 0 && ci < blocks.length - 1) {
+        return blocks[ci + 1];
+      }
+    }
+
+    return null;
+  }
+
+  ExtendedBlockStatement child(ExtendedBlockStatement current) {
+    if (blocks.containsKey(current.name)) {
+      final blocks = this.blocks[current.name];
+      final ci = blocks.indexOf(current);
+
+      if (ci > 0) {
+        return blocks[ci - 1];
+      }
     }
 
     return null;
