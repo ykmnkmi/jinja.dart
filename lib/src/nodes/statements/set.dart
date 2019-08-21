@@ -1,18 +1,40 @@
 import '../../context.dart';
+import '../../namespace.dart';
 import '../core.dart';
 import '../expressions/filter.dart';
 
-abstract class SetStatement extends Statement {}
+abstract class SetStatement extends Statement {
+  String get target;
+  String get field;
+
+  void assign(Context context, dynamic value) {
+    if (field != null) {
+      final nameSpace = context[target];
+
+      if (nameSpace is NameSpace) {
+        nameSpace[field] = value;
+        return;
+      }
+
+      // TODO: exception
+    }
+
+    context[target] = value;
+  }
+}
 
 class SetInlineStatement extends SetStatement {
-  SetInlineStatement(this.target, this.value);
+  SetInlineStatement(this.target, this.value, {this.field});
 
+  @override
   final String target;
+  @override
+  final String field;
   final Expression value;
 
   @override
   void accept(_, Context context) {
-    context[target] = value.resolve(context);
+    assign(context, value.resolve(context));
   }
 
   @override
@@ -24,9 +46,12 @@ class SetInlineStatement extends SetStatement {
 }
 
 class SetBlockStatement extends SetStatement {
-  SetBlockStatement(this.target, this.body, [this.filter]);
+  SetBlockStatement(this.target, this.body, {this.field, this.filter});
 
+  @override
   final String target;
+  @override
+  final String field;
   final Node body;
   final Filter filter;
 
@@ -36,10 +61,11 @@ class SetBlockStatement extends SetStatement {
     body.accept(buffer, context);
 
     if (filter != null) {
-      context[target] = filter.filter(context, buffer.toString());
-    } else {
-      context[target] = buffer.toString();
+      assign(context, filter.filter(context, buffer.toString()));
+      return;
     }
+
+    assign(context, buffer.toString());
   }
 
   @override

@@ -24,9 +24,14 @@ class Parser {
 
   static RegExp getBlockStartReg(String rule, [bool leftStripBlocks = false]) {
     final blockStart = RegExp.escape(rule);
-    final strip = leftStripBlocks ? '^[ \\t]*' : '';
-    return RegExp('(?:\\s*$blockStart\\-|$strip$blockStart)\\s*',
-        multiLine: true);
+
+    if (leftStripBlocks) {
+      return RegExp(
+          '(?:\\s*$blockStart\\-|^[ \\t]*$blockStart|$blockStart)\\s*',
+          multiLine: true);
+    }
+
+    return RegExp('(?:\\s*$blockStart\\-|$blockStart)\\s*', multiLine: true);
   }
 
   static RegExp getBlockEndReg(String rule, [bool trimBlocks = false]) {
@@ -378,6 +383,11 @@ class Parser {
 
     // TODO: namespace with field
     final target = scanner.lastMatch[1];
+    String field;
+
+    if (scanner.scan(dotReg) && scanner.scan(nameReg)) {
+      field = scanner.lastMatch[1];
+    }
 
     if (scanner.scan(assignReg)) {
       if (scanner.matches(blockEndReg)) {
@@ -388,7 +398,7 @@ class Parser {
 
       scanner.expect(blockEndReg);
 
-      return SetInlineStatement(target, value);
+      return SetInlineStatement(target, value, field: field);
     }
 
     Filter filter;
@@ -407,7 +417,7 @@ class Parser {
 
     scanner.expect(setEndReg);
 
-    return SetBlockStatement(target, body, filter);
+    return SetBlockStatement(target, body, field: field, filter: filter);
   }
 
   RawStatement parseRaw() {

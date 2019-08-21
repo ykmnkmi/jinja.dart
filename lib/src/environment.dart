@@ -27,6 +27,7 @@ class Environment {
     this.variableEnd = '}}',
     this.commentStart = '{#',
     this.commentEnd = '#}',
+    this.autoEscape = false,
     this.trimBlocks = false,
     this.leftStripBlocks = false,
     Finalizer finalize = _defaultFinalizer,
@@ -55,6 +56,7 @@ class Environment {
   final String variableEnd;
   final String commentStart;
   final String commentEnd;
+  final bool autoEscape;
   final bool trimBlocks;
   final bool leftStripBlocks;
   final Finalizer finalize;

@@ -1,10 +1,11 @@
 ## 0.1.0 on work
-- Little speed up
-- New statements:
+- little speed up
+- new statements:
   - filter
   - set
   - raw
-- Environment
+- add namespace
+- environment
   - add leftStrip and trimBlocks
   - add extensions
   - rename:
@@ -16,20 +17,20 @@
     - commentClose to commentEnd
   - move autoReload to FileSystemLoader
   - remove getFilter and getTest
-- Update context and parser
-- Parser:
+- update context and parser
+- parser:
   - parsing *args, **kwargs in calls (not in filters and tests)
   - custom tags support
   - context
   - onParseName
-- Template:
+- template:
   - add renderWr function to Template: renderWr(kv1: ..., kv2: ...) calls render({'kv1': ..., 'kv2': ...})
   - add simple module
   - add self.blockName callback ref in context
-- Removed filters:
+- removed filters:
   - batch
   - filesizeformat
-- More ...
+- more ...
 
 ## 0.0.8+1
 - Fixes

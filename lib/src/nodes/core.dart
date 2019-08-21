@@ -1,9 +1,12 @@
 import '../context.dart';
+import '../markup.dart';
 
 import '../utils.dart';
 
 export '../context.dart';
 export '../utils.dart';
+
+class Imposible implements Exception {}
 
 abstract class Node {
   void accept(StringBuffer buffer, Context context);
@@ -28,8 +31,14 @@ abstract class Expression implements Node {
 
   @override
   void accept(StringBuffer buffer, Context context) {
-    final value = resolve(context);
-    buffer.write(context.env.finalize(value));
+    var value = resolve(context);
+    value = context.env.finalize(value);
+
+    if (context.env.autoEscape) {
+      value = Markup.escape(value.toString());
+    }
+
+    buffer.write(value);
   }
 }
 
@@ -59,8 +68,7 @@ abstract class CanAssign {
 
 abstract class CanConst {
   bool canConst;
-
-  Literal asConst();
+  Literal get asConst;
 }
 
 class Name extends Expression implements CanAssign {

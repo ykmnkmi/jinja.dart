@@ -12,24 +12,6 @@ import 'statements/inheritence.dart';
 
 typedef void ContextModifier(Context context);
 
-class RenderWrapper {
-  RenderWrapper(this.function);
-
-  final Function function;
-
-  dynamic call() => function();
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) {
-    if (invocation.memberName == #call) {
-      return function(invocation.namedArguments
-          .map((key, value) => MapEntry(MirrorSystem.getName(key), value)));
-    }
-
-    return super.noSuchMethod(invocation);
-  }
-}
-
 /// The central `Template` object. This class represents a compiled template
 /// and is used to evaluate it.
 ///
@@ -48,6 +30,7 @@ class Template extends Node {
     String variableEnd = '}}',
     String commentStart = '{#',
     String commentEnd = '#}',
+    bool autoEscape = false,
     bool trimBlocks = false,
     bool leftStripBlocks = false,
   }) =>
@@ -59,6 +42,7 @@ class Template extends Node {
           variableEnd: variableEnd,
           commentStart: commentStart,
           commentEnd: commentEnd,
+          autoEscape: autoEscape,
           trimBlocks: trimBlocks,
           leftStripBlocks: leftStripBlocks,
         ),
@@ -82,8 +66,8 @@ class Template extends Node {
     final self = module.copy();
 
     for (var blockEntry
-        in self.data.entries.where((entry) => entry.value is BlockStatement)) {
-      self.data[blockEntry.key] = () {
+        in self.entries.where((entry) => entry.value is BlockStatement)) {
+      self[blockEntry.key] = () {
         blockEntry.value.accept(buffer, context);
       };
     }
@@ -119,4 +103,22 @@ class Template extends Node {
 
   @override
   String toString() => 'Template($path, $body)';
+}
+
+class RenderWrapper {
+  RenderWrapper(this.function);
+
+  final Function function;
+
+  dynamic call() => function();
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) {
+    if (invocation.memberName == #call) {
+      return function(invocation.namedArguments
+          .map((key, value) => MapEntry(MirrorSystem.getName(key), value)));
+    }
+
+    return super.noSuchMethod(invocation);
+  }
 }
