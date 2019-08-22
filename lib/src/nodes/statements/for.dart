@@ -44,7 +44,7 @@ class ForStatement extends Statement {
     if (i > 0) prev = values[i - 1];
     if (i < values.length - 1) next = values[i + 1];
 
-    bool changed(dynamic item) {
+    bool changed(Object item) {
       if (i == 0) return true;
       if (item == values[i - 1]) return false;
       return true;
@@ -145,12 +145,31 @@ class ForStatementWithFilter extends ForStatement {
 
   final Expression filter;
 
+  Map<String, dynamic> getDataForFilter(List values, int i) {
+    var current = values[i];
+
+    final data = <String, dynamic>{};
+
+    if (targets.length == 1) {
+      if (current is MapEntry) {
+        data[targets.first] = [current.key, current.value];
+      } else {
+        data[targets.first] = current;
+      }
+    } else {
+      unpack(data, current);
+    }
+
+    return data;
+  }
+
   List<dynamic> filterValues(Iterable values, Context context) {
     final list = values.toList(growable: false);
     final filteredList = [];
 
     for (var i = 0; i < list.length; i++) {
-      final data = getDataForContext(list, i, context.env.undefined);
+      final data = getDataForFilter(list, i);
+
       context.apply(data, (context) {
         if (toBool(filter.resolve(context))) filteredList.add(list[i]);
       });

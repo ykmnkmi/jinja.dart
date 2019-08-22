@@ -118,7 +118,7 @@ void main() {
     });
 
     test('reuse blocks', () {
-      final template = env.fromSource('{{ self.foo() }}|{% block foo %}42'
+      final template = env.fromString('{{ self.foo() }}|{% block foo %}42'
           '{% endblock %}|{{ self.foo() }}');
       expect(template.render(), equals('42|42|42'));
     });
@@ -178,7 +178,7 @@ void main() {
       );
 
       final template =
-          env.fromSource('{% extends "master.html" %}{% block item %}'
+          env.fromString('{% extends "master.html" %}{% block item %}'
               '{{ item }}{% endblock %}');
       expect(template.renderWr(seq: range(5)), equals('[0][1][2][3][4]'));
     });
@@ -192,7 +192,7 @@ void main() {
       );
 
       final template =
-          env.fromSource('{% extends "master.html" %}{% block item %}'
+          env.fromString('{% extends "master.html" %}{% block item %}'
               '{{ super() }}|{{ item * 2 }}{% endblock %}');
       expect(template.renderWr(seq: range(5)),
           equals('[0|0][1|2][2|4][3|6][4|8]'));
@@ -202,6 +202,7 @@ void main() {
     // TODO: test fixed macro scoping bug
 
     test('double extends', () {
+      // TODO(fix): double extends
       expect(() => Template(doubleextends), throwsException);
     });
   });

@@ -21,7 +21,7 @@ abstract class Loader {
 
   void load(Environment env) {
     for (var path in listSources()) {
-      env.fromSource(getSource(path), path: path);
+      env.fromString(getSource(path), path: path);
     }
   }
 
@@ -86,7 +86,7 @@ class FileSystemLoader extends Loader {
           .where((event) => event.type == FileSystemEvent.modify)
           .listen((event) {
         final path = _path.relative(event.path, from: directory.path);
-        env.fromSource(getSource(path), path: path);
+        env.fromString(getSource(path), path: path);
       });
     }
   }

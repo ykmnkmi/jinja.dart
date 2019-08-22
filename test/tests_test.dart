@@ -6,34 +6,34 @@ void main() {
     final env = Environment();
 
     test('No Paren For Arg 1', () {
-      final template = env.fromSource('{{ foo is sameas none }}');
+      final template = env.fromString('{{ foo is sameas none }}');
       expect(template.render({'foo': null}), equals('true'));
     });
 
     test('Defined', () {
-      final template = env.fromSource('{{ missing is defined }}|'
+      final template = env.fromString('{{ missing is defined }}|'
           '{{ true is defined }}');
       expect(template.render(), equals('false|true'));
     });
 
     test('Even', () {
-      final template = env.fromSource('{{ 1 is even }}|{{ 2 is even }}');
+      final template = env.fromString('{{ 1 is even }}|{{ 2 is even }}');
       expect(template.render(), equals('false|true'));
     });
 
     test('Odd', () {
-      final template = env.fromSource('{{ 1 is odd }}|{{ 2 is odd }}');
+      final template = env.fromString('{{ 1 is odd }}|{{ 2 is odd }}');
       expect(template.render(), equals('true|false'));
     });
 
     test('Lower', () {
       final template =
-          env.fromSource('{{ "foo" is lower }}|{{ "FOO" is lower }}');
+          env.fromString('{{ "foo" is lower }}|{{ "FOO" is lower }}');
       expect(template.render(), equals('true|false'));
     });
 
     test('Type Checks', () {
-      final template = env.fromSource('{{ 42 is undefined }}|'
+      final template = env.fromString('{{ 42 is undefined }}|'
           '{{ 42 is defined }}|'
           '{{ 42 is none }}|'
           '{{ none is none }}|'
@@ -58,7 +58,7 @@ void main() {
     });
 
     test('Sequence', () {
-      final template = env.fromSource('{{ [1, 2, 3] is sequence }}|'
+      final template = env.fromString('{{ [1, 2, 3] is sequence }}|'
           '{{ "foo" is sequence }}|'
           '{{ 42 is sequence }}');
       expect(template.render(), equals('true|true|false'));
@@ -66,12 +66,12 @@ void main() {
 
     test('Upper', () {
       final template =
-          env.fromSource('{{ "FOO" is upper }}|{{ "foo" is upper }}');
+          env.fromString('{{ "FOO" is upper }}|{{ "foo" is upper }}');
       expect(template.render(), equals('true|false'));
     });
 
     test('Equal To', () {
-      final template = env.fromSource('{{ foo is eq 12 }}|'
+      final template = env.fromString('{{ foo is eq 12 }}|'
           '{{ foo is eq 0 }}|'
           '{{ foo is eq (3 * 4) }}|'
           '{{ bar is eq "baz" }}|'
@@ -84,7 +84,7 @@ void main() {
     });
 
     test('Compare Aliases', () {
-      final template = env.fromSource('{{ 2 is eq 2 }}|{{ 2 is eq 3 }}|'
+      final template = env.fromString('{{ 2 is eq 2 }}|{{ 2 is eq 3 }}|'
           '{{ 2 is ne 3 }}|{{ 2 is ne 2 }}|{{ 2 is lt 3 }}|'
           '{{ 2 is lt 2 }}|{{ 2 is le 2 }}|{{ 2 is le 1 }}|'
           '{{ 2 is gt 1 }}|{{ 2 is gt 2 }}|{{ 2 is ge 2 }}|'
@@ -96,19 +96,19 @@ void main() {
     });
 
     test('Same As', () {
-      final template = env.fromSource('{{ foo is sameas false }}|'
+      final template = env.fromString('{{ foo is sameas false }}|'
           '{{ 0 is sameas false }}');
       expect(template.render({'foo': false}), equals('true|false'));
     });
 
     test('Greater Than', () {
-      final template = env.fromSource('{{ 1 is greaterthan 0 }}|'
+      final template = env.fromString('{{ 1 is greaterthan 0 }}|'
           '{{ 0 is greaterthan 1 }}');
       expect(template.render(), equals('true|false'));
     });
 
     test('Less Than', () {
-      final template = env.fromSource('{{ 0 is lessthan 1 }}|'
+      final template = env.fromString('{{ 0 is lessthan 1 }}|'
           '{{ 1 is lessthan 0 }}');
       expect(template.render(), equals('true|false'));
     });
@@ -121,7 +121,7 @@ void main() {
       }
 
       final env = Environment(tests: {'matching': matching});
-      final template = env.fromSource('{{ "us-west-1" is matching '
+      final template = env.fromString('{{ "us-west-1" is matching '
           '"(us-east-1|ap-northeast-1)" '
           'or "stage" is matching "(dev|stage)" }}');
 
@@ -135,7 +135,7 @@ void main() {
     });
 
     test('In', () {
-      final template = env.fromSource('{{ "o" is in "foo" }}|'
+      final template = env.fromString('{{ "o" is in "foo" }}|'
           '{{ "foo" is in "foo" }}|'
           '{{ "b" is in "foo" }}|'
           '{{ 1 is in ((1, 2)) }}|'

@@ -72,7 +72,7 @@ class Environment {
   Future<void> compileTemplats() async {}
 
   /// If `path` is not `null` template stored in environment cache.
-  Template fromSource(String source, {String path}) {
+  Template fromString(String source, {String path}) {
     final template = Parser(this, source, path: path).parse();
     if (path != null) templates[path] = template;
     return template;

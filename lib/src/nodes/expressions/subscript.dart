@@ -1,3 +1,5 @@
+import '../../exceptions.dart';
+import '../../undefined.dart';
 import '../core.dart';
 
 class Field extends Expression {
@@ -7,7 +9,15 @@ class Field extends Expression {
   final Expression expr;
 
   @override
-  dynamic resolve(Context context) => getField(expr.resolve(context), attr);
+  dynamic resolve(Context context) {
+    final value = expr.resolve(context);
+
+    if (value == null || value is Undefined) {
+      throw UndefinedError();
+    }
+
+    return getField(value, attr);
+  }
 
   @override
   String toDebugString([int level = 0]) => '${expr.toDebugString(level)}.$attr';
