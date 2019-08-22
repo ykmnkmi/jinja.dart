@@ -1,6 +1,6 @@
 import 'core.dart';
 
-class Text extends Node {
+class Text implements Node {
   Text(this.text);
 
   final String text;

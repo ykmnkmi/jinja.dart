@@ -14,16 +14,6 @@ abstract class Node {
   String toDebugString([int level = 0]);
 }
 
-class EmptyNode implements Node {
-  const EmptyNode();
-
-  @override
-  void accept(StringBuffer buffer, Context context) {}
-
-  @override
-  String toDebugString([int level = 0]) => 'empty';
-}
-
 abstract class Statement implements Node {}
 
 abstract class Expression implements Node {
@@ -32,13 +22,18 @@ abstract class Expression implements Node {
   @override
   void accept(StringBuffer buffer, Context context) {
     var value = resolve(context);
-    value = context.env.finalize(value);
 
-    if (context.env.autoEscape) {
-      value = Markup.escape(value.toString());
+    if (value is Node) {
+      value.accept(buffer, context);
+    } else {
+      value = context.env.finalize(value);
+
+      if (context.env.autoEscape) {
+        value = Markup.escape(value.toString());
+      }
+
+      buffer.write(value);
     }
-
-    buffer.write(value);
   }
 }
 
@@ -92,13 +87,13 @@ class Name extends Expression implements CanAssign {
   String toString() => 'Name($name)';
 }
 
-class Literal extends Expression {
+class Literal<T> extends Expression {
   Literal(this.value);
 
-  final dynamic value;
+  final T value;
 
   @override
-  dynamic resolve(Context context) => value;
+  T resolve(Context context) => value;
 
   @override
   String toDebugString([int level = 0]) => ' ' * level + repr(value);

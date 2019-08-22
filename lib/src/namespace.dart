@@ -1,6 +1,8 @@
 import 'dart:mirrors';
 
 class NameSpace {
+  static const NameSpaceFactory Factory = const NameSpaceFactory();
+
   NameSpace([Map<String, dynamic> data])
       : _data = data != null ? Map.of(data) : <String, dynamic>{};
 
@@ -39,16 +41,29 @@ class NameSpace {
   }
 }
 
-class NameSpaceWrapper {
-  const NameSpaceWrapper();
+class NameSpaceFactory {
+  const NameSpaceFactory();
 
   NameSpace call() => NameSpace();
 
   @override
   dynamic noSuchMethod(Invocation invocation) {
     if (invocation.memberName == #call) {
-      return NameSpace(invocation.namedArguments
+      final data = <String, Object>{};
+      final args = invocation.positionalArguments;
+
+      if (args.isNotEmpty) {
+        if (args.any((arg) => arg is Map<String, dynamic>)) {
+          for (var arg in args.cast<Map<String, dynamic>>()) data.addAll(arg);
+        } else {
+          // TODO: update exception
+          throw Exception();
+        }
+      }
+
+      data.addAll(invocation.namedArguments
           .map((key, value) => MapEntry(MirrorSystem.getName(key), value)));
+      return NameSpace(data);
     }
 
     return super.noSuchMethod(invocation);

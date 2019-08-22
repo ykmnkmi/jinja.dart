@@ -16,7 +16,7 @@ class Filter extends Expression {
   @override
   dynamic resolve(Context context) => filter(context, expr.resolve(context));
 
-  dynamic filter(Context context, dynamic value) => context.env.callFilter(
+  dynamic filter(Context context, Object value) => context.env.callFilter(
         name,
         args: [value]
             .followedBy(args.map((arg) => arg.resolve(context)))

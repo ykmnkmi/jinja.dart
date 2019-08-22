@@ -229,6 +229,12 @@ class Parser {
       final body = template.body;
       Node first;
 
+      if (first is IfStatement &&
+          (first.pairs.values.any((node) => node is! ExtendsStatement) ||
+              first.orElse is! ExtendsStatement)) {
+        error('not extends statement in dynamic exntends');
+      }
+
       if (body is Interpolation) {
         first = body.nodes.first;
 
@@ -239,12 +245,6 @@ class Parser {
         body.nodes
           ..clear()
           ..add(first);
-      }
-
-      if (first is IfStatement &&
-          (first.pairs.values.any((node) => node is! ExtendsStatement) ||
-              first.orElse is! ExtendsStatement)) {
-        error('not extends statement in dynamic exntends');
       }
     });
 
@@ -304,9 +304,20 @@ class Parser {
   }
 
   IncludeStatement parseInlcude() {
-    final path = parsePrimary();
+    final oneOrList = parsePrimary();
+
+    bool ignoreMissing = false;
+    if (scanner.scan(' ignore missing')) ignoreMissing = true;
+
+    bool withContext = true;
+
+    if (scanner.scan(' without context')) {
+      withContext = false;
+    } else if (scanner.scan(' with context')) ;
+
     scanner.expect(blockEndReg);
-    return IncludeStatement(path);
+    return IncludeStatement(oneOrList,
+        ignoreMissing: ignoreMissing, withContext: withContext);
   }
 
   ForStatement parseFor() {
@@ -401,23 +412,29 @@ class Parser {
       return SetInlineStatement(target, value, field: field);
     }
 
-    Filter filter;
+    final filters = <Filter>[];
 
-    if (scanner.matches(pipeReg)) {
-      filter = parseFilter(hasLeadingPipe: false);
+    while (scanner.scan(pipeReg)) {
+      final filter = parseFilter(hasLeadingPipe: false);
 
       if (filter == null) {
         error('filter expected but got ${filter.runtimeType}');
       }
+
+      filters.add(filter);
     }
 
     scanner.expect(blockEndReg);
 
-    final body = parseBody([setEndReg]);
+    var body = parseBody([setEndReg]);
 
     scanner.expect(setEndReg);
 
-    return SetBlockStatement(target, body, field: field, filter: filter);
+    if (filters.isNotEmpty) {
+      body = FilterBlockStatement(filters, body);
+    }
+
+    return SetBlockStatement(target, body, field: field);
   }
 
   RawStatement parseRaw() {
@@ -443,10 +460,16 @@ class Parser {
       error('filter expected');
     }
 
-    final filter = parseFilter(hasLeadingPipe: false);
+    final filters = <Filter>[];
 
-    if (filter is! Filter) {
-      error('filter expected but got ${filter.runtimeType}');
+    while (scanner.scan(pipeReg)) {
+      final filter = parseFilter(hasLeadingPipe: false);
+
+      if (filter == null) {
+        error('filter expected but got ${filter.runtimeType}');
+      }
+
+      filters.add(filter);
     }
 
     scanner.expect(blockEndReg);
@@ -455,7 +478,7 @@ class Parser {
 
     scanner.expect(filterEndReg);
 
-    return FilterBlockStatement(filter, body);
+    return FilterBlockStatement(filters, body);
   }
 
   List<String> parseAssignTarget({
@@ -927,19 +950,29 @@ class Parser {
   Filter parseFilter({Expression expr, bool hasLeadingPipe = true}) {
     if (hasLeadingPipe) scanner.expect(pipeReg);
 
-    do {
-      scanner.expect(nameReg, name: 'filter name');
-      final name = scanner.lastMatch[1];
-
-      if (scanner.matches(lParenReg)) {
-        final call = parseCall();
-        expr = Filter(name, expr: expr, args: call.args, kwargs: call.kwargs);
-      } else {
-        expr = Filter(name, expr: expr);
-      }
-    } while (scanner.scan(pipeReg));
+    if (expr != null) {
+      do {
+        expr = _parseFilter(expr);
+      } while (scanner.scan(pipeReg));
+    } else {
+      expr = _parseFilter(expr);
+    }
 
     return expr as Filter;
+  }
+
+  Expression _parseFilter(Expression expr) {
+    scanner.expect(nameReg, name: 'filter name');
+    final name = scanner.lastMatch[1];
+
+    if (scanner.matches(lParenReg)) {
+      final call = parseCall();
+      expr = Filter(name, expr: expr, args: call.args, kwargs: call.kwargs);
+    } else {
+      expr = Filter(name, expr: expr);
+    }
+
+    return expr;
   }
 
   Expression parseTest(Expression expr) {

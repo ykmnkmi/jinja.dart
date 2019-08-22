@@ -1,13 +1,12 @@
 import '../../context.dart';
 import '../../namespace.dart';
 import '../core.dart';
-import '../expressions/filter.dart';
 
 abstract class SetStatement extends Statement {
   String get target;
   String get field;
 
-  void assign(Context context, dynamic value) {
+  void assign(Context context, Object value) {
     if (field != null) {
       final nameSpace = context[target];
 
@@ -46,26 +45,17 @@ class SetInlineStatement extends SetStatement {
 }
 
 class SetBlockStatement extends SetStatement {
-  SetBlockStatement(this.target, this.body, {this.field, this.filter});
+  SetBlockStatement(this.target, this.body, {this.field});
 
   @override
   final String target;
   @override
   final String field;
   final Node body;
-  final Filter filter;
 
   @override
   void accept(_, Context context) {
-    final buffer = StringBuffer();
-    body.accept(buffer, context);
-
-    if (filter != null) {
-      assign(context, filter.filter(context, buffer.toString()));
-      return;
-    }
-
-    assign(context, buffer.toString());
+    assign(context, body);
   }
 
   @override
@@ -73,11 +63,11 @@ class SetBlockStatement extends SetStatement {
     final buffer = StringBuffer(' ' * level);
     buffer.write('set $target');
 
-    if (filter != null) {
-      buffer.writeln(' | ${filter.toDebugString()}');
-    } else {
-      buffer.writeln();
-    }
+    // if (filter != null) {
+    //   buffer.writeln(' | ${filter.toDebugString()}');
+    // } else {
+    //   buffer.writeln();
+    // }
 
     buffer.write(body.toDebugString(level + 1));
     return buffer.toString();
