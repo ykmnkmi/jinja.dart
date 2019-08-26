@@ -65,8 +65,7 @@ class Template extends Node {
   void setContext(StringBuffer buffer, Context context) {
     final self = NameSpace();
 
-    for (var blockEntry
-        in self.entries.where((entry) => entry.value is BlockStatement)) {
+    for (var blockEntry in blocks.entries) {
       self[blockEntry.key] = () {
         blockEntry.value.accept(buffer, context);
       };

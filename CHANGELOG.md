@@ -1,4 +1,7 @@
-## 0.1.0 on work
+## 0.1.1
+- fix template blocks ref
+
+## 0.1.0
 - little speed up
 - new statements:
   - filter
@@ -30,7 +33,6 @@
 - removed filters:
   - batch
   - filesizeformat
-- more ...
 
 ## 0.0.8+1
 - Fixes

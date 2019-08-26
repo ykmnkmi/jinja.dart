@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:meta/meta.dart';
 
 import 'defaults.dart';
@@ -70,7 +68,8 @@ class Environment {
   final Map<String, ParserCallback> extensions;
   final Map<String, Template> templates;
 
-  Future<void> compileTemplats() async {}
+  // TODO(env): compile templates
+  // Future<void> compileTemplates() async {}
 
   /// If `path` is not `null` template stored in environment cache.
   Template fromString(String source, {String path}) {

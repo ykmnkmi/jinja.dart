@@ -59,9 +59,5 @@ Contributing
 If you found a bug, just create a [new issue][new_issue] or even better fork
 and issue a pull request with you fix.
 
-Versioning
-----------
-The library will follow a [semantic versioning][semver]
-
 [jinja]: http://jinja.pocoo.org/
 [new_issue]: https://github.com/ymknkmi/dart-jinja/issues/new
