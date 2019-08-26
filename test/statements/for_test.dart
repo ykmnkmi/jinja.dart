@@ -9,25 +9,25 @@ void main() {
     test('simple', () {
       final template =
           env.fromString('{% for item in seq %}{{ item }}{% endfor %}');
-      expect(template.renderWr(seq: range(10)), equals('0123456789'));
+      expect(template.render(seq: range(10)), equals('0123456789'));
     });
 
     test('else', () {
       final template =
           env.fromString('{% for item in seq %}XXX{% else %}...{% endfor %}');
-      expect(template.render(), equals('...'));
+      expect(template.renderMap(), equals('...'));
     });
 
     test('else scoping item', () {
       final template = env
           .fromString('{% for item in [] %}{% else %}{{ item }}{% endfor %}');
-      expect(template.renderWr(item: 42), equals('42'));
+      expect(template.render(item: 42), equals('42'));
     });
 
     test('empty blocks', () {
       final template =
           env.fromString('<{% for item in seq %}{% else %}{% endfor %}>');
-      expect(template.render(), equals('<>'));
+      expect(template.renderMap(), equals('<>'));
     });
 
     test('context vars', () {
@@ -40,7 +40,7 @@ void main() {
                 loop.revindex0 }}|{{ loop.first }}|{{ loop.last }}|{{
                loop.length }}###{% endfor %}''');
 
-        final parts = template.renderWr(seq: seq).split('###');
+        final parts = template.render(seq: seq).split('###');
         final one = parts[0].split('|');
         final two = parts[1].split('|');
 
@@ -66,7 +66,7 @@ void main() {
       final template = env.fromString('''{% for item in seq %}{{
             loop.cycle('<1>', '<2>') }}{% endfor %}{%
             for item in seq %}{{ loop.cycle(*through) }}{% endfor %}''');
-      expect(template.renderWr(seq: range(4), through: ['<1>', '<2>']),
+      expect(template.render(seq: range(4), through: ['<1>', '<2>']),
           equals('<1><2>' * 4));
     });
 
@@ -76,21 +76,21 @@ void main() {
             loop.nextitem|default('x') }}|
         {%- endfor %}''');
       expect(
-          template.renderWr(seq: range(4)), equals('x-0-1|0-1-2|1-2-3|2-3-x|'));
+          template.render(seq: range(4)), equals('x-0-1|0-1-2|1-2-3|2-3-x|'));
     });
 
     test('changed', () {
       final template = env.fromString('''{% for item in seq -%}
             {{ loop.changed(item) }},
         {%- endfor %}''');
-      expect(template.renderWr(seq: [null, null, 1, 2, 2, 3, 4, 4, 4]),
+      expect(template.render(seq: [null, null, 1, 2, 2, 3, 4, 4, 4]),
           equals('true,false,true,true,false,true,true,false,false,'));
     });
 
     test('scope', () {
       final template =
           env.fromString('{% for item in seq %}{% endfor %}{{ item }}');
-      expect(template.renderWr(seq: range(10)), equals(''));
+      expect(template.render(seq: range(10)), equals(''));
     });
 
     test('varlen', () {
@@ -101,12 +101,12 @@ void main() {
         for (var i = 0; i < 5; i++) yield i;
       }
 
-      expect(template.renderWr(iter: inner()), equals('01234'));
+      expect(template.render(iter: inner()), equals('01234'));
     });
 
     test('noniter', () {
       final template = env.fromString('{% for item in none %}...{% endfor %}');
-      expect(() => template.render(), throwsArgumentError);
+      expect(() => template.renderMap(), throwsArgumentError);
     });
 
     // TODO: test recursive
@@ -121,30 +121,30 @@ void main() {
                 [{{ rowloop.index }}|{{ loop.index }}]
             {%- endfor %}
         {%- endfor %}''');
-      expect(template.renderWr(table: ['ab', 'cd']), '[1|1][1|2][2|1][2|2]');
+      expect(template.render(table: ['ab', 'cd']), '[1|1][1|2][2|1][2|2]');
     });
 
     test('reversed bug', () {
       final template = env.fromString('{% for i in items %}{{ i }}'
           '{% if not loop.last %}'
           ',{% endif %}{% endfor %}');
-      expect(template.renderWr(items: [3, 2, 1].reversed), '1,2,3');
+      expect(template.render(items: [3, 2, 1].reversed), '1,2,3');
     });
 
     test('loop errors', () {
       final template = env.fromString('''{% for item in [1] if loop.index
                                       == 0 %}...{% endfor %}''');
-      expect(() => template.render(), throwsA(isA<UndefinedError>()));
+      expect(() => template.renderMap(), throwsA(isA<UndefinedError>()));
     });
 
     test('loop filter', () {
       var template = env.fromString('{% for item in range(10) if item '
           'is even %}[{{ item }}]{% endfor %}');
-      expect(template.render(), '[0][2][4][6][8]');
+      expect(template.renderMap(), '[0][2][4][6][8]');
       template = env.fromString('''
             {%- for item in range(10) if item is even %}[{{
                 loop.index }}:{{ item }}]{% endfor %}''');
-      expect(template.render(), '[1:0][2:2][3:4][4:6][5:8]');
+      expect(template.renderMap(), '[1:0][2:2][3:4][4:6][5:8]');
     });
 
     // TODO: test loop unassignable
@@ -153,17 +153,17 @@ void main() {
       final template =
           env.fromString('{% for s in seq %}[{{ loop.first }}{% for c in s %}'
               '|{{ loop.first }}{% endfor %}]{% endfor %}');
-      expect(template.renderWr(seq: ['ab', 'cd']),
+      expect(template.render(seq: ['ab', 'cd']),
           '[true|true|false][false|true|false]');
     });
 
     test('scoped loop var', () {
       var template = env.fromString('{% for x in seq %}{{ loop.first }}'
           '{% for y in seq %}{% endfor %}{% endfor %}');
-      expect(template.renderWr(seq: 'ab'), 'truefalse');
+      expect(template.render(seq: 'ab'), 'truefalse');
       template = env.fromString('{% for x in seq %}{% for y in seq %}'
           '{{ loop.first }}{% endfor %}{% endfor %}');
-      expect(template.renderWr(seq: 'ab'), 'truefalsetruefalse');
+      expect(template.render(seq: 'ab'), 'truefalsetruefalse');
     });
 
     // TODO: test recursive empty loop iter
@@ -173,16 +173,16 @@ void main() {
     test('unpacking', () {
       final template = env.fromString('{% for a, b, c in [[1, 2, 3]] %}'
           '{{ a }}|{{ b }}|{{ c }}{% endfor %}');
-      expect(template.render(), '1|2|3');
+      expect(template.renderMap(), '1|2|3');
     });
 
     test('intended scoping with set', () {
       var template = env.fromString('{% for item in seq %}{{ x }}'
           '{% set x = item %}{{ x }}{% endfor %}');
-      expect(template.renderWr(x: 0, seq: [1, 2, 3]), '010203');
+      expect(template.render(x: 0, seq: [1, 2, 3]), '010203');
       template = env.fromString('{% set x = 9 %}{% for item in seq %}{{ x }}'
           '{% set x = item %}{{ x }}{% endfor %}');
-      expect(template.renderWr(x: 0, seq: [1, 2, 3]), '919293');
+      expect(template.render(x: 0, seq: [1, 2, 3]), '919293');
     });
   });
 }

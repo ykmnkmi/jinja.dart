@@ -24,7 +24,7 @@
   - context
   - onParseName
 - template:
-  - add renderWr function to Template: renderWr(kv1: ..., kv2: ...) calls render({'kv1': ..., 'kv2': ...})
+  - update render function: render(kv1: ..., kv2: ...) calls renderMap({'kv1': ..., 'kv2': ...})
   - add simple module
   - add self.blockName callback ref in context
 - removed filters:

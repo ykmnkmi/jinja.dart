@@ -50,20 +50,20 @@ class Template extends Node {
       ).parse();
 
   Template.from({@required this.body, @required this.env, this.path})
-      : module = NameSpace() {
-    _renderWr = RenderWrapper(([Map<String, Object> data]) => render(data));
+      : blocks = <String, BlockStatement>{} {
+    _render = RenderWrapper(([Map<String, Object> data]) => renderMap(data));
   }
 
   final Node body;
   final Environment env;
   final String path;
-  final NameSpace module;
+  final Map<String, BlockStatement> blocks;
 
-  dynamic _renderWr;
-  dynamic get renderWr => _renderWr;
+  dynamic _render;
+  Function get render => _render as Function;
 
   void setContext(StringBuffer buffer, Context context) {
-    final self = module.copy();
+    final self = NameSpace();
 
     for (var blockEntry
         in self.entries.where((entry) => entry.value is BlockStatement)) {
@@ -81,7 +81,7 @@ class Template extends Node {
     body.accept(buffer, context);
   }
 
-  String render([Map<String, Object> data]) {
+  String renderMap([Map<String, Object> data]) {
     final buffer = StringBuffer();
     final context = Context(data: data, env: env);
     setContext(buffer, context);
@@ -105,7 +105,7 @@ class Template extends Node {
   String toString() => 'Template($path, $body)';
 }
 
-class RenderWrapper {
+class RenderWrapper extends Function {
   RenderWrapper(this.function);
 
   final Function function;

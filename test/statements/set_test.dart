@@ -7,14 +7,14 @@ void main() {
 
     test('simple', () {
       final template = envTrim.fromString('{% set foo = 1 %}{{ foo }}');
-      expect(template.render(), equals('1'));
+      expect(template.renderMap(), equals('1'));
       // TODO: test module foo == 1
     });
 
     test('block', () {
       final template =
           envTrim.fromString('{% set foo %}42{% endset %}{{ foo }}');
-      expect(template.render(), equals('42'));
+      expect(template.renderMap(), equals('42'));
       // TODO: test module foo == '42'
     });
 
@@ -22,7 +22,7 @@ void main() {
       final env = Environment(autoEscape: true);
       final template = env.fromString('{% set foo %}<em>{{ test }}</em>'
           '{% endset %}foo: {{ foo }}');
-      expect(template.renderWr(test: '<unsafe>'),
+      expect(template.render(test: '<unsafe>'),
           equals('foo: <em>&lt;unsafe&gt;</em>'));
     });
 
@@ -32,7 +32,7 @@ void main() {
 
       final template = envTrim.fromString('{% set foo.bar = 1 %}');
       expect(
-          () => template.renderWr(foo: {}),
+          () => template.render(foo: {}),
           throwsA(predicate((e) =>
               e is TemplateRuntimeError &&
               e.message == 'non-namespace object')));
@@ -42,7 +42,7 @@ void main() {
       final template = envTrim.fromString('{% set ns = namespace() %}'
           '{% set ns.bar = "hi" %}');
       expect(
-          () => template.renderWr(namespace: () => {}),
+          () => template.render(namespace: () => {}),
           throwsA(predicate((e) =>
               e is TemplateRuntimeError &&
               e.message == 'non-namespace object')));
@@ -52,21 +52,21 @@ void main() {
       final template = envTrim.fromString('{% set ns = namespace() %}'
           '{% set ns.bar = "42" %}'
           '{{ ns.bar }}');
-      expect(template.render(), equals('42'));
+      expect(template.renderMap(), equals('42'));
     });
 
     test('namespace block', () {
       final template = envTrim.fromString('{% set ns = namespace() %}'
           '{% set ns.bar %}42{% endset %}'
           '{{ ns.bar }}');
-      expect(template.render(), equals('42'));
+      expect(template.renderMap(), equals('42'));
     });
 
     test('init namespace', () {
       final template = envTrim.fromString('{% set ns = namespace(d, self=37) %}'
           '{% set ns.b = 42 %}'
           '{{ ns.a }}|{{ ns.self }}|{{ ns.b }}');
-      expect(template.renderWr(d: {'a': 13}), equals('13|37|42'));
+      expect(template.render(d: {'a': 13}), equals('13|37|42'));
     });
 
     test('namespace loop', () {
@@ -78,8 +78,8 @@ void main() {
               '{% endif %}'
               '{% endfor %}'
               '{{ ns.found }}');
-      expect(template.renderWr(v: 3), equals('true'));
-      expect(template.renderWr(v: 4), equals('false'));
+      expect(template.render(v: 3), equals('true'));
+      expect(template.render(v: 4), equals('false'));
     });
 
     // TODO: test namespace macro
@@ -89,7 +89,7 @@ void main() {
       final template =
           env.fromString('{% set foo | trim %}<em>{{ test }}</em>    '
               '{% endset %}foo: {{ foo }}');
-      expect(template.renderWr(test: '<unsafe>'),
+      expect(template.render(test: '<unsafe>'),
           equals('foo: <em>&lt;unsafe&gt;</em>'));
     });
 
@@ -97,7 +97,7 @@ void main() {
       final template = envTrim.fromString(
           '{% set foo | trim | length | string %} 42    {% endset %}'
           '{{ foo }}');
-      expect(template.render(), equals('2'));
+      expect(template.renderMap(), equals('2'));
       // TODO: test module foo == '2'
     });
 
@@ -113,7 +113,7 @@ void main() {
           ' {% set b = " yy " %} 42 {{ a }}{{ b }}   '
           '{% endset %}'
           '{{ foo }}');
-      expect(template.render(), equals('11'));
+      expect(template.renderMap(), equals('11'));
       // TODO: test module foo == '11'
     });
   });

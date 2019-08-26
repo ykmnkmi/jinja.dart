@@ -33,8 +33,8 @@ class Context {
       if (context.containsKey(key)) return context[key];
     }
 
-    if (env.globalContext.containsKey(key)) {
-      return env.globalContext[key];
+    if (env.globals.containsKey(key)) {
+      return env.globals[key];
     }
 
     return env.undefined;

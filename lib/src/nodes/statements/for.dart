@@ -18,12 +18,13 @@ class ForStatement extends Statement {
       var list = current.toList(growable: false);
 
       if (list.length < _targetsLen) {
-        throw Exception('not enough values to unpack '
+        throw ArgumentError('not enough values to unpack '
             '(expected $_targetsLen, got ${list.length})');
       }
 
       if (list.length > _targetsLen) {
-        throw Exception('too many values to unpack (expected $_targetsLen)');
+        throw ArgumentError(
+            'too many values to unpack (expected $_targetsLen)');
       }
 
       if (list is List<MapEntry>) {

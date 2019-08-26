@@ -12,56 +12,56 @@ void main() {
     test('chaining', () {
       final template =
           env.fromString('{{ ["<foo>", "<bar>"] | first | upper | escape }}');
-      expect(template.render(), equals('&lt;FOO&gt;'));
+      expect(template.renderMap(), equals('&lt;FOO&gt;'));
     });
 
     test('capitalize', () {
       final template = env.fromString('{{ "foo bar" | capitalize }}');
-      expect(template.render(), equals('Foo bar'));
+      expect(template.renderMap(), equals('Foo bar'));
     });
 
     test('center', () {
       final template = env.fromString('{{ "foo" | center(9) }}');
-      expect(template.render(), equals('   foo   '));
+      expect(template.renderMap(), equals('   foo   '));
     });
 
     test('count', () {
       final template = env.fromString('{{ "hello world" | count }}');
-      expect(template.render(), equals('11'));
+      expect(template.renderMap(), equals('11'));
     });
 
     test('default', () {
       final template = env.fromString('{{ missing | default("no") }}'
           '|{{ false | default("no") }}|{{ false | default("no", true) }}|'
           '{{ given | default("no") }}');
-      expect(template.render({'given': 'yes'}), equals('no|false|no|yes'));
+      expect(template.renderMap({'given': 'yes'}), equals('no|false|no|yes'));
     });
 
     test('escape', () {
       final template = env.fromString('{{ \'<">&\' | escape }}');
-      expect(template.render(), equals('&lt;&#34;&gt;&amp;'));
+      expect(template.renderMap(), equals('&lt;&#34;&gt;&amp;'));
     });
 
     test('first', () {
       final template = env.fromString('{{ foo | list | first }}');
-      expect(template.render({'foo': range(10)}), equals('0'));
+      expect(template.renderMap({'foo': range(10)}), equals('0'));
     });
 
     test('force escape', () {
       final template = env.fromString('{{  x | forceescape  }}');
       expect(
-          template.render({'x': Markup('<div />')}), equals('&lt;div /&gt;'));
+          template.renderMap({'x': Markup('<div />')}), equals('&lt;div /&gt;'));
     });
 
     test('join', () {
       final template = env.fromString('{{ [1, 2, 3] | join("|") }}');
-      expect(template.render(), equals('1|2|3'));
+      expect(template.renderMap(), equals('1|2|3'));
     });
 
     test('join attribute', () {
       final template = env.fromString('{{ points | join("|", "y") }}');
       expect(
-          template.render({
+          template.renderMap({
             'points': range(3)
                 .map<Point<num>>((i) => Point<num>(i, pow(i, 2)))
                 .toList(growable: false)
@@ -71,19 +71,19 @@ void main() {
 
     test('last', () {
       final template = env.fromString('{{ foo | list | last }}');
-      expect(template.render({'foo': range(10)}), equals('9'));
+      expect(template.renderMap({'foo': range(10)}), equals('9'));
     });
 
     test('lower', () {
       final template = env.fromString('{{ "FOO" | lower }}');
 
-      expect(template.render(), equals('foo'));
+      expect(template.renderMap(), equals('foo'));
     });
 
     test('upper', () {
       final template = env.fromString('{{ "foo" | upper }}');
 
-      expect(template.render(), equals('FOO'));
+      expect(template.renderMap(), equals('FOO'));
     });
   });
 }

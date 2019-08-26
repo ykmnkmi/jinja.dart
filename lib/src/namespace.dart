@@ -50,15 +50,38 @@ class NameSpaceFactory {
   dynamic noSuchMethod(Invocation invocation) {
     if (invocation.memberName == #call) {
       final data = <String, Object>{};
-      final args = invocation.positionalArguments;
 
-      if (args.isNotEmpty) {
-        if (args.any((arg) => arg is Map<String, dynamic>)) {
-          for (var arg in args.cast<Map<String, dynamic>>()) data.addAll(arg);
+      if (invocation.positionalArguments.length == 1) {
+        final arg = invocation.positionalArguments.first;
+
+        if (arg is Map<String, dynamic>) {
+          data.addAll(arg);
+        } else if (arg is List) {
+          for (var i = 0, pair = arg[i]; i < arg.length; i++) {
+            List list;
+
+            if (pair is Iterable) {
+              list = pair.toList(growable: false);
+            } else if (pair is String) {
+              list = pair.split('');
+            } else {
+              throw ArgumentError('cannot convert map update sequence '
+                  'element #$i to a sequence');
+            }
+
+            if (list.length < 2 || list.length > 2) {
+              throw ArgumentError('map update sequence element #$i, '
+                  'has length ${list.length}; 2 is required');
+            }
+
+            if (list[0] is String) data[list[0] as String] = list[1];
+          }
         } else {
-          // TODO: update exception
-          throw Exception();
+          throw TypeError();
         }
+      } else if (invocation.positionalArguments.length > 1) {
+        throw ArgumentError('map expected at most 1 arguments, '
+            'got ${invocation.positionalArguments.length}');
       }
 
       data.addAll(invocation.namedArguments

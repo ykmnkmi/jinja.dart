@@ -1,6 +1,5 @@
 import '../context.dart';
 import '../markup.dart';
-import '../undefined.dart';
 import '../utils.dart';
 
 export '../context.dart';

@@ -3,8 +3,7 @@ import '../core.dart';
 import '../template.dart';
 
 class ExtendsStatement extends Statement {
-  static const String containerKey = '__ext-cnt';
-  static const String levelKey = '__ext-last-lvl';
+  static const String containerKey = '__extend';
 
   ExtendsStatement(this.pathOrTemplate);
 
@@ -18,13 +17,13 @@ class ExtendsStatement extends Statement {
 
     Template template;
 
-    if (pathOrTemplate is String) {
-      template = context.env.getTemplate(pathOrTemplate);
-    } else if (pathOrTemplate is Template) {
+    if (pathOrTemplate is Template) {
       template = pathOrTemplate;
+    } else if (pathOrTemplate is String) {
+      template = context.env.getTemplate(pathOrTemplate);
     } else {
-      // TODO: full path
-      throw Exception(pathOrTemplate.runtimeType);
+      throw ArgumentError.value(
+          pathOrTemplate, 'template', 'not path or template object');
     }
 
     for (var block in blocks) {
@@ -79,7 +78,7 @@ class BlockStatement extends Statement {
     }
   }
 
-  Map<String, dynamic> childContext(StringBuffer buffer, Context context) {
+  Map<String, Object> childContext(StringBuffer buffer, Context context) {
     return {
       'super': () {
         context.removeLast('super');

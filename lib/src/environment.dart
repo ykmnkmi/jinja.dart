@@ -20,6 +20,7 @@ dynamic _defaultFinalizer(dynamic value) => value ?? '';
 /// will lead to surprising effects and undefined behavior.
 @immutable
 class Environment {
+  /// If `loader` is not `null`, templates will be loaded
   Environment({
     this.blockStart = '{%',
     this.blockEnd = '%}',
@@ -35,7 +36,7 @@ class Environment {
     this.optimize = true,
     this.undefined = const Undefined(),
     this.extensions = const <String, ParserCallback>{},
-    Map<String, dynamic> globals = const <String, dynamic>{},
+    Map<String, Object> globals = const <String, Object>{},
     Map<String, Function> filters = const <String, Function>{},
     Map<String, Function> tests = const <String, Function>{},
   })  : finalize = ((value) {
@@ -43,7 +44,7 @@ class Environment {
           if (value is! String) return repr(value, false);
           return value;
         }),
-        globalContext = Map.of(defaultContext)..addAll(globals),
+        globals = Map.of(defaultContext)..addAll(globals),
         filters = Map.of(defaultFilters)..addAll(filters),
         tests = Map.of(defaultTests)..addAll(tests),
         templates = <String, Template>{} {
@@ -61,7 +62,7 @@ class Environment {
   final bool leftStripBlocks;
   final Finalizer finalize;
   final Undefined undefined;
-  final Map<String, dynamic> globalContext;
+  final Map<String, Object> globals;
   final Map<String, Function> filters;
   final Map<String, Function> tests;
   final bool optimize;

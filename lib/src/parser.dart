@@ -73,7 +73,7 @@ class Parser {
   final List<List<Pattern>> endRulesStack = <List<Pattern>>[];
   final List<String> tagsStack = <String>[];
 
-  int deep = 0;
+  final List<int> level = <int>[];
 
   RegExp getBlockEndRegFor(String rule, [bool withStart = false]) {
     if (withStart) {
@@ -99,8 +99,8 @@ class Parser {
 
   @alwaysThrows
   void error(String message) {
-    throw TemplateSyntaxError(
-        message, path, scanner.state.line, scanner.state.position);
+    throw TemplateSyntaxError(message,
+        path: path, line: scanner.state.line, position: scanner.state.position);
   }
 
   void expect(Pattern pattern, {String name}) {
@@ -118,8 +118,8 @@ class Parser {
     }
 
     final message = 'expected $name';
-    throw TemplateSyntaxError(
-        message, path, scanner.state.line, scanner.state.position);
+    throw TemplateSyntaxError(message,
+        path: path, line: scanner.state.line, position: scanner.state.position);
   }
 
   Template parse() {
@@ -138,9 +138,9 @@ class Parser {
   }
 
   Node parseBody([List<Pattern> endRules = const <Pattern>[]]) {
-    deep++;
+    level.add(0);
     final nodes = subParse(endRules);
-    deep--;
+    level.removeLast();
     return env.optimize ? Interpolation.orNode(nodes) : Interpolation(nodes);
   }
 
@@ -153,6 +153,7 @@ class Parser {
     void flush() {
       if (buffer.isNotEmpty) {
         body.add(Text(buffer.toString()));
+        level.last++;
         buffer.clear();
       }
     }
@@ -163,9 +164,11 @@ class Parser {
           flush();
           if (endRules.isNotEmpty && testAll(endRules)) return body;
           body.add(parseStatement());
+          level.last++;
         } else if (scanner.scan(variableStartReg)) {
           flush();
           body.add(parseExpression());
+          level.last++;
           expect(variableEndReg);
         } else if (scanner.scan(commentStartReg)) {
           flush();
@@ -196,7 +199,6 @@ class Parser {
 
     final tagName = scanner.lastMatch[1];
     bool popTag = true;
-
     tagsStack.add(tagName);
 
     expect(spaceReg);
@@ -246,21 +248,20 @@ class Parser {
       context[ExtendsStatement.containerKey] = [extendsStatement];
     }
 
+    final state = scanner.state;
+
     addTemplateModifier((template) {
       final body = template.body;
       Node first;
-
-      if (first is IfStatement &&
-          (first.pairs.values.any((node) => node is! ExtendsStatement) ||
-              first.orElse is! ExtendsStatement)) {
-        error('not extends statement in dynamic exntends');
-      }
 
       if (body is Interpolation) {
         first = body.nodes.first;
 
         if (body.nodes.sublist(1).any((node) => node is ExtendsStatement)) {
-          error('only one extends statement in template');
+          throw TemplateSyntaxError('only one extends statement in template',
+              path: scanner.sourceUrl,
+              line: state.line,
+              position: state.position);
         }
 
         body.nodes
@@ -307,8 +308,7 @@ class Parser {
       final block = ExtendedBlockStatement(name, path, body,
           scoped: scoped, hasSuper: hasSuper);
 
-      for (var extendsStatement in (context[ExtendsStatement.containerKey]
-          as List<ExtendsStatement>)) {
+      for (var extendsStatement in context[ExtendsStatement.containerKey]) {
         extendsStatement.blocks.add(block);
       }
 
@@ -318,7 +318,7 @@ class Parser {
     final block = BlockStatement(name, path, body, scoped);
 
     addTemplateModifier((template) {
-      template.module[block.name] = block;
+      template.blocks[block.name] = block;
     });
 
     return block;
@@ -413,7 +413,6 @@ class Parser {
 
     expect(nameReg);
 
-    // TODO: namespace with field
     final target = scanner.lastMatch[1];
     String field;
 
