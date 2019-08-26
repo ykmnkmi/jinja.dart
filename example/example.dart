@@ -6,9 +6,9 @@ void main() {
       '{% else %}No users{% endfor %}';
 
   final env = Environment();
-  final template = env.fromSource(source, path: 'index.html');
+  final template = env.fromString(source, path: 'index.html');
 
-  print(template.renderWr(users: [
+  print(template.render(users: [
     {'fullname': 'Jhon Doe', 'email': 'jhondoe@dev.py'},
     {'fullname': 'Jane Doe', 'email': 'janedoe@dev.py'},
   ]));
