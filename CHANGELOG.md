@@ -1,3 +1,6 @@
+## 0.1.2
+- fix example
+
 ## 0.1.1
 - fix template blocks ref
 

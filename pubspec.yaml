@@ -2,7 +2,7 @@ name: jinja
 description: >-
   Jinja2 server-side template engine for Dart.
   Variables, expressions, control structures and template inheritance.
-version: 0.1.1
+version: 0.1.2
 homepage: https://github.com/ykmnkmi/dart-jinja
 author: Suleimen Olzhas <amajisenpai@gmail.com>
 
