@@ -1,6 +1,6 @@
 import '../../context.dart';
+import '../../environment.dart';
 import '../core.dart';
-import '../template.dart';
 
 class ExtendsStatement extends Statement {
   static const String containerKey = '__extend';

@@ -1,7 +1,7 @@
 import '../../context.dart';
+import '../../environment.dart';
 import '../../exceptions.dart';
 import '../core.dart';
-import '../template.dart';
 
 class IncludeStatement extends Statement {
   IncludeStatement(

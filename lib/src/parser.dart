@@ -9,7 +9,7 @@ import 'environment.dart';
 import 'exceptions.dart';
 import 'nodes.dart';
 
-typedef T ParserCallback<T extends Node>(Parser parser);
+typedef T ExtensionParser<T extends Node>(Parser parser);
 typedef void TemplateModifier(Template template);
 
 class Parser {
@@ -60,7 +60,7 @@ class Parser {
   final RegExp commentStartReg;
   final RegExp commentEndReg;
 
-  final Set<String> notAssignable = <String>{
+  final Set<String> keywords = <String>{
     'not',
     'and',
     'or',
@@ -117,8 +117,7 @@ class Parser {
       }
     }
 
-    final message = 'expected $name';
-    throw TemplateSyntaxError(message,
+    throw TemplateSyntaxError('expected $name',
         path: path, line: scanner.state.line, position: scanner.state.position);
   }
 
@@ -222,6 +221,13 @@ class Parser {
         case 'filter':
           return parseFilterBlock();
         default:
+          if (env.extensions.containsKey(tagName)) {
+            final node = env.extensions[tagName](this);
+
+            if (node == null) {}
+
+            return node;
+          }
       }
 
       if (env.extensions.containsKey(tagName)) {
@@ -292,7 +298,7 @@ class Parser {
 
     expect(this.blockEndReg);
 
-    notAssignable.add('super');
+    keywords.add('super');
 
     final subscription = onParseName.listen((node) {
       if (node.name == 'super') hasSuper = true;
@@ -300,7 +306,7 @@ class Parser {
 
     final body = parseBody([blockEndReg]);
     subscription.cancel();
-    notAssignable.remove('super');
+    keywords.remove('super');
 
     expect(blockEndReg);
 
@@ -522,7 +528,7 @@ class Parser {
       target = Name(scanner.lastMatch[1]);
     }
 
-    if (target.keys.any(notAssignable.contains)) {
+    if (target.keys.any(keywords.contains)) {
       error('expected identifer got keyword');
     }
 

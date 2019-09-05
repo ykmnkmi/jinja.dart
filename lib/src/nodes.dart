@@ -22,5 +22,4 @@ export 'nodes/statements/imports.dart';
 export 'nodes/statements/inheritence.dart';
 export 'nodes/statements/raw.dart';
 export 'nodes/statements/set.dart';
-export 'nodes/template.dart';
 export 'nodes/text.dart';

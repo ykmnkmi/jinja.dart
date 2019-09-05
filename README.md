@@ -28,8 +28,10 @@ Using it
 --------
 Add package to your `pubspec.yaml` as a dependency
 
-      dependencies:
-        jinja: ^0.1.0
+```yaml
+dependencies:
+  jinja: '>=0.1.0 <0.2.0'
+```
 
 Import library and use it:
 
@@ -54,10 +56,14 @@ Docs
 ----
 In progress ...
 
+Plans
+-----
+Add tokenizer
+
 Contributing
 ------------
 If you found a bug, just create a [new issue][new_issue] or even better fork
 and issue a pull request with you fix.
 
 [jinja]: http://jinja.pocoo.org/
-[new_issue]: https://github.com/ymknkmi/dart-jinja/issues/new
+[new_issue]: https://github.com/ykmnkmi/dart-jinja/issues/new
