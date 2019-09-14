@@ -6,11 +6,23 @@ Iterable<int> range(int n) sync* {
   for (var i = 0; i < n; i++) yield i;
 }
 
-dynamic getField(dynamic value, dynamic field) => reflect(value)
-    .getField(field is Symbol ? field : Symbol('$field'))
-    .reflectee;
+dynamic tryGetField(dynamic value, dynamic field) {
+  try {
+    return reflect(value)
+        .getField(field is Symbol ? field : Symbol('$field'))
+        .reflectee;
+  } catch (_) {
+    return null;
+  }
+}
 
-dynamic getItem(dynamic value, dynamic key) => value is Map ? value[key] : null;
+dynamic tryGetItem(dynamic value, dynamic key) {
+  try {
+    return value[key];
+  } catch (_) {
+    return null;
+  }
+}
 
 bool toBool(dynamic value) {
   if (value is Undefined || value == null) return false;

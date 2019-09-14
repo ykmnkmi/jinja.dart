@@ -12,7 +12,7 @@ Done
 - Comments
 - Variables
 - Expressions: variables, literals, subscription, math, comparison, logic, tests, filters, calls
-- Filters (not all)
+- Filters (not all, see [here](filters))
 - Tests
 - Statements
   - Filter
@@ -56,14 +56,11 @@ Docs
 ----
 In progress ...
 
-Plans
------
-Add tokenizer
-
 Contributing
 ------------
 If you found a bug, just create a [new issue][new_issue] or even better fork
 and issue a pull request with you fix.
 
 [jinja]: http://jinja.pocoo.org/
+[filter]: https://github.com/ykmnkmi/dart-jinja/blob/master/lib/src/filters.dart
 [new_issue]: https://github.com/ykmnkmi/dart-jinja/issues/new

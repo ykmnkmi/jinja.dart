@@ -1,3 +1,7 @@
+## 0.2.0
+- adding token stream
+- adding extensions
+
 ## 0.1.2
 - fix example
 

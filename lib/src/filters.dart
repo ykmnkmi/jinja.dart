@@ -64,7 +64,7 @@ const Map<String, Function> filters = <String, Function>{
 num doAbs(num n) => n.abs();
 
 dynamic doAttr(dynamic value, String attribute) =>
-    getItem(value, attribute) ?? getField(value, attribute);
+    tryGetField(value, attribute) ?? tryGetItem(value, attribute);
 
 String doCapitalize(String value) =>
     value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase();
@@ -92,7 +92,7 @@ dynamic doDefault(dynamic value, [dynamic d = '', bool boolean = false]) {
 Markup doEscape(value) =>
     value is Markup ? value : Markup.escape(value.toString());
 
-dynamic doFirst(List values) => values.first;
+dynamic doFirst(Iterable values) => values.first;
 
 double doFloat(dynamic value, [double $default = 0.0]) {
   if (value is num) return value.toDouble();
@@ -114,7 +114,7 @@ String doJoin(Iterable values, [String d = '', String attribute]) {
   return values.join(d);
 }
 
-dynamic doLast(List values) => values.last;
+dynamic doLast(Iterable values) => values.last;
 
 List doList(dynamic value) {
   if (value is Iterable) return value.toList();

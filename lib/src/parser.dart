@@ -9,6 +9,12 @@ import 'environment.dart';
 import 'exceptions.dart';
 import 'nodes.dart';
 
+abstract class Extension {
+  String get tag;
+
+  Node parse(Parser parser);
+}
+
 typedef T ExtensionParser<T extends Node>(Parser parser);
 typedef void TemplateModifier(Template template);
 
@@ -48,7 +54,9 @@ class Parser {
         variableStartReg = RegExp(getBeginRule(env.variableStart)),
         variableEndReg = RegExp(getEndRule(env.variableEnd)),
         commentStartReg = RegExp(getBeginRule(env.commentStart)),
-        commentEndReg = RegExp('.*' + getEndRule(env.commentEnd));
+        commentEndReg = RegExp('.*' + getEndRule(env.commentEnd)),
+        extensions = Map.fromEntries(
+            env.extensions.map((ext) => MapEntry(ext.tag, ext.parse)));
 
   final Environment env;
   final String path;
@@ -59,6 +67,7 @@ class Parser {
   final RegExp variableEndReg;
   final RegExp commentStartReg;
   final RegExp commentEndReg;
+  final Map<String, ExtensionParser> extensions;
 
   final Set<String> keywords = <String>{
     'not',
@@ -73,8 +82,6 @@ class Parser {
   final List<List<Pattern>> endRulesStack = <List<Pattern>>[];
   final List<String> tagsStack = <String>[];
 
-  final List<int> level = <int>[];
-
   RegExp getBlockEndRegFor(String rule, [bool withStart = false]) {
     if (withStart) {
       return RegExp(
@@ -85,11 +92,11 @@ class Parser {
     return RegExp(RegExp.escape(rule) + blockEndReg.pattern);
   }
 
-  final StreamController<Node> controller =
-      StreamController<Node>.broadcast(sync: true);
+  // before token stream
+  final StreamController<Name> onParseNameController =
+      StreamController<Name>.broadcast(sync: true);
 
-  Stream<Name> get onParseName =>
-      controller.stream.where(((node) => node is Name)).cast<Name>();
+  Stream<Name> get onParseName => onParseNameController.stream;
 
   final List<TemplateModifier> _templateModifiers = <TemplateModifier>[];
 
@@ -100,7 +107,7 @@ class Parser {
   @alwaysThrows
   void error(String message) {
     throw TemplateSyntaxError(message,
-        path: path, line: scanner.state.line, position: scanner.state.position);
+        path: path, line: scanner.state.line, column: scanner.state.column);
   }
 
   void expect(Pattern pattern, {String name}) {
@@ -117,8 +124,12 @@ class Parser {
       }
     }
 
-    throw TemplateSyntaxError('expected $name',
-        path: path, line: scanner.state.line, position: scanner.state.position);
+    throw TemplateSyntaxError(
+      '$name expected',
+      path: path,
+      line: scanner.state.line,
+      column: scanner.state.column,
+    );
   }
 
   Template parse() {
@@ -137,9 +148,7 @@ class Parser {
   }
 
   Node parseBody([List<Pattern> endRules = const <Pattern>[]]) {
-    level.add(0);
     final nodes = subParse(endRules);
-    level.removeLast();
     return env.optimize ? Interpolation.orNode(nodes) : Interpolation(nodes);
   }
 
@@ -152,7 +161,6 @@ class Parser {
     void flush() {
       if (buffer.isNotEmpty) {
         body.add(Text(buffer.toString()));
-        level.last++;
         buffer.clear();
       }
     }
@@ -163,11 +171,9 @@ class Parser {
           flush();
           if (endRules.isNotEmpty && testAll(endRules)) return body;
           body.add(parseStatement());
-          level.last++;
         } else if (scanner.scan(variableStartReg)) {
           flush();
           body.add(parseExpression());
-          level.last++;
           expect(variableEndReg);
         } else if (scanner.scan(commentStartReg)) {
           flush();
@@ -194,7 +200,7 @@ class Parser {
   }
 
   Node parseStatement() {
-    expect(nameReg, name: 'tag name expected');
+    expect(nameReg, name: 'statement tag');
 
     final tagName = scanner.lastMatch[1];
     bool popTag = true;
@@ -221,17 +227,15 @@ class Parser {
         case 'filter':
           return parseFilterBlock();
         default:
-          if (env.extensions.containsKey(tagName)) {
-            final node = env.extensions[tagName](this);
+          if (extensions.containsKey(tagName)) {
+            final node = extensions[tagName](this);
 
-            if (node == null) {}
+            if (node == null) {
+              // TODO: error?
+            }
 
             return node;
           }
-      }
-
-      if (env.extensions.containsKey(tagName)) {
-        return env.extensions[tagName](this);
       }
 
       tagsStack.removeLast();
@@ -242,6 +246,7 @@ class Parser {
     }
   }
 
+  // TODO: update, check
   ExtendsStatement parseExtends() {
     final path = parsePrimary();
     expect(blockEndReg);
@@ -264,10 +269,12 @@ class Parser {
         first = body.nodes.first;
 
         if (body.nodes.sublist(1).any((node) => node is ExtendsStatement)) {
-          throw TemplateSyntaxError('only one extends statement in template',
-              path: scanner.sourceUrl,
-              line: state.line,
-              position: state.position);
+          throw TemplateSyntaxError(
+            'only one extends statement in template',
+            path: scanner.sourceUrl,
+            line: state.line,
+            column: state.column,
+          );
         }
 
         body.nodes
@@ -758,7 +765,7 @@ class Parser {
     } else if (scanner.scan(nameReg)) {
       final name = scanner.lastMatch[1];
       expr = Name(name);
-      controller.add(expr);
+      onParseNameController.add(expr as Name);
     } else if (scanner.scan(stringStartReg)) {
       String body;
 

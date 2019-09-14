@@ -16,7 +16,8 @@ class Field extends Expression {
       throw UndefinedError();
     }
 
-    return getField(value, attr);
+    // TODO: ?? env.undefined
+    return tryGetField(value, attr);
   }
 
   @override
@@ -33,8 +34,13 @@ class Item extends Expression {
   final Expression expr;
 
   @override
-  dynamic resolve(Context context) =>
-      getItem(expr.resolve(context), item.resolve(context));
+  dynamic resolve(Context context) {
+    final value = expr.resolve(context);
+    final item = this.item.resolve(context);
+
+    // TODO: ?? env.undefined
+    return tryGetItem(value, item);
+  }
 
   @override
   String toDebugString([int level = 0]) =>

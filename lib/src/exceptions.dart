@@ -31,13 +31,13 @@ class TemplatesNotFound extends TemplateNotFound {
 }
 
 class TemplateSyntaxError extends TemplateError {
-  TemplateSyntaxError(String message, {this.path, int line, this.position})
+  TemplateSyntaxError(String message, {this.path, int line, this.column})
       : line = line + 1,
         super(message);
 
   final dynamic path;
   final int line;
-  final int position;
+  final int column;
 
   @override
   String toString() {
@@ -46,7 +46,7 @@ class TemplateSyntaxError extends TemplateError {
 
     if (line != null) {
       buffer.write(' on line $line');
-      if (position != null) buffer.write(' column $position');
+      if (column != null) buffer.write(' column $column');
     }
 
     buffer.write(': $message');
