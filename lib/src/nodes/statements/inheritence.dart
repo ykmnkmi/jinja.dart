@@ -1,5 +1,6 @@
 import '../../context.dart';
 import '../../environment.dart';
+import '../../exceptions.dart';
 import '../core.dart';
 
 class ExtendsStatement extends Statement {
@@ -22,8 +23,7 @@ class ExtendsStatement extends Statement {
     } else if (pathOrTemplate is String) {
       template = context.env.getTemplate(pathOrTemplate);
     } else {
-      throw ArgumentError.value(
-          pathOrTemplate, 'template', 'not path or template object');
+      throw TemplatesNotFound(); // TODO: add template name
     }
 
     for (var block in blocks) {
@@ -95,7 +95,7 @@ class BlockStatement extends Statement {
     if (scoped) {
       buffer.writeln('scoped');
     } else {
-      buffer.writeln('scoped');
+      buffer.writeln();
     }
 
     buffer.write(body.toDebugString(level + 1));
@@ -163,19 +163,6 @@ class ExtendedBlockContext {
     } else {
       blocks[name] = <ExtendedBlockStatement>[block];
     }
-  }
-
-  ExtendedBlockStatement parent(ExtendedBlockStatement current) {
-    if (blocks.containsKey(current.name)) {
-      final blocks = this.blocks[current.name];
-      final ci = blocks.indexOf(current);
-
-      if (ci >= 0 && ci < blocks.length - 1) {
-        return blocks[ci + 1];
-      }
-    }
-
-    return null;
   }
 
   ExtendedBlockStatement child(ExtendedBlockStatement current) {

@@ -3,6 +3,7 @@ import 'dart:mirrors';
 import 'package:meta/meta.dart';
 
 import 'defaults.dart';
+import 'ext.dart';
 import 'loaders.dart';
 import 'namespace.dart';
 import 'nodes.dart';

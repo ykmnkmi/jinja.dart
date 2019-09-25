@@ -7,15 +7,9 @@ import 'package:string_scanner/string_scanner.dart';
 
 import 'environment.dart';
 import 'exceptions.dart';
+import 'ext.dart';
 import 'nodes.dart';
 
-abstract class Extension {
-  String get tag;
-
-  Node parse(Parser parser);
-}
-
-typedef T ExtensionParser<T extends Node>(Parser parser);
 typedef void TemplateModifier(Template template);
 
 class Parser {
@@ -55,8 +49,8 @@ class Parser {
         variableEndReg = RegExp(getEndRule(env.variableEnd)),
         commentStartReg = RegExp(getBeginRule(env.commentStart)),
         commentEndReg = RegExp('.*' + getEndRule(env.commentEnd)),
-        extensions = Map.fromEntries(
-            env.extensions.map((ext) => MapEntry(ext.tag, ext.parse)));
+        extensions =
+            Map.fromIterables(env.extensions.map((e) => e.tag), env.extensions);
 
   final Environment env;
   final String path;
@@ -67,7 +61,8 @@ class Parser {
   final RegExp variableEndReg;
   final RegExp commentStartReg;
   final RegExp commentEndReg;
-  final Map<String, ExtensionParser> extensions;
+
+  final Map<String, Extension> extensions;
 
   final Set<String> keywords = <String>{
     'not',
@@ -228,13 +223,13 @@ class Parser {
           return parseFilterBlock();
         default:
           if (extensions.containsKey(tagName)) {
-            final node = extensions[tagName](this);
+            final ext = extensions[tagName];
 
-            if (node == null) {
+            if (ext == null) {
               // TODO: error?
+            } else {
+              return ext.parse(this);
             }
-
-            return node;
           }
       }
 
