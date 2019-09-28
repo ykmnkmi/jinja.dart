@@ -40,14 +40,14 @@ import 'package:jinja/jinja.dart';
 
 // code ...
 
-var template = Template('...source...');
+var template = Template('...source...', blockStart: '...');
 // or
 var env = Environment(blockStart: '...', ... );
 var template = env.fromString('...source...');
 
-template.render(key: value, );
-// or 
 template.renderMap({ 'key': value, });
+// or 
+template.render(key: value, );
 ```
 
 Note: all variables and literals used in the template are **dart objects** with their own fields and methods.

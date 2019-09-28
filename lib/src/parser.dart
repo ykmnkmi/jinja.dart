@@ -49,8 +49,13 @@ class Parser {
         variableEndReg = RegExp(getEndRule(env.variableEnd)),
         commentStartReg = RegExp(getBeginRule(env.commentStart)),
         commentEndReg = RegExp('.*' + getEndRule(env.commentEnd)),
-        extensions =
-            Map.fromIterables(env.extensions.map((e) => e.tag), env.extensions);
+        extensions = <String, Extension>{} {
+    final extensionsSet = env.extensions.toSet();
+
+    for (var ext in extensionsSet) {
+      extensions[ext.tag] = ext;
+    }
+  }
 
   final Environment env;
   final String path;
@@ -64,14 +69,14 @@ class Parser {
 
   final Map<String, Extension> extensions;
 
-  final Set<String> keywords = <String>{
+  final Set<String> keywords = Set<String>.of([
     'not',
     'and',
     'or',
     'is',
     'if',
     'else',
-  };
+  ]);
 
   final Map<String, dynamic> context = <String, dynamic>{};
   final List<List<Pattern>> endRulesStack = <List<Pattern>>[];

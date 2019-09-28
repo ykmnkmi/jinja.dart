@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:jinja/jinja.dart';
 import 'package:jinja/src/markup.dart';
 import 'package:jinja/src/utils.dart';

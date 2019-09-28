@@ -45,7 +45,7 @@ class Environment {
     Loader loader,
     bool optimize = true,
     Undefined undefined = const Undefined(),
-    Set<Extension> extensions = const <Extension>{},
+    Iterable<Extension> extensions = const <Extension>[],
     Map<String, Function> filters = const <String, Function>{},
     Map<String, Function> tests = const <String, Function>{},
     Map<String, dynamic> globals = const <String, dynamic>{},
@@ -87,7 +87,7 @@ class Environment {
     this.optimize,
     this.shared,
     this.undefined,
-    this.extensions = const <Extension>{},
+    this.extensions = const <Extension>[],
     this.filters = const <String, Function>{},
     this.tests = const <String, Function>{},
     this.globals = const <String, dynamic>{},
@@ -106,7 +106,7 @@ class Environment {
   final Undefined undefined;
   final bool optimize;
   final bool shared;
-  final Set<Extension> extensions;
+  final Iterable<Extension> extensions;
   final Map<String, Function> filters;
   final Map<String, Function> tests;
   final Map<String, dynamic> globals;
@@ -189,7 +189,7 @@ class Template extends Node {
     Loader loader,
     bool optimize = true,
     Undefined undefined = const Undefined(),
-    Set<Extension> extensions = const <Extension>{},
+    Iterable<Extension> extensions = const <Extension>[],
     Map<String, Function> filters = const <String, Function>{},
     Map<String, Function> tests = const <String, Function>{},
     Map<String, dynamic> globals = const <String, dynamic>{},

@@ -1,4 +1,4 @@
-## 0.2.0
+## in progress
 - adding token stream
 - adding extensions
 
