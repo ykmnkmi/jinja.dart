@@ -9,15 +9,15 @@ class Field extends Expression {
   final Expression expr;
 
   @override
-  dynamic resolve(Context context) {
-    final value = expr.resolve(context);
+  Object resolve(Context context) {
+    Object value = expr.resolve(context);
 
     if (value == null || value is Undefined) {
       throw UndefinedError();
     }
 
-    // TODO: ?? env.undefined
-    return tryGetField(value, attr);
+    // TODO: env.getField
+    return context.env.getField(value, attr);
   }
 
   @override
@@ -34,12 +34,12 @@ class Item extends Expression {
   final Expression expr;
 
   @override
-  dynamic resolve(Context context) {
-    final value = expr.resolve(context);
-    final item = this.item.resolve(context);
+  Object resolve(Context context) {
+    Object value = expr.resolve(context);
+    Object item = this.item.resolve(context);
 
-    // TODO: ?? env.undefined
-    return tryGetItem(value, item);
+    // TODO: env.getItem
+    return context.env.getItem(value, item);
   }
 
   @override

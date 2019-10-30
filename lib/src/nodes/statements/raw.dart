@@ -12,7 +12,7 @@ class RawStatement extends Statement {
 
   @override
   String toDebugString([int level = 0]) =>
-      '${' ' * level}raw\n${' ' * (level + 1) + repr(body)}';
+      ' ' * level + 'raw\n' + ' ' * (level + 1) + repr(body);
 
   @override
   String toString() => 'Raw($body)';

@@ -9,7 +9,7 @@ abstract class SetStatement extends Statement {
 
   void assign(Context context, Object value) {
     if (field != null) {
-      final nameSpace = context[target];
+      Object nameSpace = context[target];
 
       if (nameSpace is NameSpace) {
         nameSpace[field] = value;
@@ -61,9 +61,10 @@ class SetBlockStatement extends SetStatement {
 
   @override
   String toDebugString([int level = 0]) {
-    final buffer = StringBuffer(' ' * level);
+    StringBuffer buffer = StringBuffer(' ' * level);
     buffer.write('set $target');
 
+    // TODO: check, fix
     // if (filter != null) {
     //   buffer.writeln(' | ${filter.toDebugString()}');
     // } else {

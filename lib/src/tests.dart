@@ -1,4 +1,5 @@
 import 'markup.dart';
+import 'undefined.dart';
 import 'utils.dart';
 
 const Map<String, Function> tests = <String, Function>{
@@ -30,57 +31,64 @@ const Map<String, Function> tests = <String, Function>{
   'upper': isUpper,
 };
 
-bool eq(dynamic value, dynamic other) => value == other;
-bool ge(dynamic value, dynamic other) => (value >= other) as bool;
-bool gt(dynamic value, dynamic other) => (value > other) as bool;
-bool le(dynamic value, dynamic other) => (value <= other) as bool;
-bool lt(dynamic value, dynamic other) => (value < other) as bool;
-bool ne(dynamic value, dynamic other) => value != other;
+bool eq(Object value, Object other) => value == other;
+bool ge(Comparable<Object> value, Comparable<Object> other) =>
+    value.compareTo(other) >= 0;
+bool gt(Comparable<Object> value, Comparable<Object> other) =>
+    value.compareTo(other) > 0;
+bool le(Comparable<Object> value, Comparable<Object> other) =>
+    value.compareTo(other) <= 0;
+bool lt(Comparable<Object> value, Comparable<Object> other) =>
+    value.compareTo(other) < 0;
+bool ne(Object value, Object other) => value != other;
 
-bool istCallable(dynamic value) => value is Function;
+bool istCallable(Object value) => value is Function;
 
-bool isDefined(dynamic value) => toBool(value);
+bool isDefined(Object value) => toBool(value);
 
 bool isDivisibleBy(num value, num divider) {
   if (divider == 0) return false;
   return value % divider == 0;
 }
 
-bool isEscaped(dynamic value) => value is Markup;
+bool isEscaped(Object value) => value is Markup;
 
 bool isEven(num value) => value % 2 == 0;
 
-bool isIn(dynamic value, dynamic values) {
-  try {
-    if (values is Iterable) return values.contains(value);
-    if (values is Map) return values.containsKey(value);
-    if (values is String) return values.contains(value as Pattern);
-  } catch (_) {}
+bool isIn(Object value, Object values) {
+  if (values is String) {
+    if (value is Pattern) return values.contains(value);
 
-  return false;
+    throw Exception('$value must be subclass of Pattern');
+  }
+
+  if (values is Iterable) return values.contains(value);
+  if (values is Map) return values.containsKey(value);
+
+  throw Exception('$values must be one of String, List or Map subclass');
 }
 
-bool isIterable(dynamic value) => value is Iterable;
+bool isIterable(Object value) => value is Iterable;
 
 bool isLower(String value) => value == value.toLowerCase();
 
-bool isMapping(value) => value is Map;
+bool isMapping(Object value) => value is Map;
 
-bool isNone(dynamic value) => value == null;
+bool isNone(Object value) => value == null;
 
-bool isNumber(dynamic value) => value is num;
+bool isNumber(Object value) => value is num;
 
 bool isOdd(num value) => value % 2 == 1;
 
-bool isSameAs(dynamic value, dynamic other) => value == other;
+bool isSameAs(Object value, Object other) => value == other;
 
-bool isSequence(dynamic values) {
+bool isSequence(Object values) {
   if (values is Iterable || values is Map || values is String) return true;
   return false;
 }
 
-bool isString(dynamic value) => value is String;
+bool isString(Object value) => value is String;
 
-bool isUndefined(dynamic value) => !toBool(value);
+bool isUndefined(Object value) => value is Undefined;
 
 bool isUpper(String value) => value == value.toUpperCase();

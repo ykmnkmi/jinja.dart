@@ -13,8 +13,17 @@ class Add extends BinaryExpression {
   String get symbol => '+';
 
   @override
-  dynamic resolve(Context context) =>
-      left.resolve(context) + right.resolve(context);
+  Object resolve(Context context) {
+    Object left = this.left.resolve(context);
+    Object right = this.right.resolve(context);
+
+    if (left is num && right is num) return left + right;
+    if (left is String && right is String) return left + right;
+    if (left is List && right is List) return left + right;
+
+    // TODO: Add exception message
+    throw Exception();
+  }
 
   @override
   String toString() => 'Add($left, $right)';
@@ -33,8 +42,15 @@ class Sub extends BinaryExpression {
   String get symbol => '/';
 
   @override
-  dynamic resolve(Context context) =>
-      left.resolve(context) - right.resolve(context);
+  Object resolve(Context context) {
+    Object left = this.left.resolve(context);
+    Object right = this.right.resolve(context);
+
+    if (left is num && right is num) return left - right;
+
+    // TODO: Add exception message
+    throw Exception();
+  }
 
   @override
   String toString() => 'Sub($left, $right)';

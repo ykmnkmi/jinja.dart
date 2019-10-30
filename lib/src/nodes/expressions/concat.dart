@@ -14,9 +14,9 @@ class Concat extends Expression {
 
   @override
   String resolve(Context context) {
-    final buffer = StringBuffer();
+    StringBuffer buffer = StringBuffer();
 
-    for (var expr in exprs) {
+    for (Expression expr in exprs) {
       expr.accept(buffer, context);
     }
 
@@ -25,7 +25,8 @@ class Concat extends Expression {
 
   @override
   String toDebugString([int level = 0]) =>
-      ' ' * level + exprs.map((expr) => expr.toDebugString()).join(' ~ ');
+      ' ' * level +
+      exprs.map((Expression expr) => expr.toDebugString()).join(' ~ ');
 
   @override
   String toString() => 'Concat($exprs)';

@@ -1,2 +1,2 @@
-export 'src/environment.dart' hide RenderWrapper;
+export 'src/environment.dart';
 export 'src/loaders.dart';

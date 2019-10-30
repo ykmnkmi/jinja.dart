@@ -1,0 +1,5 @@
+jinja_generator:
+  filters:
+    attr:
+      uri: 'package:beck/utils.dart'
+      symbol: getAttr

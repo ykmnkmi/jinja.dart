@@ -1,5 +1,3 @@
-import 'dart:mirrors';
-
 import '../core.dart';
 
 class Call extends Expression {
@@ -19,43 +17,50 @@ class Call extends Expression {
 
   @override
   dynamic resolve(Context context) {
-    var args =
-        this.args.map((arg) => arg.resolve(context)).toList(growable: false);
-    var kwargs = this
-        .kwargs
-        .map((key, value) => MapEntry(Symbol(key), value.resolve(context)));
+    List<Object> args = this
+        .args
+        .map<Object>((Expression arg) => arg.resolve(context))
+        .toList();
+    Map<Symbol, Object> kwargs = this.kwargs.map(
+        (String key, Expression value) =>
+            MapEntry<Symbol, Object>(Symbol(key), value.resolve(context)));
 
     if (this.argsDyn != null) {
-      final argsDyn = this.argsDyn.resolve(context);
+      Object argsDyn = this.argsDyn.resolve(context);
 
       if (argsDyn is Iterable) {
-        args = args.followedBy(argsDyn).toList(growable: false);
+        args = <Object>[args, ...argsDyn];
       } else {
+        // TODO: argsDyn exception message
         throw Exception();
       }
     }
 
     if (kwargsDyn != null) {
-      final kwargsDyn = this.kwargsDyn.resolve(context);
+      Object kwargsDyn = this.kwargsDyn.resolve(context);
 
-      if (kwargsDyn is Map<String, dynamic>) {
-        kwargs.addAll(kwargsDyn.map(
-            (key, value) => MapEntry(Symbol(key), value.resolve(context))));
+      if (kwargsDyn is Map<String, Expression>) {
+        kwargs.addAll(kwargsDyn.map<Symbol, Object>(
+            (String key, Expression value) =>
+                MapEntry<Symbol, Object>(Symbol(key), value.resolve(context))));
       } else {
+        // TODO: kwargsDyn exception message
         throw Exception();
       }
     }
 
-    return reflect(expr.resolve(context)).invoke(#call, args, kwargs).reflectee;
+    return Function.apply(
+        (expr.resolve(context) as dynamic).call as Function, args, kwargs);
   }
 
   @override
   String toDebugString([int level = 0]) {
-    final buffer = StringBuffer(expr.toDebugString(level));
+    StringBuffer buffer = StringBuffer(expr.toDebugString(level));
     buffer.write('(');
 
     if (args.isNotEmpty) {
-      buffer.write(args.map((arg) => arg.toDebugString()).join(', '));
+      buffer.writeAll(
+          args.map<String>((Expression arg) => arg.toDebugString()), ', ');
     }
 
     if (argsDyn != null) {
@@ -65,9 +70,10 @@ class Call extends Expression {
 
     if (kwargs.isNotEmpty) {
       if (args.isNotEmpty) buffer.write(', ');
-      buffer.write(kwargs.entries
-          .map((kwarg) => '${repr(kwarg.key)}: ${kwarg.value.toDebugString()}')
-          .join(', '));
+      buffer.writeAll(
+          kwargs.entries.map<String>((MapEntry<String, Expression> kwarg) =>
+              '${repr(kwarg.key)}: ${kwarg.value.toDebugString()}'),
+          ', ');
     }
 
     if (kwargsDyn != null) {
@@ -84,7 +90,7 @@ class Call extends Expression {
 
   @override
   String toString() {
-    final buffer = StringBuffer('Call($expr');
+    StringBuffer buffer = StringBuffer('Call($expr');
     if (args != null && args.isNotEmpty) buffer.write(', args: $args');
     if (kwargs != null && kwargs.isNotEmpty) buffer.write(', kwargs: $kwargs');
     buffer.write(')');

@@ -1,26 +1,8 @@
-import 'dart:mirrors';
-
 import 'undefined.dart';
 
 Iterable<int> range(int n) sync* {
-  for (var i = 0; i < n; i++) yield i;
-}
-
-dynamic tryGetField(dynamic value, dynamic field) {
-  try {
-    return reflect(value)
-        .getField(field is Symbol ? field : Symbol('$field'))
-        .reflectee;
-  } catch (_) {
-    return null;
-  }
-}
-
-dynamic tryGetItem(dynamic value, dynamic key) {
-  try {
-    return value[key];
-  } catch (_) {
-    return null;
+  for (int i = 0; i < n; i++) {
+    yield i;
   }
 }
 
@@ -36,17 +18,18 @@ bool toBool(dynamic value) {
 
 String repr(dynamic object, [bool reprString = true]) {
   if (object is Iterable) {
-    final buffer = StringBuffer();
+    StringBuffer buffer = StringBuffer();
     buffer.write('[');
-    buffer.write(object.map((item) => repr(item)).join(', '));
+    buffer.writeAll(object.map<Object>(repr), ', ');
     buffer.write(']');
     return buffer.toString();
   } else if (object is Map) {
-    final buffer = StringBuffer();
+    StringBuffer buffer = StringBuffer();
     buffer.write('{');
-    buffer.write(object.entries
-        .map((entry) => '${repr(entry.key)}: ${repr(entry.value)}')
-        .join(', '));
+    buffer.writeAll(
+        object.entries.map<Object>((MapEntry<Object, Object> entry) =>
+            '${repr(entry.key)}: ${repr(entry.value)}'),
+        ', ');
     buffer.write('}');
     return buffer.toString();
   } else if (reprString && object is String) {

@@ -13,9 +13,17 @@ class MoreEqual extends BinaryExpression {
   String get symbol => '>=';
 
   @override
-  bool resolve(Context context) =>
-      // ignore: return_of_invalid_type
-      left.resolve(context) >= right.resolve(context);
+  bool resolve(Context context) {
+    Object left = this.left.resolve(context);
+    Object right = this.right.resolve(context);
+
+    if (left is Comparable && right is Comparable) {
+      return left.compareTo(right) >= 0;
+    }
+
+    // TODO: MoreEqual exception message
+    throw Exception();
+  }
 
   @override
   String toString() => 'MoreEqual($left, $right)';
@@ -34,8 +42,17 @@ class More extends BinaryExpression {
   String get symbol => '>';
 
   @override
-  bool resolve(Context context) =>
-      (left.resolve(context) > right.resolve(context)) as bool;
+  bool resolve(Context context) {
+    Object left = this.left.resolve(context);
+    Object right = this.right.resolve(context);
+
+    if (left is Comparable && right is Comparable) {
+      return left.compareTo(right) > 0;
+    }
+
+    // TODO: More exception message
+    throw Exception();
+  }
 
   @override
   String toString() => 'More($left, $right)';
@@ -54,9 +71,17 @@ class Less extends BinaryExpression {
   String get symbol => '<';
 
   @override
-  bool resolve(Context context) =>
-      // ignore: return_of_invalid_type
-      left.resolve(context) < right.resolve(context);
+  bool resolve(Context context) {
+    Object left = this.left.resolve(context);
+    Object right = this.right.resolve(context);
+
+    if (left is Comparable && right is Comparable) {
+      return left.compareTo(right) < 0;
+    }
+
+    // TODO: Less exception message
+    throw Exception();
+  }
 
   @override
   String toString() => 'Less($left, $right)';
@@ -75,9 +100,17 @@ class LessEqual extends BinaryExpression {
   String get symbol => '<=';
 
   @override
-  bool resolve(Context context) =>
-      // ignore: return_of_invalid_type
-      left.resolve(context) <= right.resolve(context);
+  bool resolve(Context context) {
+    Object left = this.left.resolve(context);
+    Object right = this.right.resolve(context);
+
+    if (left is Comparable && right is Comparable) {
+      return left.compareTo(right) <= 0;
+    }
+
+    // TODO: LessEqual exception message
+    throw Exception();
+  }
 
   @override
   String toString() => 'LessEqual($left, $right)';

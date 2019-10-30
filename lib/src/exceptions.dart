@@ -35,13 +35,13 @@ class TemplateSyntaxError extends TemplateError {
       : line = line + 1,
         super(message);
 
-  final dynamic path;
+  final Object path;
   final int line;
   final int column;
 
   @override
   String toString() {
-    final buffer = StringBuffer('TemplateSyntaxError');
+    StringBuffer buffer = StringBuffer('TemplateSyntaxError');
     if (path != null) buffer.write(' in \'$path\'');
 
     if (line != null) {

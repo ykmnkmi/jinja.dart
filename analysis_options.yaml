@@ -1,9 +1,13 @@
+include: package:pedantic/analysis_options.yaml
+
 analyzer:
   exclude:
     - example/**
   strong-mode:
     implicit-casts: false
+    implicit-dynamic: false
 linter:
   rules:
+    - always_specify_types
     - annotate_overrides
     - valid_regexps

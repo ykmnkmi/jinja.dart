@@ -18,10 +18,10 @@ class IncludeStatement extends Statement {
   void accept(StringBuffer buffer, Context context) {
     Template template;
 
-    final oneOrList = paths.resolve(context);
+    Object oneOrList = paths.resolve(context);
 
     if (oneOrList is List) {
-      for (var path in oneOrList) {
+      for (Object path in oneOrList) {
         if (path is String) {
           template = context.env.templates[path];
         } else if (path is Template) {
@@ -40,8 +40,7 @@ class IncludeStatement extends Statement {
       if (withContext) {
         template.accept(buffer, context);
       } else {
-        final newContext = Context(env: context.env);
-        template.accept(buffer, newContext);
+        template.accept(buffer, Context(env: context.env));
       }
     } else if (!ignoreMissing) {
       throw TemplatesNotFound();
@@ -50,7 +49,7 @@ class IncludeStatement extends Statement {
 
   @override
   String toDebugString([int level = 0]) {
-    final buffer = StringBuffer(' ' * level);
+    StringBuffer buffer = StringBuffer(' ' * level);
     buffer.write('inlcude ${paths.toDebugString()}');
     if (!withContext) buffer.write(' without context');
     if (ignoreMissing) buffer.write(' ignore missing');

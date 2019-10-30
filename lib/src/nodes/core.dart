@@ -16,11 +16,11 @@ abstract class Node {
 abstract class Statement implements Node {}
 
 abstract class Expression implements Node {
-  dynamic resolve(Context context) => null;
+  Object resolve(Context context) => null;
 
   @override
   void accept(StringBuffer buffer, Context context) {
-    var value = resolve(context);
+    Object value = resolve(context);
 
     if (value is Node) {
       value.accept(buffer, context);
@@ -62,7 +62,7 @@ abstract class CanAssign {
 
 abstract class CanConst {
   bool canConst;
-  Literal get asConst;
+  Literal<Object> get asConst;
 }
 
 class Name extends Expression implements CanAssign {

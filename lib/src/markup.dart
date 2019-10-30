@@ -15,7 +15,7 @@ class Markup {
   final String value;
 
   @override
-  bool operator ==(dynamic other) => other is Markup && value == other.value;
+  bool operator ==(Object other) => other is Markup && value == other.value;
 
   @override
   int get hashCode => value.hashCode;

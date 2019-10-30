@@ -1,12 +1,18 @@
-import 'dart:math';
+import 'dart:math' show Random;
 
+import 'environment.dart';
 import 'markup.dart';
 import 'undefined.dart';
 import 'utils.dart';
 
+const Map<String, Function> envFilters = <String, Function>{
+  'attr': doAttr,
+  'join': doJoin,
+  'sum': doSum,
+};
+
 const Map<String, Function> filters = <String, Function>{
   'abs': doAbs,
-  'attr': doAttr,
   'capitalize': doCapitalize,
   'center': doCenter,
   'count': doCount,
@@ -18,14 +24,12 @@ const Map<String, Function> filters = <String, Function>{
   'float': doFloat,
   'forceescape': doForceEscape,
   'int': doInt,
-  'join': doJoin,
   'last': doLast,
   'length': doCount,
   'list': doList,
   'lower': doLower,
   'random': doRandom,
   'string': doString,
-  'sum': doSum,
   'trim': doTrim,
   'upper': doUpper,
 
@@ -63,82 +67,85 @@ const Map<String, Function> filters = <String, Function>{
 
 num doAbs(num n) => n.abs();
 
-dynamic doAttr(dynamic value, String attribute) =>
-    tryGetField(value, attribute) ?? tryGetItem(value, attribute);
+Object doAttr(Environment env, Object value, String attribute) {
+  return env.getItem(value, attribute) ?? env.getField(value, attribute);
+}
 
 String doCapitalize(String value) =>
     value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase();
 
 String doCenter(String value, int width) {
   if (value.length >= width) return value;
-  final padLength = (width - value.length) ~/ 2;
-  final pad = ' ' * padLength;
+  int padLength = (width - value.length) ~/ 2;
+  String pad = ' ' * padLength;
   return pad + value + pad;
 }
 
-int doCount(dynamic value) {
-  try {
-    return value.length as int;
-  } catch (e) {
-    return null;
-  }
+int doCount(Object value) {
+  if (value is String) return value.length;
+  if (value is Iterable) return value.length;
+  if (value is Map) return value.length;
+  return null;
 }
 
-dynamic doDefault(dynamic value, [dynamic d = '', bool boolean = false]) {
-  if (boolean) return toBool(value) ? value : d;
-  return value is! Undefined ? value : d;
+Object doDefault(Object value, [Object $default = '', bool boolean = false]) {
+  if (boolean) return toBool(value) ? value : $default;
+  return value is! Undefined ? value : $default;
 }
 
-Markup doEscape(value) =>
+Markup doEscape(Object value) =>
     value is Markup ? value : Markup.escape(value.toString());
 
-dynamic doFirst(Iterable values) => values.first;
+Object doFirst(Iterable<Object> values) => values.first;
 
-double doFloat(dynamic value, [double $default = 0.0]) {
+double doFloat(Object value, [double $default = 0.0]) {
   if (value is num) return value.toDouble();
   return double.tryParse(value.toString()) ?? $default;
 }
 
-Markup doForceEscape(value) => Markup.escape(value.toString());
+Markup doForceEscape(Object value) => Markup.escape(value.toString());
 
-int doInt(dynamic value, [int $default = 0, int base = 10]) {
+int doInt(Object value, [int $default = 0, int base = 10]) {
   if (value is num) return value.toInt();
   return int.tryParse(value.toString(), radix: base) ?? $default;
 }
 
-String doJoin(Iterable values, [String d = '', String attribute]) {
+String doJoin(Environment env, Iterable<Object> values,
+    [String d = '', String attribute]) {
   if (attribute != null) {
-    return values.map((value) => doAttr(value, attribute)).join(d);
+    return values.map((Object value) => doAttr(env, value, attribute)).join(d);
   }
 
   return values.join(d);
 }
 
-dynamic doLast(Iterable values) => values.last;
+Object doLast(Iterable<Object> values) => values.last;
 
-List doList(dynamic value) {
+List<Object> doList(Object value) {
   if (value is Iterable) return value.toList();
   if (value is String) return value.split('');
-  return [value];
+  return <Object>[value];
 }
 
-String doLower(dynamic value) => repr(value, false).toLowerCase();
+String doLower(Object value) => repr(value, false).toLowerCase();
 
-dynamic doRandom(List values) {
-  final length = values.length;
-  return values[Random(DateTime.now().millisecondsSinceEpoch).nextInt(length)];
+final Random _rnd = Random();
+Object doRandom(List<Object> values) {
+  int length = values.length;
+  return values[_rnd.nextInt(length)];
 }
 
-String doString(dynamic value) => repr(value, false);
+String doString(Object value) => repr(value, false);
 
-num doSum(Iterable values, {String attribute, num start = 0}) {
+num doSum(Environment env, Iterable<Object> values,
+    {String attribute, num start = 0}) {
   if (attribute != null) {
-    values = values.map((val) => doAttr(val, attribute));
+    values = values.map<Object>((Object val) => doAttr(env, val, attribute));
   }
 
-  return values.cast<num>().fold(start, (s, n) => s + n);
+  return values.cast<num>().fold<num>(start, (num s, num n) => s + n);
 }
 
-String doTrim(dynamic value) => repr(value, false).trim();
+String doTrim(Object value) => repr(value, false).trim();
 
-String doUpper(dynamic value) => repr(value, false).toUpperCase();
+String doUpper(Object value) => repr(value, false).toUpperCase();

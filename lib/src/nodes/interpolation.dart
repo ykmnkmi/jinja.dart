@@ -14,14 +14,14 @@ class Interpolation extends Statement {
 
   @override
   void accept(StringBuffer buffer, Context context) {
-    for (var node in nodes) {
+    for (Node node in nodes) {
       node.accept(buffer, context);
     }
   }
 
   @override
   String toDebugString([int level = 0]) =>
-      nodes.map((node) => node.toDebugString(level)).join('\n');
+      nodes.map<String>((Node node) => node.toDebugString(level)).join('\n');
 
   @override
   String toString() => 'Interpolation($nodes)';

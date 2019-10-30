@@ -10,7 +10,14 @@ class Neg extends UnaryExpression {
   String get symbol => '-';
 
   @override
-  dynamic resolve(Context context) => -expr.resolve(context);
+  Object resolve(Context context) {
+    Object result = expr.resolve(context);
+
+    if (result is num) return -result;
+
+    // TODO: Neg exception message
+    throw Exception();
+  }
 
   @override
   String toDebugString([int level = 0]) =>

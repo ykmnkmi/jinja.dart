@@ -1,4 +1,4 @@
-import 'dart:math';
+import 'dart:math' show pow;
 
 import '../core.dart';
 
@@ -15,9 +15,15 @@ class Pow extends BinaryExpression {
   String get symbol => '**';
 
   @override
-  dynamic resolve(Context context) =>
-      // ignore: argument_type_not_assignable
-      pow(left.resolve(context), right.resolve(context));
+  Object resolve(Context context) {
+    Object left = this.left.resolve(context);
+    Object right = this.right.resolve(context);
+
+    if (left is num && right is num) return pow(left, right);
+
+    // TODO: Pow exception message
+    throw Exception();
+  }
 
   @override
   String toString() => 'Pow($left, $right)';

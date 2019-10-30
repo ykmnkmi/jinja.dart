@@ -13,9 +13,9 @@ class ForStatement extends Statement {
 
   final int _targetsLen;
 
-  void unpack(Map<String, dynamic> data, dynamic current) {
+  void unpack(Map<String, Object> data, Object current) {
     if (current is Iterable) {
-      var list = current.toList(growable: false);
+      List<Object> list = current.toList();
 
       if (list.length < _targetsLen) {
         throw ArgumentError('not enough values to unpack '
@@ -27,20 +27,17 @@ class ForStatement extends Statement {
             'too many values to unpack (expected $_targetsLen)');
       }
 
-      if (list is List<MapEntry>) {
-        list = list.map((e) => [e.key, e.value]).toList(growable: false);
-      }
-
-      for (var i = 0; i < _targetsLen; i++) {
+      for (int i = 0; i < _targetsLen; i++) {
         data[targets[i]] = list[i];
       }
-    } else {}
+    }
   }
 
-  Map<String, dynamic> getDataForContext(
-      List values, int i, Undefined undefined) {
-    dynamic prev = undefined, next = undefined;
-    var current = values[i];
+  Map<String, Object> getDataForContext(
+      List<Object> values, int i, Undefined undefined) {
+    Object prev = undefined;
+    Object next = undefined;
+    Object current = values[i];
 
     if (i > 0) prev = values[i - 1];
     if (i < values.length - 1) next = values[i + 1];
@@ -51,16 +48,12 @@ class ForStatement extends Statement {
       return true;
     }
 
-    final data = <String, dynamic>{
+    Map<String, Object> data = <String, Object>{
       'loop': LoopContext(i, values.length, prev, next, changed),
     };
 
     if (targets.length == 1) {
-      if (current is MapEntry) {
-        data[targets[0]] = [current.key, current.value];
-      } else {
-        data[targets[0]] = current;
-      }
+      data[targets[0]] = current;
     } else {
       unpack(data, current);
     }
@@ -68,35 +61,38 @@ class ForStatement extends Statement {
     return data;
   }
 
-  void render(List list, Context context, StringBuffer buffer) {
-    for (var i = 0; i < list.length; i++) {
-      final data = getDataForContext(list, i, context.env.undefined);
-      context.apply(data, (context) {
+  void render(List<Object> list, Context context, StringBuffer buffer) {
+    for (int i = 0; i < list.length; i++) {
+      Map<String, Object> data =
+          getDataForContext(list, i, context.env.undefined);
+      context.apply(data, (Context context) {
         body.accept(buffer, context);
       });
     }
   }
 
-  void loopIterable(Iterable values, Context context, StringBuffer buffer) {
-    final list = values.toList(growable: false);
+  void loopIterable(
+      Iterable<Object> values, Context context, StringBuffer buffer) {
+    List<Object> list = values.toList();
     render(list, context, buffer);
   }
 
-  void loopMap(Map dict, Context context, StringBuffer buffer) {
-    final list = dict.entries
-        .map((entry) => [entry.key, entry.value])
-        .toList(growable: false);
+  void loopMap(Map<Object, Object> dict, Context context, StringBuffer buffer) {
+    List<List<Object>> list = dict.entries
+        .map((MapEntry<Object, Object> entry) =>
+            <Object>[entry.key, entry.value])
+        .toList();
     render(list, context, buffer);
   }
 
   void loopString(String value, Context context, StringBuffer buffer) {
-    final list = value.split('');
+    List<String> list = value.split('');
     render(list, context, buffer);
   }
 
   @override
   void accept(StringBuffer buffer, Context context) {
-    final iterable = this.iterable.resolve(context);
+    Object iterable = this.iterable.resolve(context);
     if (iterable == null) throw ArgumentError.notNull();
 
     if (iterable is Iterable && iterable.isNotEmpty) {
@@ -112,7 +108,7 @@ class ForStatement extends Statement {
 
   @override
   String toDebugString([int level = 0]) {
-    final buffer = StringBuffer(' ' * level);
+    StringBuffer buffer = StringBuffer(' ' * level);
     buffer.writeln('for ${targets.join(', ')} in ${iterable.toDebugString()}');
     buffer.write('${body.toDebugString(level + 1)}');
 
@@ -128,7 +124,7 @@ class ForStatement extends Statement {
 
   @override
   String toString() {
-    final buffer = StringBuffer('For($targets, $iterable, $body}');
+    StringBuffer buffer = StringBuffer('For($targets, $iterable, $body}');
     if (orElse != null) buffer.write(', orElse: $orElse');
     buffer.write(')');
     return buffer.toString();
@@ -146,14 +142,14 @@ class ForStatementWithFilter extends ForStatement {
 
   final Expression filter;
 
-  Map<String, dynamic> getDataForFilter(List values, int i) {
-    var current = values[i];
+  Map<String, Object> getDataForFilter(List<Object> values, int i) {
+    Object current = values[i];
 
-    final data = <String, dynamic>{};
+    Map<String, Object> data = <String, Object>{};
 
     if (targets.length == 1) {
       if (current is MapEntry) {
-        data[targets.first] = [current.key, current.value];
+        data[targets.first] = <Object>[current.key, current.value];
       } else {
         data[targets.first] = current;
       }
@@ -164,14 +160,14 @@ class ForStatementWithFilter extends ForStatement {
     return data;
   }
 
-  List<dynamic> filterValues(Iterable values, Context context) {
-    final list = values.toList(growable: false);
-    final filteredList = [];
+  List<Object> filterValues(Iterable<Object> values, Context context) {
+    List<Object> list = values.toList();
+    List<Object> filteredList = <Object>[];
 
-    for (var i = 0; i < list.length; i++) {
-      final data = getDataForFilter(list, i);
+    for (int i = 0; i < list.length; i++) {
+      Map<String, Object> data = getDataForFilter(list, i);
 
-      context.apply(data, (context) {
+      context.apply(data, (Context context) {
         if (toBool(filter.resolve(context))) filteredList.add(list[i]);
       });
     }
@@ -180,27 +176,30 @@ class ForStatementWithFilter extends ForStatement {
   }
 
   @override
-  void loopIterable(Iterable values, Context context, StringBuffer buffer) {
-    final list = filterValues(values, context);
+  void loopIterable(
+      Iterable<Object> values, Context context, StringBuffer buffer) {
+    List<Object> list = filterValues(values, context);
     render(list, context, buffer);
   }
 
   @override
-  void loopMap(Map dict, Context context, StringBuffer buffer) {
-    final list = filterValues(
-        dict.entries.map((entry) => [entry.key, entry.value]), context);
+  void loopMap(Map<Object, Object> dict, Context context, StringBuffer buffer) {
+    List<Object> list = filterValues(
+        dict.entries.map((MapEntry<Object, Object> entry) =>
+            <Object>[entry.key, entry.value]),
+        context);
     render(list, context, buffer);
   }
 
   @override
   void loopString(String value, Context context, StringBuffer buffer) {
-    final list = filterValues(value.split(''), context);
+    List<Object> list = filterValues(value.split(''), context);
     render(list, context, buffer);
   }
 
   @override
   String toDebugString([int level = 0]) {
-    final buffer = StringBuffer(' ' * level);
+    StringBuffer buffer = StringBuffer(' ' * level);
     buffer.write('for ${targets.join(', ')} in ${iterable.toDebugString()}');
 
     if (filter != null) {
@@ -223,7 +222,7 @@ class ForStatementWithFilter extends ForStatement {
 
   @override
   String toString() {
-    final buffer =
+    StringBuffer buffer =
         StringBuffer('ForWithFilter($targets, $iterable, $body, $filter}');
     if (orElse != null) buffer.write(', orElse: $orElse');
     buffer.write(')');
@@ -233,38 +232,114 @@ class ForStatementWithFilter extends ForStatement {
 
 class LoopContext {
   LoopContext(
-      this.index0, this.length, this.previtem, this.nextitem, this.changed)
-      : _cycle = CycleWrapper((args) => args[index0 % args.length]);
+      this.index0, this.length, this.previtem, this.nextitem, this.changed);
 
   final int index0;
   final int length;
-  final dynamic previtem;
-  final dynamic nextitem;
-  final bool Function(dynamic) changed;
-
-  dynamic _cycle;
-  dynamic get cycle => _cycle;
+  final Object previtem;
+  final Object nextitem;
+  final bool Function(Object object) changed;
 
   int get index => index0 + 1;
   bool get first => index0 == 0;
   bool get last => index == length;
   int get revindex => length - index0;
   int get revindex0 => length - index;
-}
 
-class CycleWrapper {
-  CycleWrapper(this.function);
+  // look at this
+  // https://github.com/flutter/engine/blob/master/lib/ui/hash_codes.dart#L42
+  Object cycle(Object arg1, Object arg2,
+      [Object arg3,
+      Object arg4,
+      Object arg5,
+      Object arg6,
+      Object arg7,
+      Object arg8,
+      Object arg9]) {
+    List<Object> args;
 
-  final dynamic Function(List) function;
-
-  dynamic call();
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) {
-    if (invocation.memberName == #call) {
-      return function(invocation.positionalArguments);
+    if (arg3 != null) {
+      if (arg4 != null) {
+        if (arg5 != null) {
+          if (arg6 != null) {
+            if (arg7 != null) {
+              if (arg8 != null) {
+                if (arg9 != null) {
+                  args = <Object>[
+                    arg1,
+                    arg2,
+                    arg3,
+                    arg4,
+                    arg5,
+                    arg6,
+                    arg7,
+                    arg8,
+                    arg9,
+                  ];
+                } else {
+                  args = <Object>[
+                    arg1,
+                    arg2,
+                    arg3,
+                    arg4,
+                    arg5,
+                    arg6,
+                    arg7,
+                    arg8,
+                  ];
+                }
+              } else {
+                args = <Object>[
+                  arg1,
+                  arg2,
+                  arg3,
+                  arg4,
+                  arg5,
+                  arg6,
+                  arg7,
+                ];
+              }
+            } else {
+              args = <Object>[
+                arg1,
+                arg2,
+                arg3,
+                arg4,
+                arg5,
+                arg6,
+              ];
+            }
+          } else {
+            args = <Object>[
+              arg1,
+              arg2,
+              arg3,
+              arg4,
+              arg5,
+            ];
+          }
+        } else {
+          args = <Object>[
+            arg1,
+            arg2,
+            arg3,
+            arg4,
+          ];
+        }
+      } else {
+        args = <Object>[
+          arg1,
+          arg2,
+          arg3,
+        ];
+      }
+    } else {
+      args = <Object>[
+        arg1,
+        arg2,
+      ];
     }
 
-    return super.noSuchMethod(invocation);
+    return args[index0 % args.length];
   }
 }
