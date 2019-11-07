@@ -29,7 +29,7 @@ class Call extends Expression {
       Object argsDyn = this.argsDyn.resolve(context);
 
       if (argsDyn is Iterable) {
-        args = <Object>[args, ...argsDyn];
+        args.addAll(argsDyn);
       } else {
         // TODO: argsDyn exception message
         throw Exception();

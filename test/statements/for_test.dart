@@ -1,11 +1,12 @@
 import 'package:jinja/jinja.dart';
+import 'package:jinja/mirrors.dart';
 import 'package:jinja/src/exceptions.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('for', () {
-    Environment env = Environment();
+    Environment env = Environment(getField: getField);
 
     test('simple', () {
       Template template =
