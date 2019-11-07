@@ -4,10 +4,10 @@
 
 [Jinja 2](jinja) server-side template engine port for Dart 2. Variables, expressions, control structures and template inheritance.
 
-# Current:
+# Current work: simplify, remove mirrors, template generators
 
-Done
-----
+## Done
+
 - Loaders
   - FileSystemLoader
   - MapLoader (DictLoader)
@@ -26,8 +26,8 @@ Done
   - Extends
   - Block
 
-Using it
---------
+## Example
+
 Add package to your `pubspec.yaml` as a dependency
 
 ```yaml
@@ -47,7 +47,7 @@ var template = Template('...source...', blockStart: '...');
 var env = Environment(blockStart: '...', ... );
 var template = env.fromString('...source...');
 
-template.render(key: value, ...);
+template.render({'key': value, ...});
 ```
 
 Note: all variables and literals used in the template are **dart objects** with their own fields and methods.
