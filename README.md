@@ -4,7 +4,9 @@
 
 [Jinja 2](jinja) server-side template engine port for Dart 2. Variables, expressions, control structures and template inheritance.
 
-# Current work: simplify, remove mirrors, template generators
+## Current
+
+Simplify, remove mirrors, template generators
 
 ## Done
 
