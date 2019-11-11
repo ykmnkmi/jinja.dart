@@ -1,6 +1,6 @@
 import '../../context.dart';
 import '../../exceptions.dart';
-import '../../namespace.dart';
+import '../../runtime.dart';
 import '../core.dart';
 
 abstract class SetStatement extends Statement {

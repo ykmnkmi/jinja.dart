@@ -4,8 +4,6 @@ import '../../exceptions.dart';
 import '../core.dart';
 
 class ExtendsStatement extends Statement {
-  static const String containerKey = '__extend';
-
   ExtendsStatement(this.pathOrTemplate);
 
   final Expression pathOrTemplate;
@@ -14,7 +12,7 @@ class ExtendsStatement extends Statement {
 
   @override
   void accept(StringBuffer buffer, Context context) {
-    final pathOrTemplate = this.pathOrTemplate.resolve(context);
+    Object pathOrTemplate = this.pathOrTemplate.resolve(context);
 
     Template template;
 
@@ -23,10 +21,10 @@ class ExtendsStatement extends Statement {
     } else if (pathOrTemplate is String) {
       template = context.env.getTemplate(pathOrTemplate);
     } else {
-      throw TemplatesNotFound(); // TODO: add template name
+      throw TemplatesNotFound('$pathOrTemplate');
     }
 
-    for (var block in blocks) {
+    for (ExtendedBlockStatement block in blocks) {
       context.blockContext.push(block.name, block);
     }
 
@@ -35,10 +33,10 @@ class ExtendsStatement extends Statement {
 
   @override
   String toDebugString([int level = 0]) {
-    final buffer = StringBuffer(' ' * level);
+    StringBuffer buffer = StringBuffer(' ' * level);
     buffer.write('# extends: ${pathOrTemplate.toDebugString()}');
 
-    blocks.forEach((block) {
+    blocks.forEach((ExtendedBlockStatement block) {
       buffer.write('\n${block.toDebugString(level)}');
     });
 
@@ -59,15 +57,15 @@ class BlockStatement extends Statement {
 
   @override
   void accept(StringBuffer buffer, Context context) {
-    final blockContext = context.blockContext;
+    ExtendedBlockContext blockContext = context.blockContext;
 
     if (blockContext.has(name)) {
-      final child = blockContext.blocks[name].last;
+      ExtendedBlockStatement child = blockContext.blocks[name].last;
 
       if (child.hasSuper) {
-        final childContext = this.childContext(buffer, context);
+        Map<String, Object> childContext = this.childContext(buffer, context);
 
-        context.apply(childContext, (context) {
+        context.apply(childContext, (Context context) {
           child.accept(buffer, context);
         });
       } else {
@@ -79,7 +77,7 @@ class BlockStatement extends Statement {
   }
 
   Map<String, Object> childContext(StringBuffer buffer, Context context) {
-    return {
+    return <String, Object>{
       'super': () {
         context.removeLast('super');
         body.accept(buffer, context);
@@ -89,7 +87,7 @@ class BlockStatement extends Statement {
 
   @override
   String toDebugString([int level = 0]) {
-    final buffer = StringBuffer(' ' * level);
+    StringBuffer buffer = StringBuffer(' ' * level);
     buffer.write('block $name');
 
     if (scoped) {
@@ -119,16 +117,16 @@ class ExtendedBlockStatement extends BlockStatement {
 
   @override
   void accept(StringBuffer buffer, Context context) {
-    final blockContext = context.blockContext;
+    ExtendedBlockContext blockContext = context.blockContext;
 
     if (blockContext.has(name)) {
-      final child = blockContext.child(this);
+      ExtendedBlockStatement child = blockContext.child(this);
 
       if (child != null) {
         if (child.hasSuper) {
-          final childContext = this.childContext(buffer, context);
+          Map<String, Object> childContext = this.childContext(buffer, context);
 
-          context.apply(childContext, (context) {
+          context.apply(childContext, (Context context) {
             child.accept(buffer, context);
           });
 
@@ -167,8 +165,8 @@ class ExtendedBlockContext {
 
   ExtendedBlockStatement child(ExtendedBlockStatement current) {
     if (blocks.containsKey(current.name)) {
-      final blocks = this.blocks[current.name];
-      final ci = blocks.indexOf(current);
+      List<ExtendedBlockStatement> blocks = this.blocks[current.name];
+      int ci = blocks.indexOf(current);
 
       if (ci > 0) {
         return blocks[ci - 1];

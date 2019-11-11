@@ -2,6 +2,10 @@
 - adding token stream
 - adding extensions
 
+## 0.2.0
+- remove mirrors
+- add getField to Environment
+
 ## 0.1.2
 - fix example
 
@@ -17,7 +21,7 @@
 - add namespace
 - environment
   - add leftStrip and trimBlocks
-  - add extensions
+  - add extensions (can change)
   - rename:
     - stmtOpen to blockStart
     - stmtClose to blockEnd

@@ -1,3 +1,4 @@
+import '../../exceptions.dart';
 import '../core.dart';
 
 class MoreEqual extends BinaryExpression {
@@ -22,7 +23,7 @@ class MoreEqual extends BinaryExpression {
     }
 
     // TODO: MoreEqual exception message
-    throw Exception();
+    throw TemplateRuntimeError();
   }
 
   @override
@@ -51,7 +52,7 @@ class More extends BinaryExpression {
     }
 
     // TODO: More exception message
-    throw Exception();
+    throw TemplateRuntimeError();
   }
 
   @override
@@ -80,7 +81,7 @@ class Less extends BinaryExpression {
     }
 
     // TODO: Less exception message
-    throw Exception();
+    throw TemplateRuntimeError();
   }
 
   @override
@@ -109,7 +110,7 @@ class LessEqual extends BinaryExpression {
     }
 
     // TODO: LessEqual exception message
-    throw Exception();
+    throw TemplateRuntimeError();
   }
 
   @override

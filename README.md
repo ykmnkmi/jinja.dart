@@ -2,11 +2,23 @@
 
 [![Pub](https://img.shields.io/pub/v/jinja.svg)](https://pub.dartlang.org/packages/jinja)
 
-[Jinja 2](jinja) server-side template engine port for Dart 2. Variables, expressions, control structures and template inheritance.
+[Jinja 2](http://jinja.pocoo.org/) server-side template engine port for Dart 2. Variables, expressions, control structures and template inheritance.
 
 ## Current
 
 Simplify, remove mirrors, template generators
+
+## Breaking changes
+
+...text_here...
+
+```dart
+import 'package:jinja/jinja.dart';
+import 'package:jinja/mirrors.dart';
+// code ...
+var env = Environment(getField: getField, ...);
+var template = env.fromString('{{ object.field }}');
+```
 
 ## Done
 
@@ -16,7 +28,7 @@ Simplify, remove mirrors, template generators
 - Comments
 - Variables
 - Expressions: variables, literals, subscription, math, comparison, logic, tests, filters, calls
-- Filters (not all, see [here](filters))
+- Filters (not all, see [here][filters])
 - Tests
 - Statements
   - Filter
@@ -41,15 +53,16 @@ Import library and use it:
 
 ```dart
 import 'package:jinja/jinja.dart';
-
 // code ...
-
-var template = Template('...source...', blockStart: '...');
+var template = Template('...source...', blockStart: '...', ...);
 // or
 var env = Environment(blockStart: '...', ... );
 var template = env.fromString('...source...');
 
-template.render({'key': value, ...});
+// overrides noSuchMethod
+template.render(key: value, ...);
+// or
+template.renderMap({'key': value, ...});
 ```
 
 Note: all variables and literals used in the template are **dart objects** with their own fields and methods.
@@ -63,6 +76,5 @@ Contributing
 If you found a bug, just create a [new issue][new_issue] or even better fork
 and issue a pull request with you fix.
 
-[jinja]: http://jinja.pocoo.org/
-[filter]: https://github.com/ykmnkmi/dart-jinja/blob/master/lib/src/filters.dart
+[filters]: https://github.com/ykmnkmi/dart-jinja/blob/master/lib/src/filters.dart
 [new_issue]: https://github.com/ykmnkmi/dart-jinja/issues/new

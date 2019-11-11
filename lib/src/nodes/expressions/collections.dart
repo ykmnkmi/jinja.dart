@@ -10,13 +10,13 @@ class ListExpression extends Expression {
       values.map<Object>((Expression value) => value.resolve(context)).toList();
 
   @override
-  String toDebugString([int level = 0]) =>
-      ' ' * level +
-      '[' +
-      values
-          .map<Object>((Expression value) => value.toDebugString())
-          .join(', ') +
-      ']';
+  String toDebugString([int level = 0]) {
+    StringBuffer buffer = StringBuffer(' ' * level + '[');
+    buffer.writeAll(
+        values.map<String>((Expression value) => value.toDebugString()), ',');
+    buffer.write(']');
+    return buffer.toString();
+  }
 
   @override
   String toString() => 'ListExpression($values)';
@@ -28,9 +28,9 @@ class MapExpression extends Expression {
   final Map<Expression, Expression> values;
 
   @override
-  Map resolve(Context context) => values.map<Object, Object>((Expression key,
-          Expression value) =>
-      MapEntry<Object, Object>(key.resolve(context), value.resolve(context)));
+  Map<Object, Object> resolve(Context context) => values.map<Object, Object>(
+      (Expression key, Expression value) => MapEntry<Object, Object>(
+          key.resolve(context), value.resolve(context)));
 
   @override
   String toDebugString([int level = 0]) {
@@ -66,11 +66,13 @@ class TupleExpression extends Expression implements CanAssign {
       items.map<String>((Expression item) => (item as Name).name).toList();
 
   @override
-  String toDebugString([int level = 0]) =>
-      ' ' * level +
-      '(' +
-      items.map<String>((Expression item) => item.toDebugString()).join(', ') +
-      ')';
+  String toDebugString([int level = 0]) {
+    StringBuffer buffer = StringBuffer(' ' * level + '[');
+    buffer.writeAll(
+        items.map<String>((Expression item) => item.toDebugString()), ', ');
+    buffer.write(']');
+    return buffer.toString();
+  }
 
   @override
   String toString() => 'TupleExpression($items)';

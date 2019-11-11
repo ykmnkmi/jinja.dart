@@ -70,14 +70,8 @@ class Parser {
 
   final Map<String, Extension> extensions;
 
-  final Set<String> keywords = Set<String>.of(<String>[
-    'not',
-    'and',
-    'or',
-    'is',
-    'if',
-    'else',
-  ]);
+  final Set<String> keywords =
+      Set<String>.of(<String>['not', 'and', 'or', 'is', 'if', 'else']);
 
   final List<ExtendsStatement> extendsStatements = <ExtendsStatement>[];
   final List<List<Pattern>> endRulesStack = <List<Pattern>>[];
@@ -228,10 +222,10 @@ class Parser {
             Extension ext = extensions[tagName];
 
             if (ext == null) {
-              // TODO: error?
-            } else {
-              return ext.parse(this);
+              error('ext not found: $ext');
             }
+
+            return ext.parse(this);
           }
       }
 
@@ -265,10 +259,11 @@ class Parser {
             .sublist(1)
             .any((Node node) => node is ExtendsStatement)) {
           throw TemplateSyntaxError(
-              'only one extends statement contains in template',
-              path: scanner.sourceUrl,
-              line: state.line,
-              column: state.column);
+            'only one extends statement contains in template',
+            path: scanner.sourceUrl,
+            line: state.line,
+            column: state.column,
+          );
         }
 
         body.nodes
@@ -762,8 +757,9 @@ class Parser {
       expr = Literal<Object>(null);
     } else if (scanner.scan(nameReg)) {
       String name = scanner.lastMatch[1];
-      expr = Name(name);
-      onParseNameController.add(expr as Name);
+      Name nameExpr = Name(name);
+      expr = nameExpr;
+      onParseNameController.add(nameExpr);
     } else if (scanner.scan(stringStartReg)) {
       String body;
 
@@ -931,13 +927,16 @@ class Parser {
   Expression parseSubscript(Expression expr) {
     if (scanner.scan(dotReg)) {
       expect(nameReg, name: 'field identifier');
-      return Field(scanner.lastMatch[1], expr);
+
+      return Field(expr, scanner.lastMatch[1]);
     }
 
     if (scanner.scan(lBracketReg)) {
       Expression item = parseExpression();
+
       expect(rBracketReg);
-      return Item(item, expr);
+
+      return Item(expr, item);
     }
 
     error('expected subscript expression');
@@ -945,6 +944,7 @@ class Parser {
 
   Call parseCall({Expression expr}) {
     expect(lParenReg);
+
     List<Expression> args = <Expression>[];
     Map<String, Expression> kwargs = <String, Expression>{};
     Expression argsDyn, kwargsDyn;
@@ -996,6 +996,7 @@ class Parser {
 
   Expression _parseFilter(Expression expr) {
     expect(nameReg, name: 'filter name');
+
     String name = scanner.lastMatch[1];
 
     if (scanner.matches(lParenReg)) {

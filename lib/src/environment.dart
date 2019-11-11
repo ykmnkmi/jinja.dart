@@ -1,42 +1,32 @@
 import 'package:meta/meta.dart';
 
 import 'defaults.dart';
+import 'exceptions.dart';
 import 'ext.dart';
 import 'loaders.dart';
-import 'namespace.dart';
 import 'nodes.dart';
 import 'parser.dart';
-import 'undefined.dart';
+import 'runtime.dart';
 
 typedef FieldGetter = Object Function(Object object, String field);
 Object defaultFieldGetter(Object object, String field) {
-  if (object is NameSpace) {
-    return object[field];
-  }
-
-  // TODO: getField error text
-  throw Exception('getField not implemented');
+  throw TemplateRuntimeError('getField not implemented');
 }
 
 typedef ItemGetter = Object Function(Object object, Object key);
-Object defaultItemGetter(Object object, Object key) {
-  if (object is NameSpace && key is String) {
+Object defaultItemGetter(dynamic object, Object key) {
+  try {
     return object[key];
+  } catch (e) {
+    throw TemplateRuntimeError(e.toString());
   }
-
-  if (object is Map && object.containsKey(key)) {
-    return object[key];
-  }
-
-  // TODO: getItem error text
-  throw Exception('object must be map');
 }
 
 typedef Finalizer = Object Function(Object value);
 Object defaultFinalizer(Object value) {
   value = value ?? '';
-  if (value is! String) return repr(value, false);
-  return value;
+  if (value is String) return value;
+  return repr(value, false);
 }
 
 /// The core component of Jinja 2 is the Environment. It contains
@@ -144,9 +134,6 @@ class Environment {
 
   final Map<String, Template> templates = <String, Template>{};
 
-  // TODO(env): compile templates
-  // Future<void> compileTemplates() async {}
-
   /// If `path` is not `null` template stored in environment cache.
   Template fromString(String source, {String path}) {
     Template template = Parser(this, source, path: path).parse();
@@ -222,13 +209,16 @@ class Template extends Node {
     bool trimBlocks = false,
     bool leftStripBlocks = false,
     Finalizer finalize = defaultFinalizer,
-    Loader loader,
+    FieldGetter getField = defaultFieldGetter,
+    ItemGetter getItem = defaultItemGetter,
     bool optimize = true,
     Undefined undefined = const Undefined(),
     Iterable<Extension> extensions = const <Extension>[],
+    Map<String, Function> envFilters = const <String, Function>{},
     Map<String, Function> filters = const <String, Function>{},
     Map<String, Function> tests = const <String, Function>{},
     Map<String, Object> globals = const <String, Object>{},
+    Loader loader,
   }) {
     List<Object> list = <Object>[
       blockStart,
@@ -241,17 +231,21 @@ class Template extends Node {
       trimBlocks,
       leftStripBlocks,
       finalize,
-      optimize,
+      getField,
+      getItem,
       undefined,
+      optimize,
       extensions,
+      envFilters,
       filters,
       tests,
       globals,
+      loader,
     ];
 
     Environment env = _shared.containsKey(list)
         ? _shared[list]
-        : Environment._(
+        : Environment(
             blockStart: blockStart,
             blockEnd: blockEnd,
             variableStart: variableStart,
@@ -262,24 +256,33 @@ class Template extends Node {
             trimBlocks: trimBlocks,
             leftStripBlocks: leftStripBlocks,
             finalize: finalize,
-            optimize: optimize,
+            getField: getField,
+            getItem: getItem,
             undefined: undefined,
+            optimize: optimize,
             extensions: extensions,
-            filters: Map<String, Function>.of(defaultFilters)..addAll(filters),
-            tests: Map<String, Function>.of(defaultTests)..addAll(tests),
-            globals: Map<String, Object>.of(defaultContext)..addAll(globals),
+            envFilters: envFilters,
+            filters: filters,
+            tests: tests,
+            globals: globals,
+            loader: loader,
           );
     _shared[list] = env;
     return Parser(env, source).parse();
   }
 
   Template.from({@required this.body, @required this.env, this.path})
-      : blocks = <String, BlockStatement>{};
+      : blocks = <String, BlockStatement>{} {
+    _render = RenderWrapper(([Map<String, Object> data]) => renderMap(data));
+  }
 
   final Node body;
   final Environment env;
   final String path;
   final Map<String, BlockStatement> blocks;
+
+  dynamic _render;
+  Function get render => _render as Function;
 
   void _setContext(StringBuffer buffer, Context context) {
     NameSpace self = NameSpace();
@@ -299,7 +302,7 @@ class Template extends Node {
     body.accept(buffer, context);
   }
 
-  String render([Map<String, Object> data]) {
+  String renderMap([Map<String, Object> data]) {
     StringBuffer buffer = StringBuffer();
     Context context = Context(data: data, env: env);
     _setContext(buffer, context);
@@ -322,4 +325,25 @@ class Template extends Node {
 
   @override
   String toString() => 'Template($path, $body)';
+}
+
+// TODO: remove deprecated
+// ignore: deprecated_extends_function
+class RenderWrapper extends Function {
+  RenderWrapper(this.function);
+
+  final Function function;
+
+  Object call() => function();
+
+  @override
+  Object noSuchMethod(Invocation invocation) {
+    if (invocation.memberName == #call) {
+      return function(invocation.namedArguments.map<String, Object>(
+          (Symbol key, Object value) =>
+              MapEntry<String, Object>(getSymbolName(key), value)));
+    }
+
+    return super.noSuchMethod(invocation);
+  }
 }

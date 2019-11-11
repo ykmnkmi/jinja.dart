@@ -1,4 +1,4 @@
-import 'undefined.dart';
+import 'runtime.dart';
 
 Iterable<int> range(int n) sync* {
   for (int i = 0; i < n; i++) {
@@ -6,7 +6,7 @@ Iterable<int> range(int n) sync* {
   }
 }
 
-bool toBool(dynamic value) {
+bool toBool(Object value) {
   if (value is Undefined || value == null) return false;
   if (value is bool) return value;
   if (value is num) return value != 0.0;
@@ -16,7 +16,7 @@ bool toBool(dynamic value) {
   return true;
 }
 
-String repr(dynamic object, [bool reprString = true]) {
+String repr(Object object, [bool reprString = true]) {
   if (object is Iterable) {
     StringBuffer buffer = StringBuffer();
     buffer.write('[');
@@ -37,4 +37,9 @@ String repr(dynamic object, [bool reprString = true]) {
   } else {
     return object.toString();
   }
+}
+
+String getSymbolName(Symbol symbol) {
+  String fullName = symbol.toString();
+  return fullName.substring(8, fullName.length - 2);
 }

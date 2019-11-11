@@ -1,12 +1,12 @@
 import '../../exceptions.dart';
-import '../../undefined.dart';
+import '../../runtime.dart';
 import '../core.dart';
 
 class Field extends Expression {
-  Field(this.attr, this.expr);
+  Field(this.expr, this.attr);
 
-  final String attr;
   final Expression expr;
+  final String attr;
 
   @override
   Object resolve(Context context) {
@@ -16,7 +16,8 @@ class Field extends Expression {
       throw UndefinedError();
     }
 
-    // TODO: env.getField
+    if (value is LoopContext) return value[attr];
+    if (value is NameSpace) return value[attr];
     return context.env.getField(value, attr);
   }
 
@@ -24,21 +25,20 @@ class Field extends Expression {
   String toDebugString([int level = 0]) => '${expr.toDebugString(level)}.$attr';
 
   @override
-  String toString() => 'Field($attr, $expr)';
+  String toString() => 'Field($expr, $attr)';
 }
 
 class Item extends Expression {
-  Item(this.item, this.expr);
+  Item(this.expr, this.item);
 
-  final Expression item;
   final Expression expr;
+  final Expression item;
 
   @override
   Object resolve(Context context) {
     Object value = expr.resolve(context);
     Object item = this.item.resolve(context);
 
-    // TODO: env.getItem
     return context.env.getItem(value, item);
   }
 
@@ -47,5 +47,5 @@ class Item extends Expression {
       '${expr.toDebugString(level)}[${item.toDebugString()}]';
 
   @override
-  String toString() => 'Item($item, $expr)';
+  String toString() => 'Item($expr, $item)';
 }

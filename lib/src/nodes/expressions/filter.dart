@@ -14,20 +14,23 @@ class Filter extends Expression {
   final Map<String, Expression> kwargs;
 
   @override
-  dynamic resolve(Context context) => filter(context, expr.resolve(context));
+  Object resolve(Context context) {
+    return filter(context, expr.resolve(context));
+  }
 
-  dynamic filter(Context context, Object value) => context.env.callFilter(
-        name,
-        args: [value]
-            .followedBy(args.map((arg) => arg.resolve(context)))
-            .toList(growable: false),
-        kwargs: kwargs.map((key, value) =>
-            MapEntry<Symbol, dynamic>(Symbol(key), value.resolve(context))),
-      );
+  Object filter(Context context, Object value) {
+    return context.env.callFilter(name,
+        args: <Object>[value]
+            .followedBy(
+                args.map<Object>((Expression arg) => arg.resolve(context)))
+            .toList(),
+        kwargs: kwargs.map<Symbol, Object>((String key, Expression value) =>
+            MapEntry<Symbol, Object>(Symbol(key), value.resolve(context))));
+  }
 
   @override
   String toDebugString([int level = 0]) {
-    final buffer = StringBuffer(' ' * level);
+    StringBuffer buffer = StringBuffer(' ' * level);
     if (expr != null) buffer.write('${expr.toDebugString()} | ');
     buffer.write(name);
     if (args.isEmpty && kwargs.isEmpty) return buffer.toString();
@@ -40,14 +43,16 @@ class Filter extends Expression {
     buffer.write('(');
 
     if (args.isNotEmpty) {
-      buffer.write(args.map((arg) => arg.toDebugString()).join(', '));
+      buffer.writeAll(
+          args.map<String>((Expression arg) => arg.toDebugString()), ', ');
     }
 
     if (kwargs.isNotEmpty) {
       if (args.isNotEmpty) buffer.write(', ');
-      buffer.write(kwargs.entries
-          .map((kwarg) => '${repr(kwarg.key)}: ${kwarg.value.toDebugString()}')
-          .join(', '));
+      buffer.writeAll(
+          kwargs.entries.map<String>((MapEntry<String, Expression> kwarg) =>
+              '${repr(kwarg.key)}: ${kwarg.value.toDebugString()}'),
+          ', ');
     }
 
     buffer.write(')');
@@ -56,7 +61,7 @@ class Filter extends Expression {
 
   @override
   String toString() {
-    final buffer = StringBuffer('Filter($name, $expr');
+    StringBuffer buffer = StringBuffer('Filter($name, $expr');
     if (args != null && args.isNotEmpty) buffer.write(', args: $args');
     if (kwargs != null && kwargs.isNotEmpty) buffer.write(', kwargs: $kwargs');
     buffer.write(')');

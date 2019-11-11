@@ -7,29 +7,29 @@ void main() {
 
     test('no paren for arg 1', () {
       Template template = env.fromString('{{ foo is sameas none }}');
-      expect(template.render(<String, Object>{'foo': null}), equals('true'));
+      expect(template.renderMap(<String, Object>{'foo': null}), equals('true'));
     });
 
     test('defined', () {
       Template template = env.fromString('{{ missing is defined }}|'
           '{{ true is defined }}');
-      expect(template.render(), equals('false|true'));
+      expect(template.renderMap(), equals('false|true'));
     });
 
     test('even', () {
       Template template = env.fromString('{{ 1 is even }}|{{ 2 is even }}');
-      expect(template.render(), equals('false|true'));
+      expect(template.renderMap(), equals('false|true'));
     });
 
     test('odd', () {
       Template template = env.fromString('{{ 1 is odd }}|{{ 2 is odd }}');
-      expect(template.render(), equals('true|false'));
+      expect(template.renderMap(), equals('true|false'));
     });
 
     test('lower', () {
       Template template =
           env.fromString('{{ "foo" is lower }}|{{ "FOO" is lower }}');
-      expect(template.render(), equals('true|false'));
+      expect(template.renderMap(), equals('true|false'));
     });
 
     test('type checks', () {
@@ -52,7 +52,7 @@ void main() {
           '{{ (10 ** 2) is number }}|'
           '{{ 3.14159 is number }}');
       expect(
-          template.render(<String, Object>{'mydict': <Object, Object>{}}),
+          template.renderMap(<String, Object>{'mydict': <Object, Object>{}}),
           equals('false|true|false|true|true|false|true|true|true|true|false|'
               'true|true|true|false|true|true|true'));
     });
@@ -61,13 +61,13 @@ void main() {
       Template template = env.fromString('{{ [1, 2, 3] is sequence }}|'
           '{{ "foo" is sequence }}|'
           '{{ 42 is sequence }}');
-      expect(template.render(), equals('true|true|false'));
+      expect(template.renderMap(), equals('true|true|false'));
     });
 
     test('upper', () {
       Template template =
           env.fromString('{{ "FOO" is upper }}|{{ "foo" is upper }}');
-      expect(template.render(), equals('true|false'));
+      expect(template.renderMap(), equals('true|false'));
     });
 
     test('equal to', () {
@@ -79,7 +79,7 @@ void main() {
           '{{ bar is eq ("ba" + "z") }}|'
           '{{ bar is eq bar }}|'
           '{{ bar is eq foo }}');
-      expect(template.render(<String, Object>{'foo': 12, 'bar': 'baz'}),
+      expect(template.renderMap(<String, Object>{'foo': 12, 'bar': 'baz'}),
           equals('true|false|true|true|false|true|true|false'));
     });
 
@@ -90,7 +90,7 @@ void main() {
           '{{ 2 is gt 1 }}|{{ 2 is gt 2 }}|{{ 2 is ge 2 }}|'
           '{{ 2 is ge 3 }}');
       expect(
-          template.render(<String, Object>{'foo': 12, 'bar': 'baz'}),
+          template.renderMap(<String, Object>{'foo': 12, 'bar': 'baz'}),
           equals('true|false|true|false|true|false|true|false|true|false|'
               'true|false'));
     });
@@ -98,20 +98,20 @@ void main() {
     test('same as', () {
       Template template = env.fromString('{{ foo is sameas false }}|'
           '{{ 0 is sameas false }}');
-      expect(template.render(<String, Object>{'foo': false}),
+      expect(template.renderMap(<String, Object>{'foo': false}),
           equals('true|false'));
     });
 
     test('greater than', () {
       Template template = env.fromString('{{ 1 is greaterthan 0 }}|'
           '{{ 0 is greaterthan 1 }}');
-      expect(template.render(), equals('true|false'));
+      expect(template.renderMap(), equals('true|false'));
     });
 
     test('less than', () {
       Template template = env.fromString('{{ 0 is lessthan 1 }}|'
           '{{ 1 is lessthan 0 }}');
-      expect(template.render(), equals('true|false'));
+      expect(template.renderMap(), equals('true|false'));
     });
 
     test('multiple test', () {
@@ -127,7 +127,7 @@ void main() {
           '"(us-east-1|ap-northeast-1)" '
           'or "stage" is matching "(dev|stage)" }}');
 
-      expect(template.render(), equals('false'));
+      expect(template.renderMap(), equals('false'));
       expect(
           items,
           equals(<List<Object>>[
@@ -146,7 +146,7 @@ void main() {
           '{{ 3 is in [1, 2] }}|'
           '{{ "foo" is in {"foo": 1}}}|'
           '{{ "baz" is in {"bar": 1}}}');
-      expect(template.render(),
+      expect(template.renderMap(),
           equals('true|true|false|true|false|true|false|true|false'));
     });
   });
