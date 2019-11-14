@@ -14,9 +14,18 @@ Simplify, remove mirrors, template generators
 
 ```dart
 import 'package:jinja/jinja.dart';
-import 'package:jinja/mirrors.dart';
-// code ...
-var env = Environment(getField: getField, ...);
+
+var env = Environment( /* ... */ );
+var template = env.fromString('{{ map["key"] }}');
+```
+
+...text_here...
+
+```dart
+import 'package:jinja/jinja.dart';
+import 'package:jinja/mirrors.dart' show getField;
+
+var env = Environment(getField: getField, /* ... */ );
 var template = env.fromString('{{ object.field }}');
 ```
 
@@ -54,15 +63,15 @@ Import library and use it:
 ```dart
 import 'package:jinja/jinja.dart';
 // code ...
-var template = Template('...source...', blockStart: '...', ...);
+var template = Template('...source...', blockStart: '...');
 // or
-var env = Environment(blockStart: '...', ... );
+var env = Environment(blockStart: '...');
 var template = env.fromString('...source...');
 
 // overrides noSuchMethod
-template.render(key: value, ...);
+template.render(key: value);
 // or
-template.renderMap({'key': value, ...});
+template.renderMap({'key': value});
 ```
 
 Note: all variables and literals used in the template are **dart objects** with their own fields and methods.
