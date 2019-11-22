@@ -4,7 +4,7 @@ import 'parser.dart';
 typedef T ExtensionParser<T extends Node>(Parser parser);
 
 abstract class Extension {
-  String get tag;
+  Set<String> get tags;
 
   Node parse(Parser parser);
 }

@@ -50,11 +50,13 @@ class Parser {
         variableEndReg = RegExp(getEndRule(env.variableEnd)),
         commentStartReg = RegExp(getBeginRule(env.commentStart)),
         commentEndReg = RegExp('.*' + getEndRule(env.commentEnd)),
-        extensions = <String, Extension>{} {
+        extensions = <String, ExtensionParser>{} {
     Set<Extension> extensionsSet = env.extensions.toSet();
 
     for (Extension ext in extensionsSet) {
-      extensions[ext.tag] = ext;
+      for (String tag in ext.tags) {
+        extensions[tag] = ext.parse;
+      }
     }
   }
 
@@ -68,7 +70,7 @@ class Parser {
   final RegExp commentStartReg;
   final RegExp commentEndReg;
 
-  final Map<String, Extension> extensions;
+  final Map<String, ExtensionParser> extensions;
 
   final Set<String> keywords =
       Set<String>.of(<String>['not', 'and', 'or', 'is', 'if', 'else']);
@@ -219,13 +221,13 @@ class Parser {
           return parseFilterBlock();
         default:
           if (extensions.containsKey(tagName)) {
-            Extension ext = extensions[tagName];
+            ExtensionParser extParser = extensions[tagName];
 
-            if (ext == null) {
-              error('ext not found: $ext');
+            if (extParser == null) {
+              error('parser not found: $tagName');
             }
 
-            return ext.parse(this);
+            return extParser(this);
           }
       }
 

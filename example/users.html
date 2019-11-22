@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}
+  {{ super() }}: users, {{ now() }}
+{% endblock %}
+{% block content %}
+  {% for user in users %}
+    {{ user["fullname"] }}, email: {{ user["email"] }}
+  {% else %}
+    No users
+  {% endfor %}
+{% endblock %}
