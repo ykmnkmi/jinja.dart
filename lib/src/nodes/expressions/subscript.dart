@@ -18,6 +18,7 @@ class Field extends Expression {
 
     if (value is LoopContext) return value[attr];
     if (value is NameSpace) return value[attr];
+    if (value is Map) return context.env.getItem(value, attr);
     return context.env.getField(value, attr);
   }
 

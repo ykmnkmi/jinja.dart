@@ -9,16 +9,17 @@ import 'parser.dart';
 import 'runtime.dart';
 
 typedef FieldGetter = Object Function(Object object, String field);
+typedef ItemGetter = Object Function(Object object, Object key);
+
 Object defaultFieldGetter(Object object, String field) {
   throw TemplateRuntimeError('getField not implemented');
 }
 
-typedef ItemGetter = Object Function(Object object, Object key);
 Object defaultItemGetter(dynamic object, Object key) {
   try {
     return object[key];
   } catch (e) {
-    throw TemplateRuntimeError(e.toString());
+    throw TemplateRuntimeError('$e');
   }
 }
 
@@ -77,8 +78,7 @@ class Environment {
       undefined: undefined,
       optimize: optimize,
       extensions: extensions,
-      envFilters: Map<String, Function>.of(defaultEnvFilters)
-        ..addAll(envFilters),
+      envFilters: Map<String, Function>.of(defaultEnvFilters)..addAll(envFilters),
       filters: Map<String, Function>.of(defaultFilters)..addAll(filters),
       tests: Map<String, Function>.of(defaultTests)..addAll(tests),
       globals: Map<String, Object>.of(defaultContext)..addAll(globals),
@@ -151,11 +151,8 @@ class Environment {
   }
 
   /// If [name] not found throws [Exception].
-  Object callFilter(
-    String name, {
-    List<Object> args = const <Object>[],
-    Map<Symbol, Object> kwargs = const <Symbol, Object>{},
-  }) {
+  Object callFilter(String name,
+      {List<Object> args = const <Object>[], Map<Symbol, Object> kwargs = const <Symbol, Object>{}}) {
     if (envFilters.containsKey(name) && envFilters[name] != null) {
       return Function.apply(envFilters[name], <Object>[this, ...args], kwargs);
     }
@@ -168,11 +165,8 @@ class Environment {
   }
 
   /// If [name] not found throws [Exception].
-  bool callTest(
-    String name, {
-    List<Object> args = const <Object>[],
-    Map<Symbol, Object> kwargs = const <Symbol, Object>{},
-  }) {
+  bool callTest(String name,
+      {List<Object> args = const <Object>[], Map<Symbol, Object> kwargs = const <Symbol, Object>{}}) {
     if (!tests.containsKey(name)) {
       throw Exception('test not found: $name');
     }
@@ -192,8 +186,7 @@ typedef ContextModifier = void Function(Context context);
 /// instance directly using the constructor.  It takes the same arguments as
 /// the environment constructor but it's not possible to specify a loader.
 class Template extends Node {
-  static final Map<List<Object>, Environment> _shared =
-      <List<Object>, Environment>{};
+  static final Map<List<Object>, Environment> _shared = <List<Object>, Environment>{};
 
   // TODO: compile template
 
@@ -271,8 +264,7 @@ class Template extends Node {
     return Parser(env, source).parse();
   }
 
-  Template.from({@required this.body, @required this.env, this.path})
-      : blocks = <String, BlockStatement>{} {
+  Template.from({@required this.body, @required this.env, this.path}) : blocks = <String, BlockStatement>{} {
     _render = RenderWrapper(([Map<String, Object> data]) => renderMap(data));
   }
 
@@ -339,9 +331,8 @@ class RenderWrapper extends Function {
   @override
   Object noSuchMethod(Invocation invocation) {
     if (invocation.memberName == #call) {
-      return function(invocation.namedArguments.map<String, Object>(
-          (Symbol key, Object value) =>
-              MapEntry<String, Object>(getSymbolName(key), value)));
+      return function(invocation.namedArguments
+          .map<String, Object>((Symbol key, Object value) => MapEntry<String, Object>(getSymbolName(key), value)));
     }
 
     return super.noSuchMethod(invocation);

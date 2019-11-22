@@ -1,6 +1,7 @@
 // TODO: TokenStream
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:meta/meta.dart';
 import 'package:string_scanner/string_scanner.dart';
@@ -42,16 +43,18 @@ class Parser {
     return RegExp('\\s*(?:\\-$blockEnd\\s*|$blockEnd$trim)');
   }
 
-  Parser(this.env, String source, {this.path})
+  Parser(this.environment, String source, {this.path})
       : scanner = SpanScanner(source, sourceUrl: path),
-        blockStartReg = getBlockStartReg(env.blockStart, env.leftStripBlocks),
-        blockEndReg = getBlockEndReg(env.blockEnd, env.trimBlocks),
-        variableStartReg = RegExp(getBeginRule(env.variableStart)),
-        variableEndReg = RegExp(getEndRule(env.variableEnd)),
-        commentStartReg = RegExp(getBeginRule(env.commentStart)),
-        commentEndReg = RegExp('.*' + getEndRule(env.commentEnd)),
+        blockStartReg = getBlockStartReg(
+            environment.blockStart, environment.leftStripBlocks),
+        blockEndReg =
+            getBlockEndReg(environment.blockEnd, environment.trimBlocks),
+        variableStartReg = RegExp(getBeginRule(environment.variableStart)),
+        variableEndReg = RegExp(getEndRule(environment.variableEnd)),
+        commentStartReg = RegExp(getBeginRule(environment.commentStart)),
+        commentEndReg = RegExp('.*' + getEndRule(environment.commentEnd)),
         extensions = <String, ExtensionParser>{} {
-    Set<Extension> extensionsSet = env.extensions.toSet();
+    Set<Extension> extensionsSet = environment.extensions.toSet();
 
     for (Extension ext in extensionsSet) {
       for (String tag in ext.tags) {
@@ -60,9 +63,10 @@ class Parser {
     }
   }
 
-  final Environment env;
+  final Environment environment;
   final String path;
   final SpanScanner scanner;
+  
   final RegExp blockStartReg;
   final RegExp blockEndReg;
   final RegExp variableStartReg;
@@ -131,7 +135,7 @@ class Parser {
 
   Template parse() {
     Node body = parseBody();
-    Template template = Template.from(body: body, env: env, path: path);
+    Template template = Template.from(body: body, env: environment, path: path);
 
     for (TemplateModifier modifier in _templateModifiers) {
       modifier(template);
@@ -142,7 +146,9 @@ class Parser {
 
   Node parseBody([List<Pattern> endRules = const <Pattern>[]]) {
     List<Node> nodes = subParse(endRules);
-    return env.optimize ? Interpolation.orNode(nodes) : Interpolation(nodes);
+    return environment.optimize
+        ? Interpolation.orNode(nodes)
+        : Interpolation(nodes);
   }
 
   List<Node> subParse(List<Pattern> endRules) {
@@ -468,7 +474,7 @@ class Parser {
   RawStatement parseRaw() {
     RegExp endRawReg = getBlockEndRegFor('endraw', true);
 
-    expect(getBlockEndReg(env.blockEnd));
+    expect(getBlockEndReg(environment.blockEnd));
 
     LineScannerState start = scanner.state;
     LineScannerState end = start;
@@ -860,7 +866,8 @@ class Parser {
       items.add(parseExpression());
     }
 
-    if (env.optimize && items.every((Expression item) => item is Literal)) {
+    if (environment.optimize &&
+        items.every((Expression item) => item is Literal)) {
       return Literal<List<Object>>(items
           .map((Expression item) => (item as Literal<Object>).value)
           .toList(growable: false));
@@ -884,7 +891,7 @@ class Parser {
       items[key] = parseExpression();
     }
 
-    if (env.optimize &&
+    if (environment.optimize &&
         items.entries.every((MapEntry<Expression, Expression> item) =>
             item.key is Literal && item.value is Literal)) {
       return Literal<Map<Object, Object>>(items.map(

@@ -20,26 +20,26 @@ String repr(Object object, [bool reprString = true]) {
   if (object is Iterable) {
     StringBuffer buffer = StringBuffer();
     buffer.write('[');
-    buffer.writeAll(object.map<Object>(repr), ', ');
+    buffer.writeAll(object.map<String>(repr), ', ');
     buffer.write(']');
-    return buffer.toString();
+    return '$buffer';
   } else if (object is Map) {
     StringBuffer buffer = StringBuffer();
     buffer.write('{');
     buffer.writeAll(
-        object.entries.map<Object>((MapEntry<Object, Object> entry) =>
+        object.entries.map<String>((MapEntry<Object, Object> entry) =>
             '${repr(entry.key)}: ${repr(entry.value)}'),
         ', ');
     buffer.write('}');
     return buffer.toString();
-  } else if (reprString && object is String) {
+  } else if (object is String && reprString) {
     return '\'${object.replaceAll('\'', '\\\'').replaceAll('\n', '\\n')}\'';
   } else {
-    return object.toString();
+    return '$object';
   }
 }
 
 String getSymbolName(Symbol symbol) {
-  String fullName = symbol.toString();
+  String fullName = '$symbol';
   return fullName.substring(8, fullName.length - 2);
 }
