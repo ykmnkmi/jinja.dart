@@ -18,14 +18,11 @@ class Call extends Expression {
 
   @override
   Object resolve(Context context) {
-    List<Object> args = this
-        .args
-        .map<Object>((Expression arg) => arg.resolve(context))
-        .toList();
-    
-    Map<Symbol, Object> kwargs = this.kwargs.map(
-        (String key, Expression value) =>
-            MapEntry<Symbol, Object>(Symbol(key), value.resolve(context)));
+    List<Object> args = this.args.map<Object>((Expression arg) => arg.resolve(context)).toList();
+
+    Map<Symbol, Object> kwargs = this
+        .kwargs
+        .map((String key, Expression value) => MapEntry<Symbol, Object>(Symbol(key), value.resolve(context)));
 
     if (this.argsDyn != null) {
       Object argsDyn = this.argsDyn.resolve(context);
@@ -43,8 +40,7 @@ class Call extends Expression {
 
       if (kwargsDyn is Map<String, Expression>) {
         kwargs.addAll(kwargsDyn.map<Symbol, Object>(
-            (String key, Expression value) =>
-                MapEntry<Symbol, Object>(Symbol(key), value.resolve(context))));
+            (String key, Expression value) => MapEntry<Symbol, Object>(Symbol(key), value.resolve(context))));
       } else {
         // TODO: kwargsDyn exception message
         throw TemplateRuntimeError();
@@ -60,8 +56,7 @@ class Call extends Expression {
     buffer.write('(');
 
     if (args.isNotEmpty) {
-      buffer.writeAll(
-          args.map<String>((Expression arg) => arg.toDebugString()), ', ');
+      buffer.writeAll(args.map<String>((Expression arg) => arg.toDebugString()), ', ');
     }
 
     if (argsDyn != null) {
@@ -72,8 +67,8 @@ class Call extends Expression {
     if (kwargs.isNotEmpty) {
       if (args.isNotEmpty) buffer.write(', ');
       buffer.writeAll(
-          kwargs.entries.map<String>((MapEntry<String, Expression> kwarg) =>
-              '${repr(kwarg.key)}: ${kwarg.value.toDebugString()}'),
+          kwargs.entries.map<String>(
+              (MapEntry<String, Expression> kwarg) => '${repr(kwarg.key)}: ${kwarg.value.toDebugString()}'),
           ', ');
     }
 

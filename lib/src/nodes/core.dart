@@ -41,8 +41,7 @@ abstract class UnaryExpression extends Expression {
   String get symbol;
 
   @override
-  String toDebugString([int level = 0]) =>
-      ' ' * level + '$symbol${expr.toDebugString()}';
+  String toDebugString([int level = 0]) => ' ' * level + '$symbol${expr.toDebugString()}';
 }
 
 abstract class BinaryExpression extends Expression {
@@ -51,8 +50,7 @@ abstract class BinaryExpression extends Expression {
   String get symbol;
 
   @override
-  String toDebugString([int level = 0]) =>
-      ' ' * level + '${left.toDebugString()} $symbol ${right.toDebugString()}';
+  String toDebugString([int level = 0]) => ' ' * level + '${left.toDebugString()} $symbol ${right.toDebugString()}';
 }
 
 abstract class CanAssign {

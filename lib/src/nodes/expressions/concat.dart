@@ -25,8 +25,7 @@ class Concat extends Expression {
 
   @override
   String toDebugString([int level = 0]) =>
-      ' ' * level +
-      exprs.map((Expression expr) => expr.toDebugString()).join(' ~ ');
+      ' ' * level + exprs.map((Expression expr) => expr.toDebugString()).join(' ~ ');
 
   @override
   String toString() => 'Concat($exprs)';

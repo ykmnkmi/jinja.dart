@@ -3,8 +3,7 @@ import '../../runtime.dart';
 import '../core.dart';
 
 class ForStatement extends Statement {
-  ForStatement(this.targets, this.iterable, this.body, {this.orElse})
-      : _targetsLen = targets.length;
+  ForStatement(this.targets, this.iterable, this.body, {this.orElse}) : _targetsLen = targets.length;
 
   final List<String> targets;
   final Expression iterable;
@@ -23,8 +22,7 @@ class ForStatement extends Statement {
       }
 
       if (list.length > _targetsLen) {
-        throw ArgumentError(
-            'too many values to unpack (expected $_targetsLen)');
+        throw ArgumentError('too many values to unpack (expected $_targetsLen)');
       }
 
       for (int i = 0; i < _targetsLen; i++) {
@@ -33,8 +31,7 @@ class ForStatement extends Statement {
     }
   }
 
-  Map<String, Object> getDataForContext(
-      List<Object> values, int i, Undefined undefined) {
+  Map<String, Object> getDataForContext(List<Object> values, int i, Undefined undefined) {
     Object prev = undefined;
     Object next = undefined;
     Object current = values[i];
@@ -63,25 +60,21 @@ class ForStatement extends Statement {
 
   void render(List<Object> list, Context context, StringBuffer buffer) {
     for (int i = 0; i < list.length; i++) {
-      Map<String, Object> data =
-          getDataForContext(list, i, context.env.undefined);
+      Map<String, Object> data = getDataForContext(list, i, context.env.undefined);
       context.apply(data, (Context context) {
         body.accept(buffer, context);
       });
     }
   }
 
-  void loopIterable(
-      Iterable<Object> values, Context context, StringBuffer buffer) {
+  void loopIterable(Iterable<Object> values, Context context, StringBuffer buffer) {
     List<Object> list = values.toList();
     render(list, context, buffer);
   }
 
   void loopMap(Map<Object, Object> dict, Context context, StringBuffer buffer) {
-    List<List<Object>> list = dict.entries
-        .map((MapEntry<Object, Object> entry) =>
-            <Object>[entry.key, entry.value])
-        .toList();
+    List<List<Object>> list =
+        dict.entries.map((MapEntry<Object, Object> entry) => <Object>[entry.key, entry.value]).toList();
     render(list, context, buffer);
   }
 
@@ -176,18 +169,15 @@ class ForStatementWithFilter extends ForStatement {
   }
 
   @override
-  void loopIterable(
-      Iterable<Object> values, Context context, StringBuffer buffer) {
+  void loopIterable(Iterable<Object> values, Context context, StringBuffer buffer) {
     List<Object> list = filterValues(values, context);
     render(list, context, buffer);
   }
 
   @override
   void loopMap(Map<Object, Object> dict, Context context, StringBuffer buffer) {
-    List<Object> list = filterValues(
-        dict.entries.map((MapEntry<Object, Object> entry) =>
-            <Object>[entry.key, entry.value]),
-        context);
+    List<Object> list =
+        filterValues(dict.entries.map((MapEntry<Object, Object> entry) => <Object>[entry.key, entry.value]), context);
     render(list, context, buffer);
   }
 
@@ -222,8 +212,7 @@ class ForStatementWithFilter extends ForStatement {
 
   @override
   String toString() {
-    StringBuffer buffer =
-        StringBuffer('ForWithFilter($targets, $iterable, $body, $filter}');
+    StringBuffer buffer = StringBuffer('ForWithFilter($targets, $iterable, $body, $filter}');
     if (orElse != null) buffer.write(', orElse: $orElse');
     buffer.write(')');
     return buffer.toString();

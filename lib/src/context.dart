@@ -7,9 +7,7 @@ class Context {
   Context({
     Map<String, Object> data,
     Environment env,
-  })  : contexts = data != null
-            ? <Map<String, Object>>[data]
-            : <Map<String, Object>>[<String, Object>{}],
+  })  : contexts = data != null ? <Map<String, Object>>[data] : <Map<String, Object>>[<String, Object>{}],
         env = env ?? Environment(),
         blockContext = ExtendedBlockContext();
 
@@ -17,8 +15,7 @@ class Context {
   final List<Map<String, Object>> contexts;
   final ExtendedBlockContext blockContext;
 
-  bool has(String name) =>
-      contexts.any((Map<String, Object> context) => context.containsKey(name));
+  bool has(String name) => contexts.any((Map<String, Object> context) => context.containsKey(name));
 
   bool removeLast(String name) {
     for (Map<String, Object> context in contexts.reversed) {

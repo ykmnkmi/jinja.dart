@@ -8,4 +8,3 @@ abstract class Extension {
 
   Node parse(Parser parser);
 }
-

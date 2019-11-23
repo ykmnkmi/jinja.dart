@@ -8,8 +8,7 @@ void main() {
     Environment env = Environment();
 
     test('chaining', () {
-      Template template =
-          env.fromString('''{{ ['<foo>', '<bar>']|first|upper|escape }}''');
+      Template template = env.fromString('''{{ ['<foo>', '<bar>']|first|upper|escape }}''');
       expect(template.renderMap(), equals('&lt;FOO&gt;'));
     });
 
@@ -24,11 +23,9 @@ void main() {
     });
 
     test('default', () {
-      Template template = env
-          .fromString("{{ missing|default('no') }}|{{ false|default('no') }}|"
-              "{{ false|default('no', true) }}|{{ given|default('no') }}");
-      expect(template.renderMap(<String, Object>{'given': 'yes'}),
-          equals('no|false|no|yes'));
+      Template template = env.fromString("{{ missing|default('no') }}|{{ false|default('no') }}|"
+          "{{ false|default('no', true) }}|{{ given|default('no') }}");
+      expect(template.renderMap(<String, Object>{'given': 'yes'}), equals('no|false|no|yes'));
     });
 
     test('escape', () {
@@ -43,8 +40,7 @@ void main() {
 
     test('force escape', () {
       Template template = env.fromString('{{ x|forceescape }}');
-      expect(template.renderMap(<String, Object>{'x': Markup('<div />')}),
-          equals('&lt;div /&gt;'));
+      expect(template.renderMap(<String, Object>{'x': Markup('<div />')}), equals('&lt;div /&gt;'));
     });
 
     test('join', () {
@@ -53,12 +49,10 @@ void main() {
     });
 
     test('join attribute', () {
-      Template template =
-          env.fromString('''{{ users|join(', ', 'username') }}''');
+      Template template = env.fromString('''{{ users|join(', ', 'username') }}''');
       expect(
           template.renderMap(<String, Object>{
-            'users': <String>['foo', 'bar']
-                .map((String name) => <String, String>{'username': name})
+            'users': <String>['foo', 'bar'].map((String name) => <String, String>{'username': name})
           }),
           equals('foo, bar'));
     });

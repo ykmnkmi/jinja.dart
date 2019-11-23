@@ -33,8 +33,7 @@ void main() {
       Template template = env.fromString('{% include ["missing", "header"] %}');
       expect(template.renderMap(foo42), equals('[42|23]'));
 
-      template = env
-          .fromString('{% include ["missing", "missing2"] ignore missing %}');
+      template = env.fromString('{% include ["missing", "missing2"] ignore missing %}');
       expect(template.renderMap(foo42), equals(''));
 
       template = env.fromString('{% include ["missing", "missing2"] %}');
@@ -67,8 +66,7 @@ void main() {
       expect(() => template.renderMap(), throwsA(isA<TemplateNotFound>()));
 
       for (String extra in <String>['', 'with context', 'without context']) {
-        template =
-            env.fromString('{% include "missing" ignore missing $extra %}');
+        template = env.fromString('{% include "missing" ignore missing $extra %}');
         expect(template.renderMap(), equals(''));
       }
     });

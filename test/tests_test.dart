@@ -27,8 +27,7 @@ void main() {
     });
 
     test('lower', () {
-      Template template =
-          env.fromString('{{ "foo" is lower }}|{{ "FOO" is lower }}');
+      Template template = env.fromString('{{ "foo" is lower }}|{{ "FOO" is lower }}');
       expect(template.renderMap(), equals('true|false'));
     });
 
@@ -65,8 +64,7 @@ void main() {
     });
 
     test('upper', () {
-      Template template =
-          env.fromString('{{ "FOO" is upper }}|{{ "foo" is upper }}');
+      Template template = env.fromString('{{ "FOO" is upper }}|{{ "foo" is upper }}');
       expect(template.renderMap(), equals('true|false'));
     });
 
@@ -98,8 +96,7 @@ void main() {
     test('same as', () {
       Template template = env.fromString('{{ foo is sameas false }}|'
           '{{ 0 is sameas false }}');
-      expect(template.renderMap(<String, Object>{'foo': false}),
-          equals('true|false'));
+      expect(template.renderMap(<String, Object>{'foo': false}), equals('true|false'));
     });
 
     test('greater than', () {
@@ -121,8 +118,7 @@ void main() {
         return false;
       }
 
-      Environment env =
-          Environment(tests: <String, Function>{'matching': matching});
+      Environment env = Environment(tests: <String, Function>{'matching': matching});
       Template template = env.fromString('{{ "us-west-1" is matching '
           '"(us-east-1|ap-northeast-1)" '
           'or "stage" is matching "(dev|stage)" }}');
@@ -146,8 +142,7 @@ void main() {
           '{{ 3 is in [1, 2] }}|'
           '{{ "foo" is in {"foo": 1}}}|'
           '{{ "baz" is in {"bar": 1}}}');
-      expect(template.renderMap(),
-          equals('true|true|false|true|false|true|false|true|false'));
+      expect(template.renderMap(), equals('true|true|false|true|false|true|false|true|false'));
     });
   });
 }

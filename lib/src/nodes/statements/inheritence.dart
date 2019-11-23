@@ -142,16 +142,14 @@ class ExtendedBlockStatement extends BlockStatement {
   }
 
   @override
-  String toDebugString([int level = 0]) =>
-      ' ' * level + 'block $name\n${body.toDebugString(level + 1)}';
+  String toDebugString([int level = 0]) => ' ' * level + 'block $name\n${body.toDebugString(level + 1)}';
 
   @override
   String toString() => 'Block($name, $path, $body)';
 }
 
 class ExtendedBlockContext {
-  final Map<String, List<ExtendedBlockStatement>> blocks =
-      <String, List<ExtendedBlockStatement>>{};
+  final Map<String, List<ExtendedBlockStatement>> blocks = <String, List<ExtendedBlockStatement>>{};
 
   bool has(String name) => blocks.containsKey(name);
 

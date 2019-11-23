@@ -20,8 +20,7 @@ class Interpolation extends Statement {
   }
 
   @override
-  String toDebugString([int level = 0]) =>
-      nodes.map<String>((Node node) => node.toDebugString(level)).join('\n');
+  String toDebugString([int level = 0]) => nodes.map<String>((Node node) => node.toDebugString(level)).join('\n');
 
   @override
   String toString() => 'Interpolation($nodes)';

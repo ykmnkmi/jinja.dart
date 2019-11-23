@@ -71,8 +71,7 @@ Object doAttr(Environment env, Object value, String attribute) {
   return env.getItem(value, attribute) ?? env.getField(value, attribute);
 }
 
-String doCapitalize(String value) =>
-    value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase();
+String doCapitalize(String value) => value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase();
 
 String doCenter(String value, int width) {
   if (value.length >= width) return value;
@@ -93,8 +92,7 @@ Object doDefault(Object value, [Object $default = '', bool boolean = false]) {
   return value is! Undefined ? value : $default;
 }
 
-Markup doEscape(Object value) =>
-    value is Markup ? value : Markup.escape(value.toString());
+Markup doEscape(Object value) => value is Markup ? value : Markup.escape(value.toString());
 
 Object doFirst(Iterable<Object> values) => values.first;
 
@@ -110,8 +108,7 @@ int doInt(Object value, [int $default = 0, int base = 10]) {
   return int.tryParse(value.toString(), radix: base) ?? $default;
 }
 
-String doJoin(Environment env, Iterable<Object> values,
-    [String d = '', String attribute]) {
+String doJoin(Environment env, Iterable<Object> values, [String d = '', String attribute]) {
   if (attribute != null) {
     return values.map((Object value) => doAttr(env, value, attribute)).join(d);
   }
@@ -137,8 +134,7 @@ Object doRandom(List<Object> values) {
 
 String doString(Object value) => repr(value, false);
 
-num doSum(Environment env, Iterable<Object> values,
-    {String attribute, num start = 0}) {
+num doSum(Environment env, Iterable<Object> values, {String attribute, num start = 0}) {
   if (attribute != null) {
     values = values.map<Object>((Object val) => doAttr(env, val, attribute));
   }

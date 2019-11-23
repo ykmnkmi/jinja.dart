@@ -20,12 +20,9 @@ class Filter extends Expression {
 
   Object filter(Context context, Object value) {
     return context.env.callFilter(name,
-        args: <Object>[value]
-            .followedBy(
-                args.map<Object>((Expression arg) => arg.resolve(context)))
-            .toList(),
-        kwargs: kwargs.map<Symbol, Object>((String key, Expression value) =>
-            MapEntry<Symbol, Object>(Symbol(key), value.resolve(context))));
+        args: <Object>[value].followedBy(args.map<Object>((Expression arg) => arg.resolve(context))).toList(),
+        kwargs: kwargs.map<Symbol, Object>(
+            (String key, Expression value) => MapEntry<Symbol, Object>(Symbol(key), value.resolve(context))));
   }
 
   @override
@@ -43,15 +40,14 @@ class Filter extends Expression {
     buffer.write('(');
 
     if (args.isNotEmpty) {
-      buffer.writeAll(
-          args.map<String>((Expression arg) => arg.toDebugString()), ', ');
+      buffer.writeAll(args.map<String>((Expression arg) => arg.toDebugString()), ', ');
     }
 
     if (kwargs.isNotEmpty) {
       if (args.isNotEmpty) buffer.write(', ');
       buffer.writeAll(
-          kwargs.entries.map<String>((MapEntry<String, Expression> kwarg) =>
-              '${repr(kwarg.key)}: ${kwarg.value.toDebugString()}'),
+          kwargs.entries.map<String>(
+              (MapEntry<String, Expression> kwarg) => '${repr(kwarg.key)}: ${kwarg.value.toDebugString()}'),
           ', ');
     }
 

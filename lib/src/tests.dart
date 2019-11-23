@@ -32,14 +32,10 @@ const Map<String, Function> tests = <String, Function>{
 };
 
 bool eq(Object value, Object other) => value == other;
-bool ge(Comparable<Object> value, Comparable<Object> other) =>
-    value.compareTo(other) >= 0;
-bool gt(Comparable<Object> value, Comparable<Object> other) =>
-    value.compareTo(other) > 0;
-bool le(Comparable<Object> value, Comparable<Object> other) =>
-    value.compareTo(other) <= 0;
-bool lt(Comparable<Object> value, Comparable<Object> other) =>
-    value.compareTo(other) < 0;
+bool ge(Comparable<Object> value, Comparable<Object> other) => value.compareTo(other) >= 0;
+bool gt(Comparable<Object> value, Comparable<Object> other) => value.compareTo(other) > 0;
+bool le(Comparable<Object> value, Comparable<Object> other) => value.compareTo(other) <= 0;
+bool lt(Comparable<Object> value, Comparable<Object> other) => value.compareTo(other) < 0;
 bool ne(Object value, Object other) => value != other;
 
 bool istCallable(Object value) => value is Function;

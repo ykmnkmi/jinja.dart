@@ -72,10 +72,8 @@ class FileSystemLoader extends Loader {
   @override
   List<String> listSources() => directory
       .listSync(recursive: true, followLinks: followLinks)
-      .map<String>((FileSystemEntity entity) =>
-          _path.relative(entity.path, from: directory.path))
-      .where((String path) =>
-          extensions.contains(_path.extension(path).substring(1)))
+      .map<String>((FileSystemEntity entity) => _path.relative(entity.path, from: directory.path))
+      .where((String path) => extensions.contains(_path.extension(path).substring(1)))
       .toList();
 
   @override
@@ -85,8 +83,7 @@ class FileSystemLoader extends Loader {
     if (autoReload) {
       directory
           .watch(recursive: true)
-          .where(
-              (FileSystemEvent event) => event.type == FileSystemEvent.modify)
+          .where((FileSystemEvent event) => event.type == FileSystemEvent.modify)
           .listen((FileSystemEvent event) {
         String path = _path.relative(event.path, from: directory.path);
         env.fromString(getSource(path), path: path);

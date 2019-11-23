@@ -13,8 +13,7 @@ class Undefined {
 class NameSpace {
   static final Function namespace = _NameSpaceFactory();
 
-  NameSpace([Map<String, Object> data])
-      : data = data != null ? Map<String, Object>.of(data) : <String, Object>{};
+  NameSpace([Map<String, Object> data]) : data = data != null ? Map<String, Object>.of(data) : <String, Object>{};
 
   final Map<String, Object> data;
   Iterable<MapEntry<String, Object>> get entries => data.entries;
@@ -40,8 +39,7 @@ class NameSpace {
       if (invocation.isGetter) return data[name];
 
       if (invocation.isMethod) {
-        return Function.apply(data[name] as Function,
-            invocation.positionalArguments, invocation.namedArguments);
+        return Function.apply(data[name] as Function, invocation.positionalArguments, invocation.namedArguments);
       }
     }
 
@@ -93,9 +91,8 @@ class _NameSpaceFactory extends Function {
             'got ${invocation.positionalArguments.length}');
       }
 
-      data.addAll(invocation.namedArguments.map<String, Object>(
-          (Symbol key, Object value) =>
-              MapEntry<String, Object>(getSymbolName(key), value)));
+      data.addAll(invocation.namedArguments
+          .map<String, Object>((Symbol key, Object value) => MapEntry<String, Object>(getSymbolName(key), value)));
       return NameSpace(data);
     }
 
@@ -104,8 +101,7 @@ class _NameSpaceFactory extends Function {
 }
 
 class LoopContext {
-  LoopContext(int index0, int length, Object previtem, Object nextitem,
-      Function changed)
+  LoopContext(int index0, int length, Object previtem, Object nextitem, Function changed)
       : data = <String, Object>{
           'index0': index0,
           'length': length,
@@ -117,8 +113,7 @@ class LoopContext {
           'last': index0 + 1 == length,
           'revindex': length - index0,
           'revindex0': length - index0 - 1,
-          'cycle':
-              _CycleWrapper((List<Object> args) => args[index0 % args.length]),
+          'cycle': _CycleWrapper((List<Object> args) => args[index0 % args.length]),
         };
 
   final Map<String, Object> data;

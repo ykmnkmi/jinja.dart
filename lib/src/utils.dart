@@ -27,8 +27,7 @@ String repr(Object object, [bool reprString = true]) {
     StringBuffer buffer = StringBuffer();
     buffer.write('{');
     buffer.writeAll(
-        object.entries.map<String>((MapEntry<Object, Object> entry) =>
-            '${repr(entry.key)}: ${repr(entry.value)}'),
+        object.entries.map<String>((MapEntry<Object, Object> entry) => '${repr(entry.key)}: ${repr(entry.value)}'),
         ', ');
     buffer.write('}');
     return buffer.toString();

@@ -18,8 +18,7 @@ void main() {
 
     test('elif deep', () {
       String source = '{% if a == 0 %}0' +
-          List<String>.generate(
-              999, (int i) => '{% elif a == ${i + 1} %}${i + 1}').join() +
+          List<String>.generate(999, (int i) => '{% elif a == ${i + 1} %}${i + 1}').join() +
           '{% else %}x{% endif %}';
       Template template = env.fromString(source);
       expect(template.renderMap(<String, Object>{'a': 0}), equals('0'));
@@ -29,33 +28,25 @@ void main() {
     });
 
     test('else', () {
-      Template template =
-          env.fromString('{% if false %}XXX{% else %}...{% endif %}');
+      Template template = env.fromString('{% if false %}XXX{% else %}...{% endif %}');
       expect(template.renderMap(), equals('...'));
     });
 
     test('empty', () {
-      Template template =
-          env.fromString('[{% if true %}{% else %}{% endif %}]');
+      Template template = env.fromString('[{% if true %}{% else %}{% endif %}]');
       expect(template.renderMap(), equals('[]'));
     });
 
     test('complete', () {
-      Template template =
-          env.fromString('{% if a %}A{% elif b %}B{% elif c == d %}'
-              'C{% else %}D{% endif %}');
-      expect(
-          template
-              .renderMap(<String, Object>{'a': 0, 'b': false, 'c': 42, 'd': 42.0}),
-          equals('C'));
+      Template template = env.fromString('{% if a %}A{% elif b %}B{% elif c == d %}'
+          'C{% else %}D{% endif %}');
+      expect(template.renderMap(<String, Object>{'a': 0, 'b': false, 'c': 42, 'd': 42.0}), equals('C'));
     });
 
     test('no scope', () {
-      Template template =
-          env.fromString('{% if a %}{% set foo = 1 %}{% endif %}{{ foo }}');
+      Template template = env.fromString('{% if a %}{% set foo = 1 %}{% endif %}{{ foo }}');
       expect(template.renderMap(<String, Object>{'a': true}), equals('1'));
-      template =
-          env.fromString('{% if true %}{% set foo = 1 %}{% endif %}{{ foo }}');
+      template = env.fromString('{% if true %}{% set foo = 1 %}{% endif %}{{ foo }}');
       expect(template.renderMap(), equals('1'));
     });
   });

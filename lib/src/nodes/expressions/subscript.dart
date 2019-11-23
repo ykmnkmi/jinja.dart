@@ -44,8 +44,7 @@ class Item extends Expression {
   }
 
   @override
-  String toDebugString([int level = 0]) =>
-      '${expr.toDebugString(level)}[${item.toDebugString()}]';
+  String toDebugString([int level = 0]) => '${expr.toDebugString(level)}[${item.toDebugString()}]';
 
   @override
   String toString() => 'Item($expr, $item)';

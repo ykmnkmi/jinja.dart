@@ -149,8 +149,7 @@ void main() {
       Template template = env.getTemplate('child');
 
       for (int i in <int>[1, 2]) {
-        expect(template.renderMap(<String, Object>{'master': 'master$i'}),
-            equals('MASTER${i}CHILD'));
+        expect(template.renderMap(<String, Object>{'master': 'master$i'}), equals('MASTER${i}CHILD'));
       }
     });
 
@@ -165,10 +164,8 @@ void main() {
       );
 
       Template template = env.getTemplate('child');
-      expect(template.renderMap(<String, Object>{'master': 'master1'}),
-          equals('MASTER1CHILD'));
-      expect(template.renderMap(<String, Object>{'master': 'master2'}),
-          equals('MASTER2CHILD'));
+      expect(template.renderMap(<String, Object>{'master': 'master1'}), equals('MASTER1CHILD'));
+      expect(template.renderMap(<String, Object>{'master': 'master2'}), equals('MASTER2CHILD'));
       expect(template.renderMap(), equals('MASTER1CHILD'));
     });
 
@@ -180,11 +177,9 @@ void main() {
         }),
       );
 
-      Template template =
-          env.fromString('{% extends "master.html" %}{% block item %}'
-              '{{ item }}{% endblock %}');
-      expect(template.renderMap(<String, Object>{'seq': range(5)}),
-          equals('[0][1][2][3][4]'));
+      Template template = env.fromString('{% extends "master.html" %}{% block item %}'
+          '{{ item }}{% endblock %}');
+      expect(template.renderMap(<String, Object>{'seq': range(5)}), equals('[0][1][2][3][4]'));
     });
 
     test('super in scoped block', () {
@@ -195,19 +190,16 @@ void main() {
         }),
       );
 
-      Template template =
-          env.fromString('{% extends "master.html" %}{% block item %}'
-              '{{ super() }}|{{ item * 2 }}{% endblock %}');
-      expect(template.renderMap(<String, Object>{'seq': range(5)}),
-          equals('[0|0][1|2][2|4][3|6][4|8]'));
+      Template template = env.fromString('{% extends "master.html" %}{% block item %}'
+          '{{ super() }}|{{ item * 2 }}{% endblock %}');
+      expect(template.renderMap(<String, Object>{'seq': range(5)}), equals('[0|0][1|2][2|4][3|6][4|8]'));
     });
 
     // TODO: test scoped block after inheritance
     // TODO: test fixed macro scoping bug
 
     test('double extends', () {
-      expect(() => Template(doubleextends),
-          throwsA(predicate<Object>((Object e) => e is TemplateError)));
+      expect(() => Template(doubleextends), throwsA(predicate<Object>((Object e) => e is TemplateError)));
     });
   });
 }

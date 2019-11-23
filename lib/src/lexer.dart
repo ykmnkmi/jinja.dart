@@ -171,7 +171,5 @@ class Token {
 class Lexer {
   Lexer(Environment environment);
 
-  Iterable<Token> tokeniter(String source, {String name, String fileName}) sync* {
-    
-  }
+  Iterable<Token> tokeniter(String source, {String name, String fileName}) sync* {}
 }
