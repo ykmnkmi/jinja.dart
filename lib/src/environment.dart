@@ -47,20 +47,21 @@ class Environment {
     String variableEnd = '}}',
     String commentStart = '{#',
     String commentEnd = '#}',
-    bool autoEscape = false,
     bool trimBlocks = false,
     bool leftStripBlocks = false,
-    Finalizer finalize = defaultFinalizer,
-    FieldGetter getField = defaultFieldGetter,
-    ItemGetter getItem = defaultItemGetter,
-    Undefined undefined = const Undefined(),
-    Loader loader,
+    bool keepTrailingNewLine = false,
+    Set<Extension> extensions = const <Extension>{},
     bool optimize = true,
-    Iterable<Extension> extensions = const <Extension>[],
-    Map<String, Function> envFilters = const <String, Function>{},
+    Undefined undefined = const Undefined(),
+    Finalizer finalize = defaultFinalizer,
+    bool autoEscape = false,
+    Loader loader,
     Map<String, Function> filters = const <String, Function>{},
+    Map<String, Function> envFilters = const <String, Function>{},
     Map<String, Function> tests = const <String, Function>{},
     Map<String, Object> globals = const <String, Object>{},
+    FieldGetter getField = defaultFieldGetter,
+    ItemGetter getItem = defaultItemGetter,
   }) {
     Environment env = Environment._(
       blockStart: blockStart,
@@ -69,19 +70,20 @@ class Environment {
       variableEnd: variableEnd,
       commentStart: commentStart,
       commentEnd: commentEnd,
-      autoEscape: autoEscape,
       trimBlocks: trimBlocks,
       leftStripBlocks: leftStripBlocks,
-      finalize: finalize,
-      getField: getField,
-      getItem: getItem,
-      undefined: undefined,
-      optimize: optimize,
+      keepTrailingNewLine: keepTrailingNewLine,
       extensions: extensions,
-      envFilters: Map<String, Function>.of(defaultEnvFilters)..addAll(envFilters),
+      optimize: optimize,
+      undefined: undefined,
+      finalize: finalize,
+      autoEscape: autoEscape,
       filters: Map<String, Function>.of(defaultFilters)..addAll(filters),
+      envFilters: Map<String, Function>.of(defaultEnvFilters)..addAll(envFilters),
       tests: Map<String, Function>.of(defaultTests)..addAll(tests),
       globals: Map<String, Object>.of(defaultContext)..addAll(globals),
+      getField: getField,
+      getItem: getItem,
     );
 
     if (loader != null) loader.load(env);
@@ -95,21 +97,22 @@ class Environment {
     this.variableEnd,
     this.commentStart,
     this.commentEnd,
-    this.autoEscape,
     this.trimBlocks,
     this.leftStripBlocks,
-    this.finalize,
-    this.getField,
-    this.getItem,
-    this.undefined,
+    this.keepTrailingNewLine,
+    this.extensions = const <Extension>{},
     this.optimize,
+    this.undefined,
+    this.finalize,
+    this.autoEscape,
     this.shared,
-    this.extensions = const <Extension>[],
-    this.envFilters = const <String, Function>{},
     this.filters = const <String, Function>{},
+    this.envFilters = const <String, Function>{},
     this.tests = const <String, Function>{},
     this.globals = const <String, Object>{},
-  });
+    this.getField,
+    this.getItem,
+  }) : _templates = <String, Template>{};
 
   final String blockStart;
   final String blockEnd;
@@ -117,37 +120,40 @@ class Environment {
   final String variableEnd;
   final String commentStart;
   final String commentEnd;
-  final bool autoEscape;
   final bool trimBlocks;
   final bool leftStripBlocks;
-  final Finalizer finalize;
-  final FieldGetter getField;
-  final ItemGetter getItem;
-  final Undefined undefined;
+  final bool keepTrailingNewLine;
+  final Set<Extension> extensions;
   final bool optimize;
+  final Undefined undefined;
+  final Finalizer finalize;
+  final bool autoEscape;
   final bool shared;
-  final Iterable<Extension> extensions;
-  final Map<String, Function> envFilters;
   final Map<String, Function> filters;
+  final Map<String, Function> envFilters;
   final Map<String, Function> tests;
   final Map<String, Object> globals;
 
-  final Map<String, Template> templates = <String, Template>{};
+  final FieldGetter getField;
+  final ItemGetter getItem;
+
+  Map<String, Template> _templates;
+  Map<String, Template> get templates => _templates;
 
   /// If `path` is not `null` template stored in environment cache.
   Template fromString(String source, {String path}) {
     Template template = Parser(this, source, path: path).parse();
-    if (path != null) templates[path] = template;
+    if (path != null) _templates[path] = template;
     return template;
   }
 
   /// If [path] not found throws `Exception`.
   Template getTemplate(String path) {
-    if (!templates.containsKey(path)) {
+    if (!_templates.containsKey(path)) {
       throw Exception('template not found: $path');
     }
 
-    return templates[path];
+    return _templates[path];
   }
 
   /// If [name] not found throws [Exception].
@@ -186,7 +192,7 @@ typedef ContextModifier = void Function(Context context);
 /// instance directly using the constructor.  It takes the same arguments as
 /// the environment constructor but it's not possible to specify a loader.
 class Template extends Node {
-  static final Map<List<Object>, Environment> _shared = <List<Object>, Environment>{};
+  static final Map<int, Environment> _shared = <int, Environment>{};
 
   // TODO: compile template
 
@@ -198,46 +204,48 @@ class Template extends Node {
     String variableEnd = '}}',
     String commentStart = '{#',
     String commentEnd = '#}',
-    bool autoEscape = false,
     bool trimBlocks = false,
     bool leftStripBlocks = false,
-    Finalizer finalize = defaultFinalizer,
-    FieldGetter getField = defaultFieldGetter,
-    ItemGetter getItem = defaultItemGetter,
+    bool keepTrailingNewLine = false,
+    Set<Extension> extensions = const <Extension>{},
     bool optimize = true,
     Undefined undefined = const Undefined(),
-    Iterable<Extension> extensions = const <Extension>[],
-    Map<String, Function> envFilters = const <String, Function>{},
+    Finalizer finalize = defaultFinalizer,
+    bool autoEscape = false,
+    Loader loader,
     Map<String, Function> filters = const <String, Function>{},
+    Map<String, Function> envFilters = const <String, Function>{},
     Map<String, Function> tests = const <String, Function>{},
     Map<String, Object> globals = const <String, Object>{},
-    Loader loader,
+    FieldGetter getField = defaultFieldGetter,
+    ItemGetter getItem = defaultItemGetter,
   }) {
-    List<Object> list = <Object>[
+    Set<Object> config = <Object>{
       blockStart,
       blockEnd,
       variableStart,
       variableEnd,
       commentStart,
       commentEnd,
-      autoEscape,
       trimBlocks,
       leftStripBlocks,
-      finalize,
-      getField,
-      getItem,
-      undefined,
-      optimize,
+      keepTrailingNewLine,
       extensions,
-      envFilters,
+      optimize,
+      undefined,
+      finalize,
+      autoEscape,
+      loader,
       filters,
+      envFilters,
       tests,
       globals,
-      loader,
-    ];
+      getField,
+      getItem,
+    };
 
-    Environment env = _shared.containsKey(list)
-        ? _shared[list]
+    Environment env = _shared.containsKey(config)
+        ? _shared[config.hashCode]
         : Environment(
             blockStart: blockStart,
             blockEnd: blockEnd,
@@ -245,38 +253,41 @@ class Template extends Node {
             variableEnd: variableEnd,
             commentStart: commentStart,
             commentEnd: commentEnd,
-            autoEscape: autoEscape,
             trimBlocks: trimBlocks,
             leftStripBlocks: leftStripBlocks,
+            keepTrailingNewLine: keepTrailingNewLine,
+            extensions: extensions,
+            optimize: optimize,
+            undefined: undefined,
             finalize: finalize,
+            autoEscape: autoEscape,
+            loader: loader,
+            filters: Map<String, Function>.of(defaultFilters)..addAll(filters),
+            envFilters: Map<String, Function>.of(defaultEnvFilters)..addAll(envFilters),
+            tests: Map<String, Function>.of(defaultTests)..addAll(tests),
+            globals: Map<String, Object>.of(defaultContext)..addAll(globals),
             getField: getField,
             getItem: getItem,
-            undefined: undefined,
-            optimize: optimize,
-            extensions: extensions,
-            envFilters: envFilters,
-            filters: filters,
-            tests: tests,
-            globals: globals,
-            loader: loader,
           );
-    _shared[list] = env;
+
+    _shared[config.hashCode] = env;
     return Parser(env, source).parse();
   }
 
-  Template.from({@required this.body, @required this.env, this.path}) : blocks = <String, BlockStatement>{} {
+  Template.parsed({@required this.body, @required this.env, this.path}) : blocks = <String, BlockStatement>{} {
     _render = RenderWrapper(([Map<String, Object> data]) => renderMap(data));
   }
 
   final Node body;
   final Environment env;
   final String path;
+
   final Map<String, BlockStatement> blocks;
 
   dynamic _render;
   Function get render => _render as Function;
 
-  void _setContext(StringBuffer buffer, Context context) {
+  void _addBlocks(StringBuffer buffer, Context context) {
     NameSpace self = NameSpace();
 
     for (MapEntry<String, BlockStatement> blockEntry in blocks.entries) {
@@ -290,17 +301,20 @@ class Template extends Node {
 
   @override
   void accept(StringBuffer buffer, Context context) {
-    _setContext(buffer, context);
+    _addBlocks(buffer, context);
     body.accept(buffer, context);
   }
 
   String renderMap([Map<String, Object> data]) {
     StringBuffer buffer = StringBuffer();
     Context context = Context(data: data, env: env);
-    _setContext(buffer, context);
+    _addBlocks(buffer, context);
     body.accept(buffer, context);
     return buffer.toString();
   }
+
+  @override
+  String toString() => 'Template($path, $body)';
 
   @override
   String toDebugString([int level = 0]) {
@@ -312,11 +326,8 @@ class Template extends Node {
     }
 
     buffer.write(body.toDebugString(level));
-    return buffer.toString();
+    return '$buffer';
   }
-
-  @override
-  String toString() => 'Template($path, $body)';
 }
 
 // TODO: remove deprecated

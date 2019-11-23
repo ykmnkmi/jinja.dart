@@ -20,7 +20,12 @@ class Interpolation extends Statement {
   }
 
   @override
-  String toDebugString([int level = 0]) => nodes.map<String>((Node node) => node.toDebugString(level)).join('\n');
+  String toDebugString([int level = 0]) {
+    StringBuffer buffer = StringBuffer(' ' * level);
+    buffer.writeln('# interpolation');
+    buffer.writeAll(nodes.map<String>((Node node) => node.toDebugString(level + 1)), '\n');
+    return '$buffer';
+  }
 
   @override
   String toString() => 'Interpolation($nodes)';

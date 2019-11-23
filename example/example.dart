@@ -1,10 +1,12 @@
 // ignore_for_file: always_specify_types
 
+import 'dart:io';
+
 import 'package:jinja/jinja.dart';
 
 void main() {
   Environment env = Environment(
-    globals: <String, Object>{
+    globals: {
       'now': () {
         DateTime dt = DateTime.now().toLocal();
         String hour = dt.hour < 10 ? '0${dt.hour}' : dt.hour.toString();
@@ -18,11 +20,8 @@ void main() {
   );
 
   Template template = env.getTemplate('users.html');
-
-  print(template.render(
-    users: [
-      {'fullname': 'Jhon Doe', 'email': 'jhondoe@dev.py'},
-      {'fullname': 'Jane Doe', 'email': 'janedoe@dev.py'},
-    ],
-  ));
+  stdout.write(template.render(users: [
+    {'fullname': 'Jhon Doe', 'email': 'jhondoe@dev.py'},
+    {'fullname': 'Jane Doe', 'email': 'janedoe@dev.py'},
+  ]));
 }
