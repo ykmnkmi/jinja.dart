@@ -14,6 +14,7 @@
 - environment:
   - add getField and getItem
   - add keepTrailingNewLine option
+- leftStripBlock tests
 
 ## 0.1.2
 - fix example

@@ -27,7 +27,7 @@ class Parser {
   static RegExp getBlockBeginReg(String rule, [bool leftStripBlocks = false]) {
     rule = RegExp.escape(rule);
     String strip = leftStripBlocks ? '([ \\t]*)$rule\\+|[ \\t]*$rule|' : '';
-    return RegExp('(?:\\s*$rule\\-|$strip$rule)\\s*', multiLine: true);
+    return RegExp('(?:\\s*$rule\\-|$strip$rule\\+?)\\s*', multiLine: true);
   }
 
   static RegExp getBlockEndReg(String rule, [bool trimBlocks = false]) {

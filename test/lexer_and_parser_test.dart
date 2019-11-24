@@ -94,7 +94,7 @@ void main() {
     test('left strip blocks false with no left strip', () {
       Template template = env.fromString('    {% if true %}\n    {% endif %}');
       expect(template.render(), equals('    \n    '));
-      template = env.fromString('    {%+ if True %}\n    {%+ endif %}');
+      template = env.fromString('    {%+ if true %}\n    {%+ endif %}');
       expect(template.render(), equals('    \n    '));
     });
   });

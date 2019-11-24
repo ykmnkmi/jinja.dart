@@ -5,6 +5,8 @@ import 'dart:io';
 import 'package:jinja/jinja.dart';
 
 void main() {
+  String path = Platform.script.resolve('.').toFilePath();
+
   Environment env = Environment(
     globals: {
       'now': () {
@@ -14,7 +16,7 @@ void main() {
         return '$hour:$minute';
       },
     },
-    loader: FileSystemLoader(path: 'example'),
+    loader: FileSystemLoader(path: path),
     leftStripBlocks: true,
     trimBlocks: true,
   );
