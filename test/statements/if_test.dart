@@ -7,13 +7,13 @@ void main() {
 
     test('simple', () {
       Template template = env.fromString('{% if true %}...{% endif %}');
-      expect(template.renderMap(), equals('...'));
+      expect(template.render(), equals('...'));
     });
 
     test('elif', () {
       Template template = env.fromString('''{% if false %}XXX{% elif true
             %}...{% else %}XXX{% endif %}''');
-      expect(template.renderMap(), equals('...'));
+      expect(template.render(), equals('...'));
     });
 
     test('elif deep', () {
@@ -21,33 +21,33 @@ void main() {
           List<String>.generate(999, (int i) => '{% elif a == ${i + 1} %}${i + 1}').join() +
           '{% else %}x{% endif %}';
       Template template = env.fromString(source);
-      expect(template.renderMap(<String, Object>{'a': 0}), equals('0'));
-      expect(template.renderMap(<String, Object>{'a': 10}), equals('10'));
-      expect(template.renderMap(<String, Object>{'a': 999}), equals('999'));
-      expect(template.renderMap(<String, Object>{'a': 1000}), equals('x'));
+      expect(template.renderWr(a: 0), equals('0'));
+      expect(template.renderWr(a: 10), equals('10'));
+      expect(template.renderWr(a: 999), equals('999'));
+      expect(template.renderWr(a: 1000), equals('x'));
     });
 
     test('else', () {
       Template template = env.fromString('{% if false %}XXX{% else %}...{% endif %}');
-      expect(template.renderMap(), equals('...'));
+      expect(template.render(), equals('...'));
     });
 
     test('empty', () {
       Template template = env.fromString('[{% if true %}{% else %}{% endif %}]');
-      expect(template.renderMap(), equals('[]'));
+      expect(template.render(), equals('[]'));
     });
 
     test('complete', () {
       Template template = env.fromString('{% if a %}A{% elif b %}B{% elif c == d %}'
           'C{% else %}D{% endif %}');
-      expect(template.renderMap(<String, Object>{'a': 0, 'b': false, 'c': 42, 'd': 42.0}), equals('C'));
+      expect(template.renderWr(a: 0, b: false, c: 42, d: 42.0), equals('C'));
     });
 
     test('no scope', () {
       Template template = env.fromString('{% if a %}{% set foo = 1 %}{% endif %}{{ foo }}');
-      expect(template.renderMap(<String, Object>{'a': true}), equals('1'));
+      expect(template.renderWr(a: true), equals('1'));
       template = env.fromString('{% if true %}{% set foo = 1 %}{% endif %}{{ foo }}');
-      expect(template.renderMap(), equals('1'));
+      expect(template.render(), equals('1'));
     });
   });
 }

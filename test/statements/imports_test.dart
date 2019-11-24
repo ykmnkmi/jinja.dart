@@ -20,31 +20,31 @@ void main() {
 
     test('context include', () {
       Template template = env.fromString('{% include "header" %}');
-      expect(template.renderMap(foo42), equals('[42|23]'));
+      expect(template.render(foo42), equals('[42|23]'));
 
       template = env.fromString('{% include "header" with context %}');
-      expect(template.renderMap(foo42), equals('[42|23]'));
+      expect(template.render(foo42), equals('[42|23]'));
 
       template = env.fromString('{% include "header" without context %}');
-      expect(template.renderMap(foo42), equals('[|23]'));
+      expect(template.render(foo42), equals('[|23]'));
     });
 
     test('choise includes', () {
       Template template = env.fromString('{% include ["missing", "header"] %}');
-      expect(template.renderMap(foo42), equals('[42|23]'));
+      expect(template.render(foo42), equals('[42|23]'));
 
       template = env.fromString('{% include ["missing", "missing2"] ignore missing %}');
-      expect(template.renderMap(foo42), equals(''));
+      expect(template.render(foo42), equals(''));
 
       template = env.fromString('{% include ["missing", "missing2"] %}');
-      expect(() => template.renderMap(), throwsA(isA<TemplatesNotFound>()));
+      expect(() => template.render(), throwsA(isA<TemplatesNotFound>()));
 
       // template names in error
       // https://github.com/pallets/jinja/blob/master/tests/test_imports.py#L122
 
       void testIncludes(Template template, Map<String, Object> context) {
         context['foo'] = 42;
-        expect(template.renderMap(context), equals('[42|23]'));
+        expect(template.render(context), equals('[42|23]'));
       }
 
       template = env.fromString('{% include ["missing", "header"] %}');
@@ -63,11 +63,11 @@ void main() {
 
     test('include ignore missing', () {
       Template template = env.fromString('{% include "missing" %}');
-      expect(() => template.renderMap(), throwsA(isA<TemplateNotFound>()));
+      expect(() => template.render(), throwsA(isA<TemplateNotFound>()));
 
       for (String extra in <String>['', 'with context', 'without context']) {
         template = env.fromString('{% include "missing" ignore missing $extra %}');
-        expect(template.renderMap(), equals(''));
+        expect(template.render(), equals(''));
       }
     });
 
@@ -80,7 +80,7 @@ void main() {
       );
 
       Template template = env.getTemplate('main');
-      expect(template.renderMap(), equals('123'));
+      expect(template.render(), equals('123'));
     });
 
     // TODO: unoptimized scopes test

@@ -112,7 +112,7 @@ class Environment {
     this.globals = const <String, Object>{},
     this.getField,
     this.getItem,
-  }) : _templates = <String, Template>{};
+  }) : templates = <String, Template>{};
 
   final String blockStart;
   final String blockEnd;
@@ -137,23 +137,22 @@ class Environment {
   final FieldGetter getField;
   final ItemGetter getItem;
 
-  Map<String, Template> _templates;
-  Map<String, Template> get templates => _templates;
+  final Map<String, Template> templates;
 
   /// If `path` is not `null` template stored in environment cache.
   Template fromString(String source, {String path}) {
     Template template = Parser(this, source, path: path).parse();
-    if (path != null) _templates[path] = template;
+    if (path != null) templates[path] = template;
     return template;
   }
 
   /// If [path] not found throws `Exception`.
   Template getTemplate(String path) {
-    if (!_templates.containsKey(path)) {
+    if (!templates.containsKey(path)) {
       throw Exception('template not found: $path');
     }
 
-    return _templates[path];
+    return templates[path];
   }
 
   /// If [name] not found throws [Exception].
@@ -246,7 +245,7 @@ class Template extends Node {
 
     Environment env = _shared.containsKey(config)
         ? _shared[config.hashCode]
-        : Environment(
+        : Environment._(
             blockStart: blockStart,
             blockEnd: blockEnd,
             variableStart: variableStart,
@@ -261,7 +260,7 @@ class Template extends Node {
             undefined: undefined,
             finalize: finalize,
             autoEscape: autoEscape,
-            loader: loader,
+            shared: true,
             filters: Map<String, Function>.of(defaultFilters)..addAll(filters),
             envFilters: Map<String, Function>.of(defaultEnvFilters)..addAll(envFilters),
             tests: Map<String, Function>.of(defaultTests)..addAll(tests),
@@ -271,11 +270,12 @@ class Template extends Node {
           );
 
     _shared[config.hashCode] = env;
+    if (loader != null) loader.load(env);
     return Parser(env, source).parse();
   }
 
   Template.parsed({@required this.body, @required this.env, this.path}) : blocks = <String, BlockStatement>{} {
-    _render = RenderWrapper(([Map<String, Object> data]) => renderMap(data));
+    _renderWr = RenderWrapper(([Map<String, Object> data]) => render(data));
   }
 
   final Node body;
@@ -284,8 +284,8 @@ class Template extends Node {
 
   final Map<String, BlockStatement> blocks;
 
-  dynamic _render;
-  Function get render => _render as Function;
+  dynamic _renderWr;
+  Function get renderWr => _renderWr as Function;
 
   void _addBlocks(StringBuffer buffer, Context context) {
     NameSpace self = NameSpace();
@@ -305,7 +305,7 @@ class Template extends Node {
     body.accept(buffer, context);
   }
 
-  String renderMap([Map<String, Object> data]) {
+  String render([Map<String, Object> data]) {
     StringBuffer buffer = StringBuffer();
     Context context = Context(data: data, env: env);
     _addBlocks(buffer, context);

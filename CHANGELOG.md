@@ -1,10 +1,19 @@
 ## in progress
 - adding token stream
-- adding extensions
 
 ## 0.2.0
-- remove mirrors
-- add getField to Environment
+- extension preview
+- remove mirrors:
+  - getField to Environment
+- template:
+  - rename render to renderWr(apper) and renderMap to render (`renderWr(k1: v1, k2: v2)` calls `render({'k1': v1, 'k2': v2})`)
+- filters:
+  - add environment filters:
+    - batch
+    - filesizeformat
+- environment:
+  - add getField and getItem
+  - add keepTrailingNewLine option
 
 ## 0.1.2
 - fix example
@@ -23,24 +32,22 @@
   - add leftStrip and trimBlocks
   - add extensions (can change)
   - rename:
-    - stmtOpen to blockStart
-    - stmtClose to blockEnd
-    - varOpen to variableStart
-    - varClose to variableEnd
-    - commentOpen to commentStart
-    - commentClose to commentEnd
-  - move autoReload to FileSystemLoader
-  - remove getFilter and getTest
+    - `stmtOpen` to `blockStart`
+    - `stmtClose` to `blockEnd`
+    - `varOpen` to `variableStart`
+    - `varClose` to `variableEnd`
+    - `commentOpen` to `commentStart`
+    - `commentClose` to `commentEnd`
+  - move `autoReload` to `FileSystemLoader`
+  - remove `getFilter` and `getTest`
 - update context and parser
 - parser:
   - parsing *args, **kwargs in calls (not in filters and tests)
   - custom tags support
   - context
-  - onParseName
 - template:
-  - update render function: render(kv1: ..., kv2: ...) calls renderMap({'kv1': ..., 'kv2': ...})
-  - add simple module
-  - add self.blockName callback ref in context
+  - update render function: `render(kv1: ..., kv2: ...)` calls `renderMap({'kv1': ..., 'kv2': ...})`
+  - add self namespace and self.blockName callback ref in context
 - removed filters:
   - batch
   - filesizeformat

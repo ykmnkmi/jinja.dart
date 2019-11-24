@@ -59,7 +59,7 @@ void main() {
     test('layout', () {
       Template template = env.getTemplate('layout');
       expect(
-          template.renderMap(),
+          template.render(),
           equals('|block 1 from layout|block 2 from '
               'layout|nested block 4 from layout|'));
     });
@@ -67,7 +67,7 @@ void main() {
     test('level1', () {
       Template template = env.getTemplate('level1');
       expect(
-          template.renderMap(),
+          template.render(),
           equals('|block 1 from level1|block 2 from '
               'layout|nested block 4 from layout|'));
     });
@@ -75,7 +75,7 @@ void main() {
     test('level2', () {
       Template template = env.getTemplate('level2');
       expect(
-          template.renderMap(),
+          template.render(),
           equals('|block 1 from level1|nested block 5 from '
               'level2|nested block 4 from layout|'));
     });
@@ -83,7 +83,7 @@ void main() {
     test('level3', () {
       Template template = env.getTemplate('level3');
       expect(
-          template.renderMap(),
+          template.render(),
           equals('|block 1 from level1|block 5 from level3|'
               'block 4 from level3|'));
     });
@@ -91,7 +91,7 @@ void main() {
     test('level4', () {
       Template template = env.getTemplate('level4');
       expect(
-          template.renderMap(),
+          template.render(),
           equals('|block 1 from level1|block 5 from '
               'level3|block 3 from level4|'));
     });
@@ -110,7 +110,7 @@ void main() {
       );
 
       Template template = env.getTemplate('c');
-      expect(template.renderMap(), equals('--INTRO--|BEFORE|[(INNER)]|AFTER'));
+      expect(template.render(), equals('--INTRO--|BEFORE|[(INNER)]|AFTER'));
     });
 
     test('working', () {
@@ -121,7 +121,7 @@ void main() {
     test('reuse blocks', () {
       Template template = env.fromString('{{ self.foo() }}|{% block foo %}42'
           '{% endblock %}|{{ self.foo() }}');
-      expect(template.renderMap(), equals('42|42|42'));
+      expect(template.render(), equals('42|42|42'));
     });
 
     test('preserve blocks', () {
@@ -134,7 +134,7 @@ void main() {
       );
 
       Template template = env.getTemplate('b');
-      expect(template.renderMap(), equals('BA'));
+      expect(template.render(), equals('BA'));
     });
 
     test('dynamic inheritance', () {
@@ -149,7 +149,7 @@ void main() {
       Template template = env.getTemplate('child');
 
       for (int i in <int>[1, 2]) {
-        expect(template.renderMap(<String, Object>{'master': 'master$i'}), equals('MASTER${i}CHILD'));
+        expect(template.renderWr(master: 'master$i'), equals('MASTER${i}CHILD'));
       }
     });
 
@@ -164,9 +164,9 @@ void main() {
       );
 
       Template template = env.getTemplate('child');
-      expect(template.renderMap(<String, Object>{'master': 'master1'}), equals('MASTER1CHILD'));
-      expect(template.renderMap(<String, Object>{'master': 'master2'}), equals('MASTER2CHILD'));
-      expect(template.renderMap(), equals('MASTER1CHILD'));
+      expect(template.renderWr(master: 'master1'), equals('MASTER1CHILD'));
+      expect(template.renderWr(master: 'master2'), equals('MASTER2CHILD'));
+      expect(template.render(), equals('MASTER1CHILD'));
     });
 
     test('scoped block', () {
@@ -179,7 +179,7 @@ void main() {
 
       Template template = env.fromString('{% extends "master.html" %}{% block item %}'
           '{{ item }}{% endblock %}');
-      expect(template.renderMap(<String, Object>{'seq': range(5)}), equals('[0][1][2][3][4]'));
+      expect(template.renderWr(seq: range(5)), equals('[0][1][2][3][4]'));
     });
 
     test('super in scoped block', () {
@@ -192,7 +192,7 @@ void main() {
 
       Template template = env.fromString('{% extends "master.html" %}{% block item %}'
           '{{ super() }}|{{ item * 2 }}{% endblock %}');
-      expect(template.renderMap(<String, Object>{'seq': range(5)}), equals('[0|0][1|2][2|4][3|6][4|8]'));
+      expect(template.renderWr(seq: range(5)), equals('[0|0][1|2][2|4][3|6][4|8]'));
     });
 
     // TODO: test scoped block after inheritance

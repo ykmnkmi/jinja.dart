@@ -20,7 +20,7 @@ void main() {
     test('raw3', () {
       Environment env = Environment(leftStripBlocks: true, trimBlocks: true);
       Template template = env.fromString('bar\n{% raw %}\n  {{baz}}2 spaces\n{% endraw %}\nfoo');
-      expect(template.render(baz: 'test'), equals('bar\n\n  {{baz}}2 spaces\nfoo'));
+      expect(template.renderWr(baz: 'test'), equals('bar\n\n  {{baz}}2 spaces\nfoo'));
     });
 
     test('raw4', () {
@@ -39,7 +39,7 @@ void main() {
 
       Template template = env.fromString(r'''{% for item in seq
             %}${{'foo': item} | upper}{% endfor %}''');
-      expect(template.render(seq: <int>[0, 1, 2]), equals("{'FOO': 0}{'FOO': 1}{'FOO': 2}"));
+      expect(template.renderWr(seq: <int>[0, 1, 2]), equals("{'FOO': 0}{'FOO': 1}{'FOO': 2}"));
     });
 
     test('comments', () {
@@ -56,7 +56,7 @@ void main() {
   <li>{item}</li>
 <!--- endfor -->
 </ul>''');
-      expect(template.render(seq: <int>[0, 1, 2]), equals('<ul>\n  <li>0</li>\n  <li>1</li>\n  <li>2</li>\n</ul>'));
+      expect(template.renderWr(seq: <int>[0, 1, 2]), equals('<ul>\n  <li>0</li>\n  <li>1</li>\n  <li>2</li>\n</ul>'));
     });
 
     test('string escapes', () {
@@ -65,7 +65,37 @@ void main() {
         expect(template.render(), equals(char));
       }
 
-      expect(env.fromString('{{ "\N{HOT SPRINGS}" }}').render(), equals('\u2668'));
+      // TODO: * poor dart
+      // expect(env.fromString('{{ "\N{HOT SPRINGS}" }}').render(), equals('\u2668'));
+    });
+  });
+
+  group('leftStripBlocks', () {
+    Environment env = Environment();
+
+    test('left strip', () {
+      Environment env = Environment(leftStripBlocks: true);
+      Template template = env.fromString('    {% if true %}\n    {% endif %}');
+      expect(template.render(), equals('\n'));
+    });
+
+    test('left strip trim', () {
+      Environment env = Environment(leftStripBlocks: true, trimBlocks: true);
+      Template template = env.fromString('    {% if true %}\n    {% endif %}');
+      expect(template.render(), equals(''));
+    });
+
+    test('no left strip', () {
+      Environment env = Environment(leftStripBlocks: true);
+      Template template = env.fromString('    {%+ if true %}\n    {%+ endif %}');
+      expect(template.render(), equals('    \n    '));
+    });
+
+    test('left strip blocks false with no left strip', () {
+      Template template = env.fromString('    {% if true %}\n    {% endif %}');
+      expect(template.render(), equals('    \n    '));
+      template = env.fromString('    {%+ if True %}\n    {%+ endif %}');
+      expect(template.render(), equals('    \n    '));
     });
   });
 }

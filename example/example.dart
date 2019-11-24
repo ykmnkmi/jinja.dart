@@ -20,7 +20,7 @@ void main() {
   );
 
   Template template = env.getTemplate('users.html');
-  stdout.write(template.render(users: [
+  stdout.write(template.renderWr(users: [
     {'fullname': 'Jhon Doe', 'email': 'jhondoe@dev.py'},
     {'fullname': 'Jane Doe', 'email': 'janedoe@dev.py'},
   ]));

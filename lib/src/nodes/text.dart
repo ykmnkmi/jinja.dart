@@ -1,7 +1,7 @@
 import 'core.dart';
 
 class Text implements Node {
-  Text(this.text);
+  const Text(this.text);
 
   final String text;
 
