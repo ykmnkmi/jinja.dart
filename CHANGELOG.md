@@ -1,8 +1,8 @@
 ## in progress
-- adding token stream
+- adding lexer, token stream
 
 ## 0.2.0
-- extension preview
+- extension preview (parser, without lexer and tokens) (see example)
 - remove mirrors:
   - getField to Environment
 - template:

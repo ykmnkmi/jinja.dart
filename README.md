@@ -10,23 +10,40 @@ Simplify, remove mirrors, template generators
 
 ## Breaking changes
 
-...text_here...
+TODO: text
+
+Before:
 
 ```dart
 import 'package:jinja/jinja.dart';
+
+// ...
 
 var env = Environment( /* ... */ );
-var template = env.fromString('{{ map["key"] }}');
+var template = env.fromString('{{ users[0].name }}');
+
+// ...
+
+outSink.write(template.render(users: listOfUsers));
+// outSink.write(template.renderMap({'users': listOfUsers}));
 ```
 
-...text_here...
+After:
 
 ```dart
 import 'package:jinja/jinja.dart';
+// for object fields
 import 'package:jinja/mirrors.dart' show getField;
 
+// ...
+
 var env = Environment(getField: getField, /* ... */ );
-var template = env.fromString('{{ object.field }}');
+var template = env.fromString('{{ users[0].name }}');
+
+// ...
+
+outSink.write(template.render({'users': listOfUsers}));
+// outSink.write(template.renderWr(users: listOfUsers));
 ```
 
 ## Done
@@ -62,16 +79,15 @@ Import library and use it:
 
 ```dart
 import 'package:jinja/jinja.dart';
+
 // code ...
-var template = Template('...source...', blockStart: '...');
-// or
+
 var env = Environment(blockStart: '...');
 var template = env.fromString('...source...');
 
-// overrides noSuchMethod
-template.render(key: value);
-// or
-template.renderMap({'key': value});
+template.render({'key': value});
+// or (overrides noSuchMethod)
+template.renderWe(key: value);
 ```
 
 Note: all variables and literals used in the template are **dart objects** with their own fields and methods.
