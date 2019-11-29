@@ -14,23 +14,13 @@ import 'nodes.dart';
 typedef TemplateModifier = void Function(Template template);
 
 class Parser {
-  static String getTagCloseRule(String rule) {
+  static RegExp getOpenReg(String rule, [bool leftStripBlocks = false]) {
     rule = RegExp.escape(rule);
-    return '(?:\\s*$rule\\-|$rule)\\s*';
-  }
-
-  static String getTagOpenRule(String rule) {
-    rule = RegExp.escape(rule);
-    return '\\s*(?:\\-$rule\\s*|$rule)';
-  }
-
-  static RegExp getBlockBeginReg(String rule, [bool leftStripBlocks = false]) {
-    rule = RegExp.escape(rule);
-    String strip = leftStripBlocks ? '([ \\t]*)$rule\\+|[ \\t]*$rule|' : '';
+    String strip = leftStripBlocks ? '(^[ \\t]*)$rule\\+|^[ \\t]*$rule|' : '';
     return RegExp('(?:\\s*$rule\\-|$strip$rule\\+?)\\s*', multiLine: true);
   }
 
-  static RegExp getBlockEndReg(String rule, [bool trimBlocks = false]) {
+  static RegExp getEndReg(String rule, [bool trimBlocks = false]) {
     rule = RegExp.escape(rule);
     String trim = trimBlocks ? '\n?' : '';
     return RegExp('\\s*(?:\\-$rule\\s*|$rule$trim)', multiLine: true);
@@ -38,12 +28,12 @@ class Parser {
 
   Parser(this.environment, String source, {this.path})
       : _scanner = SpanScanner(source, sourceUrl: path),
-        blockStartReg = getBlockBeginReg(environment.blockStart, environment.leftStripBlocks),
-        blockEndReg = getBlockEndReg(environment.blockEnd, environment.trimBlocks),
-        variableStartReg = RegExp(getTagCloseRule(environment.variableStart)),
-        variableEndReg = RegExp(getTagOpenRule(environment.variableEnd)),
-        commentStartReg = RegExp(getTagCloseRule(environment.commentStart)),
-        commentEndReg = RegExp('.*' + getTagOpenRule(environment.commentEnd)),
+        commentStartReg = getOpenReg(environment.commentStart, environment.leftStripBlocks),
+        commentEndReg = getEndReg(environment.commentEnd, environment.trimBlocks),
+        variableStartReg = getOpenReg(environment.variableStart),
+        variableEndReg = getEndReg(environment.variableEnd),
+        blockStartReg = getOpenReg(environment.blockStart, environment.leftStripBlocks),
+        blockEndReg = getEndReg(environment.blockEnd, environment.trimBlocks),
         extensions = <String, ExtensionParser>{},
         keywords = <String>{'not', 'and', 'or', 'is', 'if', 'else'} {
     Set<Extension> extensionsSet = environment.extensions.toSet();
@@ -74,7 +64,7 @@ class Parser {
   final List<List<Pattern>> endRulesStack = <List<Pattern>>[];
   final List<String> tagsStack = <String>[];
 
-  RegExp getBlockEndRegFor(String rule, [bool withStart = false]) {
+  RegExp getEndRegFor(String rule, [bool withStart = false]) {
     if (withStart) {
       return RegExp(blockStartReg.pattern + RegExp.escape(rule) + blockEndReg.pattern, multiLine: true);
     }
@@ -157,7 +147,21 @@ class Parser {
 
     try {
       while (!_scanner.isDone) {
-        if (_scanner.scan(blockStartReg)) {
+        if (_scanner.scan(commentStartReg)) {
+          flush();
+
+          while (!_scanner.matches(commentEndReg)) {
+            _scanner.readChar();
+          }
+
+          expect(commentEndReg);
+        } else if (_scanner.scan(variableStartReg)) {
+          flush();
+          body.add(parseExpression());
+          expect(variableEndReg);
+        } else if (_scanner.scan(blockStartReg)) {
+          // TODO: lstrip: проверка блока перекрывает переменную
+
           flush();
 
           if (_scanner.lastMatch.groupCount > 0 && _scanner.lastMatch[0].trimRight().endsWith('+')) {
@@ -174,13 +178,6 @@ class Parser {
 
           if (endRules.isNotEmpty && testAll(endRules)) return body;
           body.add(parseStatement());
-        } else if (_scanner.scan(variableStartReg)) {
-          flush();
-          body.add(parseExpression());
-          expect(variableEndReg);
-        } else if (_scanner.scan(commentStartReg)) {
-          flush();
-          expect(commentEndReg);
         } else {
           buffer.writeCharCode(_scanner.readChar());
         }
@@ -286,7 +283,7 @@ class Parser {
   }
 
   BlockStatement parseBlock() {
-    RegExp blockEndReg = getBlockEndRegFor('endblock');
+    RegExp blockEndReg = getEndRegFor('endblock');
 
     if (_scanner.matches(this.blockEndReg)) {
       error('block name expected');
@@ -351,8 +348,8 @@ class Parser {
   }
 
   ForStatement parseFor() {
-    RegExp elseReg = getBlockEndRegFor('else');
-    RegExp forEndReg = getBlockEndRegFor('endfor');
+    RegExp elseReg = getEndRegFor('else');
+    RegExp forEndReg = getEndRegFor('endfor');
     List<String> targets = parseAssignTarget();
 
     expect(spacePlusReg);
@@ -383,8 +380,8 @@ class Parser {
   }
 
   IfStatement parseIf() {
-    RegExp elseReg = getBlockEndRegFor('else');
-    RegExp ifEndReg = getBlockEndRegFor('endif');
+    RegExp elseReg = getEndRegFor('else');
+    RegExp ifEndReg = getEndRegFor('endif');
     Map<Expression, Node> pairs = <Expression, Node>{};
     Node orElse;
 
@@ -419,7 +416,7 @@ class Parser {
   }
 
   SetStatement parseSet() {
-    RegExp setEndReg = getBlockEndRegFor('endset');
+    RegExp setEndReg = getEndRegFor('endset');
 
     expect(nameReg);
 
@@ -468,9 +465,9 @@ class Parser {
   }
 
   RawStatement parseRaw() {
-    RegExp endRawReg = getBlockEndRegFor('endraw', true);
+    RegExp endRawReg = getEndRegFor('endraw', true);
 
-    expect(getBlockEndReg(environment.blockEnd));
+    expect(getEndReg(environment.blockEnd));
 
     LineScannerState start = _scanner.state;
     LineScannerState end = start;
@@ -485,7 +482,7 @@ class Parser {
   }
 
   FilterBlockStatement parseFilterBlock() {
-    RegExp filterEndReg = getBlockEndRegFor('endfilter');
+    RegExp filterEndReg = getEndRegFor('endfilter');
 
     if (_scanner.matches(blockEndReg)) {
       error('filter expected');
