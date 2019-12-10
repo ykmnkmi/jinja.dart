@@ -4,7 +4,6 @@ import 'dart:async';
 
 import 'package:meta/meta.dart';
 import 'package:string_scanner/string_scanner.dart';
-import 'package:source_span/source_span.dart';
 
 import 'environment.dart';
 import 'exceptions.dart';
@@ -16,13 +15,13 @@ typedef TemplateModifier = void Function(Template template);
 class Parser {
   static RegExp getOpenReg(String rule, [bool leftStripBlocks = false]) {
     rule = RegExp.escape(rule);
-    String strip = leftStripBlocks ? '(^[ \\t]*)$rule\\+|^[ \\t]*$rule|' : '';
+    var strip = leftStripBlocks ? '(^[ \\t]*)$rule\\+|^[ \\t]*$rule|' : '';
     return RegExp('(?:\\s*$rule\\-|$strip$rule\\+?)\\s*', multiLine: true);
   }
 
   static RegExp getEndReg(String rule, [bool trimBlocks = false]) {
     rule = RegExp.escape(rule);
-    String trim = trimBlocks ? '\n?' : '';
+    var trim = trimBlocks ? '\n?' : '';
     return RegExp('\\s*(?:\\-$rule\\s*|$rule$trim)', multiLine: true);
   }
 
@@ -36,10 +35,10 @@ class Parser {
         blockEndReg = getEndReg(environment.blockEnd, environment.trimBlocks),
         extensions = <String, ExtensionParser>{},
         keywords = <String>{'not', 'and', 'or', 'is', 'if', 'else'} {
-    Set<Extension> extensionsSet = environment.extensions.toSet();
+    var extensionsSet = environment.extensions.toSet();
 
-    for (Extension ext in extensionsSet) {
-      for (String tag in ext.tags) {
+    for (var ext in extensionsSet) {
+      for (var tag in ext.tags) {
         extensions[tag] = ext.parse;
       }
     }
@@ -92,10 +91,10 @@ class Parser {
 
     if (name == null) {
       if (pattern is RegExp) {
-        String source = pattern.pattern;
+        var source = pattern.pattern;
         name = '/$source/';
       } else {
-        name = pattern.toString().replaceAll("\\", "\\\\").replaceAll('"', '\\"');
+        name = pattern.toString().replaceAll('\\', '\\\\').replaceAll('"', '\\"');
         name = '"$name"';
       }
     }
@@ -117,10 +116,10 @@ class Parser {
   bool get isDone => _scanner.isDone;
 
   Template parse() {
-    Node body = parseBody();
-    Template template = Template.parsed(body: body, env: environment, path: path);
+    var body = parseBody();
+    var template = Template.parsed(body: body, env: environment, path: path);
 
-    for (TemplateModifier modifier in _templateModifiers) {
+    for (var modifier in _templateModifiers) {
       modifier(template);
     }
 
@@ -128,13 +127,13 @@ class Parser {
   }
 
   Node parseBody([List<Pattern> endRules = const <Pattern>[]]) {
-    List<Node> nodes = subParse(endRules);
+    var nodes = subParse(endRules);
     return environment.optimize ? Interpolation.orNode(nodes) : Interpolation(nodes);
   }
 
   List<Node> subParse(List<Pattern> endRules) {
-    StringBuffer buffer = StringBuffer();
-    List<Node> body = <Node>[];
+    var buffer = StringBuffer();
+    var body = <Node>[];
 
     if (endRules.isNotEmpty) endRulesStack.add(endRules);
 
@@ -165,7 +164,7 @@ class Parser {
           flush();
 
           if (_scanner.lastMatch.groupCount > 0 && _scanner.lastMatch[0].trimRight().endsWith('+')) {
-            String spaces = _scanner.lastMatch[1];
+            var spaces = _scanner.lastMatch[1];
 
             if (spaces.isNotEmpty) {
               if (body.isNotEmpty && body.last is Text) {
@@ -192,7 +191,7 @@ class Parser {
   }
 
   bool testAll(List<Pattern> endRules) {
-    for (Pattern rule in endRules) {
+    for (var rule in endRules) {
       if (_scanner.matches(rule)) return true;
     }
 
@@ -202,8 +201,8 @@ class Parser {
   Node parseStatement() {
     expect(nameReg, name: 'statement tag');
 
-    String tagName = _scanner.lastMatch[1];
-    bool popTag = true;
+    var tagName = _scanner.lastMatch[1];
+    var popTag = true;
     tagsStack.add(tagName);
 
     expect(spaceReg);
@@ -228,7 +227,7 @@ class Parser {
           return parseFilterBlock();
         default:
           if (extensions.containsKey(tagName)) {
-            ExtensionParser extParser = extensions[tagName];
+            var extParser = extensions[tagName];
 
             if (extParser == null) {
               error('parser not found: $tagName');
@@ -248,17 +247,18 @@ class Parser {
 
   // TODO: update, check
   ExtendsStatement parseExtends() {
-    Expression path = parsePrimary();
+    var path = parsePrimary();
+
     expect(blockEndReg);
 
-    ExtendsStatement extendsStatement = ExtendsStatement(path);
+    var extendsStatement = ExtendsStatement(path);
 
     extendsStatements.add(extendsStatement);
 
-    LineScannerState state = _scanner.state;
+    var state = _scanner.state;
 
     addTemplateModifier((Template template) {
-      Node body = template.body;
+      var body = template.body;
       Node first;
 
       if (body is Interpolation) {
@@ -283,7 +283,7 @@ class Parser {
   }
 
   BlockStatement parseBlock() {
-    RegExp blockEndReg = getEndRegFor('endblock');
+    var blockEndReg = getEndRegFor('endblock');
 
     if (_scanner.matches(this.blockEndReg)) {
       error('block name expected');
@@ -291,9 +291,9 @@ class Parser {
 
     expect(nameReg, name: 'block name');
 
-    String name = _scanner.lastMatch[1];
-    bool scoped = false;
-    bool hasSuper = false;
+    var name = _scanner.lastMatch[1];
+    var scoped = false;
+    var hasSuper = false;
 
     if (_scanner.scan(spacePlusReg) && _scanner.scan('scoped')) {
       scoped = true;
@@ -301,26 +301,26 @@ class Parser {
 
     expect(this.blockEndReg);
 
-    StreamSubscription<Name> subscription = onParseName.listen((Name node) {
+    var subscription = onParseName.listen((Name node) {
       if (node.name == 'super') hasSuper = true;
     });
 
-    Node body = parseBody(<Pattern>[blockEndReg]);
+    var body = parseBody(<Pattern>[blockEndReg]);
     subscription.cancel();
 
     expect(blockEndReg);
 
     if (extendsStatements.isNotEmpty) {
-      ExtendedBlockStatement block = ExtendedBlockStatement(name, path, body, scoped: scoped, hasSuper: hasSuper);
+      var block = ExtendedBlockStatement(name, path, body, scoped: scoped, hasSuper: hasSuper);
 
-      for (ExtendsStatement extendsStatement in extendsStatements) {
+      for (var extendsStatement in extendsStatements) {
         extendsStatement.blocks.add(block);
       }
 
       return block;
     }
 
-    BlockStatement block = BlockStatement(name, path, body, scoped);
+    var block = BlockStatement(name, path, body, scoped);
 
     addTemplateModifier((Template template) {
       template.blocks[block.name] = block;
@@ -330,12 +330,10 @@ class Parser {
   }
 
   IncludeStatement parseInlcude() {
-    Expression oneOrList = parsePrimary();
-
-    bool ignoreMissing = false;
+    var oneOrList = parsePrimary();
+    var ignoreMissing = false;
     if (_scanner.scan(' ignore missing')) ignoreMissing = true;
-
-    bool withContext = true;
+    var withContext = true;
 
     if (_scanner.scan(' without context')) {
       withContext = false;
@@ -348,15 +346,15 @@ class Parser {
   }
 
   ForStatement parseFor() {
-    RegExp elseReg = getEndRegFor('else');
-    RegExp forEndReg = getEndRegFor('endfor');
-    List<String> targets = parseAssignTarget();
+    var elseReg = getEndRegFor('else');
+    var forEndReg = getEndRegFor('endfor');
+    var targets = parseAssignTarget();
 
     expect(spacePlusReg);
     expect('in');
     expect(spacePlusReg);
 
-    Expression iterable = parseExpression(withCondition: false);
+    var iterable = parseExpression(withCondition: false);
     Expression filter;
 
     if (_scanner.scan(ifReg)) {
@@ -365,7 +363,7 @@ class Parser {
 
     expect(blockEndReg);
 
-    Node body = parseBody(<Pattern>[elseReg, forEndReg]);
+    var body = parseBody(<Pattern>[elseReg, forEndReg]);
     Node orElse;
 
     if (_scanner.scan(elseReg)) {
@@ -380,9 +378,9 @@ class Parser {
   }
 
   IfStatement parseIf() {
-    RegExp elseReg = getEndRegFor('else');
-    RegExp ifEndReg = getEndRegFor('endif');
-    Map<Expression, Node> pairs = <Expression, Node>{};
+    var elseReg = getEndRegFor('else');
+    var ifEndReg = getEndRegFor('endif');
+    var pairs = <Expression, Node>{};
     Node orElse;
 
     while (true) {
@@ -390,11 +388,11 @@ class Parser {
         error('expect statement body');
       }
 
-      Expression condition = parseExpression();
+      var condition = parseExpression();
 
       expect(blockEndReg);
 
-      Node body = parseBody(<Pattern>['elif', elseReg, ifEndReg]);
+      var body = parseBody(<Pattern>['elif', elseReg, ifEndReg]);
 
       if (_scanner.scan('elif')) {
         _scanner.scan(spaceReg);
@@ -416,11 +414,11 @@ class Parser {
   }
 
   SetStatement parseSet() {
-    RegExp setEndReg = getEndRegFor('endset');
+    var setEndReg = getEndRegFor('endset');
 
     expect(nameReg);
 
-    String target = _scanner.lastMatch[1];
+    var target = _scanner.lastMatch[1];
     String field;
 
     if (_scanner.scan(dotReg) && _scanner.scan(nameReg)) {
@@ -432,17 +430,17 @@ class Parser {
         error('expression expected');
       }
 
-      Expression value = parseExpression(withCondition: false);
+      var value = parseExpression(withCondition: false);
 
       expect(blockEndReg);
 
       return SetInlineStatement(target, value, field: field);
     }
 
-    List<Filter> filters = <Filter>[];
+    var filters = <Filter>[];
 
     while (_scanner.scan(pipeReg)) {
-      Filter filter = parseFilter(hasLeadingPipe: false);
+      var filter = parseFilter(hasLeadingPipe: false);
 
       if (filter == null) {
         error('filter expected but got ${filter.runtimeType}');
@@ -453,7 +451,7 @@ class Parser {
 
     expect(blockEndReg);
 
-    Node body = parseBody(<Pattern>[setEndReg]);
+    var body = parseBody(<Pattern>[setEndReg]);
 
     expect(setEndReg);
 
@@ -465,33 +463,33 @@ class Parser {
   }
 
   RawStatement parseRaw() {
-    RegExp endRawReg = getEndRegFor('endraw', true);
+    var endRawReg = getEndRegFor('endraw', true);
 
     expect(getEndReg(environment.blockEnd));
 
-    LineScannerState start = _scanner.state;
-    LineScannerState end = start;
+    var start = _scanner.state;
+    var end = start;
 
     while (!_scanner.isDone && !_scanner.scan(endRawReg)) {
       _scanner.readChar();
       end = _scanner.state;
     }
 
-    FileSpan span = _scanner.spanFrom(start, end);
+    var span = _scanner.spanFrom(start, end);
     return RawStatement(span.text);
   }
 
   FilterBlockStatement parseFilterBlock() {
-    RegExp filterEndReg = getEndRegFor('endfilter');
+    var filterEndReg = getEndRegFor('endfilter');
 
     if (_scanner.matches(blockEndReg)) {
       error('filter expected');
     }
 
-    List<Filter> filters = <Filter>[];
+    var filters = <Filter>[];
 
     while (_scanner.scan(pipeReg)) {
-      Filter filter = parseFilter(hasLeadingPipe: false);
+      var filter = parseFilter(hasLeadingPipe: false);
 
       if (filter == null) {
         error('filter expected but got ${filter.runtimeType}');
@@ -502,7 +500,7 @@ class Parser {
 
     expect(blockEndReg);
 
-    Node body = parseBody(<Pattern>[filterEndReg]);
+    var body = parseBody(<Pattern>[filterEndReg]);
 
     expect(filterEndReg);
 
@@ -545,10 +543,10 @@ class Parser {
   }
 
   Expression parseCondition() {
-    Expression expr = parseOr();
+    var expr = parseOr();
 
     while (_scanner.scan(ifReg)) {
-      Expression testExpr = parseOr();
+      var testExpr = parseOr();
       Test test;
       Expression elseExpr;
 
@@ -571,7 +569,7 @@ class Parser {
   }
 
   Expression parseOr() {
-    Expression left = parseAnd();
+    var left = parseAnd();
 
     while (_scanner.scan(orReg)) {
       left = Or(left, parseAnd());
@@ -581,7 +579,7 @@ class Parser {
   }
 
   Expression parseAnd() {
-    Expression left = parseNot();
+    var left = parseNot();
 
     while (_scanner.scan(andReg)) {
       left = And(left, parseNot());
@@ -599,7 +597,7 @@ class Parser {
   }
 
   Expression parseCompare() {
-    Expression left = parseMath1();
+    var left = parseMath1();
 
     while (true) {
       String op;
@@ -614,7 +612,7 @@ class Parser {
         break;
       }
 
-      Expression right = parseMath1();
+      var right = parseMath1();
 
       if (right == null) {
         error('Expected math expression');
@@ -648,11 +646,11 @@ class Parser {
   }
 
   Expression parseMath1() {
-    Expression left = parseConcat();
+    var left = parseConcat();
 
     while (!testAll(<Pattern>[variableEndReg, blockEndReg]) && _scanner.scan(math1Reg)) {
-      String op = _scanner.lastMatch[1];
-      Expression right = parseConcat();
+      var op = _scanner.lastMatch[1];
+      var right = parseConcat();
 
       switch (op) {
         case '+':
@@ -667,7 +665,7 @@ class Parser {
   }
 
   Expression parseConcat() {
-    List<Expression> args = <Expression>[parseMath2()];
+    var args = <Expression>[parseMath2()];
 
     while (!testAll(<Pattern>[variableEndReg, blockEndReg]) && _scanner.scan(tildaReg)) {
       args.add(parseMath2());
@@ -681,11 +679,11 @@ class Parser {
   }
 
   Expression parseMath2() {
-    Expression left = parsePow();
+    var left = parsePow();
 
     while (!testAll(<Pattern>[variableEndReg, blockEndReg]) && _scanner.scan(math2Reg)) {
-      String op = _scanner.lastMatch[1];
-      Expression right = parsePow();
+      var op = _scanner.lastMatch[1];
+      var right = parsePow();
 
       switch (op) {
         case '*':
@@ -706,7 +704,7 @@ class Parser {
   }
 
   Expression parsePow() {
-    Expression left = parseUnary();
+    var left = parseUnary();
 
     while (_scanner.scan(powReg)) {
       left = Pow(left, parseUnary());
@@ -754,8 +752,8 @@ class Parser {
     } else if (_scanner.scan('none')) {
       expr = Literal<Object>(null);
     } else if (_scanner.scan(nameReg)) {
-      String name = _scanner.lastMatch[1];
-      Name nameExpr = Name(name);
+      var name = _scanner.lastMatch[1];
+      var nameExpr = Name(name);
       expr = nameExpr;
       _onParseNameController.add(nameExpr);
     } else if (_scanner.scan(stringStartReg)) {
@@ -773,7 +771,7 @@ class Parser {
 
       expr = Literal<Object>(body);
     } else if (_scanner.scan(digitReg)) {
-      String integer = _scanner.lastMatch[1];
+      var integer = _scanner.lastMatch[1];
 
       if (_scanner.scan(fractionalReg)) {
         expr = Literal<double>(double.tryParse(integer + _scanner.lastMatch[0]));
@@ -810,8 +808,8 @@ class Parser {
       $parse = () => parseExpression(withCondition: true);
     }
 
-    List<Expression> args = <Expression>[];
-    bool isTuple = false;
+    var args = <Expression>[];
+    var isTuple = false;
 
     while (!_scanner.scan(rParenReg)) {
       if (args.isNotEmpty) {
@@ -848,7 +846,7 @@ class Parser {
   Expression parseList() {
     expect(lBracketReg);
 
-    List<Expression> items = <Expression>[];
+    var items = <Expression>[];
 
     while (!_scanner.scan(rBracketReg)) {
       if (items.isNotEmpty) expect(commaReg);
@@ -867,12 +865,12 @@ class Parser {
   Expression parseMap() {
     expect(lBraceReg);
 
-    Map<Expression, Expression> items = <Expression, Expression>{};
+    var items = <Expression, Expression>{};
 
     while (!_scanner.scan(rBraceReg)) {
       if (items.isNotEmpty) expect(commaReg);
 
-      Expression key = parseExpression();
+      var key = parseExpression();
 
       expect(colonReg, name: 'dict entry delimeter');
 
@@ -926,7 +924,7 @@ class Parser {
     }
 
     if (_scanner.scan(lBracketReg)) {
-      Expression item = parseExpression();
+      var item = parseExpression();
 
       expect(rBracketReg);
 
@@ -939,10 +937,10 @@ class Parser {
   Call parseCall({Expression expr}) {
     expect(lParenReg);
 
-    List<Expression> args = <Expression>[];
-    Map<String, Expression> kwargs = <String, Expression>{};
+    var args = <Expression>[];
+    var kwargs = <String, Expression>{};
     Expression argsDyn, kwargsDyn;
-    bool requireComma = false;
+    var requireComma = false;
 
     while (!_scanner.scan(rParenReg)) {
       if (requireComma) {
@@ -956,8 +954,8 @@ class Parser {
       } else if (_scanner.scan('*')) {
         argsDyn = parseExpression();
       } else if (_scanner.scan(RegExp(nameReg.pattern + assignReg.pattern)) && argsDyn == null && kwargsDyn == null) {
-        String arg = _scanner.lastMatch[1];
-        String key = arg == 'default' ? '\$default' : arg;
+        var arg = _scanner.lastMatch[1];
+        var key = arg == 'default' ? '\$default' : arg;
         kwargs[key] = parseExpression();
       } else if (kwargs.isEmpty && argsDyn == null && kwargsDyn == null) {
         args.add(parseExpression());
@@ -988,10 +986,10 @@ class Parser {
   Expression _parseFilter(Expression expr) {
     expect(nameReg, name: 'filter name');
 
-    String name = _scanner.lastMatch[1];
+    var name = _scanner.lastMatch[1];
 
     if (_scanner.matches(lParenReg)) {
-      Call call = parseCall();
+      var call = parseCall();
       expr = Filter(name, expr: expr, args: call.args, kwargs: call.kwargs);
     } else {
       expr = Filter(name, expr: expr);
@@ -1001,24 +999,24 @@ class Parser {
   }
 
   Expression parseTest(Expression expr) {
-    List<Expression> args = <Expression>[];
-    Map<String, Expression> kwargs = <String, Expression>{};
-    bool negated = false;
+    var args = <Expression>[];
+    var kwargs = <String, Expression>{};
+    var negated = false;
 
     _scanner.scan(isReg);
     if (_scanner.scan(notReg)) negated = true;
     expect(nameReg, name: 'test name');
 
-    String name = _scanner.lastMatch[1];
+    var name = _scanner.lastMatch[1];
 
     if (_scanner.matches(lParenReg)) {
-      Call call = parseCall();
+      var call = parseCall();
       args.addAll(call.args);
       kwargs.addAll(call.kwargs);
     } else if (_scanner.matches(inlineSpacePlusReg) &&
         !testAll(<Pattern>[elseReg, orReg, andReg, variableEndReg, blockEndReg])) {
       _scanner.scan(spacePlusReg);
-      Expression arg = parsePrimary();
+      var arg = parsePrimary();
 
       if (arg is Name) {
         if (!<String>['else', 'or', 'and'].contains(arg.name)) {

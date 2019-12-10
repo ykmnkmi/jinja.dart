@@ -14,8 +14,8 @@ class Add extends BinaryExpression {
 
   @override
   Object resolve(Context context) {
-    Object left = this.left.resolve(context);
-    Object right = this.right.resolve(context);
+    var left = this.left.resolve(context);
+    var right = this.right.resolve(context);
 
     if (left is num && right is num) return left + right;
     if (left is String && right is String) return left + right;
@@ -43,8 +43,8 @@ class Sub extends BinaryExpression {
 
   @override
   Object resolve(Context context) {
-    Object left = this.left.resolve(context);
-    Object right = this.right.resolve(context);
+    var left = this.left.resolve(context);
+    var right = this.right.resolve(context);
 
     if (left is num && right is num) return left - right;
 

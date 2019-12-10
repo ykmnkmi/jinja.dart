@@ -23,7 +23,7 @@ class Test extends Expression {
 
   @override
   String toDebugString([int level = 0]) {
-    StringBuffer buffer = StringBuffer(' ' * level);
+    var buffer = StringBuffer(' ' * level);
     if (expr != null) buffer.write(expr.toDebugString());
     if (name == 'defined') return buffer.toString();
     buffer.write(' is $name');
@@ -54,7 +54,7 @@ class Test extends Expression {
 
   @override
   String toString() {
-    StringBuffer buffer = StringBuffer('Test($name');
+    var buffer = StringBuffer('Test($name');
     if (expr != null) buffer.write(', $expr');
     if (args != null && args.isNotEmpty) buffer.write(', args: $args');
     if (kwargs != null && kwargs.isNotEmpty) buffer.write(', kwargs: $kwargs');

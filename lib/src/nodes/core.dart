@@ -20,7 +20,7 @@ abstract class Expression implements Node {
 
   @override
   void accept(StringBuffer buffer, Context context) {
-    Object value = resolve(context);
+    var value = resolve(context);
 
     if (value is Node) {
       value.accept(buffer, context);

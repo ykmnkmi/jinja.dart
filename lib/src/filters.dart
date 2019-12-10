@@ -75,8 +75,8 @@ String doCapitalize(String value) => value.substring(0, 1).toUpperCase() + value
 
 String doCenter(String value, int width) {
   if (value.length >= width) return value;
-  int padLength = (width - value.length) ~/ 2;
-  String pad = ' ' * padLength;
+  var padLength = (width - value.length) ~/ 2;
+  var pad = ' ' * padLength;
   return pad + value + pad;
 }
 
@@ -128,7 +128,7 @@ String doLower(Object value) => repr(value, false).toLowerCase();
 
 final Random _rnd = Random();
 Object doRandom(List<Object> values) {
-  int length = values.length;
+  var length = values.length;
   return values[_rnd.nextInt(length)];
 }
 

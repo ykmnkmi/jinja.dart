@@ -20,7 +20,7 @@ abstract class Loader {
   }
 
   void load(Environment env) {
-    for (String path in listSources()) {
+    for (var path in listSources()) {
       env.fromString(getSource(path), path: path);
     }
   }
@@ -59,8 +59,8 @@ class FileSystemLoader extends Loader {
 
   @override
   String getSource(String path) {
-    String templatePath = _path.join(directory.path, path);
-    File templateFile = File(templatePath);
+    var templatePath = _path.join(directory.path, path);
+    var templateFile = File(templatePath);
 
     if (!templateFile.existsSync()) {
       throw Exception('template not found: $path');
@@ -85,7 +85,7 @@ class FileSystemLoader extends Loader {
           .watch(recursive: true)
           .where((FileSystemEvent event) => event.type == FileSystemEvent.modify)
           .listen((FileSystemEvent event) {
-        String path = _path.relative(event.path, from: directory.path);
+        var path = _path.relative(event.path, from: directory.path);
         env.fromString(getSource(path), path: path);
       });
     }

@@ -1,7 +1,7 @@
 import 'runtime.dart';
 
 Iterable<int> range(int n) sync* {
-  for (int i = 0; i < n; i++) {
+  for (var i = 0; i < n; i++) {
     yield i;
   }
 }
@@ -18,13 +18,13 @@ bool toBool(Object value) {
 
 String repr(Object object, [bool reprString = true]) {
   if (object is Iterable) {
-    StringBuffer buffer = StringBuffer();
+    var buffer = StringBuffer();
     buffer.write('[');
     buffer.writeAll(object.map<String>(repr), ', ');
     buffer.write(']');
     return '$buffer';
   } else if (object is Map) {
-    StringBuffer buffer = StringBuffer();
+    var buffer = StringBuffer();
     buffer.write('{');
     buffer.writeAll(
         object.entries.map<String>((MapEntry<Object, Object> entry) => '${repr(entry.key)}: ${repr(entry.value)}'),
@@ -39,6 +39,6 @@ String repr(Object object, [bool reprString = true]) {
 }
 
 String getSymbolName(Symbol symbol) {
-  String fullName = '$symbol';
+  var fullName = '$symbol';
   return fullName.substring(8, fullName.length - 2);
 }

@@ -14,9 +14,9 @@ class Concat extends Expression {
 
   @override
   String resolve(Context context) {
-    StringBuffer buffer = StringBuffer();
+    var buffer = StringBuffer();
 
-    for (Expression expr in exprs) {
+    for (var expr in exprs) {
       expr.accept(buffer, context);
     }
 

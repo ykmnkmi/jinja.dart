@@ -27,7 +27,7 @@ class Filter extends Expression {
 
   @override
   String toDebugString([int level = 0]) {
-    StringBuffer buffer = StringBuffer(' ' * level);
+    var buffer = StringBuffer(' ' * level);
     if (expr != null) buffer.write('${expr.toDebugString()} | ');
     buffer.write(name);
     if (args.isEmpty && kwargs.isEmpty) return buffer.toString();
@@ -57,7 +57,7 @@ class Filter extends Expression {
 
   @override
   String toString() {
-    StringBuffer buffer = StringBuffer('Filter($name, $expr');
+    var buffer = StringBuffer('Filter($name, $expr');
     if (args != null && args.isNotEmpty) buffer.write(', args: $args');
     if (kwargs != null && kwargs.isNotEmpty) buffer.write(', kwargs: $kwargs');
     buffer.write(')');

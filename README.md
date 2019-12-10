@@ -4,15 +4,14 @@
 
 [Jinja 2](http://jinja.pocoo.org/) server-side template engine port for Dart 2. Variables, expressions, control structures and template inheritance.
 
-## Current
+Current
+-------
+Simplify, template generators
 
-Simplify, remove mirrors, template generators
+Breaking changes
+----------------
 
-## Breaking changes
-
-TODO: text
-
-Before:
+Current:
 
 ```dart
 import 'package:jinja/jinja.dart';
@@ -28,7 +27,7 @@ outSink.write(template.render(users: listOfUsers));
 // outSink.write(template.renderMap({'users': listOfUsers}));
 ```
 
-After:
+Now:
 
 ```dart
 import 'package:jinja/jinja.dart';
@@ -46,8 +45,8 @@ outSink.write(template.render({'users': listOfUsers}));
 // outSink.write(template.renderWr(users: listOfUsers));
 ```
 
-## Done
-
+Done
+----
 - Loaders
   - FileSystemLoader
   - MapLoader (DictLoader)
@@ -66,8 +65,8 @@ outSink.write(template.render({'users': listOfUsers}));
   - Extends
   - Block
 
-## Example
-
+Example
+-------
 Add package to your `pubspec.yaml` as a dependency
 
 ```yaml
@@ -87,7 +86,7 @@ var template = env.fromString('...source...');
 
 template.render({'key': value});
 // or (overrides noSuchMethod)
-template.renderWe(key: value);
+template.renderWr(key: value);
 ```
 
 Note: all variables and literals used in the template are **dart objects** with their own fields and methods.
@@ -99,7 +98,7 @@ In progress ...
 Contributing
 ------------
 If you found a bug, just create a [new issue][new_issue] or even better fork
-and issue a pull request with you fix.
+and issue a pull request with your fix.
 
 [filters]: https://github.com/ykmnkmi/dart-jinja/blob/master/lib/src/filters.dart
 [new_issue]: https://github.com/ykmnkmi/dart-jinja/issues/new

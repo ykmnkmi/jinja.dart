@@ -63,7 +63,7 @@ class Environment {
     FieldGetter getField = defaultFieldGetter,
     ItemGetter getItem = defaultItemGetter,
   }) {
-    Environment env = Environment._(
+    var env = Environment._(
       blockStart: blockStart,
       blockEnd: blockEnd,
       variableStart: variableStart,
@@ -141,7 +141,7 @@ class Environment {
 
   /// If `path` is not `null` template stored in environment cache.
   Template fromString(String source, {String path}) {
-    Template template = Parser(this, source, path: path).parse();
+    var template = Parser(this, source, path: path).parse();
     if (path != null) templates[path] = template;
     return template;
   }
@@ -219,7 +219,7 @@ class Template extends Node {
     FieldGetter getField = defaultFieldGetter,
     ItemGetter getItem = defaultItemGetter,
   }) {
-    Set<Object> config = <Object>{
+    var config = <Object>{
       blockStart,
       blockEnd,
       variableStart,
@@ -243,7 +243,7 @@ class Template extends Node {
       getItem,
     };
 
-    Environment env = _shared.containsKey(config)
+    var env = _shared.containsKey(config)
         ? _shared[config.hashCode]
         : Environment._(
             blockStart: blockStart,
@@ -288,9 +288,9 @@ class Template extends Node {
   Function get renderWr => _renderWr as Function;
 
   void _addBlocks(StringBuffer buffer, Context context) {
-    NameSpace self = NameSpace();
+    var self = NameSpace();
 
-    for (MapEntry<String, BlockStatement> blockEntry in blocks.entries) {
+    for (var blockEntry in blocks.entries) {
       self[blockEntry.key] = () {
         blockEntry.value.accept(buffer, context);
       };
@@ -306,8 +306,8 @@ class Template extends Node {
   }
 
   String render([Map<String, Object> data]) {
-    StringBuffer buffer = StringBuffer();
-    Context context = Context(data: data, env: env);
+    var buffer = StringBuffer();
+    var context = Context(data: data, env: env);
     _addBlocks(buffer, context);
     body.accept(buffer, context);
     return buffer.toString();
@@ -318,7 +318,7 @@ class Template extends Node {
 
   @override
   String toDebugString([int level = 0]) {
-    StringBuffer buffer = StringBuffer();
+    var buffer = StringBuffer();
 
     if (path != null) {
       buffer.write(' ' * level);

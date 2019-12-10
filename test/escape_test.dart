@@ -1,5 +1,5 @@
 import 'package:jinja/src/markup.dart';
-import "package:test/test.dart" hide escape;
+import 'package:test/test.dart' hide escape;
 
 void main() {
   group('escape', () {

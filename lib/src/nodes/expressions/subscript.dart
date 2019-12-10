@@ -10,7 +10,7 @@ class Field extends Expression {
 
   @override
   Object resolve(Context context) {
-    Object value = expr.resolve(context);
+    var value = expr.resolve(context);
 
     if (value == null || value is Undefined) {
       throw UndefinedError();
@@ -37,9 +37,8 @@ class Item extends Expression {
 
   @override
   Object resolve(Context context) {
-    Object value = expr.resolve(context);
-    Object item = this.item.resolve(context);
-
+    var value = expr.resolve(context);
+    var item = this.item.resolve(context);
     return context.env.getItem(value, item);
   }
 

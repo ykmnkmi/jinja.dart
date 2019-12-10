@@ -2,19 +2,21 @@
 - adding lexer, token stream
 
 ## 0.2.0
-- extension preview (parser, without lexer and tokens) (see example)
-- remove mirrors:
-  - getField to Environment
+- minimal dart SDK version: 2.6
+- extensions preview (parser with regexp) (see example)
+- environment:
+  - add `getField` and `getItem` methods
+  - add `leftStripBlock` and `keepTrailingNewLine` options
+- field expression that used mirrors now uses `Environment.getField` method</br>
+  default getField throws runtime error, to use field expression import and pass to environment `getField` method from `package:jinja/get_field.dart`</br>
 - template:
-  - rename render to renderWr(apper) and renderMap to render (`renderWr(k1: v1, k2: v2)` calls `render({'k1': v1, 'k2': v2})`)
+  - rename `render` to `renderWr` and `renderMap` to `render`<br/>
+    renderWr(k1: v1, k2: v2) calls render({'k1': v1, 'k2': v2})
 - filters:
   - add environment filters:
     - batch
     - filesizeformat
-- environment:
-  - add getField and getItem
-  - add keepTrailingNewLine option
-- leftStripBlock tests
+- more package tests
 
 ## 0.1.2
 - fix example

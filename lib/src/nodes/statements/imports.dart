@@ -18,7 +18,7 @@ class IncludeStatement extends Statement {
   void accept(StringBuffer buffer, Context context) {
     Template template;
 
-    Object oneOrList = paths.resolve(context);
+    var oneOrList = paths.resolve(context);
 
     if (oneOrList is List) {
       for (Object path in oneOrList) {
@@ -49,7 +49,7 @@ class IncludeStatement extends Statement {
 
   @override
   String toDebugString([int level = 0]) {
-    StringBuffer buffer = StringBuffer(' ' * level);
+    var buffer = StringBuffer(' ' * level);
     buffer.write('inlcude ${paths.toDebugString()}');
     if (!withContext) buffer.write(' without context');
     if (ignoreMissing) buffer.write(' ignore missing');

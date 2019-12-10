@@ -9,7 +9,7 @@ class IfStatement extends Statement {
 
   @override
   void accept(StringBuffer buffer, Context context) {
-    for (MapEntry<Expression, Node> pair in pairs.entries) {
+    for (var pair in pairs.entries) {
       if (toBool(pair.key.resolve(context))) {
         pair.value.accept(buffer, context);
         return;
@@ -21,12 +21,12 @@ class IfStatement extends Statement {
 
   @override
   String toDebugString([int level = 0]) {
-    StringBuffer buffer = StringBuffer(' ' * level);
-    MapEntry<Expression, Node> first = pairs.entries.first;
+    var buffer = StringBuffer(' ' * level);
+    var first = pairs.entries.first;
     buffer.writeln('if ${first.key.toDebugString()}');
     buffer.write(first.value.toDebugString(level + 1));
 
-    for (MapEntry<Expression, Node> pair in pairs.entries.skip(1)) {
+    for (var pair in pairs.entries.skip(1)) {
       buffer.writeln();
       buffer.write(' ' * level);
       buffer.writeln('if ${pair.key.toDebugString()}');
@@ -44,7 +44,7 @@ class IfStatement extends Statement {
 
   @override
   String toString() {
-    StringBuffer buffer = StringBuffer('If($pairs');
+    var buffer = StringBuffer('If($pairs');
     if (orElse != null) buffer.write(', $orElse');
     buffer.write(')');
     return buffer.toString();

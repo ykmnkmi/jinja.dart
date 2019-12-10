@@ -18,7 +18,7 @@ class Context {
   bool has(String name) => contexts.any((Map<String, Object> context) => context.containsKey(name));
 
   bool removeLast(String name) {
-    for (Map<String, Object> context in contexts.reversed) {
+    for (var context in contexts.reversed) {
       if (context.containsKey(name)) {
         context.remove(name);
         return true;
@@ -29,7 +29,7 @@ class Context {
   }
 
   Object operator [](String key) {
-    for (Map<String, Object> context in contexts.reversed) {
+    for (var context in contexts.reversed) {
       if (context.containsKey(key)) return context[key];
     }
 
