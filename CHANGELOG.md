@@ -7,11 +7,8 @@
 - environment:
   - add `getField` and `getItem` methods
   - add `leftStripBlock` and `keepTrailingNewLine` options
-- field expression that used mirrors now uses `Environment.getField` method</br>
-  default getField throws runtime error, to use field expression import and pass to environment `getField` method from `package:jinja/get_field.dart`</br>
-- template:
-  - rename `render` to `renderWr` and `renderMap` to `render`<br/>
-    renderWr(k1: v1, k2: v2) calls render({'k1': v1, 'k2': v2})
+- field and method calling expressions that used mirrors now uses `Environment.getField` method</br>
+  default getField throws runtime error, to use field expression import and pass to environment `getField` method from `package:jinja/get_field.dart`, this method uses dart:mirrors</br>
 - filters:
   - add environment filters:
     - batch

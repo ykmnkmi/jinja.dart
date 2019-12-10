@@ -4,15 +4,14 @@
 
 [Jinja 2](http://jinja.pocoo.org/) server-side template engine port for Dart 2. Variables, expressions, control structures and template inheritance.
 
-Current
+Current status
 -------
-Simplify, template generators
+Token based parser, extensions, template generator
 
 Breaking changes
 ----------------
-
 Current:
-
+For field and object methods
 ```dart
 import 'package:jinja/jinja.dart';
 
@@ -23,16 +22,15 @@ var template = env.fromString('{{ users[0].name }}');
 
 // ...
 
-outSink.write(template.render(users: listOfUsers));
-// outSink.write(template.renderMap({'users': listOfUsers}));
+outStringSink.write(template.renderMap({'users': listOfUsers}));
+// outStringSink.write(template.render(users: listOfUsers));
 ```
 
 Now:
-
 ```dart
 import 'package:jinja/jinja.dart';
-// for object fields
-import 'package:jinja/mirrors.dart' show getField;
+// for field expression
+import 'package:jinja/get_field.dart' show getField;
 
 // ...
 
@@ -41,8 +39,8 @@ var template = env.fromString('{{ users[0].name }}');
 
 // ...
 
-outSink.write(template.render({'users': listOfUsers}));
-// outSink.write(template.renderWr(users: listOfUsers));
+outStringSink.write(template.renderMap({'users': listOfUsers}));
+// outStringSink.write(template.render(users: listOfUsers));
 ```
 
 Done
@@ -88,8 +86,6 @@ template.render({'key': value});
 // or (overrides noSuchMethod)
 template.renderWr(key: value);
 ```
-
-Note: all variables and literals used in the template are **dart objects** with their own fields and methods.
 
 Docs
 ----

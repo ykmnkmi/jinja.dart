@@ -59,7 +59,7 @@ void main() {
     test('layout', () {
       var template = env.getTemplate('layout');
       expect(
-          template.render(),
+          template.renderMap(),
           equals('|block 1 from layout|block 2 from '
               'layout|nested block 4 from layout|'));
     });
@@ -67,7 +67,7 @@ void main() {
     test('level1', () {
       var template = env.getTemplate('level1');
       expect(
-          template.render(),
+          template.renderMap(),
           equals('|block 1 from level1|block 2 from '
               'layout|nested block 4 from layout|'));
     });
@@ -75,7 +75,7 @@ void main() {
     test('level2', () {
       var template = env.getTemplate('level2');
       expect(
-          template.render(),
+          template.renderMap(),
           equals('|block 1 from level1|nested block 5 from '
               'level2|nested block 4 from layout|'));
     });
@@ -83,7 +83,7 @@ void main() {
     test('level3', () {
       var template = env.getTemplate('level3');
       expect(
-          template.render(),
+          template.renderMap(),
           equals('|block 1 from level1|block 5 from level3|'
               'block 4 from level3|'));
     });
@@ -91,7 +91,7 @@ void main() {
     test('level4', () {
       var template = env.getTemplate('level4');
       expect(
-          template.render(),
+          template.renderMap(),
           equals('|block 1 from level1|block 5 from '
               'level3|block 3 from level4|'));
     });
@@ -110,7 +110,7 @@ void main() {
       );
 
       var template = env.getTemplate('c');
-      expect(template.render(), equals('--INTRO--|BEFORE|[(INNER)]|AFTER'));
+      expect(template.renderMap(), equals('--INTRO--|BEFORE|[(INNER)]|AFTER'));
     });
 
     test('working', () {
@@ -121,7 +121,7 @@ void main() {
     test('reuse blocks', () {
       var template = env.fromString('{{ self.foo() }}|{% block foo %}42'
           '{% endblock %}|{{ self.foo() }}');
-      expect(template.render(), equals('42|42|42'));
+      expect(template.renderMap(), equals('42|42|42'));
     });
 
     test('preserve blocks', () {
@@ -134,7 +134,7 @@ void main() {
       );
 
       var template = env.getTemplate('b');
-      expect(template.render(), equals('BA'));
+      expect(template.renderMap(), equals('BA'));
     });
 
     test('dynamic inheritance', () {
@@ -149,7 +149,7 @@ void main() {
       var template = env.getTemplate('child');
 
       for (var i in <int>[1, 2]) {
-        expect(template.renderWr(master: 'master$i'), equals('MASTER${i}CHILD'));
+        expect(template.render(master: 'master$i'), equals('MASTER${i}CHILD'));
       }
     });
 
@@ -164,9 +164,9 @@ void main() {
       );
 
       var template = env.getTemplate('child');
-      expect(template.renderWr(master: 'master1'), equals('MASTER1CHILD'));
-      expect(template.renderWr(master: 'master2'), equals('MASTER2CHILD'));
-      expect(template.render(), equals('MASTER1CHILD'));
+      expect(template.render(master: 'master1'), equals('MASTER1CHILD'));
+      expect(template.render(master: 'master2'), equals('MASTER2CHILD'));
+      expect(template.renderMap(), equals('MASTER1CHILD'));
     });
 
     test('scoped block', () {
@@ -179,7 +179,7 @@ void main() {
 
       var template = env.fromString('{% extends "master.html" %}{% block item %}'
           '{{ item }}{% endblock %}');
-      expect(template.renderWr(seq: range(5)), equals('[0][1][2][3][4]'));
+      expect(template.render(seq: range(5)), equals('[0][1][2][3][4]'));
     });
 
     test('super in scoped block', () {
@@ -192,7 +192,7 @@ void main() {
 
       var template = env.fromString('{% extends "master.html" %}{% block item %}'
           '{{ super() }}|{{ item * 2 }}{% endblock %}');
-      expect(template.renderWr(seq: range(5)), equals('[0|0][1|2][2|4][3|6][4|8]'));
+      expect(template.render(seq: range(5)), equals('[0|0][1|2][2|4][3|6][4|8]'));
     });
 
     // TODO: test scoped block after inheritance

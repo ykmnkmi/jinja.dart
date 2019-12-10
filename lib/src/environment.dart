@@ -275,7 +275,7 @@ class Template extends Node {
   }
 
   Template.parsed({@required this.body, @required this.env, this.path}) : blocks = <String, BlockStatement>{} {
-    _renderWr = RenderWrapper(([Map<String, Object> data]) => render(data));
+    _render = RenderWrapper(([Map<String, Object> data]) => renderMap(data));
   }
 
   final Node body;
@@ -284,8 +284,8 @@ class Template extends Node {
 
   final Map<String, BlockStatement> blocks;
 
-  dynamic _renderWr;
-  Function get renderWr => _renderWr as Function;
+  dynamic _render;
+  Function get render => _render as Function;
 
   void _addBlocks(StringBuffer buffer, Context context) {
     var self = NameSpace();
@@ -305,7 +305,7 @@ class Template extends Node {
     body.accept(buffer, context);
   }
 
-  String render([Map<String, Object> data]) {
+  String renderMap([Map<String, Object> data]) {
     var buffer = StringBuffer();
     var context = Context(data: data, env: env);
     _addBlocks(buffer, context);
