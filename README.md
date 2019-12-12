@@ -4,14 +4,9 @@
 
 [Jinja 2](http://jinja.pocoo.org/) server-side template engine port for Dart 2. Variables, expressions, control structures and template inheritance.
 
-Current status
--------
-Token based parser, extensions, template generator
-
 Breaking changes
 ----------------
 Current:
-For field and object methods
 ```dart
 import 'package:jinja/jinja.dart';
 
@@ -82,9 +77,8 @@ import 'package:jinja/jinja.dart';
 var env = Environment(blockStart: '...');
 var template = env.fromString('...source...');
 
-template.render({'key': value});
-// or (overrides noSuchMethod)
-template.renderWr(key: value);
+outStringSink.write(template.renderMap({'key': value}));
+// outStringSink.write(template.render(key: value));
 ```
 
 Docs
