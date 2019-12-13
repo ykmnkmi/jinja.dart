@@ -10,7 +10,7 @@ class Field extends Expression {
 
   @override
   Object resolve(Context context) {
-    var value = expr.resolve(context);
+    final value = expr.resolve(context);
 
     if (value == null || value is Undefined) {
       throw UndefinedError();
@@ -18,8 +18,8 @@ class Field extends Expression {
 
     if (value is LoopContext) return value[attr];
     if (value is NameSpace) return value[attr];
-    if (value is Map) return context.env.getItem(value, attr);
-    return context.env.getField(value, attr);
+    if (value is Map) return context.environment.getItem(value, attr);
+    return context.environment.getField(value, attr);
   }
 
   @override
@@ -37,9 +37,9 @@ class Item extends Expression {
 
   @override
   Object resolve(Context context) {
-    var value = expr.resolve(context);
-    var item = this.item.resolve(context);
-    return context.env.getItem(value, item);
+    final value = expr.resolve(context);
+    final item = this.item.resolve(context);
+    return context.environment.getItem(value, item);
   }
 
   @override

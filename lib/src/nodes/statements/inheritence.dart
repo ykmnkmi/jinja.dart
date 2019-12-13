@@ -12,18 +12,18 @@ class ExtendsStatement extends Statement {
 
   @override
   void accept(StringBuffer buffer, Context context) {
-    var pathOrTemplate = this.pathOrTemplate.resolve(context);
+    final pathOrTemplate = this.pathOrTemplate.resolve(context);
     Template template;
 
     if (pathOrTemplate is Template) {
       template = pathOrTemplate;
     } else if (pathOrTemplate is String) {
-      template = context.env.getTemplate(pathOrTemplate);
+      template = context.environment.getTemplate(pathOrTemplate);
     } else {
       throw TemplatesNotFound('$pathOrTemplate');
     }
 
-    for (var block in blocks) {
+    for (final block in blocks) {
       context.blockContext.push(block.name, block);
     }
 
@@ -32,7 +32,7 @@ class ExtendsStatement extends Statement {
 
   @override
   String toDebugString([int level = 0]) {
-    var buffer = StringBuffer(' ' * level);
+    final buffer = StringBuffer(' ' * level);
     buffer.write('# extends: ${pathOrTemplate.toDebugString()}');
 
     blocks.forEach((ExtendedBlockStatement block) {
@@ -56,13 +56,13 @@ class BlockStatement extends Statement {
 
   @override
   void accept(StringBuffer buffer, Context context) {
-    var blockContext = context.blockContext;
+    final blockContext = context.blockContext;
 
     if (blockContext.has(name)) {
-      var child = blockContext.blocks[name].last;
+      final child = blockContext.blocks[name].last;
 
       if (child.hasSuper) {
-        var childContext = this.childContext(buffer, context);
+        final childContext = this.childContext(buffer, context);
         context.apply(childContext, (Context context) {
           child.accept(buffer, context);
         });
@@ -85,7 +85,7 @@ class BlockStatement extends Statement {
 
   @override
   String toDebugString([int level = 0]) {
-    var buffer = StringBuffer(' ' * level);
+    final buffer = StringBuffer(' ' * level);
     buffer.write('block $name');
 
     if (scoped) {
@@ -115,13 +115,13 @@ class ExtendedBlockStatement extends BlockStatement {
 
   @override
   void accept(StringBuffer buffer, Context context) {
-    var blockContext = context.blockContext;
+    final blockContext = context.blockContext;
 
     if (blockContext.has(name)) {
-      var child = blockContext.child(this);
+      final child = blockContext.child(this);
       if (child != null) {
         if (child.hasSuper) {
-          var childContext = this.childContext(buffer, context);
+          final childContext = this.childContext(buffer, context);
           context.apply(childContext, (Context context) {
             child.accept(buffer, context);
           });
@@ -158,8 +158,8 @@ class ExtendedBlockContext {
 
   ExtendedBlockStatement child(ExtendedBlockStatement current) {
     if (blocks.containsKey(current.name)) {
-      var blocks = this.blocks[current.name];
-      var ci = blocks.indexOf(current);
+      final blocks = this.blocks[current.name];
+      final ci = blocks.indexOf(current);
 
       if (ci > 0) {
         return blocks[ci - 1];

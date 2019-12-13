@@ -1,12 +1,11 @@
-## in progress
-- adding lexer, token stream
+## [Unreleased]
 
-## 0.2.0
-- minimal dart SDK version: 2.6
-- extensions preview (parser with regexp) (see example)
-- environment:
-  - add `getField` and `getItem` methods
-  - add `leftStripBlock` and `keepTrailingNewLine` options
+## [0.2.0]
+### Added
+- Environment:
+    - `getField` and `getItem` methods
+    - `leftStripBlock` and `keepTrailingNewLine` fields
+    - 
 - field and method calling expressions that used mirrors now uses `Environment.getField` method</br>
   default getField throws runtime error, to use field expression import and pass to environment `getField` method from `package:jinja/get_field.dart`, this method uses dart:mirrors</br>
 - filters:
@@ -14,6 +13,9 @@
     - batch
     - filesizeformat
 - more package tests
+
+### Changed
+- minimal SDK version: 2.7.0
 
 ## 0.1.2
 - fix example

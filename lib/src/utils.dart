@@ -18,17 +18,15 @@ bool toBool(Object value) {
 
 String repr(Object object, [bool reprString = true]) {
   if (object is Iterable) {
-    var buffer = StringBuffer();
+    final buffer = StringBuffer();
     buffer.write('[');
     buffer.writeAll(object.map<String>(repr), ', ');
     buffer.write(']');
     return '$buffer';
   } else if (object is Map) {
-    var buffer = StringBuffer();
+    final buffer = StringBuffer();
     buffer.write('{');
-    buffer.writeAll(
-        object.entries.map<String>((MapEntry<Object, Object> entry) => '${repr(entry.key)}: ${repr(entry.value)}'),
-        ', ');
+    buffer.writeAll(object.entries.map<String>((entry) => '${repr(entry.key)}: ${repr(entry.value)}'), ', ');
     buffer.write('}');
     return buffer.toString();
   } else if (object is String && reprString) {
@@ -39,6 +37,6 @@ String repr(Object object, [bool reprString = true]) {
 }
 
 String getSymbolName(Symbol symbol) {
-  var fullName = '$symbol';
+  final fullName = '$symbol';
   return fullName.substring(8, fullName.length - 2);
 }

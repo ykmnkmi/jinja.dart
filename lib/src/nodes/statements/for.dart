@@ -32,9 +32,9 @@ class ForStatement extends Statement {
   }
 
   Map<String, Object> getDataForContext(List<Object> values, int i, Undefined undefined) {
+    final current = values[i];
     Object prev = undefined;
     Object next = undefined;
-    var current = values[i];
 
     if (i > 0) prev = values[i - 1];
     if (i < values.length - 1) next = values[i + 1];
@@ -45,7 +45,7 @@ class ForStatement extends Statement {
       return true;
     }
 
-    var data = <String, Object>{
+    final data = <String, Object>{
       'loop': LoopContext(i, values.length, prev, next, changed),
     };
 
@@ -60,7 +60,7 @@ class ForStatement extends Statement {
 
   void render(List<Object> list, Context context, StringBuffer buffer) {
     for (var i = 0; i < list.length; i++) {
-      var data = getDataForContext(list, i, context.env.undefined);
+      final data = getDataForContext(list, i, context.environment.undefined);
       context.apply(data, (Context context) {
         body.accept(buffer, context);
       });
@@ -68,23 +68,23 @@ class ForStatement extends Statement {
   }
 
   void loopIterable(Iterable<Object> values, Context context, StringBuffer buffer) {
-    var list = values.toList();
+    final list = values.toList();
     render(list, context, buffer);
   }
 
   void loopMap(Map<Object, Object> dict, Context context, StringBuffer buffer) {
-    var list = dict.entries.map((MapEntry<Object, Object> entry) => <Object>[entry.key, entry.value]).toList();
+    final list = dict.entries.map((MapEntry<Object, Object> entry) => <Object>[entry.key, entry.value]).toList();
     render(list, context, buffer);
   }
 
   void loopString(String value, Context context, StringBuffer buffer) {
-    var list = value.split('');
+    final list = value.split('');
     render(list, context, buffer);
   }
 
   @override
   void accept(StringBuffer buffer, Context context) {
-    var iterable = this.iterable.resolve(context);
+    final iterable = this.iterable.resolve(context);
     if (iterable == null) throw ArgumentError.notNull();
 
     if (iterable is Iterable && iterable.isNotEmpty) {
@@ -100,7 +100,7 @@ class ForStatement extends Statement {
 
   @override
   String toDebugString([int level = 0]) {
-    var buffer = StringBuffer(' ' * level);
+    final buffer = StringBuffer(' ' * level);
     buffer.writeln('for ${targets.join(', ')} in ${iterable.toDebugString()}');
     buffer.write('${body.toDebugString(level + 1)}');
 
@@ -116,7 +116,7 @@ class ForStatement extends Statement {
 
   @override
   String toString() {
-    var buffer = StringBuffer('For($targets, $iterable, $body}');
+    final buffer = StringBuffer('For($targets, $iterable, $body}');
     if (orElse != null) buffer.write(', orElse: $orElse');
     buffer.write(')');
     return buffer.toString();
@@ -135,8 +135,8 @@ class ForStatementWithFilter extends ForStatement {
   final Expression filter;
 
   Map<String, Object> getDataForFilter(List<Object> values, int i) {
-    var current = values[i];
-    var data = <String, Object>{};
+    final current = values[i];
+    final data = <String, Object>{};
 
     if (targets.length == 1) {
       if (current is MapEntry) {
@@ -152,11 +152,11 @@ class ForStatementWithFilter extends ForStatement {
   }
 
   List<Object> filterValues(Iterable<Object> values, Context context) {
-    var list = values.toList();
-    var filteredList = <Object>[];
+    final list = values.toList();
+    final filteredList = <Object>[];
 
     for (var i = 0; i < list.length; i++) {
-      var data = getDataForFilter(list, i);
+      final data = getDataForFilter(list, i);
       context.apply(data, (Context context) {
         if (toBool(filter.resolve(context))) filteredList.add(list[i]);
       });
@@ -167,26 +167,26 @@ class ForStatementWithFilter extends ForStatement {
 
   @override
   void loopIterable(Iterable<Object> values, Context context, StringBuffer buffer) {
-    var list = filterValues(values, context);
+    final list = filterValues(values, context);
     render(list, context, buffer);
   }
 
   @override
   void loopMap(Map<Object, Object> dict, Context context, StringBuffer buffer) {
-    var list =
+    final list =
         filterValues(dict.entries.map((MapEntry<Object, Object> entry) => <Object>[entry.key, entry.value]), context);
     render(list, context, buffer);
   }
 
   @override
   void loopString(String value, Context context, StringBuffer buffer) {
-    var list = filterValues(value.split(''), context);
+    final list = filterValues(value.split(''), context);
     render(list, context, buffer);
   }
 
   @override
   String toDebugString([int level = 0]) {
-    var buffer = StringBuffer(' ' * level);
+    final buffer = StringBuffer(' ' * level);
     buffer.write('for ${targets.join(', ')} in ${iterable.toDebugString()}');
 
     if (filter != null) {
@@ -209,7 +209,7 @@ class ForStatementWithFilter extends ForStatement {
 
   @override
   String toString() {
-    var buffer = StringBuffer('ForWithFilter($targets, $iterable, $body, $filter}');
+    final buffer = StringBuffer('ForWithFilter($targets, $iterable, $body, $filter}');
     if (orElse != null) buffer.write(', orElse: $orElse');
     buffer.write(')');
     return buffer.toString();

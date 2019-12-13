@@ -4,8 +4,6 @@ import 'utils.dart' show getSymbolName;
 class Undefined {
   const Undefined();
 
-  void call() {}
-
   @override
   String toString() => '';
 }
@@ -13,7 +11,7 @@ class Undefined {
 class NameSpace {
   static final Function namespace = _NameSpaceFactory();
 
-  NameSpace([Map<String, Object> data]) : data = data != null ? Map<String, Object>.of(data) : <String, Object>{};
+  NameSpace([Map<String, Object> data]) : data = data != null ? Map.of(data) : <String, Object>{};
 
   final Map<String, Object> data;
   Iterable<MapEntry<String, Object>> get entries => data.entries;
@@ -55,16 +53,15 @@ class _NameSpaceFactory extends Function {
   @override
   Object noSuchMethod(Invocation invocation) {
     if (invocation.memberName == #call) {
-      var data = <String, Object>{};
+      final data = <String, Object>{};
 
       if (invocation.positionalArguments.length == 1) {
-        Object arg = invocation.positionalArguments.first;
+        final Object arg = invocation.positionalArguments.first;
 
         if (arg is Map<String, Object>) {
           data.addAll(arg);
         } else if (arg is List<Object>) {
-          for (var i = 0; i < arg.length; i++) {
-            var pair = arg[i];
+          for (final pair in arg) {
             List<Object> list;
 
             if (pair is Iterable<Object>) {
@@ -73,17 +70,18 @@ class _NameSpaceFactory extends Function {
               list = pair.split('');
             } else {
               throw ArgumentError('cannot convert map update sequence '
-                  'element #$i to a sequence');
+                  'element #${arg.indexOf(pair)} to a sequence');
             }
 
             if (list.length < 2 || list.length > 2) {
-              throw ArgumentError('map update sequence element #$i, '
+              throw ArgumentError('map update sequence element #${arg.indexOf(pair)}, '
                   'has length ${list.length}; 2 is required');
             }
 
             if (list[0] is String) data[list[0] as String] = list[1];
           }
         } else {
+          // TODO: error info
           throw TypeError();
         }
       } else if (invocation.positionalArguments.length > 1) {
@@ -91,8 +89,7 @@ class _NameSpaceFactory extends Function {
             'got ${invocation.positionalArguments.length}');
       }
 
-      data.addAll(invocation.namedArguments
-          .map<String, Object>((Symbol key, Object value) => MapEntry<String, Object>(getSymbolName(key), value)));
+      data.addAll(invocation.namedArguments.map((key, Object value) => MapEntry(getSymbolName(key), value)));
       return NameSpace(data);
     }
 
@@ -102,7 +99,7 @@ class _NameSpaceFactory extends Function {
 
 class LoopContext {
   LoopContext(int index0, int length, Object previtem, Object nextitem, Function changed)
-      : data = <String, Object>{
+      : data = {
           'index0': index0,
           'length': length,
           'previtem': previtem,
@@ -113,7 +110,7 @@ class LoopContext {
           'last': index0 + 1 == length,
           'revindex': length - index0,
           'revindex0': length - index0 - 1,
-          'cycle': _CycleWrapper((List<Object> args) => args[index0 % args.length]),
+          'cycle': _CycleWrapper((args) => args[index0 % args.length]),
         };
 
   final Map<String, Object> data;

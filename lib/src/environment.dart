@@ -2,7 +2,7 @@ import 'package:meta/meta.dart';
 
 import 'defaults.dart';
 import 'exceptions.dart';
-import 'ext.dart';
+import 'filters.dart' show FilterFunction, FilterType;
 import 'loaders.dart';
 import 'nodes.dart';
 import 'parser.dart';
@@ -15,15 +15,16 @@ Object defaultFieldGetter(Object object, String field) {
   throw TemplateRuntimeError('getField not implemented');
 }
 
-Object defaultItemGetter(dynamic object, Object key) {
+Object defaultItemGetter(Object object, Object key) {
   try {
-    return object[key];
+    return (object as Map)[key];
   } catch (e) {
     throw TemplateRuntimeError('$e');
   }
 }
 
 typedef Finalizer = Object Function(Object value);
+
 Object defaultFinalizer(Object value) {
   value = value ?? '';
   if (value is String) return value;
@@ -50,7 +51,6 @@ class Environment {
     bool trimBlocks = false,
     bool leftStripBlocks = false,
     bool keepTrailingNewLine = false,
-    Set<Extension> extensions = const <Extension>{},
     bool optimize = true,
     Undefined undefined = const Undefined(),
     Finalizer finalize = defaultFinalizer,
@@ -63,7 +63,7 @@ class Environment {
     FieldGetter getField = defaultFieldGetter,
     ItemGetter getItem = defaultItemGetter,
   }) {
-    var env = Environment._(
+    final env = Environment._(
       blockStart: blockStart,
       blockEnd: blockEnd,
       variableStart: variableStart,
@@ -73,13 +73,11 @@ class Environment {
       trimBlocks: trimBlocks,
       leftStripBlocks: leftStripBlocks,
       keepTrailingNewLine: keepTrailingNewLine,
-      extensions: extensions,
       optimize: optimize,
       undefined: undefined,
       finalize: finalize,
       autoEscape: autoEscape,
       filters: Map<String, Function>.of(defaultFilters)..addAll(filters),
-      envFilters: Map<String, Function>.of(defaultEnvFilters)..addAll(envFilters),
       tests: Map<String, Function>.of(defaultTests)..addAll(tests),
       globals: Map<String, Object>.of(defaultContext)..addAll(globals),
       getField: getField,
@@ -100,19 +98,17 @@ class Environment {
     this.trimBlocks,
     this.leftStripBlocks,
     this.keepTrailingNewLine,
-    this.extensions = const <Extension>{},
     this.optimize,
     this.undefined,
     this.finalize,
     this.autoEscape,
     this.shared,
-    this.filters = const <String, Function>{},
-    this.envFilters = const <String, Function>{},
-    this.tests = const <String, Function>{},
-    this.globals = const <String, Object>{},
+    this.filters = const {},
+    this.tests = const {},
+    this.globals = const {},
     this.getField,
     this.getItem,
-  }) : templates = <String, Template>{};
+  }) : templates = {};
 
   final String blockStart;
   final String blockEnd;
@@ -123,14 +119,12 @@ class Environment {
   final bool trimBlocks;
   final bool leftStripBlocks;
   final bool keepTrailingNewLine;
-  final Set<Extension> extensions;
   final bool optimize;
   final Undefined undefined;
   final Finalizer finalize;
   final bool autoEscape;
   final bool shared;
   final Map<String, Function> filters;
-  final Map<String, Function> envFilters;
   final Map<String, Function> tests;
   final Map<String, Object> globals;
 
@@ -141,41 +135,42 @@ class Environment {
 
   /// If `path` is not `null` template stored in environment cache.
   Template fromString(String source, {String path}) {
-    var template = Parser(this, source, path: path).parse();
+    final template = Parser(this, source, path: path).parse();
     if (path != null) templates[path] = template;
     return template;
   }
 
   /// If [path] not found throws `Exception`.
   Template getTemplate(String path) {
-    if (!templates.containsKey(path)) {
-      throw Exception('template not found: $path');
-    }
-
+    // TODO: fix error
+    if (!templates.containsKey(path)) throw Exception('template not found: $path');
     return templates[path];
   }
 
   /// If [name] not found throws [Exception].
-  Object callFilter(String name,
-      {List<Object> args = const <Object>[], Map<Symbol, Object> kwargs = const <Symbol, Object>{}}) {
-    if (envFilters.containsKey(name) && envFilters[name] != null) {
-      return Function.apply(envFilters[name], <Object>[this, ...args], kwargs);
-    }
-
+  Object callFilter(Context context, String name,
+      {List<Object> args = const [], Map<Symbol, Object> kwargs = const {}}) {
     if (filters.containsKey(name) && filters[name] != null) {
-      return Function.apply(filters[name], args, kwargs);
+      final filter = filters[name];
+
+      switch (filter.filterType) {
+        case FilterType.context:
+          return Function.apply(filter, <Object>[context, ...args], kwargs);
+        case FilterType.environment:
+          return Function.apply(filter, <Object>[context.environment, ...args], kwargs);
+        default:
+          return Function.apply(filter, args, kwargs);
+      }
     }
 
+    // TODO: fix error
     throw Exception('filter not found: $name');
   }
 
   /// If [name] not found throws [Exception].
-  bool callTest(String name,
-      {List<Object> args = const <Object>[], Map<Symbol, Object> kwargs = const <Symbol, Object>{}}) {
-    if (!tests.containsKey(name)) {
-      throw Exception('test not found: $name');
-    }
-
+  bool callTest(String name, {List<Object> args = const [], Map<Symbol, Object> kwargs = const {}}) {
+    // TODO: fix error
+    if (!tests.containsKey(name)) throw Exception('test not found: $name');
     // ignore: return_of_invalid_type
     return Function.apply(tests[name], args, kwargs);
   }
@@ -191,7 +186,7 @@ typedef ContextModifier = void Function(Context context);
 /// instance directly using the constructor.  It takes the same arguments as
 /// the environment constructor but it's not possible to specify a loader.
 class Template extends Node {
-  static final Map<int, Environment> _shared = <int, Environment>{};
+  static final Map<int, Environment> _shared = {};
 
   // TODO: compile template
 
@@ -206,20 +201,18 @@ class Template extends Node {
     bool trimBlocks = false,
     bool leftStripBlocks = false,
     bool keepTrailingNewLine = false,
-    Set<Extension> extensions = const <Extension>{},
     bool optimize = true,
     Undefined undefined = const Undefined(),
     Finalizer finalize = defaultFinalizer,
     bool autoEscape = false,
     Loader loader,
     Map<String, Function> filters = const <String, Function>{},
-    Map<String, Function> envFilters = const <String, Function>{},
     Map<String, Function> tests = const <String, Function>{},
     Map<String, Object> globals = const <String, Object>{},
     FieldGetter getField = defaultFieldGetter,
     ItemGetter getItem = defaultItemGetter,
   }) {
-    var config = <Object>{
+    final config = <Object>{
       blockStart,
       blockEnd,
       variableStart,
@@ -229,21 +222,19 @@ class Template extends Node {
       trimBlocks,
       leftStripBlocks,
       keepTrailingNewLine,
-      extensions,
       optimize,
       undefined,
       finalize,
       autoEscape,
       loader,
       filters,
-      envFilters,
       tests,
       globals,
       getField,
       getItem,
     };
 
-    var env = _shared.containsKey(config)
+    final env = _shared.containsKey(config)
         ? _shared[config.hashCode]
         : Environment._(
             blockStart: blockStart,
@@ -255,14 +246,12 @@ class Template extends Node {
             trimBlocks: trimBlocks,
             leftStripBlocks: leftStripBlocks,
             keepTrailingNewLine: keepTrailingNewLine,
-            extensions: extensions,
             optimize: optimize,
             undefined: undefined,
             finalize: finalize,
             autoEscape: autoEscape,
             shared: true,
             filters: Map<String, Function>.of(defaultFilters)..addAll(filters),
-            envFilters: Map<String, Function>.of(defaultEnvFilters)..addAll(envFilters),
             tests: Map<String, Function>.of(defaultTests)..addAll(tests),
             globals: Map<String, Object>.of(defaultContext)..addAll(globals),
             getField: getField,
@@ -288,9 +277,9 @@ class Template extends Node {
   Function get render => _render as Function;
 
   void _addBlocks(StringBuffer buffer, Context context) {
-    var self = NameSpace();
+    final self = NameSpace();
 
-    for (var blockEntry in blocks.entries) {
+    for (final blockEntry in blocks.entries) {
       self[blockEntry.key] = () {
         blockEntry.value.accept(buffer, context);
       };
@@ -306,8 +295,8 @@ class Template extends Node {
   }
 
   String renderMap([Map<String, Object> data]) {
-    var buffer = StringBuffer();
-    var context = Context(data: data, env: env);
+    final buffer = StringBuffer();
+    final context = Context(data: data, env: env);
     _addBlocks(buffer, context);
     body.accept(buffer, context);
     return buffer.toString();
@@ -318,7 +307,7 @@ class Template extends Node {
 
   @override
   String toDebugString([int level = 0]) {
-    var buffer = StringBuffer();
+    final buffer = StringBuffer();
 
     if (path != null) {
       buffer.write(' ' * level);
@@ -342,8 +331,7 @@ class RenderWrapper extends Function {
   @override
   Object noSuchMethod(Invocation invocation) {
     if (invocation.memberName == #call) {
-      return function(invocation.namedArguments
-          .map<String, Object>((Symbol key, Object value) => MapEntry<String, Object>(getSymbolName(key), value)));
+      return function(invocation.namedArguments.map((key, Object value) => MapEntry(getSymbolName(key), value)));
     }
 
     return super.noSuchMethod(invocation);

@@ -2,7 +2,7 @@ import 'markup.dart';
 import 'runtime.dart';
 import 'utils.dart';
 
-const Map<String, Function> tests = <String, Function>{
+final Map<String, Function> tests = <String, Function>{
   'callable': istCallable,
   'defined': isDefined,
   'divisibleby': isDivisibleBy,
@@ -54,7 +54,6 @@ bool isEven(num value) => value % 2 == 0;
 bool isIn(Object value, Object values) {
   if (values is String) {
     if (value is Pattern) return values.contains(value);
-
     throw Exception('$value must be subclass of Pattern');
   }
 

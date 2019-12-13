@@ -20,7 +20,7 @@ abstract class Loader {
   }
 
   void load(Environment env) {
-    for (var path in listSources()) {
+    for (final path in listSources()) {
       env.fromString(getSource(path), path: path);
     }
   }
@@ -43,7 +43,7 @@ abstract class Loader {
 class FileSystemLoader extends Loader {
   FileSystemLoader({
     this.autoReload = false,
-    this.extensions = const <String>['html'],
+    this.extensions = const ['html'],
     String path = '/templates',
     this.followLinks = true,
   }) : directory = Directory(path) {
@@ -59,8 +59,8 @@ class FileSystemLoader extends Loader {
 
   @override
   String getSource(String path) {
-    var templatePath = _path.join(directory.path, path);
-    var templateFile = File(templatePath);
+    final templatePath = _path.join(directory.path, path);
+    final templateFile = File(templatePath);
 
     if (!templateFile.existsSync()) {
       throw Exception('template not found: $path');
@@ -72,8 +72,8 @@ class FileSystemLoader extends Loader {
   @override
   List<String> listSources() => directory
       .listSync(recursive: true, followLinks: followLinks)
-      .map<String>((FileSystemEntity entity) => _path.relative(entity.path, from: directory.path))
-      .where((String path) => extensions.contains(_path.extension(path).substring(1)))
+      .map((entity) => _path.relative(entity.path, from: directory.path))
+      .where((path) => extensions.contains(_path.extension(path).substring(1)))
       .toList();
 
   @override
@@ -81,11 +81,8 @@ class FileSystemLoader extends Loader {
     super.load(env);
 
     if (autoReload) {
-      directory
-          .watch(recursive: true)
-          .where((FileSystemEvent event) => event.type == FileSystemEvent.modify)
-          .listen((FileSystemEvent event) {
-        var path = _path.relative(event.path, from: directory.path);
+      directory.watch(recursive: true).where((event) => event.type == FileSystemEvent.modify).listen((event) {
+        final path = _path.relative(event.path, from: directory.path);
         env.fromString(getSource(path), path: path);
       });
     }

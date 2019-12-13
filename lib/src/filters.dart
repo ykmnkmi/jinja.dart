@@ -5,13 +5,28 @@ import 'markup.dart';
 import 'runtime.dart';
 import 'utils.dart';
 
-const Map<String, Function> envFilters = <String, Function>{
-  'attr': doAttr,
-  'join': doJoin,
-  'sum': doSum,
-};
+final Expando<FilterType> _filterTypes = Expando<FilterType>();
 
-const Map<String, Function> filters = <String, Function>{
+enum FilterType {
+  context,
+  environment,
+}
+
+extension FilterFunction on Function {
+  FilterType get filterType {
+    return _filterTypes[this];
+  }
+
+  set filterType(FilterType type) {
+    _filterTypes[this] = type;
+  }
+}
+
+final Map<String, Function> filters = <String, Function>{
+  'attr': doAttr..filterType = FilterType.environment,
+  'join': doJoin..filterType = FilterType.environment,
+  'sum': doSum..filterType = FilterType.environment,
+
   'abs': doAbs,
   'capitalize': doCapitalize,
   'center': doCenter,
@@ -75,8 +90,8 @@ String doCapitalize(String value) => value.substring(0, 1).toUpperCase() + value
 
 String doCenter(String value, int width) {
   if (value.length >= width) return value;
-  var padLength = (width - value.length) ~/ 2;
-  var pad = ' ' * padLength;
+  final padLength = (width - value.length) ~/ 2;
+  final pad = ' ' * padLength;
   return pad + value + pad;
 }
 
@@ -128,7 +143,7 @@ String doLower(Object value) => repr(value, false).toLowerCase();
 
 final Random _rnd = Random();
 Object doRandom(List<Object> values) {
-  var length = values.length;
+  final length = values.length;
   return values[_rnd.nextInt(length)];
 }
 

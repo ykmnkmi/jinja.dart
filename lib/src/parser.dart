@@ -7,7 +7,6 @@ import 'package:string_scanner/string_scanner.dart';
 
 import 'environment.dart';
 import 'exceptions.dart';
-import 'ext.dart';
 import 'nodes.dart';
 
 typedef TemplateModifier = void Function(Template template);
@@ -15,13 +14,13 @@ typedef TemplateModifier = void Function(Template template);
 class Parser {
   static RegExp getOpenReg(String rule, [bool leftStripBlocks = false]) {
     rule = RegExp.escape(rule);
-    var strip = leftStripBlocks ? '(^[ \\t]*)$rule\\+|^[ \\t]*$rule|' : '';
+    final strip = leftStripBlocks ? '(^[ \\t]*)$rule\\+|^[ \\t]*$rule|' : '';
     return RegExp('(?:\\s*$rule\\-|$strip$rule\\+?)\\s*', multiLine: true);
   }
 
   static RegExp getEndReg(String rule, [bool trimBlocks = false]) {
     rule = RegExp.escape(rule);
-    var trim = trimBlocks ? '\n?' : '';
+    final trim = trimBlocks ? '\n?' : '';
     return RegExp('\\s*(?:\\-$rule\\s*|$rule$trim)', multiLine: true);
   }
 
@@ -33,16 +32,7 @@ class Parser {
         variableEndReg = getEndReg(environment.variableEnd),
         blockStartReg = getOpenReg(environment.blockStart, environment.leftStripBlocks),
         blockEndReg = getEndReg(environment.blockEnd, environment.trimBlocks),
-        extensions = <String, ExtensionParser>{},
-        keywords = <String>{'not', 'and', 'or', 'is', 'if', 'else'} {
-    var extensionsSet = environment.extensions.toSet();
-
-    for (var ext in extensionsSet) {
-      for (var tag in ext.tags) {
-        extensions[tag] = ext.parse;
-      }
-    }
-  }
+        keywords = <String>{'not', 'and', 'or', 'is', 'if', 'else'};
 
   final Environment environment;
   final String path;
@@ -56,7 +46,6 @@ class Parser {
   final RegExp commentStartReg;
   final RegExp commentEndReg;
 
-  final Map<String, ExtensionParser> extensions;
   final Set<String> keywords;
 
   final List<ExtendsStatement> extendsStatements = <ExtendsStatement>[];
@@ -91,7 +80,7 @@ class Parser {
 
     if (name == null) {
       if (pattern is RegExp) {
-        var source = pattern.pattern;
+        final source = pattern.pattern;
         name = '/$source/';
       } else {
         name = pattern.toString().replaceAll('\\', '\\\\').replaceAll('"', '\\"');
@@ -226,15 +215,6 @@ class Parser {
         case 'filter':
           return parseFilterBlock();
         default:
-          if (extensions.containsKey(tagName)) {
-            var extParser = extensions[tagName];
-
-            if (extParser == null) {
-              error('parser not found: $tagName');
-            }
-
-            return extParser(this);
-          }
       }
 
       tagsStack.removeLast();

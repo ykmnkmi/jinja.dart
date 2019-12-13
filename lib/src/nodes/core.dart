@@ -5,17 +5,15 @@ import '../utils.dart';
 export '../context.dart';
 export '../utils.dart';
 
-class Imposible implements Exception {}
-
 abstract class Node {
   void accept(StringBuffer buffer, Context context);
 
   String toDebugString([int level = 0]);
 }
 
-abstract class Statement implements Node {}
+abstract class Statement extends Node {}
 
-abstract class Expression implements Node {
+abstract class Expression extends Node {
   Object resolve(Context context) => null;
 
   @override
@@ -25,9 +23,9 @@ abstract class Expression implements Node {
     if (value is Node) {
       value.accept(buffer, context);
     } else {
-      value = context.env.finalize(value);
+      value = context.environment.finalize(value);
 
-      if (context.env.autoEscape) {
+      if (context.environment.autoEscape) {
         value = Markup.escape(value.toString());
       }
 
@@ -56,11 +54,6 @@ abstract class BinaryExpression extends Expression {
 abstract class CanAssign {
   List<String> get keys;
   bool get canAssign => false;
-}
-
-abstract class CanConst {
-  bool canConst;
-  Literal<Object> get asConst;
 }
 
 class Name extends Expression implements CanAssign {
