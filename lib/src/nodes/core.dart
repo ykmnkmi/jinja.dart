@@ -6,7 +6,7 @@ export '../context.dart';
 export '../utils.dart';
 
 abstract class Node {
-  void accept(StringBuffer buffer, Context context);
+  void accept(StringSink outSink, Context context);
 
   String toDebugString([int level = 0]);
 }
@@ -17,11 +17,11 @@ abstract class Expression extends Node {
   Object resolve(Context context) => null;
 
   @override
-  void accept(StringBuffer buffer, Context context) {
+  void accept(StringSink outSink, Context context) {
     var value = resolve(context);
 
     if (value is Node) {
-      value.accept(buffer, context);
+      value.accept(outSink, context);
     } else {
       value = context.environment.finalize(value);
 
@@ -29,7 +29,7 @@ abstract class Expression extends Node {
         value = Markup.escape(value.toString());
       }
 
-      buffer.write(value);
+      outSink.write(value);
     }
   }
 }
@@ -48,7 +48,11 @@ abstract class BinaryExpression extends Expression {
   String get symbol;
 
   @override
-  String toDebugString([int level = 0]) => ' ' * level + '${left.toDebugString()} $symbol ${right.toDebugString()}';
+  String toDebugString([int level = 0]) {
+    final StringBuffer buffer = StringBuffer(' ' * level);
+    buffer.write('${left.toDebugString()} $symbol ${right.toDebugString()}');
+    return '$buffer';
+  }
 }
 
 abstract class CanAssign {

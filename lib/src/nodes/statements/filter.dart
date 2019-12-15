@@ -9,7 +9,7 @@ class FilterBlockStatement extends Statement {
   final Node body;
 
   @override
-  void accept(StringBuffer buffer, Context context) {
+  void accept(StringSink outSink, Context context) {
     Object result;
 
     if (body is Expression) {
@@ -24,12 +24,12 @@ class FilterBlockStatement extends Statement {
       result = filter.filter(context, result);
     }
 
-    buffer.write(result);
+    outSink.write(result);
   }
 
   @override
   String toDebugString([int level = 0]) {
-    final buffer = StringBuffer(' ' * level);
+    final StringBuffer buffer = StringBuffer(' ' * level);
     buffer.write('filter ${filters.first.toDebugString()}');
 
     for (final filter in filters.sublist(1)) {

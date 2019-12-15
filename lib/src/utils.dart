@@ -18,13 +18,13 @@ bool toBool(Object value) {
 
 String repr(Object object, [bool reprString = true]) {
   if (object is Iterable) {
-    final buffer = StringBuffer();
+    final StringBuffer buffer = StringBuffer();
     buffer.write('[');
     buffer.writeAll(object.map<String>(repr), ', ');
     buffer.write(']');
     return '$buffer';
   } else if (object is Map) {
-    final buffer = StringBuffer();
+    final StringBuffer buffer = StringBuffer();
     buffer.write('{');
     buffer.writeAll(object.entries.map<String>((entry) => '${repr(entry.key)}: ${repr(entry.value)}'), ', ');
     buffer.write('}');

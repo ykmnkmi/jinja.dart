@@ -143,7 +143,7 @@ class Environment {
   /// If [path] not found throws `Exception`.
   Template getTemplate(String path) {
     // TODO: fix error
-    if (!templates.containsKey(path)) throw Exception('template not found: $path');
+    if (!templates.containsKey(path)) throw ArgumentError('template not found: $path');
     return templates[path];
   }
 
@@ -163,20 +163,16 @@ class Environment {
       }
     }
 
-    // TODO: fix error
-    throw Exception('filter not found: $name');
+    throw ArgumentError('filter not found: $name');
   }
 
   /// If [name] not found throws [Exception].
   bool callTest(String name, {List<Object> args = const [], Map<Symbol, Object> kwargs = const {}}) {
-    // TODO: fix error
-    if (!tests.containsKey(name)) throw Exception('test not found: $name');
+    if (!tests.containsKey(name)) throw ArgumentError('test not found: $name');
     // ignore: return_of_invalid_type
     return Function.apply(tests[name], args, kwargs);
   }
 }
-
-typedef ContextModifier = void Function(Context context);
 
 /// The central `Template` object. This class represents a compiled template
 /// and is used to evaluate it.
@@ -276,12 +272,13 @@ class Template extends Node {
   dynamic _render;
   Function get render => _render as Function;
 
-  void _addBlocks(StringBuffer buffer, Context context) {
+  @protected
+  void addBlocks(StringSink outSink, Context context) {
     final self = NameSpace();
 
     for (final blockEntry in blocks.entries) {
       self[blockEntry.key] = () {
-        blockEntry.value.accept(buffer, context);
+        blockEntry.value.accept(outSink, context);
       };
     }
 
@@ -289,15 +286,15 @@ class Template extends Node {
   }
 
   @override
-  void accept(StringBuffer buffer, Context context) {
-    _addBlocks(buffer, context);
-    body.accept(buffer, context);
+  void accept(StringSink outSink, Context context) {
+    addBlocks(outSink, context);
+    body.accept(outSink, context);
   }
 
   String renderMap([Map<String, Object> data]) {
-    final buffer = StringBuffer();
+    final StringBuffer buffer = StringBuffer();
     final context = Context(data: data, env: env);
-    _addBlocks(buffer, context);
+    addBlocks(buffer, context);
     body.accept(buffer, context);
     return buffer.toString();
   }
@@ -307,7 +304,7 @@ class Template extends Node {
 
   @override
   String toDebugString([int level = 0]) {
-    final buffer = StringBuffer();
+    final StringBuffer buffer = StringBuffer();
 
     if (path != null) {
       buffer.write(' ' * level);
@@ -319,7 +316,6 @@ class Template extends Node {
   }
 }
 
-// TODO: remove deprecated
 // ignore: deprecated_extends_function
 class RenderWrapper extends Function {
   RenderWrapper(this.function);

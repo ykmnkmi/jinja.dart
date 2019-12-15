@@ -15,12 +15,12 @@ class IncludeStatement extends Statement {
   final bool withContext;
 
   @override
-  void accept(StringBuffer buffer, Context context) {
-    final oneOrList = paths.resolve(context);
+  void accept(StringSink outSink, Context context) {
+    final Object oneOrList = paths.resolve(context);
     Template template;
 
-    if (oneOrList is List) {
-      for (final path in oneOrList) {
+    if (oneOrList is List<Object>) {
+      for (Object path in oneOrList) {
         if (path is String) {
           template = context.environment.templates[path];
         } else if (path is Template) {
@@ -37,9 +37,9 @@ class IncludeStatement extends Statement {
 
     if (template != null) {
       if (withContext) {
-        template.accept(buffer, context);
+        template.accept(outSink, context);
       } else {
-        template.accept(buffer, Context(env: context.environment));
+        template.accept(outSink, Context(env: context.environment));
       }
     } else if (!ignoreMissing) {
       throw TemplatesNotFound();
@@ -48,7 +48,7 @@ class IncludeStatement extends Statement {
 
   @override
   String toDebugString([int level = 0]) {
-    final buffer = StringBuffer(' ' * level);
+    final StringBuffer buffer = StringBuffer(' ' * level);
     buffer.write('inlcude ${paths.toDebugString()}');
     if (!withContext) buffer.write(' without context');
     if (ignoreMissing) buffer.write(' ignore missing');

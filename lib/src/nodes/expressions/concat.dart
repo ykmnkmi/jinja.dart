@@ -6,17 +6,17 @@ class Concat extends Expression {
   final List<Expression> exprs;
 
   @override
-  void accept(StringBuffer buffer, Context context) {
-    for (var expr in exprs) {
-      expr.accept(buffer, context);
+  void accept(StringSink outSink, Context context) {
+    for (final expr in exprs) {
+      expr.accept(outSink, context);
     }
   }
 
   @override
   String resolve(Context context) {
-    var buffer = StringBuffer();
+    final StringBuffer buffer = StringBuffer();
 
-    for (var expr in exprs) {
+    for (final expr in exprs) {
       expr.accept(buffer, context);
     }
 
@@ -24,8 +24,11 @@ class Concat extends Expression {
   }
 
   @override
-  String toDebugString([int level = 0]) =>
-      ' ' * level + exprs.map((Expression expr) => expr.toDebugString()).join(' ~ ');
+  String toDebugString([int level = 0]) {
+    final StringBuffer buffer = StringBuffer(' ' * level);
+    buffer.writeAll(exprs.map<String>((expr) => expr.toDebugString()), ' ~ ');
+    return '$buffer';
+  }
 
   @override
   String toString() => 'Concat($exprs)';

@@ -6,12 +6,12 @@ class RawStatement extends Statement {
   final String body;
 
   @override
-  void accept(StringBuffer buffer, _) {
-    buffer.write(body);
+  void accept(StringSink outSink, Context context) {
+    outSink.write(body);
   }
 
   @override
-  String toDebugString([int level = 0]) => ' ' * level + 'raw\n' + ' ' * (level + 1) + repr(body);
+  String toDebugString([int level = 0]) => '${' ' * level}raw${' ' * (level + 1)}${repr(body)}';
 
   @override
   String toString() => 'Raw($body)';

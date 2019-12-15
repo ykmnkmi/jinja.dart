@@ -41,7 +41,7 @@ class TemplateSyntaxError extends TemplateError {
 
   @override
   String toString() {
-    final buffer = StringBuffer('TemplateSyntaxError');
+    final StringBuffer buffer = StringBuffer('TemplateSyntaxError');
     if (path != null) buffer.write(' in \'$path\'');
 
     if (line != null) {

@@ -26,7 +26,7 @@ class Filter extends Expression {
 
   @override
   String toDebugString([int level = 0]) {
-    final buffer = StringBuffer(' ' * level);
+    final StringBuffer buffer = StringBuffer(' ' * level);
     if (expr != null) buffer.write('${expr.toDebugString()} | ');
     buffer.write(name);
     if (args.isEmpty && kwargs.isEmpty) return buffer.toString();

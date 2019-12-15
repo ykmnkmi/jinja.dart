@@ -6,8 +6,8 @@ class Text implements Node {
   final String text;
 
   @override
-  void accept(StringBuffer buffer, Context context) {
-    buffer.write(text);
+  void accept(StringSink outSink, Context context) {
+    outSink.write(text);
   }
 
   @override

@@ -13,15 +13,15 @@ class Interpolation extends Statement {
   final List<Node> nodes;
 
   @override
-  void accept(StringBuffer buffer, Context context) {
-    for (final node in nodes) {
-      node.accept(buffer, context);
+  void accept(StringSink outSink, Context context) {
+    for (Node node in nodes) {
+      node.accept(outSink, context);
     }
   }
 
   @override
   String toDebugString([int level = 0]) {
-    final buffer = StringBuffer(' ' * level);
+    final StringBuffer buffer = StringBuffer(' ' * level);
     buffer.writeln('# interpolation');
     buffer.writeAll(nodes.map<String>((Node node) => node.toDebugString(level + 1)), '\n');
     return '$buffer';

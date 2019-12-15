@@ -8,25 +8,25 @@ class IfStatement extends Statement {
   final Node orElse;
 
   @override
-  void accept(StringBuffer buffer, Context context) {
-    for (final pair in pairs.entries) {
+  void accept(StringSink outSink, Context context) {
+    for (MapEntry<Expression, Node> pair in pairs.entries) {
       if (toBool(pair.key.resolve(context))) {
-        pair.value.accept(buffer, context);
+        pair.value.accept(outSink, context);
         return;
       }
     }
 
-    orElse?.accept(buffer, context);
+    orElse?.accept(outSink, context);
   }
 
   @override
   String toDebugString([int level = 0]) {
-    final buffer = StringBuffer(' ' * level);
-    final first = pairs.entries.first;
+    final StringBuffer buffer = StringBuffer(' ' * level);
+    final MapEntry<Expression, Node> first = pairs.entries.first;
     buffer.writeln('if ${first.key.toDebugString()}');
     buffer.write(first.value.toDebugString(level + 1));
 
-    for (final pair in pairs.entries.skip(1)) {
+    for (MapEntry<Expression, Node> pair in pairs.entries.skip(1)) {
       buffer.writeln();
       buffer.write(' ' * level);
       buffer.writeln('if ${pair.key.toDebugString()}');
@@ -44,7 +44,7 @@ class IfStatement extends Statement {
 
   @override
   String toString() {
-    final buffer = StringBuffer('If($pairs');
+    final StringBuffer buffer = StringBuffer('If($pairs');
     if (orElse != null) buffer.write(', $orElse');
     buffer.write(')');
     return buffer.toString();

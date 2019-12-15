@@ -9,7 +9,7 @@ abstract class SetStatement extends Statement {
 
   void assign(Context context, Object value) {
     if (field != null) {
-      final nameSpace = context[target];
+      final Object nameSpace = context[target];
 
       if (nameSpace is NameSpace) {
         nameSpace[field] = value;
@@ -28,17 +28,19 @@ class SetInlineStatement extends SetStatement {
 
   @override
   final String target;
+
   @override
   final String field;
+
   final Expression value;
 
   @override
-  void accept(_, Context context) {
+  void accept(StringSink outSink, Context context) {
     assign(context, value.resolve(context));
   }
 
   @override
-  String toDebugString([int level = 0]) => ' ' * level + 'set $target = ${value.toDebugString()}';
+  String toDebugString([int level = 0]) => '${' ' * level}set $target = ${value.toDebugString()}';
 
   @override
   String toString() => 'Set($target, $value})';
@@ -49,18 +51,20 @@ class SetBlockStatement extends SetStatement {
 
   @override
   final String target;
+
   @override
   final String field;
+
   final Node body;
 
   @override
-  void accept(_, Context context) {
+  void accept(StringSink outSink, Context context) {
     assign(context, body);
   }
 
   @override
   String toDebugString([int level = 0]) {
-    final buffer = StringBuffer(' ' * level);
+    final StringBuffer buffer = StringBuffer(' ' * level);
     buffer.write('set $target');
 
     // TODO: check, fix
