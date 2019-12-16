@@ -17,7 +17,7 @@ Object defaultFieldGetter(Object object, String field) {
 
 Object defaultItemGetter(Object object, Object key) {
   try {
-    return (object as Map)[key];
+    return (object as Map<Object, Object>)[key];
   } catch (e) {
     throw TemplateRuntimeError('$e');
   }
@@ -63,7 +63,7 @@ class Environment {
     FieldGetter getField = defaultFieldGetter,
     ItemGetter getItem = defaultItemGetter,
   }) {
-    final env = Environment._(
+    final Environment env = Environment._(
       blockStart: blockStart,
       blockEnd: blockEnd,
       variableStart: variableStart,
@@ -103,12 +103,12 @@ class Environment {
     this.finalize,
     this.autoEscape,
     this.shared,
-    this.filters = const {},
-    this.tests = const {},
-    this.globals = const {},
+    this.filters = const <String, Function>{},
+    this.tests = const <String, Function>{},
+    this.globals = const <String, Object>{},
     this.getField,
     this.getItem,
-  }) : templates = {};
+  }) : templates = <String, Template>{};
 
   final String blockStart;
   final String blockEnd;
@@ -135,23 +135,22 @@ class Environment {
 
   /// If `path` is not `null` template stored in environment cache.
   Template fromString(String source, {String path}) {
-    final template = Parser(this, source, path: path).parse();
+    final Template template = Parser(this, source, path: path).parse();
     if (path != null) templates[path] = template;
     return template;
   }
 
   /// If [path] not found throws `Exception`.
   Template getTemplate(String path) {
-    // TODO: fix error
     if (!templates.containsKey(path)) throw ArgumentError('template not found: $path');
     return templates[path];
   }
 
   /// If [name] not found throws [Exception].
   Object callFilter(Context context, String name,
-      {List<Object> args = const [], Map<Symbol, Object> kwargs = const {}}) {
+      {List<Object> args = const <Object>[], Map<Symbol, Object> kwargs = const <Symbol, Object>{}}) {
     if (filters.containsKey(name) && filters[name] != null) {
-      final filter = filters[name];
+      final Function filter = filters[name];
 
       switch (filter.filterType) {
         case FilterType.context:
@@ -167,7 +166,8 @@ class Environment {
   }
 
   /// If [name] not found throws [Exception].
-  bool callTest(String name, {List<Object> args = const [], Map<Symbol, Object> kwargs = const {}}) {
+  bool callTest(String name,
+      {List<Object> args = const <Object>[], Map<Symbol, Object> kwargs = const <Symbol, Object>{}}) {
     if (!tests.containsKey(name)) throw ArgumentError('test not found: $name');
     // ignore: return_of_invalid_type
     return Function.apply(tests[name], args, kwargs);
@@ -182,9 +182,7 @@ class Environment {
 /// instance directly using the constructor.  It takes the same arguments as
 /// the environment constructor but it's not possible to specify a loader.
 class Template extends Node {
-  static final Map<int, Environment> _shared = {};
-
-  // TODO: compile template
+  static final Map<int, Environment> _shared = <int, Environment>{};
 
   factory Template(
     String source, {
@@ -208,7 +206,7 @@ class Template extends Node {
     FieldGetter getField = defaultFieldGetter,
     ItemGetter getItem = defaultItemGetter,
   }) {
-    final config = <Object>{
+    final Set<Object> config = <Object>{
       blockStart,
       blockEnd,
       variableStart,
@@ -230,7 +228,7 @@ class Template extends Node {
       getItem,
     };
 
-    final env = _shared.containsKey(config)
+    final Environment env = _shared.containsKey(config)
         ? _shared[config.hashCode]
         : Environment._(
             blockStart: blockStart,
@@ -274,9 +272,9 @@ class Template extends Node {
 
   @protected
   void addBlocks(StringSink outSink, Context context) {
-    final self = NameSpace();
+    final NameSpace self = NameSpace();
 
-    for (final blockEntry in blocks.entries) {
+    for (MapEntry<String, BlockStatement> blockEntry in blocks.entries) {
       self[blockEntry.key] = () {
         blockEntry.value.accept(outSink, context);
       };
@@ -293,7 +291,7 @@ class Template extends Node {
 
   String renderMap([Map<String, Object> data]) {
     final StringBuffer buffer = StringBuffer();
-    final context = Context(data: data, env: env);
+    final Context context = Context(data: data, env: env);
     addBlocks(buffer, context);
     body.accept(buffer, context);
     return buffer.toString();
@@ -312,7 +310,7 @@ class Template extends Node {
     }
 
     buffer.write(body.toDebugString(level));
-    return '$buffer';
+    return buffer.toString();
   }
 }
 
@@ -327,7 +325,8 @@ class RenderWrapper extends Function {
   @override
   Object noSuchMethod(Invocation invocation) {
     if (invocation.memberName == #call) {
-      return function(invocation.namedArguments.map((key, Object value) => MapEntry(getSymbolName(key), value)));
+      return function(invocation.namedArguments
+          .map((Symbol key, Object value) => MapEntry<String, Object>(getSymbolName(key), value)));
     }
 
     return super.noSuchMethod(invocation);

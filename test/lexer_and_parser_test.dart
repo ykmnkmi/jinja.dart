@@ -4,53 +4,53 @@ import 'package:test/test.dart';
 
 void main() {
   group('lexer', () {
-    var env = Environment();
+    final Environment env = Environment();
 
     test('raw', () {
-      var template = env.fromString('{% raw %}foo{% endraw %}|'
+      final Template template = env.fromString('{% raw %}foo{% endraw %}|'
           '{%raw%}{{ bar }}|{% baz %}{%       endraw    %}');
       expect(template.renderMap(), equals('foo|{{ bar }}|{% baz %}'));
     });
 
     test('raw2', () {
-      var template = env.fromString('1  {%- raw -%}   2   {%- endraw -%}   3');
+      final Template template = env.fromString('1  {%- raw -%}   2   {%- endraw -%}   3');
       expect(template.renderMap(), equals('123'));
     });
 
     test('raw3', () {
-      var env = Environment(leftStripBlocks: true, trimBlocks: true);
-      var template = env.fromString('bar\n{% raw %}\n  {{baz}}2 spaces\n{% endraw %}\nfoo');
+      final Environment env = Environment(leftStripBlocks: true, trimBlocks: true);
+      final Template template = env.fromString('bar\n{% raw %}\n  {{baz}}2 spaces\n{% endraw %}\nfoo');
       expect(template.render(baz: 'test'), equals('bar\n\n  {{baz}}2 spaces\nfoo'));
     });
 
     test('raw4', () {
-      var env = Environment(leftStripBlocks: true);
-      var template = env.fromString('bar\n{%- raw -%}\n\n  \n  2 spaces\n space{%- endraw -%}\nfoo');
+      final Environment env = Environment(leftStripBlocks: true);
+      final Template template = env.fromString('bar\n{%- raw -%}\n\n  \n  2 spaces\n space{%- endraw -%}\nfoo');
       expect(template.renderMap(), equals('bar2 spaces\n spacefoo'));
     });
 
     test('balancing', () {
-      var env = Environment(
+      final Environment env = Environment(
         blockStart: '{%',
         blockEnd: '%}',
         variableStart: r'${',
         variableEnd: '}',
       );
 
-      var template = env.fromString(r'''{% for item in seq
+      final Template template = env.fromString(r'''{% for item in seq
             %}${{'foo': item} | upper}{% endfor %}''');
       expect(template.render(seq: <int>[0, 1, 2]), equals("{'FOO': 0}{'FOO': 1}{'FOO': 2}"));
     });
 
     test('comments', () {
-      var env = Environment(
+      final Environment env = Environment(
         blockStart: '<!--',
         blockEnd: '-->',
         variableStart: '{',
         variableEnd: '}',
       );
 
-      var template = env.fromString('''\
+      final Template template = env.fromString('''\
 <ul>
 <!--- for item in seq -->
   <li>{item}</li>
@@ -60,91 +60,91 @@ void main() {
     });
 
     test('string escapes', () {
-      for (var char in <String>[r'\0', r'\2668', r'\xe4', r'\t', r'\r', r'\n']) {
-        var template = env.fromString('{{ ${repr(char)} }}');
+      for (String char in <String>[r'\0', r'\2668', r'\xe4', r'\t', r'\r', r'\n']) {
+        final Template template = env.fromString('{{ ${repr(char)} }}');
         expect(template.renderMap(), equals(char));
       }
 
-      // TODO: * poor dart
+      // TODO: проверять
       // expect(env.fromString('{{ "\N{HOT SPRINGS}" }}').render(), equals('\u2668'));
     });
   });
 
   group('leftStripBlocks', () {
-    var env = Environment();
+    final Environment env = Environment();
 
     test('lstrip', () {
-      var env = Environment(leftStripBlocks: true);
-      var template = env.fromString('    {% if true %}\n    {% endif %}');
+      final Environment env = Environment(leftStripBlocks: true);
+      final Template template = env.fromString('    {% if true %}\n    {% endif %}');
       expect(template.renderMap(), equals('\n'));
     });
 
     test('lstrip trim', () {
-      var env = Environment(leftStripBlocks: true, trimBlocks: true);
-      var template = env.fromString('    {% if true %}\n    {% endif %}');
+      final Environment env = Environment(leftStripBlocks: true, trimBlocks: true);
+      final Template template = env.fromString('    {% if true %}\n    {% endif %}');
       expect(template.renderMap(), equals(''));
     });
 
     test('no lstrip', () {
-      var env = Environment(leftStripBlocks: true);
-      var template = env.fromString('    {%+ if true %}\n    {%+ endif %}');
+      final Environment env = Environment(leftStripBlocks: true);
+      final Template template = env.fromString('    {%+ if true %}\n    {%+ endif %}');
       expect(template.renderMap(), equals('    \n    '));
     });
 
     test('lstrip blocks false with no lstrip', () {
-      var template = env.fromString('    {% if true %}\n    {% endif %}');
+      Template template = env.fromString('    {% if true %}\n    {% endif %}');
       expect(template.renderMap(), equals('    \n    '));
       template = env.fromString('    {%+ if true %}\n    {%+ endif %}');
       expect(template.renderMap(), equals('    \n    '));
     });
 
     test('lstrip endline', () {
-      var env = Environment(leftStripBlocks: true);
-      var template = env.fromString('    hello{% if true %}\n    goodbye{% endif %}');
+      final Environment env = Environment(leftStripBlocks: true);
+      final Template template = env.fromString('    hello{% if true %}\n    goodbye{% endif %}');
       expect(template.renderMap(), equals('    hello\n    goodbye'));
     });
 
     test('lstrip inline', () {
-      var env = Environment(leftStripBlocks: true);
-      var template = env.fromString('    {% if true %}hello    {% endif %}');
+      final Environment env = Environment(leftStripBlocks: true);
+      final Template template = env.fromString('    {% if true %}hello    {% endif %}');
       expect(template.renderMap(), equals('hello    '));
     });
 
     test('lstrip nested', () {
-      var env = Environment(leftStripBlocks: true);
-      var template = env.fromString('    {% if true %}a {% if true %}b {% endif %}c {% endif %}');
+      final Environment env = Environment(leftStripBlocks: true);
+      final Template template = env.fromString('    {% if true %}a {% if true %}b {% endif %}c {% endif %}');
       expect(template.renderMap(), equals('a b c '));
     });
 
     test('lstrip left chars', () {
-      var env = Environment(leftStripBlocks: true);
-      var template = env.fromString('''    abc {% if true %}
+      final Environment env = Environment(leftStripBlocks: true);
+      final Template template = env.fromString('''    abc {% if true %}
         hello{% endif %}''');
       expect(template.renderMap(), equals('    abc \n        hello'));
     });
 
     test('lstrip embeded strings', () {
-      var env = Environment(leftStripBlocks: true);
-      var template = env.fromString('    {% set x = " {% str %} " %}{{ x }}');
+      final Environment env = Environment(leftStripBlocks: true);
+      final Template template = env.fromString('    {% set x = " {% str %} " %}{{ x }}');
       expect(template.renderMap(), equals(' {% str %} '));
     });
 
     test('lstrip preserve leading newlines', () {
-      var env = Environment(leftStripBlocks: true);
-      var template = env.fromString('\n\n\n{% set hello = 1 %}');
+      final Environment env = Environment(leftStripBlocks: true);
+      final Template template = env.fromString('\n\n\n{% set hello = 1 %}');
       expect(template.renderMap(), equals('\n\n\n'));
     });
 
     test('lstrip comment', () {
-      var env = Environment(leftStripBlocks: true);
-      var template = env.fromString('''    {# if true #}
+      final Environment env = Environment(leftStripBlocks: true);
+      final Template template = env.fromString('''    {# if true #}
 hello
     {#endif#}''');
       expect(template.renderMap(), equals('\nhello\n'));
     });
 
     test('lstrip angle bracket simple', () {
-      var env = Environment(
+      final Environment env = Environment(
         blockStart: '<%',
         blockEnd: '%>',
         variableStart: r'${',
@@ -155,12 +155,12 @@ hello
         leftStripBlocks: true,
         trimBlocks: true,
       );
-      var template = env.fromString('    <% if true %>hello    <% endif %>');
+      final Template template = env.fromString('    <% if true %>hello    <% endif %>');
       expect(template.renderMap(), equals('hello    '));
     });
 
     test('lstrip angle bracket comment', () {
-      var env = Environment(
+      final Environment env = Environment(
         blockStart: '<%',
         blockEnd: '%>',
         variableStart: r'${',
@@ -171,13 +171,13 @@ hello
         leftStripBlocks: true,
         trimBlocks: true,
       );
-      var template = env.fromString('    <%# if true %>hello    <%# endif %>');
+      final Template template = env.fromString('    <%# if true %>hello    <%# endif %>');
       expect(template.renderMap(), equals('hello    '));
     });
 
-// TODO: line comment
+// TODO: разблокировать: после реализации строковых коментариев
 //     test('lstrip angle bracket', () {
-//       var env = Environment(
+//       final Environment env = Environment(
 //         blockStart: '<%',
 //         blockEnd: '%>',
 //         variableStart: r'${',
@@ -188,17 +188,17 @@ hello
 //         leftStripBlocks: true,
 //         trimBlocks: true,
 //       );
-//       var template = env.fromString(r'''
+//       final Template template = env.fromString(r'''
 //     <%# regular comment %>
 //     <% for item in seq %>
 // ${item} ## the rest of the stuff
 //    <% endfor %>''');
-//       expect(template.renderWr(seq: range(5)), equals(range(5).map((int n) => '$n\n').join()));
+//       expect(template.render(seq: range(5)), equals(range(5).map((int n) => '$n\n').join()));
 //     });
 
-// TODO: line comment
+// TODO: разблокировать: после реализации строковых коментариев
 //     test('lstrip angle bracket compact', () {
-//       var env = Environment(
+//       final Environment env = Environment(
 //         blockStart: '<%',
 //         blockEnd: '%>',
 //         variableStart: r'${',
@@ -209,7 +209,7 @@ hello
 //         leftStripBlocks: true,
 //         trimBlocks: true,
 //       );
-//       var template = env.fromString(r'''
+//       final Template template = env.fromString(r'''
 //     <%#regular comment%>
 //     <%for item in seq%>
 // ${item} ## the rest of the stuff
@@ -218,7 +218,7 @@ hello
 //     });
 
     test('php syntax with manual', () {
-      var env = Environment(
+      final Environment env = Environment(
         blockStart: '<?',
         blockEnd: '?>',
         variableStart: '<?=',
@@ -228,7 +228,7 @@ hello
         leftStripBlocks: true,
         trimBlocks: true,
       );
-      var template = env.fromString('''\
+      final Template template = env.fromString('''\
     <!-- I'm a comment, I'm not interesting -->
     <? for item in seq -?>
         <?= item ?>
@@ -237,7 +237,7 @@ hello
     });
 
     test('php syntax', () {
-      var env = Environment(
+      final Environment env = Environment(
         blockStart: '<?',
         blockEnd: '?>',
         variableStart: '<?=',
@@ -247,7 +247,7 @@ hello
         leftStripBlocks: true,
         trimBlocks: true,
       );
-      var template = env.fromString('''\
+      final Template template = env.fromString('''\
     <!-- I'm a comment, I'm not interesting -->
     <? for item in seq ?>
         <?= item ?>
@@ -256,7 +256,7 @@ hello
     });
 
     test('php syntax compact', () {
-      var env = Environment(
+      final Environment env = Environment(
         blockStart: '<?',
         blockEnd: '?>',
         variableStart: '<?=',
@@ -266,7 +266,7 @@ hello
         leftStripBlocks: true,
         trimBlocks: true,
       );
-      var template = env.fromString('''\
+      final Template template = env.fromString('''\
     <!-- I'm a comment, I'm not interesting -->
     <?for item in seq?>
         <?=item?>
@@ -275,7 +275,7 @@ hello
     });
 
     test('erb syntax', () {
-      var env = Environment(
+      final Environment env = Environment(
         blockStart: '<%',
         blockEnd: '%>',
         variableStart: '<%=',
@@ -285,7 +285,7 @@ hello
         leftStripBlocks: true,
         trimBlocks: true,
       );
-      var template = env.fromString('''<%# I'm a comment, I'm not interesting %>
+      final Template template = env.fromString('''<%# I'm a comment, I'm not interesting %>
     <% for item in seq %>
     <%= item %>
     <% endfor %>
@@ -294,7 +294,7 @@ hello
     });
 
     test('erb syntax with manual', () {
-      var env = Environment(
+      final Environment env = Environment(
         blockStart: '<%',
         blockEnd: '%>',
         variableStart: '<%=',
@@ -304,7 +304,7 @@ hello
         leftStripBlocks: true,
         trimBlocks: true,
       );
-      var template = env.fromString('''<%# I'm a comment, I'm not interesting %>
+      final Template template = env.fromString('''<%# I'm a comment, I'm not interesting %>
     <% for item in seq -%>
         <%= item %>
     <%- endfor %>''');
@@ -312,7 +312,7 @@ hello
     });
 
     test('erb syntax no lstrip', () {
-      var env = Environment(
+      final Environment env = Environment(
         blockStart: '<%',
         blockEnd: '%>',
         variableStart: '<%=',
@@ -322,7 +322,7 @@ hello
         leftStripBlocks: true,
         trimBlocks: true,
       );
-      var template = env.fromString('''<%# I'm a comment, I'm not interesting %>
+      final Template template = env.fromString('''<%# I'm a comment, I'm not interesting %>
     <%+ for item in seq -%>
         <%= item %>
     <%- endfor %>''');
@@ -330,7 +330,7 @@ hello
     });
 
     test('comment syntax', () {
-      var env = Environment(
+      final Environment env = Environment(
         blockStart: '<!--',
         blockEnd: '-->',
         variableStart: r'${',
@@ -340,7 +340,7 @@ hello
         leftStripBlocks: true,
         trimBlocks: true,
       );
-      var template = env.fromString(r'''<!--# I'm a comment, I'm not interesting -->
+      final Template template = env.fromString(r'''<!--# I'm a comment, I'm not interesting -->
 <!-- for item in seq --->
     ${item}
 <!--- endfor -->''');

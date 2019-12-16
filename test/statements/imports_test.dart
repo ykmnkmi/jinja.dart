@@ -3,23 +3,23 @@ import 'package:jinja/src/exceptions.dart';
 import 'package:test/test.dart';
 
 void main() {
-  var env = Environment(
+  final Environment env = Environment(
     globals: <String, Object>{'bar': 23},
     loader: MapLoader(<String, String>{
-      // TODO: module test
+      // TODO: включить после реализаци модулей
       // module: '{% macro test() %}[{{ foo }}|{{ bar }}]{% endmacro %}'
       'header': '[{{ foo }}|{{ 23 }}]',
       'o_printer': '({{ o }})',
     }),
   );
 
-  // TODO: imports test
+  // TODO: добавить тест: import
 
   group('include', () {
-    var foo42 = <String, Object>{'foo': 42};
+    final Map<String, Object> foo42 = <String, Object>{'foo': 42};
 
     test('context include', () {
-      var template = env.fromString('{% include "header" %}');
+      Template template = env.fromString('{% include "header" %}');
       expect(template.renderMap(foo42), equals('[42|23]'));
 
       template = env.fromString('{% include "header" with context %}');
@@ -30,7 +30,7 @@ void main() {
     });
 
     test('choise includes', () {
-      var template = env.fromString('{% include ["missing", "header"] %}');
+      Template template = env.fromString('{% include ["missing", "header"] %}');
       expect(template.renderMap(foo42), equals('[42|23]'));
 
       template = env.fromString('{% include ["missing", "missing2"] ignore missing %}');
@@ -39,8 +39,7 @@ void main() {
       template = env.fromString('{% include ["missing", "missing2"] %}');
       expect(() => template.renderMap(), throwsA(isA<TemplatesNotFound>()));
 
-      // template names in error
-      // https://github.com/pallets/jinja/blob/master/tests/test_imports.py#L122
+      // TODO: ссылка https://github.com/pallets/jinja/blob/master/tests/test_imports.py#L122
 
       void testIncludes(Template template, Map<String, Object> context) {
         context['foo'] = 42;
@@ -62,28 +61,28 @@ void main() {
     });
 
     test('include ignore missing', () {
-      var template = env.fromString('{% include "missing" %}');
+      Template template = env.fromString('{% include "missing" %}');
       expect(() => template.renderMap(), throwsA(isA<TemplateNotFound>()));
 
-      for (var extra in <String>['', 'with context', 'without context']) {
+      for (String extra in <String>['', 'with context', 'without context']) {
         template = env.fromString('{% include "missing" ignore missing $extra %}');
         expect(template.renderMap(), equals(''));
       }
     });
 
     test('context include with overrides', () {
-      var env = Environment(
+      final Environment env = Environment(
         loader: MapLoader(<String, String>{
           'main': '{% for item in [1, 2, 3] %}{% include "item" %}{% endfor %}',
           'item': '{{ item }}',
         }),
       );
 
-      var template = env.getTemplate('main');
+      final Template template = env.getTemplate('main');
       expect(template.renderMap(), equals('123'));
     });
 
-    // TODO: unoptimized scopes test
-    // TODO: import from with context test
+    // TODO: добавить тест: unoptimized scopes
+    // TODO: добавить тест: import from with context
   });
 }

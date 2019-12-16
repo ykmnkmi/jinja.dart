@@ -9,9 +9,9 @@ class Undefined {
 }
 
 class NameSpace {
-  static final Function namespace = _NameSpaceFactory();
+  static final Function namespace = NameSpaceFactory();
 
-  NameSpace([Map<String, Object> data]) : data = data != null ? Map.of(data) : <String, Object>{};
+  NameSpace([Map<String, Object> data]) : data = data != null ? Map<String, Object>.of(data) : <String, Object>{};
 
   final Map<String, Object> data;
   Iterable<MapEntry<String, Object>> get entries => data.entries;
@@ -24,7 +24,7 @@ class NameSpace {
 
   @override
   Object noSuchMethod(Invocation invocation) {
-    var name = invocation.memberName.toString().substring(0);
+    String name = invocation.memberName.toString().substring(0);
 
     if (invocation.isSetter) {
       // 'name='
@@ -45,15 +45,15 @@ class NameSpace {
   }
 }
 
-// TODO: remove deprecated
+// TODO: убарть костыль
 // ignore: deprecated_extends_function
-class _NameSpaceFactory extends Function {
+class NameSpaceFactory extends Function {
   NameSpace call() => NameSpace();
 
   @override
   Object noSuchMethod(Invocation invocation) {
     if (invocation.memberName == #call) {
-      final data = <String, Object>{};
+      final Map<String, Object> data = <String, Object>{};
 
       if (invocation.positionalArguments.length == 1) {
         final Object arg = invocation.positionalArguments.first;
@@ -61,7 +61,7 @@ class _NameSpaceFactory extends Function {
         if (arg is Map<String, Object>) {
           data.addAll(arg);
         } else if (arg is List<Object>) {
-          for (final pair in arg) {
+          for (Object pair in arg) {
             List<Object> list;
 
             if (pair is Iterable<Object>) {
@@ -81,7 +81,7 @@ class _NameSpaceFactory extends Function {
             if (list[0] is String) data[list[0] as String] = list[1];
           }
         } else {
-          // TODO: error info
+          // TODO: поправить: текст ошибки
           throw TypeError();
         }
       } else if (invocation.positionalArguments.length > 1) {
@@ -89,7 +89,8 @@ class _NameSpaceFactory extends Function {
             'got ${invocation.positionalArguments.length}');
       }
 
-      data.addAll(invocation.namedArguments.map((key, Object value) => MapEntry(getSymbolName(key), value)));
+      data.addAll(invocation.namedArguments
+          .map<String, Object>((Symbol key, Object value) => MapEntry<String, Object>(getSymbolName(key), value)));
       return NameSpace(data);
     }
 
@@ -99,7 +100,7 @@ class _NameSpaceFactory extends Function {
 
 class LoopContext {
   LoopContext(int index0, int length, Object previtem, Object nextitem, Function changed)
-      : data = {
+      : data = <String, Object>{
           'index0': index0,
           'length': length,
           'previtem': previtem,
@@ -110,7 +111,7 @@ class LoopContext {
           'last': index0 + 1 == length,
           'revindex': length - index0,
           'revindex0': length - index0 - 1,
-          'cycle': _CycleWrapper((args) => args[index0 % args.length]),
+          'cycle': CycleWrapper((List<Object> args) => args[index0 % args.length]),
         };
 
   final Map<String, Object> data;
@@ -118,10 +119,10 @@ class LoopContext {
   Object operator [](String key) => data[key];
 }
 
-// TODO: remove deprecated
+// TODO: убрать костыль
 // ignore: deprecated_extends_function
-class _CycleWrapper extends Function {
-  _CycleWrapper(this.function);
+class CycleWrapper extends Function {
+  CycleWrapper(this.function);
 
   final Object Function(List<Object> values) function;
 

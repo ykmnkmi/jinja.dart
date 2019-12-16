@@ -18,31 +18,29 @@ class Call extends Expression {
 
   @override
   Object resolve(Context context) {
-    var args = this.args.map<Object>((Expression arg) => arg.resolve(context)).toList();
-
-    var kwargs = this
-        .kwargs
-        .map((String key, Expression value) => MapEntry<Symbol, Object>(Symbol(key), value.resolve(context)));
+    final List<Object> args = this.args.map<Object>((Expression arg) => arg.resolve(context)).toList();
+    final Map<Symbol, Object> kwargs = this.kwargs.map<Symbol, Object>(
+        (String key, Expression value) => MapEntry<Symbol, Object>(Symbol(key), value.resolve(context)));
 
     if (argsDyn != null) {
-      var argsDyn = this.argsDyn.resolve(context);
+      final Object argsDyn = this.argsDyn.resolve(context);
 
-      if (argsDyn is Iterable) {
+      if (argsDyn is Iterable<Object>) {
         args.addAll(argsDyn);
       } else {
-        // TODO: argsDyn exception message
+        // TODO: добавить: текст ошибки
         throw TemplateRuntimeError();
       }
     }
 
     if (kwargsDyn != null) {
-      var kwargsDyn = this.kwargsDyn.resolve(context);
+      final Object kwargsDyn = this.kwargsDyn.resolve(context);
 
       if (kwargsDyn is Map<String, Expression>) {
         kwargs.addAll(kwargsDyn.map<Symbol, Object>(
             (String key, Expression value) => MapEntry<Symbol, Object>(Symbol(key), value.resolve(context))));
       } else {
-        // TODO: kwargsDyn exception message
+        // TODO: добавить: текст ошибки
         throw TemplateRuntimeError();
       }
     }
@@ -52,7 +50,7 @@ class Call extends Expression {
 
   @override
   String toDebugString([int level = 0]) {
-    var buffer = StringBuffer(expr.toDebugString(level));
+    final StringBuffer buffer = StringBuffer(expr.toDebugString(level));
     buffer.write('(');
 
     if (args.isNotEmpty) {
@@ -86,7 +84,7 @@ class Call extends Expression {
 
   @override
   String toString() {
-    var buffer = StringBuffer('Call($expr');
+    final StringBuffer buffer = StringBuffer('Call($expr');
     if (args != null && args.isNotEmpty) buffer.write(', args: $args');
     if (kwargs != null && kwargs.isNotEmpty) buffer.write(', kwargs: $kwargs');
     if (argsDyn != null) buffer.write(', argsDyn: $argsDyn');

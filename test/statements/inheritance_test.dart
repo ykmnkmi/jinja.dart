@@ -44,7 +44,7 @@ const String doubleextends = '''{% extends "layout" %}
 
 void main() {
   group('inheritance', () {
-    var env = Environment(
+    final Environment env = Environment(
       loader: MapLoader(<String, String>{
         'layout': layout,
         'level1': level1,
@@ -57,7 +57,7 @@ void main() {
     );
 
     test('layout', () {
-      var template = env.getTemplate('layout');
+      final Template template = env.getTemplate('layout');
       expect(
           template.renderMap(),
           equals('|block 1 from layout|block 2 from '
@@ -65,7 +65,7 @@ void main() {
     });
 
     test('level1', () {
-      var template = env.getTemplate('level1');
+      final Template template = env.getTemplate('level1');
       expect(
           template.renderMap(),
           equals('|block 1 from level1|block 2 from '
@@ -73,7 +73,7 @@ void main() {
     });
 
     test('level2', () {
-      var template = env.getTemplate('level2');
+      final Template template = env.getTemplate('level2');
       expect(
           template.renderMap(),
           equals('|block 1 from level1|nested block 5 from '
@@ -81,7 +81,7 @@ void main() {
     });
 
     test('level3', () {
-      var template = env.getTemplate('level3');
+      final Template template = env.getTemplate('level3');
       expect(
           template.renderMap(),
           equals('|block 1 from level1|block 5 from level3|'
@@ -89,7 +89,7 @@ void main() {
     });
 
     test('level4', () {
-      var template = env.getTemplate('level4');
+      final Template template = env.getTemplate('level4');
       expect(
           template.renderMap(),
           equals('|block 1 from level1|block 5 from '
@@ -97,7 +97,7 @@ void main() {
     });
 
     test('super', () {
-      var env = Environment(
+      final Environment env = Environment(
         loader: MapLoader(<String, String>{
           'a': '{% block intro %}INTRO{% endblock %}|'
               'BEFORE|{% block data %}INNER{% endblock %}|AFTER',
@@ -109,23 +109,23 @@ void main() {
         }),
       );
 
-      var template = env.getTemplate('c');
+      final Template template = env.getTemplate('c');
       expect(template.renderMap(), equals('--INTRO--|BEFORE|[(INNER)]|AFTER'));
     });
 
     test('working', () {
-      var template = env.getTemplate('working');
+      final Template template = env.getTemplate('working');
       expect(template, isNotNull);
     });
 
     test('reuse blocks', () {
-      var template = env.fromString('{{ self.foo() }}|{% block foo %}42'
+      final Template template = env.fromString('{{ self.foo() }}|{% block foo %}42'
           '{% endblock %}|{{ self.foo() }}');
       expect(template.renderMap(), equals('42|42|42'));
     });
 
     test('preserve blocks', () {
-      var env = Environment(
+      final Environment env = Environment(
         loader: MapLoader(<String, String>{
           'a': '{% if false %}{% block x %}A{% endblock %}'
               '{% endif %}{{ self.x() }}',
@@ -133,12 +133,12 @@ void main() {
         }),
       );
 
-      var template = env.getTemplate('b');
+      final Template template = env.getTemplate('b');
       expect(template.renderMap(), equals('BA'));
     });
 
     test('dynamic inheritance', () {
-      var env = Environment(
+      final Environment env = Environment(
         loader: MapLoader(<String, String>{
           'master1': 'MASTER1{% block x %}{% endblock %}',
           'master2': 'MASTER2{% block x %}{% endblock %}',
@@ -146,15 +146,15 @@ void main() {
         }),
       );
 
-      var template = env.getTemplate('child');
+      final Template template = env.getTemplate('child');
 
-      for (var i in <int>[1, 2]) {
+      for (int i in <int>[1, 2]) {
         expect(template.render(master: 'master$i'), equals('MASTER${i}CHILD'));
       }
     });
 
     test('multi inheritance', () {
-      var env = Environment(
+      final Environment env = Environment(
         loader: MapLoader(<String, String>{
           'master1': 'MASTER1{% block x %}{% endblock %}',
           'master2': 'MASTER2{% block x %}{% endblock %}',
@@ -163,40 +163,40 @@ void main() {
         }),
       );
 
-      var template = env.getTemplate('child');
+      final Template template = env.getTemplate('child');
       expect(template.render(master: 'master1'), equals('MASTER1CHILD'));
       expect(template.render(master: 'master2'), equals('MASTER2CHILD'));
       expect(template.renderMap(), equals('MASTER1CHILD'));
     });
 
     test('scoped block', () {
-      var env = Environment(
+      final Environment env = Environment(
         loader: MapLoader(<String, String>{
           'master.html': '{% for item in seq %}[{% block item scoped %}'
               '{% endblock %}]{% endfor %}',
         }),
       );
 
-      var template = env.fromString('{% extends "master.html" %}{% block item %}'
+      final Template template = env.fromString('{% extends "master.html" %}{% block item %}'
           '{{ item }}{% endblock %}');
       expect(template.render(seq: range(5)), equals('[0][1][2][3][4]'));
     });
 
     test('super in scoped block', () {
-      var env = Environment(
+      final Environment env = Environment(
         loader: MapLoader(<String, String>{
           'master.html': '{% for item in seq %}[{% block item scoped %}'
               '{{ item }}{% endblock %}]{% endfor %}',
         }),
       );
 
-      var template = env.fromString('{% extends "master.html" %}{% block item %}'
+      final Template template = env.fromString('{% extends "master.html" %}{% block item %}'
           '{{ super() }}|{{ item * 2 }}{% endblock %}');
       expect(template.render(seq: range(5)), equals('[0|0][1|2][2|4][3|6][4|8]'));
     });
 
-    // TODO: test scoped block after inheritance
-    // TODO: test fixed macro scoping bug
+    // TODO: добавить тест: scoped block after inheritance
+    // TODO: добавить тест: fixed macro scoping bug
 
     test('double extends', () {
       expect(() => Template(doubleextends), throwsA(predicate<Object>((Object e) => e is TemplateError)));

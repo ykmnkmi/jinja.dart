@@ -5,41 +5,41 @@ import 'package:test/test.dart';
 
 void main() {
   group('for', () {
-    var env = Environment();
+    final Environment env = Environment();
 
     test('simple', () {
-      var template = env.fromString('{% for item in seq %}{{ item }}{% endfor %}');
+      final Template template = env.fromString('{% for item in seq %}{{ item }}{% endfor %}');
       expect(template.render(seq: range(10)), equals('0123456789'));
     });
 
     test('else', () {
-      var template = env.fromString('{% for item in seq %}XXX{% else %}...{% endfor %}');
+      final Template template = env.fromString('{% for item in seq %}XXX{% else %}...{% endfor %}');
       expect(template.renderMap(), equals('...'));
     });
 
     test('else scoping item', () {
-      var template = env.fromString('{% for item in [] %}{% else %}{{ item }}{% endfor %}');
+      final Template template = env.fromString('{% for item in [] %}{% else %}{{ item }}{% endfor %}');
       expect(template.render(item: 42), equals('42'));
     });
 
     test('empty blocks', () {
-      var template = env.fromString('<{% for item in seq %}{% else %}{% endfor %}>');
+      final Template template = env.fromString('<{% for item in seq %}{% else %}{% endfor %}>');
       expect(template.renderMap(), equals('<>'));
     });
 
     test('context vars', () {
-      var slist = <int>[42, 24];
+      final List<int> slist = <int>[42, 24];
       Template template;
 
-      for (var seq in <Iterable<int>>[slist, slist.reversed]) {
+      for (Iterable<int> seq in <Iterable<int>>[slist, slist.reversed]) {
         template = env.fromString('''{% for item in seq -%}
             {{ loop.index }}|{{ loop.index0 }}|{{ loop.revindex }}|{{
                 loop.revindex0 }}|{{ loop.first }}|{{ loop.last }}|{{
                loop.length }}###{% endfor %}''');
 
-        var parts = template.renderMap(<String, Object>{'seq': seq}).split('###');
-        var one = parts[0].split('|');
-        var two = parts[1].split('|');
+        final List<String> parts = template.renderMap(<String, Object>{'seq': seq}).split('###');
+        final List<String> one = parts[0].split('|');
+        final List<String> two = parts[1].split('|');
 
         expect(one[0], equals('1'));
         expect(one[1], equals('0'));
@@ -60,14 +60,14 @@ void main() {
     });
 
     test('cycling', () {
-      var template = env.fromString('''{% for item in seq %}{{
+      final Template template = env.fromString('''{% for item in seq %}{{
             loop.cycle('<1>', '<2>') }}{% endfor %}{%
             for item in seq %}{{ loop.cycle(*through) }}{% endfor %}''');
       expect(template.render(seq: range(4), through: <String>['<1>', '<2>']), equals('<1><2>' * 4));
     });
 
     test('lookaround', () {
-      var template = env.fromString('''{% for item in seq -%}
+      final Template template = env.fromString('''{% for item in seq -%}
             {{ loop.previtem|default('x') }}-{{ item }}-{{
             loop.nextitem|default('x') }}|
         {%- endfor %}''');
@@ -75,7 +75,7 @@ void main() {
     });
 
     test('changed', () {
-      var template = env.fromString('''{% for item in seq -%}
+      final Template template = env.fromString('''{% for item in seq -%}
             {{ loop.changed(item) }},
         {%- endfor %}''');
       expect(template.render(seq: <int>[null, null, 1, 2, 2, 3, 4, 4, 4]),
@@ -83,15 +83,15 @@ void main() {
     });
 
     test('scope', () {
-      var template = env.fromString('{% for item in seq %}{% endfor %}{{ item }}');
+      final Template template = env.fromString('{% for item in seq %}{% endfor %}{{ item }}');
       expect(template.render(seq: range(10)), equals(''));
     });
 
     test('varlen', () {
-      var template = env.fromString('{% for item in iter %}{{ item }}{% endfor %}');
+      final Template template = env.fromString('{% for item in iter %}{{ item }}{% endfor %}');
 
       Iterable<int> inner() sync* {
-        for (var i = 0; i < 5; i++) {
+        for (int i = 0; i < 5; i++) {
           yield i;
         }
       }
@@ -100,17 +100,17 @@ void main() {
     });
 
     test('noniter', () {
-      var template = env.fromString('{% for item in none %}...{% endfor %}');
+      final Template template = env.fromString('{% for item in none %}...{% endfor %}');
       expect(() => template.renderMap(), throwsArgumentError);
     });
 
-    // TODO: test recursive
-    // TODO: test recursive lookaround
-    // TODO: test recursive depth0
-    // TODO: test recursive depth
+    // TODO: добавить тест: recursive
+    // TODO: добавить тест: recursive lookaround
+    // TODO: добавить тест: recursive depth0
+    // TODO: добавить тест: recursive depth
 
     test('looploop', () {
-      var template = env.fromString('''{% for row in table %}
+      final Template template = env.fromString('''{% for row in table %}
             {%- set rowloop = loop -%}
             {% for cell in row -%}
                 [{{ rowloop.index }}|{{ loop.index }}]
@@ -120,20 +120,20 @@ void main() {
     });
 
     test('reversed bug', () {
-      var template = env.fromString('{% for i in items %}{{ i }}'
+      final Template template = env.fromString('{% for i in items %}{{ i }}'
           '{% if not loop.last %}'
           ',{% endif %}{% endfor %}');
       expect(template.render(items: <int>[3, 2, 1].reversed), '1,2,3');
     });
 
     test('loop errors', () {
-      var template = env.fromString('''{% for item in [1] if loop.index
+      final Template template = env.fromString('''{% for item in [1] if loop.index
                                       == 0 %}...{% endfor %}''');
       expect(() => template.renderMap(), throwsA(isA<UndefinedError>()));
     });
 
     test('loop filter', () {
-      var template = env.fromString('{% for item in range(10) if item '
+      Template template = env.fromString('{% for item in range(10) if item '
           'is even %}[{{ item }}]{% endfor %}');
       expect(template.renderMap(), '[0][2][4][6][8]');
       template = env.fromString('''
@@ -142,18 +142,18 @@ void main() {
       expect(template.renderMap(), '[1:0][2:2][3:4][4:6][5:8]');
     });
 
-    // TODO: test loop unassignable
+    // TODO: добавить тест: loop unassignable
 
     test('scoped special var', () {
-      var template = env.fromString('{% for s in seq %}[{{ loop.first }}{% for c in s %}'
+      final Template template = env.fromString('{% for s in seq %}[{{ loop.first }}{% for c in s %}'
           '|{{ loop.first }}{% endfor %}]{% endfor %}');
       expect(template.render(seq: <String>['ab', 'cd']), '[true|true|false][false|true|false]');
     });
 
     test('scoped loop var', () {
-      var template = env.fromString('{% for x in seq %}{{ loop.first }}'
+      Template template = env.fromString('{% for x in seq %}{{ loop.first }}'
           '{% for y in seq %}{% endfor %}{% endfor %}');
-      var data = <String, Object>{'seq': 'ab'};
+      final Map<String, Object> data = <String, Object>{'seq': 'ab'};
 
       expect(template.renderMap(data), 'truefalse');
       template = env.fromString('{% for x in seq %}{% for y in seq %}'
@@ -161,20 +161,20 @@ void main() {
       expect(template.renderMap(data), 'truefalsetruefalse');
     });
 
-    // TODO: test recursive empty loop iter
-    // TODO: test call in loop
-    // TODO: test scoping bug
+    // TODO: добавить тест: recursive empty loop iter
+    // TODO: добавить тест: call in loop
+    // TODO: добавить тест: scoping bug
 
     test('unpacking', () {
-      var template = env.fromString('{% for a, b, c in [[1, 2, 3]] %}'
+      final Template template = env.fromString('{% for a, b, c in [[1, 2, 3]] %}'
           '{{ a }}|{{ b }}|{{ c }}{% endfor %}');
       expect(template.renderMap(), '1|2|3');
     });
 
     test('intended scoping with set', () {
-      var template = env.fromString('{% for item in seq %}{{ x }}'
+      Template template = env.fromString('{% for item in seq %}{{ x }}'
           '{% set x = item %}{{ x }}{% endfor %}');
-      var data = <String, Object>{
+      final Map<String, Object> data = <String, Object>{
         'x': 0,
         'seq': <int>[1, 2, 3]
       };

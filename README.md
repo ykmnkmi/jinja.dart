@@ -13,7 +13,7 @@ import 'package:jinja/jinja.dart';
 // ...
 
 var env = Environment( /* ... */ );
-var template = env.fromString('{{ users[0].name }}');
+final Template template = env.fromString('{{ users[0].name }}');
 
 // ...
 
@@ -30,7 +30,7 @@ import 'package:jinja/get_field.dart' show getField;
 // ...
 
 var env = Environment(getField: getField, /* ... */ );
-var template = env.fromString('{{ users[0].name }}');
+final Template template = env.fromString('{{ users[0].name }}');
 
 // ...
 
@@ -75,7 +75,7 @@ import 'package:jinja/jinja.dart';
 // code ...
 
 var env = Environment(blockStart: '...');
-var template = env.fromString('...source...');
+final Template template = env.fromString('...source...');
 
 outStringSink.write(template.renderMap({'key': value}));
 // outStringSink.write(template.render(key: value));

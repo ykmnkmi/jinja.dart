@@ -11,9 +11,9 @@ class Neg extends UnaryExpression {
 
   @override
   Object resolve(Context context) {
-    var result = expr.resolve(context);
+    Object result = expr.resolve(context);
     if (result is num) return -result;
-    // TODO: Neg exception message
+    // TODO: исправить
     throw Exception();
   }
 

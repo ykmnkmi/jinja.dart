@@ -14,13 +14,13 @@ class Mul extends BinaryExpression {
 
   @override
   Object resolve(Context context) {
-    var left = this.left.resolve(context);
-    var right = this.right.resolve(context);
+    final Object left = this.left.resolve(context);
+    final Object right = this.right.resolve(context);
 
     if (left is num && right is num) return left * right;
     if (left is String && right is int) return left * right;
 
-    // TODO: Mul exception message
+    // TODO: исправить
     throw Exception();
   }
 
@@ -42,12 +42,12 @@ class Div extends BinaryExpression {
 
   @override
   num resolve(Context context) {
-    var left = this.left.resolve(context);
-    var right = this.right.resolve(context);
+    final Object left = this.left.resolve(context);
+    final Object right = this.right.resolve(context);
 
     if (left is num && right is num) return left / right;
 
-    // TODO: Div exception message
+    // TODO: исправить
     throw Exception();
   }
 
@@ -69,12 +69,12 @@ class FloorDiv extends BinaryExpression {
 
   @override
   int resolve(Context context) {
-    var left = this.left.resolve(context);
-    var right = this.right.resolve(context);
+    final Object left = this.left.resolve(context);
+    final Object right = this.right.resolve(context);
 
     if (left is num && right is num) return left ~/ right;
 
-    // TODO: FloorDiv exception message
+    // TODO: исправить
     throw Exception();
   }
 
@@ -96,12 +96,12 @@ class Mod extends BinaryExpression {
 
   @override
   num resolve(Context context) {
-    var left = this.left.resolve(context);
-    var right = this.right.resolve(context);
+    final Object left = this.left.resolve(context);
+    final Object right = this.right.resolve(context);
 
     if (left is num && right is num) return left % right;
 
-    // TODO: Mod exception message
+    // TODO: исправить
     throw Exception();
   }
 

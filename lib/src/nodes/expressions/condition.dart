@@ -17,7 +17,7 @@ class Condition extends Expression {
 
   @override
   String toDebugString([int level = 0]) {
-    var buffer = StringBuffer(' ' * level);
+    final StringBuffer buffer = StringBuffer(' ' * level);
 
     if (expr2 != null) {
       buffer.write('${expr1.toDebugString()} ');
@@ -31,7 +31,7 @@ class Condition extends Expression {
 
   @override
   String toString() {
-    var buffer = StringBuffer('Condition($test, $expr1');
+    final StringBuffer buffer = StringBuffer('Condition($test, $expr1');
     if (expr2 != null) buffer.write(', $expr2');
     buffer.write(')');
     return buffer.toString();

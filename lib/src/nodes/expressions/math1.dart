@@ -14,14 +14,14 @@ class Add extends BinaryExpression {
 
   @override
   Object resolve(Context context) {
-    var left = this.left.resolve(context);
-    var right = this.right.resolve(context);
+    final Object left = this.left.resolve(context);
+    final Object right = this.right.resolve(context);
 
     if (left is num && right is num) return left + right;
     if (left is String && right is String) return left + right;
     if (left is List && right is List) return left + right;
 
-    // TODO: Add exception message
+    // TODO: исправить
     throw Exception();
   }
 
@@ -43,12 +43,12 @@ class Sub extends BinaryExpression {
 
   @override
   Object resolve(Context context) {
-    var left = this.left.resolve(context);
-    var right = this.right.resolve(context);
+    final Object left = this.left.resolve(context);
+    final Object right = this.right.resolve(context);
 
     if (left is num && right is num) return left - right;
 
-    // TODO: Add exception message
+    // TODO: исправить
     throw Exception();
   }
 

@@ -39,7 +39,7 @@ class ExtendsStatement extends Statement {
       buffer.write('\n${block.toDebugString(level)}');
     }
 
-    return '$buffer';
+    return buffer.toString();
   }
 
   @override
@@ -95,7 +95,7 @@ class BlockStatement extends Statement {
     }
 
     buffer.write(body.toDebugString(level + 1));
-    return '$buffer';
+    return buffer.toString();
   }
 
   @override

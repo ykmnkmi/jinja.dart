@@ -24,7 +24,7 @@ class Interpolation extends Statement {
     final StringBuffer buffer = StringBuffer(' ' * level);
     buffer.writeln('# interpolation');
     buffer.writeAll(nodes.map<String>((Node node) => node.toDebugString(level + 1)), '\n');
-    return '$buffer';
+    return buffer.toString();
   }
 
   @override

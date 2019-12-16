@@ -17,8 +17,9 @@ class Test extends Expression {
   bool resolve(Context context) => test(context, expr.resolve(context));
 
   bool test(Context context, Object value) => context.environment.callTest(name,
-      args: <Object>[value, ...args.map<Object>((arg) => arg.resolve(context))],
-      kwargs: kwargs.map((key, value) => MapEntry<Symbol, Object>(Symbol(key), value.resolve(context))));
+      args: <Object>[value, ...args.map<Object>((Expression arg) => arg.resolve(context))],
+      kwargs: kwargs.map<Symbol, Object>(
+          (String key, Expression value) => MapEntry<Symbol, Object>(Symbol(key), value.resolve(context))));
 
   @override
   String toDebugString([int level = 0]) {
@@ -29,20 +30,23 @@ class Test extends Expression {
     if (args.isEmpty && kwargs.isEmpty) return buffer.toString();
 
     if (args.length == 1 && kwargs.isEmpty) {
-      buffer.write(' ${args[0].toDebugString()}');
+      buffer.write(' ' + args[0].toDebugString());
       return buffer.toString();
     }
 
     buffer.write('(');
 
     if (args.isNotEmpty) {
-      buffer.writeAll(args.map<String>((arg) => arg.toDebugString()), ', ');
+      buffer.writeAll(args.map<String>((Expression arg) => arg.toDebugString()), ', ');
     }
 
     if (kwargs.isNotEmpty) {
       if (args.isNotEmpty) buffer.write(', ');
-      buffer.writeAll(
-          kwargs.entries.map<String>((kwarg) => '${repr(kwarg.key)}: ${kwarg.value.toDebugString()}'), ', ');
+      buffer.writeAll(kwargs.entries.map<String>((MapEntry<String, Expression> kwarg) {
+        final String key = repr(kwarg.key);
+        final String value = kwarg.value.toDebugString();
+        return '$key: $value';
+      }), ', ');
     }
 
     buffer.write(')');
