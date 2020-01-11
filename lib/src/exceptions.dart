@@ -5,7 +5,10 @@ class TemplateError extends Error {
 
   @override
   String toString() {
-    if (message == null) return 'TemplateError';
+    if (message == null) {
+      return 'TemplateError';
+    }
+
     return 'TemplateError: $message';
   }
 }
@@ -15,7 +18,10 @@ class TemplateNotFound extends TemplateError {
 
   @override
   String toString() {
-    if (message == null) return 'TemplateNotFound';
+    if (message == null) {
+      return 'TemplateNotFound';
+    }
+
     return 'TemplateNotFound: $message';
   }
 }
@@ -25,7 +31,10 @@ class TemplatesNotFound extends TemplateNotFound {
 
   @override
   String toString() {
-    if (message == null) return 'TemplatesNotFound';
+    if (message == null) {
+      return 'TemplatesNotFound';
+    }
+
     return 'TemplatesNotFound: $message';
   }
 }
@@ -42,7 +51,9 @@ class TemplateSyntaxError extends TemplateError {
   @override
   String toString() {
     final StringBuffer buffer = StringBuffer('TemplateSyntaxError');
-    if (path != null) buffer.write(' in \'$path\'');
+    if (path != null) {
+      buffer.write(' in \'$path\'');
+    }
 
     if (line != null) {
       buffer.write(' on line $line');
@@ -59,7 +70,10 @@ class TemplateRuntimeError extends TemplateError {
 
   @override
   String toString() {
-    if (message == null) return 'TemplateRuntimeError';
+    if (message == null) {
+      return 'TemplateRuntimeError';
+    }
+
     return 'TemplateRuntimeError: $message';
   }
 }
@@ -69,7 +83,10 @@ class UndefinedError extends TemplateRuntimeError {
 
   @override
   String toString() {
-    if (message == null) return 'UndefinedError';
+    if (message == null) {
+      return 'UndefinedError';
+    }
+
     return 'UndefinedError: $message';
   }
 }

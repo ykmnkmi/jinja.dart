@@ -23,13 +23,13 @@ class IfStatement extends Statement {
   String toDebugString([int level = 0]) {
     final StringBuffer buffer = StringBuffer(' ' * level);
     final MapEntry<Expression, Node> first = pairs.entries.first;
-    buffer.writeln('if ${first.key.toDebugString()}');
+    buffer.writeln('if ' + first.key.toDebugString());
     buffer.write(first.value.toDebugString(level + 1));
 
     for (MapEntry<Expression, Node> pair in pairs.entries.skip(1)) {
       buffer.writeln();
       buffer.write(' ' * level);
-      buffer.writeln('if ${pair.key.toDebugString()}');
+      buffer.writeln('if ' + pair.key.toDebugString());
       buffer.write(pair.value.toDebugString(level + 1));
     }
 
@@ -45,7 +45,11 @@ class IfStatement extends Statement {
   @override
   String toString() {
     final StringBuffer buffer = StringBuffer('If($pairs');
-    if (orElse != null) buffer.write(', $orElse');
+
+    if (orElse != null) {
+      buffer.write(', $orElse');
+    }
+
     buffer.write(')');
     return buffer.toString();
   }

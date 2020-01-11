@@ -40,10 +40,14 @@ class SetInlineStatement extends SetStatement {
   }
 
   @override
-  String toDebugString([int level = 0]) => '${' ' * level}set $target = ${value.toDebugString()}';
+  String toDebugString([int level = 0]) {
+    return ' ' * level + 'set $target = ${value.toDebugString()}';
+  }
 
   @override
-  String toString() => 'Set($target, $value})';
+  String toString() {
+    return 'Set($target, $value})';
+  }
 }
 
 class SetBlockStatement extends SetStatement {
@@ -79,5 +83,7 @@ class SetBlockStatement extends SetStatement {
   }
 
   @override
-  String toString() => 'Set($target, $body})';
+  String toString() {
+    return 'Set($target, $body})';
+  }
 }

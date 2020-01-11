@@ -11,8 +11,12 @@ class Text implements Node {
   }
 
   @override
-  String toDebugString([int level = 0]) => ' ' * level + repr(text);
+  String toDebugString([int level = 0]) {
+    return ' ' * level + repr(text);
+  }
 
   @override
-  String toString() => 'Text($text)';
+  String toString() {
+    return 'Text($text)';
+  }
 }

@@ -33,17 +33,19 @@ class ExtendsStatement extends Statement {
   @override
   String toDebugString([int level = 0]) {
     final StringBuffer buffer = StringBuffer(' ' * level);
-    buffer.write('# extends: ${pathOrTemplate.toDebugString()}');
+    buffer.write('# extends: ' + pathOrTemplate.toDebugString());
 
     for (ExtendedBlockStatement block in blocks) {
-      buffer.write('\n${block.toDebugString(level)}');
+      buffer.write('\n' + block.toDebugString(level));
     }
 
     return buffer.toString();
   }
 
   @override
-  String toString() => 'Extends($pathOrTemplate, $blocks)';
+  String toString() {
+    return 'Extends($pathOrTemplate, $blocks)';
+  }
 }
 
 class BlockStatement extends Statement {
@@ -62,7 +64,8 @@ class BlockStatement extends Statement {
       final ExtendedBlockStatement child = blockContext.blocks[name].last;
 
       if (child.hasSuper) {
-        final Map<String, Object> childContext = this.childContext(outSink, context);
+        final Map<String, Object> childContext =
+            this.childContext(outSink, context);
         context.apply(childContext, (Context context) {
           child.accept(outSink, context);
         });
@@ -99,7 +102,9 @@ class BlockStatement extends Statement {
   }
 
   @override
-  String toString() => 'Block($name, $path, $body)';
+  String toString() {
+    return 'Block($name, $path, $body)';
+  }
 }
 
 class ExtendedBlockStatement extends BlockStatement {
@@ -119,14 +124,16 @@ class ExtendedBlockStatement extends BlockStatement {
 
     if (blockContext.has(name)) {
       final ExtendedBlockStatement child = blockContext.child(this);
+
       if (child != null) {
         if (child.hasSuper) {
-          final Map<String, Object> childContext = this.childContext(outSink, context);
-          
+          final Map<String, Object> childContext =
+              this.childContext(outSink, context);
+
           context.apply(childContext, (Context context) {
             child.accept(outSink, context);
           });
-          
+
           return;
         }
 
@@ -139,14 +146,21 @@ class ExtendedBlockStatement extends BlockStatement {
   }
 
   @override
-  String toDebugString([int level = 0]) => '${' ' * level}block $name${body.toDebugString(level + 1)}';
+  String toDebugString([int level = 0]) {
+    return ' ' * level +
+        'block $name [$path]\n' +
+        body.toDebugString(level + 1);
+  }
 
   @override
-  String toString() => 'Block($name, $path, $body)';
+  String toString() {
+    return 'Block($name, $path, $body)';
+  }
 }
 
 class ExtendedBlockContext {
-  final Map<String, List<ExtendedBlockStatement>> blocks = <String, List<ExtendedBlockStatement>>{};
+  final Map<String, List<ExtendedBlockStatement>> blocks =
+      <String, List<ExtendedBlockStatement>>{};
 
   bool has(String name) => blocks.containsKey(name);
 
@@ -172,5 +186,7 @@ class ExtendedBlockContext {
   }
 
   @override
-  String toString() => repr(blocks);
+  String toString() {
+    return repr(blocks);
+  }
 }

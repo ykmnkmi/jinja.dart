@@ -3,7 +3,8 @@ import '../../runtime.dart';
 import '../core.dart';
 
 class ForStatement extends Statement {
-  ForStatement(this.targets, this.iterable, this.body, {this.orElse}) : _targetsLen = targets.length;
+  ForStatement(this.targets, this.iterable, this.body, {this.orElse})
+      : _targetsLen = targets.length;
 
   final List<String> targets;
   final Expression iterable;
@@ -22,7 +23,8 @@ class ForStatement extends Statement {
       }
 
       if (list.length > _targetsLen) {
-        throw ArgumentError('too many values to unpack (expected $_targetsLen)');
+        throw ArgumentError(
+            'too many values to unpack (expected $_targetsLen)');
       }
 
       for (int i = 0; i < _targetsLen; i++) {
@@ -31,17 +33,29 @@ class ForStatement extends Statement {
     }
   }
 
-  Map<String, Object> getDataForContext(List<Object> values, int i, Undefined undefined) {
+  Map<String, Object> getDataForContext(
+      List<Object> values, int i, Undefined undefined) {
     final Object current = values[i];
     Object prev = undefined;
     Object next = undefined;
 
-    if (i > 0) prev = values[i - 1];
-    if (i < values.length - 1) next = values[i + 1];
+    if (i > 0) {
+      prev = values[i - 1];
+    }
+
+    if (i < values.length - 1) {
+      next = values[i + 1];
+    }
 
     bool changed(Object item) {
-      if (i == 0) return true;
-      if (item == values[i - 1]) return false;
+      if (i == 0) {
+        return true;
+      }
+
+      if (item == values[i - 1]) {
+        return false;
+      }
+
       return true;
     }
 
@@ -60,21 +74,25 @@ class ForStatement extends Statement {
 
   void render(List<Object> list, Context context, StringSink outSink) {
     for (int i = 0; i < list.length; i++) {
-      final Map<String, Object> data = getDataForContext(list, i, context.environment.undefined);
+      final Map<String, Object> data =
+          getDataForContext(list, i, context.environment.undefined);
       context.apply(data, (Context context) {
         body.accept(outSink, context);
       });
     }
   }
 
-  void loopIterable(Iterable<Object> values, Context context, StringSink outSink) {
+  void loopIterable(
+      Iterable<Object> values, Context context, StringSink outSink) {
     final List<Object> list = values.toList();
     render(list, context, outSink);
   }
 
   void loopMap(Map<Object, Object> dict, Context context, StringSink outSink) {
-    final List<List<Object>> list =
-        dict.entries.map((MapEntry<Object, Object> entry) => <Object>[entry.key, entry.value]).toList();
+    final List<List<Object>> list = dict.entries
+        .map<List<Object>>((MapEntry<Object, Object> entry) =>
+            <Object>[entry.key, entry.value])
+        .toList();
     render(list, context, outSink);
   }
 
@@ -86,7 +104,11 @@ class ForStatement extends Statement {
   @override
   void accept(StringSink outSink, Context context) {
     final Object iterable = this.iterable.resolve(context);
-    if (iterable == null) throw ArgumentError.notNull('iterable');
+
+    if (iterable == null) {
+      // TODO: сравнить сообщение ошибки
+      throw ArgumentError.notNull('iterable');
+    }
 
     if (iterable is Iterable<Object> && iterable.isNotEmpty) {
       loopIterable(iterable, context, outSink);
@@ -102,14 +124,15 @@ class ForStatement extends Statement {
   @override
   String toDebugString([int level = 0]) {
     final StringBuffer buffer = StringBuffer(' ' * level);
-    buffer.writeln('for ${targets.join(', ')} in ${iterable.toDebugString()}');
-    buffer.write('${body.toDebugString(level + 1)}');
+    buffer.writeln(
+        'for ' + targets.join(', ') + ' in ' + iterable.toDebugString());
+    buffer.write(body.toDebugString(level + 1));
 
     if (orElse != null) {
       buffer.writeln();
       buffer.write(' ' * level);
       buffer.writeln('else');
-      buffer.write('${orElse.toDebugString(level + 1)}');
+      buffer.write(orElse.toDebugString(level + 1));
     }
 
     return buffer.toString();
@@ -118,7 +141,11 @@ class ForStatement extends Statement {
   @override
   String toString() {
     final StringBuffer buffer = StringBuffer('For($targets, $iterable, $body}');
-    if (orElse != null) buffer.write(', orElse: $orElse');
+
+    if (orElse != null) {
+      buffer.write(', orElse: $orElse');
+    }
+
     buffer.write(')');
     return buffer.toString();
   }
@@ -168,15 +195,18 @@ class ForStatementWithFilter extends ForStatement {
   }
 
   @override
-  void loopIterable(Iterable<Object> values, Context context, StringSink outSink) {
+  void loopIterable(
+      Iterable<Object> values, Context context, StringSink outSink) {
     final List<Object> list = filterValues(values, context);
     render(list, context, outSink);
   }
 
   @override
   void loopMap(Map<Object, Object> dict, Context context, StringSink outSink) {
-    final List<Object> list =
-        filterValues(dict.entries.map((MapEntry<Object, Object> entry) => <Object>[entry.key, entry.value]), context);
+    final List<Object> list = filterValues(
+        dict.entries.map<Object>((MapEntry<Object, Object> entry) =>
+            <Object>[entry.key, entry.value]),
+        context);
     render(list, context, outSink);
   }
 
@@ -189,10 +219,11 @@ class ForStatementWithFilter extends ForStatement {
   @override
   String toDebugString([int level = 0]) {
     final StringBuffer buffer = StringBuffer(' ' * level);
-    buffer.write('for ${targets.join(', ')} in ${iterable.toDebugString()}');
+    buffer
+        .write('for ' + targets.join(', ') + ' in ' + iterable.toDebugString());
 
     if (filter != null) {
-      buffer.writeln(' if ${filter.toDebugString()}');
+      buffer.writeln(' if ' + filter.toDebugString());
     } else {
       buffer.writeln();
     }
@@ -203,7 +234,7 @@ class ForStatementWithFilter extends ForStatement {
       buffer.writeln();
       buffer.write(' ' * level);
       buffer.writeln('else');
-      buffer.write('${orElse.toDebugString(level + 1)}');
+      buffer.write(orElse.toDebugString(level + 1));
     }
 
     return buffer.toString();
@@ -211,8 +242,13 @@ class ForStatementWithFilter extends ForStatement {
 
   @override
   String toString() {
-    final StringBuffer buffer = StringBuffer('ForWithFilter($targets, $iterable, $body, $filter}');
-    if (orElse != null) buffer.write(', orElse: $orElse');
+    final StringBuffer buffer =
+        StringBuffer('ForWithFilter($targets, $iterable, $body, $filter}');
+
+    if (orElse != null) {
+      buffer.write(', orElse: $orElse');
+    }
+
     buffer.write(')');
     return buffer.toString();
   }

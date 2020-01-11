@@ -27,7 +27,9 @@ class IncludeStatement extends Statement {
           template = path;
         }
 
-        if (template != null) break;
+        if (template != null) {
+          break;
+        }
       }
     } else if (oneOrList is String) {
       template = context.environment.templates[oneOrList];
@@ -49,9 +51,16 @@ class IncludeStatement extends Statement {
   @override
   String toDebugString([int level = 0]) {
     final StringBuffer buffer = StringBuffer(' ' * level);
-    buffer.write('inlcude ${paths.toDebugString()}');
-    if (!withContext) buffer.write(' without context');
-    if (ignoreMissing) buffer.write(' ignore missing');
+    buffer.write('inlcude ' + paths.toDebugString());
+
+    if (!withContext) {
+      buffer.write(' without context');
+    }
+
+    if (ignoreMissing) {
+      buffer.write(' ignore missing');
+    }
+
     return buffer.toString();
   }
 

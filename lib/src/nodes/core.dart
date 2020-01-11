@@ -39,7 +39,9 @@ abstract class UnaryExpression extends Expression {
   String get symbol;
 
   @override
-  String toDebugString([int level = 0]) => ' ' * level + '$symbol${expr.toDebugString()}';
+  String toDebugString([int level = 0]) {
+    return ' ' * level + '$symbol${expr.toDebugString()}';
+  }
 }
 
 abstract class BinaryExpression extends Expression {
@@ -57,7 +59,10 @@ abstract class BinaryExpression extends Expression {
 
 abstract class CanAssign {
   List<String> get keys;
-  bool get canAssign => false;
+
+  bool get canAssign {
+    return false;
+  }
 }
 
 class Name extends Expression implements CanAssign {
@@ -66,19 +71,29 @@ class Name extends Expression implements CanAssign {
   final String name;
 
   @override
-  dynamic resolve(Context context) => context[name];
+  dynamic resolve(Context context) {
+    return context[name];
+  }
 
   @override
-  bool get canAssign => true;
+  bool get canAssign {
+    return true;
+  }
 
   @override
-  List<String> get keys => <String>[name];
+  List<String> get keys {
+    return <String>[name];
+  }
 
   @override
-  String toDebugString([int level = 0]) => ' ' * level + name;
+  String toDebugString([int level = 0]) {
+    return ' ' * level + name;
+  }
 
   @override
-  String toString() => 'Name($name)';
+  String toString() {
+    return 'Name($name)';
+  }
 }
 
 class Literal<T> extends Expression {
@@ -87,11 +102,17 @@ class Literal<T> extends Expression {
   final T value;
 
   @override
-  T resolve(Context context) => value;
+  T resolve(Context context) {
+    return value;
+  }
 
   @override
-  String toDebugString([int level = 0]) => ' ' * level + repr(value);
+  String toDebugString([int level = 0]) {
+    return ' ' * level + repr(value);
+  }
 
   @override
-  String toString() => 'Literal($value)';
+  String toString() {
+    return 'Literal($value)';
+  }
 }

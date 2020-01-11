@@ -30,13 +30,13 @@ class FilterBlockStatement extends Statement {
   @override
   String toDebugString([int level = 0]) {
     final StringBuffer buffer = StringBuffer(' ' * level);
-    buffer.write('filter ${filters.first.toDebugString()}');
+    buffer.write('filter ' + filters.first.toDebugString());
 
     for (Filter filter in filters.sublist(1)) {
-      buffer.write(' | ${filter.toDebugString()}');
+      buffer.write(' | ' + filter.toDebugString());
     }
 
-    buffer.write('\n${body.toDebugString(level + 1)}');
+    buffer.write('\n' + body.toDebugString(level + 1));
     return buffer.toString();
   }
 

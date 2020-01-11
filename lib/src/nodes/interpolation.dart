@@ -3,8 +3,14 @@ import 'text.dart';
 
 class Interpolation extends Statement {
   static Node orNode(List<Node> nodes) {
-    if (nodes.isEmpty) return Text('');
-    if (nodes.length == 1) return nodes[0];
+    if (nodes.isEmpty) {
+      return Text('');
+    }
+
+    if (nodes.length == 1) {
+      return nodes[0];
+    }
+
     return Interpolation(nodes);
   }
 
@@ -23,10 +29,13 @@ class Interpolation extends Statement {
   String toDebugString([int level = 0]) {
     final StringBuffer buffer = StringBuffer(' ' * level);
     buffer.writeln('# interpolation');
-    buffer.writeAll(nodes.map<String>((Node node) => node.toDebugString(level + 1)), '\n');
+    buffer.writeAll(
+        nodes.map<String>((Node node) => node.toDebugString(level + 1)), '\n');
     return buffer.toString();
   }
 
   @override
-  String toString() => 'Interpolation($nodes)';
+  String toString() {
+    return 'Interpolation($nodes)';
+  }
 }
