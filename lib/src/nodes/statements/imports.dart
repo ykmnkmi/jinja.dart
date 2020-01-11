@@ -51,7 +51,7 @@ class IncludeStatement extends Statement {
   @override
   String toDebugString([int level = 0]) {
     final StringBuffer buffer = StringBuffer(' ' * level);
-    buffer.write('inlcude ' + paths.toDebugString());
+    buffer.write('inlcude ${paths.toDebugString()}');
 
     if (!withContext) {
       buffer.write(' without context');

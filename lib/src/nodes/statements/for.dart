@@ -124,8 +124,7 @@ class ForStatement extends Statement {
   @override
   String toDebugString([int level = 0]) {
     final StringBuffer buffer = StringBuffer(' ' * level);
-    buffer.writeln(
-        'for ' + targets.join(', ') + ' in ' + iterable.toDebugString());
+    buffer.writeln('for ${targets.join(', ')} in ${iterable.toDebugString()}');
     buffer.write(body.toDebugString(level + 1));
 
     if (orElse != null) {
@@ -219,11 +218,10 @@ class ForStatementWithFilter extends ForStatement {
   @override
   String toDebugString([int level = 0]) {
     final StringBuffer buffer = StringBuffer(' ' * level);
-    buffer
-        .write('for ' + targets.join(', ') + ' in ' + iterable.toDebugString());
+    buffer.write('for ${targets.join(', ')} in ${iterable.toDebugString()}');
 
     if (filter != null) {
-      buffer.writeln(' if ' + filter.toDebugString());
+      buffer.writeln(' if ${filter.toDebugString()}');
     } else {
       buffer.writeln();
     }

@@ -41,7 +41,7 @@ class SetInlineStatement extends SetStatement {
 
   @override
   String toDebugString([int level = 0]) {
-    return ' ' * level + 'set $target = ${value.toDebugString()}';
+    return '${' ' * level}set $target = ${value.toDebugString()}';
   }
 
   @override

@@ -33,10 +33,10 @@ class ExtendsStatement extends Statement {
   @override
   String toDebugString([int level = 0]) {
     final StringBuffer buffer = StringBuffer(' ' * level);
-    buffer.write('# extends: ' + pathOrTemplate.toDebugString());
+    buffer.write('# extends: ${pathOrTemplate.toDebugString()}');
 
     for (ExtendedBlockStatement block in blocks) {
-      buffer.write('\n' + block.toDebugString(level));
+      buffer.write('\n${block.toDebugString(level)}');
     }
 
     return buffer.toString();
@@ -147,9 +147,7 @@ class ExtendedBlockStatement extends BlockStatement {
 
   @override
   String toDebugString([int level = 0]) {
-    return ' ' * level +
-        'block $name [$path]\n' +
-        body.toDebugString(level + 1);
+    return '${' ' * level}block $name [$path]\n${body.toDebugString(level + 1)}';
   }
 
   @override

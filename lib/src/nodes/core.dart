@@ -40,7 +40,7 @@ abstract class UnaryExpression extends Expression {
 
   @override
   String toDebugString([int level = 0]) {
-    return ' ' * level + '$symbol${expr.toDebugString()}';
+    return '${' ' * level}$symbol${expr.toDebugString()}';
   }
 }
 
