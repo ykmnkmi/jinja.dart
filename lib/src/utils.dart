@@ -26,7 +26,8 @@ String repr(Object object, [bool reprString = true]) {
   } else if (object is Map) {
     final StringBuffer buffer = StringBuffer();
     buffer.write('{');
-    buffer.writeAll(object.entries.map<String>((MapEntry<Object, Object> entry) {
+    buffer.writeAll(
+        object.entries.map<String>((MapEntry<Object, Object> entry) {
       final String key = repr(entry.key);
       final String value = repr(entry.value);
       return '$key: $value';
@@ -34,7 +35,8 @@ String repr(Object object, [bool reprString = true]) {
     buffer.write('}');
     return buffer.toString();
   } else if (object is String && reprString) {
-    final String string = object.replaceAll('\'', '\\\'').replaceAll('\n', '\\n');
+    final String string =
+        object.replaceAll('\'', '\\\'').replaceAll('\n', '\\n');
     return "'$string'";
   } else {
     return object.toString();

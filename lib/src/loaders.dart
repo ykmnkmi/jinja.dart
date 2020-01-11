@@ -12,7 +12,9 @@ abstract class Loader {
     throw Exception('template not found: $path');
   }
 
-  bool get hasSourceAccess => true;
+  bool get hasSourceAccess {
+    return true;
+  }
 
   /// Iterates over all templates.
   List<String> listSources() {
@@ -72,8 +74,10 @@ class FileSystemLoader extends Loader {
   @override
   List<String> listSources() => directory
       .listSync(recursive: true, followLinks: followLinks)
-      .map<String>((FileSystemEntity entity) => _path.relative(entity.path, from: directory.path))
-      .where((String path) => extensions.contains(_path.extension(path).substring(1)))
+      .map<String>((FileSystemEntity entity) =>
+          _path.relative(entity.path, from: directory.path))
+      .where((String path) =>
+          extensions.contains(_path.extension(path).substring(1)))
       .toList();
 
   @override
@@ -83,7 +87,8 @@ class FileSystemLoader extends Loader {
     if (autoReload) {
       directory
           .watch(recursive: true)
-          .where((FileSystemEvent event) => event.type == FileSystemEvent.modify)
+          .where(
+              (FileSystemEvent event) => event.type == FileSystemEvent.modify)
           .listen((FileSystemEvent event) {
         final String path = _path.relative(event.path, from: directory.path);
         env.fromString(getSource(path), path: path);
@@ -92,7 +97,9 @@ class FileSystemLoader extends Loader {
   }
 
   @override
-  String toString() => 'FileSystemLoader($directory)';
+  String toString() {
+    return 'FileSystemLoader($directory)';
+  }
 }
 
 /// Loads a template from a map. It's passed a map of strings bound to
@@ -112,14 +119,21 @@ class MapLoader extends Loader {
   final bool hasSourceAccess = false;
 
   @override
-  List<String> listSources() => dict.keys.toList();
+  List<String> listSources() {
+    return dict.keys.toList();
+  }
 
   @override
   String getSource(String path) {
-    if (dict.containsKey(path)) return dict[path];
+    if (dict.containsKey(path)) {
+      return dict[path];
+    }
+
     throw Exception('template not found: $path');
   }
 
   @override
-  String toString() => 'MapLoader($dict)';
+  String toString() {
+    return 'MapLoader($dict)';
+  }
 }

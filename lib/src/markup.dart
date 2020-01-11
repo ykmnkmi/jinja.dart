@@ -10,16 +10,24 @@ String escape(String text) {
 class Markup {
   const Markup(this.value);
 
-  factory Markup.escape(String value) => Markup(escape(value));
+  factory Markup.escape(String value) {
+    return Markup(escape(value));
+  }
 
   final String value;
 
   @override
-  bool operator ==(Object other) => other is Markup && value == other.value;
+  bool operator ==(Object other) {
+    return other is Markup && value == other.value;
+  }
 
   @override
-  int get hashCode => value.hashCode;
+  int get hashCode {
+    return value.hashCode;
+  }
 
   @override
-  String toString() => value;
+  String toString() {
+    return value;
+  }
 }

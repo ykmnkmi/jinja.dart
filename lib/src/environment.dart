@@ -27,7 +27,11 @@ typedef Finalizer = Object Function(Object value);
 
 Object defaultFinalizer(Object value) {
   value = value ?? '';
-  if (value is String) return value;
+
+  if (value is String) {
+    return value;
+  }
+
   return repr(value, false);
 }
 
@@ -84,7 +88,10 @@ class Environment {
       getItem: getItem,
     );
 
-    if (loader != null) loader.load(env);
+    if (loader != null) {
+      loader.load(env);
+    }
+
     return env;
   }
 
@@ -136,19 +143,26 @@ class Environment {
   /// If `path` is not `null` template stored in environment cache.
   Template fromString(String source, {String path}) {
     final Template template = Parser(this, source, path: path).parse();
-    if (path != null) templates[path] = template;
+    if (path != null) {
+      templates[path] = template;
+    }
+
     return template;
   }
 
   /// If [path] not found throws `Exception`.
   Template getTemplate(String path) {
-    if (!templates.containsKey(path)) throw ArgumentError('template not found: $path');
+    if (!templates.containsKey(path)) {
+      throw ArgumentError('template not found: $path');
+    }
+
     return templates[path];
   }
 
   /// If [name] not found throws [Exception].
   Object callFilter(Context context, String name,
-      {List<Object> args = const <Object>[], Map<Symbol, Object> kwargs = const <Symbol, Object>{}}) {
+      {List<Object> args = const <Object>[],
+      Map<Symbol, Object> kwargs = const <Symbol, Object>{}}) {
     if (filters.containsKey(name) && filters[name] != null) {
       final Function filter = filters[name];
 
@@ -156,7 +170,8 @@ class Environment {
         case FilterType.context:
           return Function.apply(filter, <Object>[context, ...args], kwargs);
         case FilterType.environment:
-          return Function.apply(filter, <Object>[context.environment, ...args], kwargs);
+          return Function.apply(
+              filter, <Object>[context.environment, ...args], kwargs);
         default:
           return Function.apply(filter, args, kwargs);
       }
@@ -167,8 +182,12 @@ class Environment {
 
   /// If [name] not found throws [Exception].
   bool callTest(String name,
-      {List<Object> args = const <Object>[], Map<Symbol, Object> kwargs = const <Symbol, Object>{}}) {
-    if (!tests.containsKey(name)) throw ArgumentError('test not found: $name');
+      {List<Object> args = const <Object>[],
+      Map<Symbol, Object> kwargs = const <Symbol, Object>{}}) {
+    if (!tests.containsKey(name)) {
+      throw ArgumentError('test not found: $name');
+    }
+
     // ignore: return_of_invalid_type
     return Function.apply(tests[name], args, kwargs);
   }
@@ -253,11 +272,16 @@ class Template extends Node {
           );
 
     _shared[config.hashCode] = env;
-    if (loader != null) loader.load(env);
+
+    if (loader != null) {
+      loader.load(env);
+    }
+
     return Parser(env, source).parse();
   }
 
-  Template.parsed({@required this.body, @required this.env, this.path}) : blocks = <String, BlockStatement>{} {
+  Template.parsed({@required this.body, @required this.env, this.path})
+      : blocks = <String, BlockStatement>{} {
     _render = RenderWrapper(([Map<String, Object> data]) => renderMap(data));
   }
 
@@ -298,7 +322,9 @@ class Template extends Node {
   }
 
   @override
-  String toString() => 'Template($path, $body)';
+  String toString() {
+    return 'Template($path, $body)';
+  }
 
   @override
   String toDebugString([int level = 0]) {
@@ -314,19 +340,23 @@ class Template extends Node {
   }
 }
 
+// TODO: убрать костыль
 // ignore: deprecated_extends_function
 class RenderWrapper extends Function {
   RenderWrapper(this.function);
 
   final Function function;
 
-  Object call() => function();
+  Object call() {
+    return function();
+  }
 
   @override
   Object noSuchMethod(Invocation invocation) {
     if (invocation.memberName == #call) {
-      return function(invocation.namedArguments
-          .map((Symbol key, Object value) => MapEntry<String, Object>(getSymbolName(key), value)));
+      return function(invocation.namedArguments.map<String, Object>(
+          (Symbol key, Object value) =>
+              MapEntry<String, Object>(getSymbolName(key), value)));
     }
 
     return super.noSuchMethod(invocation);

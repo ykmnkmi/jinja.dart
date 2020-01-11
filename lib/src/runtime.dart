@@ -11,12 +11,18 @@ class Undefined {
 class NameSpace {
   static final Function namespace = NameSpaceFactory();
 
-  NameSpace([Map<String, Object> data]) : data = data != null ? Map<String, Object>.of(data) : <String, Object>{};
+  NameSpace([Map<String, Object> data])
+      : data = data != null ? Map<String, Object>.of(data) : <String, Object>{};
 
   final Map<String, Object> data;
-  Iterable<MapEntry<String, Object>> get entries => data.entries;
 
-  Object operator [](String key) => data[key];
+  Iterable<MapEntry<String, Object>> get entries {
+    return data.entries;
+  }
+
+  Object operator [](String key) {
+    return data[key];
+  }
 
   void operator []=(String key, Object value) {
     data[key] = value;
@@ -24,7 +30,7 @@ class NameSpace {
 
   @override
   Object noSuchMethod(Invocation invocation) {
-    String name = invocation.memberName.toString().substring(0);
+    String name = invocation.memberName.toString();
 
     if (invocation.isSetter) {
       // 'name='
@@ -37,7 +43,8 @@ class NameSpace {
       if (invocation.isGetter) return data[name];
 
       if (invocation.isMethod) {
-        return Function.apply(data[name] as Function, invocation.positionalArguments, invocation.namedArguments);
+        return Function.apply(data[name] as Function,
+            invocation.positionalArguments, invocation.namedArguments);
       }
     }
 
@@ -45,10 +52,12 @@ class NameSpace {
   }
 }
 
-// TODO: убарть костыль
+// TODO: убрать костыль
 // ignore: deprecated_extends_function
 class NameSpaceFactory extends Function {
-  NameSpace call() => NameSpace();
+  NameSpace call() {
+    return NameSpace();
+  }
 
   @override
   Object noSuchMethod(Invocation invocation) {
@@ -74,11 +83,14 @@ class NameSpaceFactory extends Function {
             }
 
             if (list.length < 2 || list.length > 2) {
-              throw ArgumentError('map update sequence element #${arg.indexOf(pair)}, '
+              throw ArgumentError(
+                  'map update sequence element #${arg.indexOf(pair)}, '
                   'has length ${list.length}; 2 is required');
             }
 
-            if (list[0] is String) data[list[0] as String] = list[1];
+            if (list[0] is String) {
+              data[list[0] as String] = list[1];
+            }
           }
         } else {
           // TODO: поправить: текст ошибки
@@ -89,8 +101,9 @@ class NameSpaceFactory extends Function {
             'got ${invocation.positionalArguments.length}');
       }
 
-      data.addAll(invocation.namedArguments
-          .map<String, Object>((Symbol key, Object value) => MapEntry<String, Object>(getSymbolName(key), value)));
+      data.addAll(invocation.namedArguments.map<String, Object>(
+          (Symbol key, Object value) =>
+              MapEntry<String, Object>(getSymbolName(key), value)));
       return NameSpace(data);
     }
 
@@ -99,7 +112,8 @@ class NameSpaceFactory extends Function {
 }
 
 class LoopContext {
-  LoopContext(int index0, int length, Object previtem, Object nextitem, Function changed)
+  LoopContext(int index0, int length, Object previtem, Object nextitem,
+      Function changed)
       : data = <String, Object>{
           'index0': index0,
           'length': length,
@@ -111,12 +125,15 @@ class LoopContext {
           'last': index0 + 1 == length,
           'revindex': length - index0,
           'revindex0': length - index0 - 1,
-          'cycle': CycleWrapper((List<Object> args) => args[index0 % args.length]),
+          'cycle':
+              CycleWrapper((List<Object> args) => args[index0 % args.length]),
         };
 
   final Map<String, Object> data;
 
-  Object operator [](String key) => data[key];
+  Object operator [](String key) {
+    return data[key];
+  }
 }
 
 // TODO: убрать костыль

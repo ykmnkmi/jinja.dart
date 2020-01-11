@@ -86,60 +86,102 @@ Object doAttr(Environment env, Object value, String attribute) {
   return env.getItem(value, attribute) ?? env.getField(value, attribute);
 }
 
-String doCapitalize(String value) => value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase();
+String doCapitalize(String value) {
+  return value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase();
+}
 
 String doCenter(String value, int width) {
-  if (value.length >= width) return value;
+  if (value.length >= width) {
+    return value;
+  }
+
   final int padLength = (width - value.length) ~/ 2;
   final String pad = ' ' * padLength;
   return pad + value + pad;
 }
 
 int doCount(Object value) {
-  if (value is String) return value.length;
-  if (value is Iterable) return value.length;
-  if (value is Map) return value.length;
+  if (value is String) {
+    return value.length;
+  }
+
+  if (value is Iterable) {
+    return value.length;
+  }
+
+  if (value is Map) {
+    return value.length;
+  }
+
   return null;
 }
 
 Object doDefault(Object value, [Object $default = '', bool boolean = false]) {
-  if (boolean) return toBool(value) ? value : $default;
+  if (boolean) {
+    return toBool(value) ? value : $default;
+  }
+
   return value is! Undefined ? value : $default;
 }
 
-Markup doEscape(Object value) => value is Markup ? value : Markup.escape(value.toString());
+Markup doEscape(Object value) {
+  return value is Markup ? value : Markup.escape(value.toString());
+}
 
-Object doFirst(Iterable<Object> values) => values.first;
+Object doFirst(Iterable<Object> values) {
+  return values.first;
+}
 
 double doFloat(Object value, [double $default = 0.0]) {
-  if (value is num) return value.toDouble();
+  if (value is num) {
+    return value.toDouble();
+  }
+
   return double.tryParse(value.toString()) ?? $default;
 }
 
-Markup doForceEscape(Object value) => Markup.escape(value.toString());
+Markup doForceEscape(Object value) {
+  return Markup.escape(value.toString());
+}
 
 int doInt(Object value, [int $default = 0, int base = 10]) {
-  if (value is num) return value.toInt();
+  if (value is num) {
+    return value.toInt();
+  }
+
   return int.tryParse(value.toString(), radix: base) ?? $default;
 }
 
-String doJoin(Environment env, Iterable<Object> values, [String d = '', String attribute]) {
+String doJoin(Environment env, Iterable<Object> values,
+    [String d = '', String attribute]) {
   if (attribute != null) {
-    return values.map((Object value) => doAttr(env, value, attribute)).join(d);
+    return values
+        .map<Object>((Object value) => doAttr(env, value, attribute))
+        .join(d);
   }
 
   return values.join(d);
 }
 
-Object doLast(Iterable<Object> values) => values.last;
+Object doLast(Iterable<Object> values) {
+  return values.last;
+}
 
 List<Object> doList(Object value) {
-  if (value is Iterable) return value.toList();
-  if (value is String) return value.split('');
+  if (value is Iterable) {
+    return value.toList();
+  }
+
+  if (value is String) {
+    return value.split('');
+  }
+
   return <Object>[value];
 }
 
-String doLower(Object value) => repr(value, false).toLowerCase();
+String doLower(Object value) {
+  return repr(value, false).toLowerCase();
+}
 
 final Random _rnd = Random();
 Object doRandom(List<Object> values) {
@@ -147,9 +189,12 @@ Object doRandom(List<Object> values) {
   return values[_rnd.nextInt(length)];
 }
 
-String doString(Object value) => repr(value, false);
+String doString(Object value) {
+  return repr(value, false);
+}
 
-num doSum(Environment env, Iterable<Object> values, {String attribute, num start = 0}) {
+num doSum(Environment env, Iterable<Object> values,
+    {String attribute, num start = 0}) {
   if (attribute != null) {
     values = values.map<Object>((Object val) => doAttr(env, val, attribute));
   }
@@ -157,6 +202,10 @@ num doSum(Environment env, Iterable<Object> values, {String attribute, num start
   return values.cast<num>().fold<num>(start, (num s, num n) => s + n);
 }
 
-String doTrim(Object value) => repr(value, false).trim();
+String doTrim(Object value) {
+  return repr(value, false).trim();
+}
 
-String doUpper(Object value) => repr(value, false).toUpperCase();
+String doUpper(Object value) {
+  return repr(value, false).toUpperCase();
+}
