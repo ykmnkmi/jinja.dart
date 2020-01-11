@@ -119,8 +119,9 @@ void main() {
     });
 
     test('reuse blocks', () {
-      final Template template = env.fromString('{{ self.foo() }}|{% block foo %}42'
-          '{% endblock %}|{{ self.foo() }}');
+      final Template template =
+          env.fromString('{{ self.foo() }}|{% block foo %}42'
+              '{% endblock %}|{{ self.foo() }}');
       expect(template.renderMap(), equals('42|42|42'));
     });
 
@@ -177,8 +178,9 @@ void main() {
         }),
       );
 
-      final Template template = env.fromString('{% extends "master.html" %}{% block item %}'
-          '{{ item }}{% endblock %}');
+      final Template template =
+          env.fromString('{% extends "master.html" %}{% block item %}'
+              '{{ item }}{% endblock %}');
       expect(template.render(seq: range(5)), equals('[0][1][2][3][4]'));
     });
 
@@ -190,16 +192,19 @@ void main() {
         }),
       );
 
-      final Template template = env.fromString('{% extends "master.html" %}{% block item %}'
-          '{{ super() }}|{{ item * 2 }}{% endblock %}');
-      expect(template.render(seq: range(5)), equals('[0|0][1|2][2|4][3|6][4|8]'));
+      final Template template =
+          env.fromString('{% extends "master.html" %}{% block item %}'
+              '{{ super() }}|{{ item * 2 }}{% endblock %}');
+      expect(
+          template.render(seq: range(5)), equals('[0|0][1|2][2|4][3|6][4|8]'));
     });
 
     // TODO: добавить тест: scoped block after inheritance
     // TODO: добавить тест: fixed macro scoping bug
 
     test('double extends', () {
-      expect(() => Template(doubleextends), throwsA(predicate<Object>((Object e) => e is TemplateError)));
+      expect(() => Template(doubleextends),
+          throwsA(predicate<Object>((Object e) => e is TemplateError)));
     });
   });
 }

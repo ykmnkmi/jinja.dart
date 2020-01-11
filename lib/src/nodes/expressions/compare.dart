@@ -130,7 +130,8 @@ class Equal extends BinaryExpression {
   String get symbol => '==';
 
   @override
-  bool resolve(Context context) => left.resolve(context) == right.resolve(context);
+  bool resolve(Context context) =>
+      left.resolve(context) == right.resolve(context);
 
   @override
   String toString() => 'Equal($left, $right)';

@@ -26,7 +26,8 @@ class Concat extends Expression {
   @override
   String toDebugString([int level = 0]) {
     final StringBuffer buffer = StringBuffer(' ' * level);
-    buffer.writeAll(exprs.map<String>((Expression expr) => expr.toDebugString()), ' ~ ');
+    buffer.writeAll(
+        exprs.map<String>((Expression expr) => expr.toDebugString()), ' ~ ');
     return buffer.toString();
   }
 

@@ -18,7 +18,8 @@ class Neg extends UnaryExpression {
   }
 
   @override
-  String toDebugString([int level = 0]) => ' ' * level + '-${expr.toDebugString()}';
+  String toDebugString([int level = 0]) =>
+      '${' ' * level}-${expr.toDebugString()}';
 
   @override
   String toString() => 'Neg($expr)';

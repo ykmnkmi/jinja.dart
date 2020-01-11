@@ -5,40 +5,52 @@ import 'package:test/test.dart';
 
 void main() {
   group('set', () {
-    final Environment envTrim = Environment(getField: getField, trimBlocks: true);
+    final Environment envTrim =
+        Environment(getField: getField, trimBlocks: true);
 
     test('simple', () {
-      final Template template = envTrim.fromString('{% set foo = 1 %}{{ foo }}');
+      final Template template =
+          envTrim.fromString('{% set foo = 1 %}{{ foo }}');
       expect(template.renderMap(), equals('1'));
       // TODO: добавить тест: module foo == 1
     });
 
     test('block', () {
-      final Template template = envTrim.fromString('{% set foo %}42{% endset %}{{ foo }}');
+      final Template template =
+          envTrim.fromString('{% set foo %}42{% endset %}{{ foo }}');
       expect(template.renderMap(), equals('42'));
       // TODO: добавить тест: module foo == '42'
     });
 
     test('block escaping', () {
       final Environment env = Environment(autoEscape: true);
-      final Template template = env.fromString('{% set foo %}<em>{{ test }}</em>'
-          '{% endset %}foo: {{ foo }}');
-      expect(template.render(test: '<unsafe>'), equals('foo: <em>&lt;unsafe&gt;</em>'));
+      final Template template =
+          env.fromString('{% set foo %}<em>{{ test }}</em>'
+              '{% endset %}foo: {{ foo }}');
+      expect(template.render(test: '<unsafe>'),
+          equals('foo: <em>&lt;unsafe&gt;</em>'));
     });
 
     test('set invalid', () {
-      expect(() => envTrim.fromString('{% set foo["bar"] = 1 %}'), throwsA(isA<TemplateSyntaxError>()));
+      expect(() => envTrim.fromString('{% set foo["bar"] = 1 %}'),
+          throwsA(isA<TemplateSyntaxError>()));
 
       final Template template = envTrim.fromString('{% set foo.bar = 1 %}');
-      expect(() => template.render(foo: <Object, Object>{}),
-          throwsA(predicate<Object>((Object e) => e is TemplateRuntimeError && e.message == 'non-namespace object')));
+      expect(
+          () => template.render(foo: <Object, Object>{}),
+          throwsA(predicate<Object>((Object e) =>
+              e is TemplateRuntimeError &&
+              e.message == 'non-namespace object')));
     });
 
     test('namespace redefined', () {
       final Template template = envTrim.fromString('{% set ns = namespace() %}'
           '{% set ns.bar = "hi" %}');
-      expect(() => template.render(namespace: () => <Object, Object>{}),
-          throwsA(predicate<Object>((Object e) => e is TemplateRuntimeError && e.message == 'non-namespace object')));
+      expect(
+          () => template.render(namespace: () => <Object, Object>{}),
+          throwsA(predicate<Object>((Object e) =>
+              e is TemplateRuntimeError &&
+              e.message == 'non-namespace object')));
     });
 
     test('namespace', () {
@@ -56,20 +68,22 @@ void main() {
     });
 
     test('init namespace', () {
-      final Template template = envTrim.fromString('{% set ns = namespace(d, self=37) %}'
-          '{% set ns.b = 42 %}'
-          '{{ ns.a }}|{{ ns.self }}|{{ ns.b }}');
+      final Template template =
+          envTrim.fromString('{% set ns = namespace(d, self=37) %}'
+              '{% set ns.b = 42 %}'
+              '{{ ns.a }}|{{ ns.self }}|{{ ns.b }}');
       expect(template.render(d: <String, Object>{'a': 13}), equals('13|37|42'));
     });
 
     test('namespace loop', () {
-      final Template template = envTrim.fromString('{% set ns = namespace(found=false) %}'
-          '{% for x in range(4) %}'
-          '{% if x == v %}'
-          '{% set ns.found = true %}'
-          '{% endif %}'
-          '{% endfor %}'
-          '{{ ns.found }}');
+      final Template template =
+          envTrim.fromString('{% set ns = namespace(found=false) %}'
+              '{% for x in range(4) %}'
+              '{% if x == v %}'
+              '{% set ns.found = true %}'
+              '{% endif %}'
+              '{% endfor %}'
+              '{{ ns.found }}');
       expect(template.render(v: 3), equals('true'));
       expect(template.render(v: 4), equals('false'));
     });
@@ -78,13 +92,16 @@ void main() {
 
     test('block escapeing filtered', () {
       final Environment env = Environment(autoEscape: true);
-      final Template template = env.fromString('{% set foo | trim %}<em>{{ test }}</em>    '
-          '{% endset %}foo: {{ foo }}');
-      expect(template.render(test: '<unsafe>'), equals('foo: <em>&lt;unsafe&gt;</em>'));
+      final Template template =
+          env.fromString('{% set foo | trim %}<em>{{ test }}</em>    '
+              '{% endset %}foo: {{ foo }}');
+      expect(template.render(test: '<unsafe>'),
+          equals('foo: <em>&lt;unsafe&gt;</em>'));
     });
 
     test('block filtered', () {
-      final Template template = envTrim.fromString('{% set foo | trim | length | string %} 42    {% endset %}'
+      final Template template = envTrim.fromString(
+          '{% set foo | trim | length | string %} 42    {% endset %}'
           '{{ foo }}');
       expect(template.renderMap(), equals('2'));
       // TODO: добавить тест: module foo == '2'

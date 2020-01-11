@@ -8,22 +8,26 @@ void main() {
     final Environment env = Environment();
 
     test('simple', () {
-      final Template template = env.fromString('{% for item in seq %}{{ item }}{% endfor %}');
+      final Template template =
+          env.fromString('{% for item in seq %}{{ item }}{% endfor %}');
       expect(template.render(seq: range(10)), equals('0123456789'));
     });
 
     test('else', () {
-      final Template template = env.fromString('{% for item in seq %}XXX{% else %}...{% endfor %}');
+      final Template template =
+          env.fromString('{% for item in seq %}XXX{% else %}...{% endfor %}');
       expect(template.renderMap(), equals('...'));
     });
 
     test('else scoping item', () {
-      final Template template = env.fromString('{% for item in [] %}{% else %}{{ item }}{% endfor %}');
+      final Template template = env
+          .fromString('{% for item in [] %}{% else %}{{ item }}{% endfor %}');
       expect(template.render(item: 42), equals('42'));
     });
 
     test('empty blocks', () {
-      final Template template = env.fromString('<{% for item in seq %}{% else %}{% endfor %}>');
+      final Template template =
+          env.fromString('<{% for item in seq %}{% else %}{% endfor %}>');
       expect(template.renderMap(), equals('<>'));
     });
 
@@ -37,7 +41,8 @@ void main() {
                 loop.revindex0 }}|{{ loop.first }}|{{ loop.last }}|{{
                loop.length }}###{% endfor %}''');
 
-        final List<String> parts = template.renderMap(<String, Object>{'seq': seq}).split('###');
+        final List<String> parts =
+            template.renderMap(<String, Object>{'seq': seq}).split('###');
         final List<String> one = parts[0].split('|');
         final List<String> two = parts[1].split('|');
 
@@ -63,7 +68,8 @@ void main() {
       final Template template = env.fromString('''{% for item in seq %}{{
             loop.cycle('<1>', '<2>') }}{% endfor %}{%
             for item in seq %}{{ loop.cycle(*through) }}{% endfor %}''');
-      expect(template.render(seq: range(4), through: <String>['<1>', '<2>']), equals('<1><2>' * 4));
+      expect(template.render(seq: range(4), through: <String>['<1>', '<2>']),
+          equals('<1><2>' * 4));
     });
 
     test('lookaround', () {
@@ -71,7 +77,8 @@ void main() {
             {{ loop.previtem|default('x') }}-{{ item }}-{{
             loop.nextitem|default('x') }}|
         {%- endfor %}''');
-      expect(template.render(seq: range(4)), equals('x-0-1|0-1-2|1-2-3|2-3-x|'));
+      expect(
+          template.render(seq: range(4)), equals('x-0-1|0-1-2|1-2-3|2-3-x|'));
     });
 
     test('changed', () {
@@ -83,12 +90,14 @@ void main() {
     });
 
     test('scope', () {
-      final Template template = env.fromString('{% for item in seq %}{% endfor %}{{ item }}');
+      final Template template =
+          env.fromString('{% for item in seq %}{% endfor %}{{ item }}');
       expect(template.render(seq: range(10)), equals(''));
     });
 
     test('varlen', () {
-      final Template template = env.fromString('{% for item in iter %}{{ item }}{% endfor %}');
+      final Template template =
+          env.fromString('{% for item in iter %}{{ item }}{% endfor %}');
 
       Iterable<int> inner() sync* {
         for (int i = 0; i < 5; i++) {
@@ -100,7 +109,8 @@ void main() {
     });
 
     test('noniter', () {
-      final Template template = env.fromString('{% for item in none %}...{% endfor %}');
+      final Template template =
+          env.fromString('{% for item in none %}...{% endfor %}');
       expect(() => template.renderMap(), throwsArgumentError);
     });
 
@@ -116,7 +126,8 @@ void main() {
                 [{{ rowloop.index }}|{{ loop.index }}]
             {%- endfor %}
         {%- endfor %}''');
-      expect(template.render(table: <String>['ab', 'cd']), '[1|1][1|2][2|1][2|2]');
+      expect(
+          template.render(table: <String>['ab', 'cd']), '[1|1][1|2][2|1][2|2]');
     });
 
     test('reversed bug', () {
@@ -127,7 +138,8 @@ void main() {
     });
 
     test('loop errors', () {
-      final Template template = env.fromString('''{% for item in [1] if loop.index
+      final Template template =
+          env.fromString('''{% for item in [1] if loop.index
                                       == 0 %}...{% endfor %}''');
       expect(() => template.renderMap(), throwsA(isA<UndefinedError>()));
     });
@@ -145,9 +157,11 @@ void main() {
     // TODO: добавить тест: loop unassignable
 
     test('scoped special var', () {
-      final Template template = env.fromString('{% for s in seq %}[{{ loop.first }}{% for c in s %}'
-          '|{{ loop.first }}{% endfor %}]{% endfor %}');
-      expect(template.render(seq: <String>['ab', 'cd']), '[true|true|false][false|true|false]');
+      final Template template =
+          env.fromString('{% for s in seq %}[{{ loop.first }}{% for c in s %}'
+              '|{{ loop.first }}{% endfor %}]{% endfor %}');
+      expect(template.render(seq: <String>['ab', 'cd']),
+          '[true|true|false][false|true|false]');
     });
 
     test('scoped loop var', () {
@@ -166,8 +180,9 @@ void main() {
     // TODO: добавить тест: scoping bug
 
     test('unpacking', () {
-      final Template template = env.fromString('{% for a, b, c in [[1, 2, 3]] %}'
-          '{{ a }}|{{ b }}|{{ c }}{% endfor %}');
+      final Template template =
+          env.fromString('{% for a, b, c in [[1, 2, 3]] %}'
+              '{{ a }}|{{ b }}|{{ c }}{% endfor %}');
       expect(template.renderMap(), '1|2|3');
     });
 

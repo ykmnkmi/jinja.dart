@@ -13,7 +13,8 @@ class And extends BinaryExpression {
   String get symbol => 'and';
 
   @override
-  bool resolve(Context context) => toBool(left.resolve(context)) && toBool(right.resolve(context));
+  bool resolve(Context context) =>
+      toBool(left.resolve(context)) && toBool(right.resolve(context));
 
   @override
   String toString() => 'And($left, $right)';

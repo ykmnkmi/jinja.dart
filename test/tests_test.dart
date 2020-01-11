@@ -17,7 +17,8 @@ void main() {
     });
 
     test('even', () {
-      final Template template = env.fromString('{{ 1 is even }}|{{ 2 is even }}');
+      final Template template =
+          env.fromString('{{ 1 is even }}|{{ 2 is even }}');
       expect(template.renderMap(), equals('false|true'));
     });
 
@@ -27,7 +28,8 @@ void main() {
     });
 
     test('lower', () {
-      final Template template = env.fromString('{{ "foo" is lower }}|{{ "FOO" is lower }}');
+      final Template template =
+          env.fromString('{{ "foo" is lower }}|{{ "FOO" is lower }}');
       expect(template.renderMap(), equals('true|false'));
     });
 
@@ -64,7 +66,8 @@ void main() {
     });
 
     test('upper', () {
-      final Template template = env.fromString('{{ "FOO" is upper }}|{{ "foo" is upper }}');
+      final Template template =
+          env.fromString('{{ "FOO" is upper }}|{{ "foo" is upper }}');
       expect(template.renderMap(), equals('true|false'));
     });
 
@@ -77,15 +80,17 @@ void main() {
           '{{ bar is eq ("ba" + "z") }}|'
           '{{ bar is eq bar }}|'
           '{{ bar is eq foo }}');
-      expect(template.render(foo: 12, bar: 'baz'), equals('true|false|true|true|false|true|true|false'));
+      expect(template.render(foo: 12, bar: 'baz'),
+          equals('true|false|true|true|false|true|true|false'));
     });
 
     test('compare aliases', () {
-      final Template template = env.fromString('{{ 2 is eq 2 }}|{{ 2 is eq 3 }}|'
-          '{{ 2 is ne 3 }}|{{ 2 is ne 2 }}|{{ 2 is lt 3 }}|'
-          '{{ 2 is lt 2 }}|{{ 2 is le 2 }}|{{ 2 is le 1 }}|'
-          '{{ 2 is gt 1 }}|{{ 2 is gt 2 }}|{{ 2 is ge 2 }}|'
-          '{{ 2 is ge 3 }}');
+      final Template template =
+          env.fromString('{{ 2 is eq 2 }}|{{ 2 is eq 3 }}|'
+              '{{ 2 is ne 3 }}|{{ 2 is ne 2 }}|{{ 2 is lt 3 }}|'
+              '{{ 2 is lt 2 }}|{{ 2 is le 2 }}|{{ 2 is le 1 }}|'
+              '{{ 2 is gt 1 }}|{{ 2 is gt 2 }}|{{ 2 is ge 2 }}|'
+              '{{ 2 is ge 3 }}');
       expect(
           template.render(foo: 12, bar: 'baz'),
           equals('true|false|true|false|true|false|true|false|true|false|'
@@ -118,7 +123,8 @@ void main() {
         return false;
       }
 
-      final Environment env = Environment(tests: <String, Function>{'matching': matching});
+      final Environment env =
+          Environment(tests: <String, Function>{'matching': matching});
       final Template template = env.fromString('{{ "us-west-1" is matching '
           '"(us-east-1|ap-northeast-1)" '
           'or "stage" is matching "(dev|stage)" }}');
@@ -142,7 +148,8 @@ void main() {
           '{{ 3 is in [1, 2] }}|'
           '{{ "foo" is in {"foo": 1}}}|'
           '{{ "baz" is in {"bar": 1}}}');
-      expect(template.renderMap(), equals('true|true|false|true|false|true|false|true|false'));
+      expect(template.renderMap(),
+          equals('true|true|false|true|false|true|false|true|false'));
     });
   });
 }

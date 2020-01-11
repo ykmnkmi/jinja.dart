@@ -6,12 +6,14 @@ class ListExpression extends Expression {
   final List<Expression> values;
 
   @override
-  List<Object> resolve(Context context) => values.map<Object>((Expression value) => value.resolve(context)).toList();
+  List<Object> resolve(Context context) =>
+      values.map<Object>((Expression value) => value.resolve(context)).toList();
 
   @override
   String toDebugString([int level = 0]) {
-    final StringBuffer buffer = StringBuffer(' ' * level + '[');
-    buffer.writeAll(values.map<String>((Expression value) => value.toDebugString()), ',');
+    final StringBuffer buffer = StringBuffer('${' ' * level}[');
+    buffer.writeAll(
+        values.map<String>((Expression value) => value.toDebugString()), ',');
     buffer.write(']');
     return buffer.toString();
   }
@@ -27,7 +29,8 @@ class MapExpression extends Expression {
 
   @override
   Map<Object, Object> resolve(Context context) => values.map<Object, Object>(
-      (Expression key, Expression value) => MapEntry<Object, Object>(key.resolve(context), value.resolve(context)));
+      (Expression key, Expression value) => MapEntry<Object, Object>(
+          key.resolve(context), value.resolve(context)));
 
   @override
   String toDebugString([int level = 0]) {
@@ -52,18 +55,21 @@ class TupleExpression extends Expression implements CanAssign {
   final List<Expression> items;
 
   @override
-  List<Object> resolve(Context context) => items.map((Expression value) => value.resolve(context)).toList();
+  List<Object> resolve(Context context) =>
+      items.map((Expression value) => value.resolve(context)).toList();
 
   @override
   bool get canAssign => items.every((Expression item) => item is Name);
 
   @override
-  List<String> get keys => items.map<String>((Expression item) => (item as Name).name).toList();
+  List<String> get keys =>
+      items.map<String>((Expression item) => (item as Name).name).toList();
 
   @override
   String toDebugString([int level = 0]) {
-    final StringBuffer buffer = StringBuffer(' ' * level + '[');
-    buffer.writeAll(items.map<String>((Expression item) => item.toDebugString()), ', ');
+    final StringBuffer buffer = StringBuffer('${' ' * level}[');
+    buffer.writeAll(
+        items.map<String>((Expression item) => item.toDebugString()), ', ');
     buffer.write(']');
     return buffer.toString();
   }

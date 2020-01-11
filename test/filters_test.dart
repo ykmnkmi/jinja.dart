@@ -8,7 +8,8 @@ void main() {
     final Environment env = Environment();
 
     test('chaining', () {
-      final Template template = env.fromString('''{{ ['<foo>', '<bar>']|first|upper|escape }}''');
+      final Template template =
+          env.fromString('''{{ ['<foo>', '<bar>']|first|upper|escape }}''');
       expect(template.renderMap(), equals('&lt;FOO&gt;'));
     });
 
@@ -23,9 +24,11 @@ void main() {
     });
 
     test('default', () {
-      final Template template = env.fromString("{{ missing|default('no') }}|{{ false|default('no') }}|"
-          "{{ false|default('no', true) }}|{{ given|default('no') }}");
-      expect(template.renderMap(<String, Object>{'given': 'yes'}), equals('no|false|no|yes'));
+      final Template template = env
+          .fromString("{{ missing|default('no') }}|{{ false|default('no') }}|"
+              "{{ false|default('no', true) }}|{{ given|default('no') }}");
+      expect(template.renderMap(<String, Object>{'given': 'yes'}),
+          equals('no|false|no|yes'));
     });
 
     test('escape', () {
@@ -35,12 +38,14 @@ void main() {
 
     test('first', () {
       final Template template = env.fromString('{{ foo|first }}');
-      expect(template.renderMap(<String, Object>{'foo': range(10)}), equals('0'));
+      expect(
+          template.renderMap(<String, Object>{'foo': range(10)}), equals('0'));
     });
 
     test('force escape', () {
       final Template template = env.fromString('{{ x|forceescape }}');
-      expect(template.renderMap(<String, Object>{'x': Markup('<div />')}), equals('&lt;div /&gt;'));
+      expect(template.renderMap(<String, Object>{'x': Markup('<div />')}),
+          equals('&lt;div /&gt;'));
     });
 
     test('join', () {
@@ -49,17 +54,20 @@ void main() {
     });
 
     test('join attribute', () {
-      final Template template = env.fromString('''{{ users|join(', ', 'username') }}''');
+      final Template template =
+          env.fromString('''{{ users|join(', ', 'username') }}''');
       expect(
           template.renderMap(<String, Object>{
-            'users': <String>['foo', 'bar'].map((String name) => <String, String>{'username': name})
+            'users': <String>['foo', 'bar']
+                .map((String name) => <String, String>{'username': name})
           }),
           equals('foo, bar'));
     });
 
     test('last', () {
       final Template template = env.fromString('''{{ foo|last }}''');
-      expect(template.renderMap(<String, Object>{'foo': range(10)}), equals('9'));
+      expect(
+          template.renderMap(<String, Object>{'foo': range(10)}), equals('9'));
     });
 
     test('length', () {

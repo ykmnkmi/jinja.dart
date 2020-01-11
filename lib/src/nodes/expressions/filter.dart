@@ -20,9 +20,12 @@ class Filter extends Expression {
 
   Object filter(Context context, Object value) {
     return context.environment.callFilter(context, name,
-        args: <Object>[value, ...args.map<Object>((Expression arg) => arg.resolve(context))],
-        kwargs: kwargs
-            .map((String key, Expression value) => MapEntry<Symbol, Object>(Symbol(key), value.resolve(context))));
+        args: <Object>[
+          value,
+          ...args.map<Object>((Expression arg) => arg.resolve(context))
+        ],
+        kwargs: kwargs.map((String key, Expression value) =>
+            MapEntry<Symbol, Object>(Symbol(key), value.resolve(context))));
   }
 
   @override
@@ -40,14 +43,15 @@ class Filter extends Expression {
     buffer.write('(');
 
     if (args.isNotEmpty) {
-      buffer.writeAll(args.map<String>((Expression arg) => arg.toDebugString()), ', ');
+      buffer.writeAll(
+          args.map<String>((Expression arg) => arg.toDebugString()), ', ');
     }
 
     if (kwargs.isNotEmpty) {
       if (args.isNotEmpty) buffer.write(', ');
       buffer.writeAll(
-          kwargs.entries.map<String>(
-              (MapEntry<String, Expression> kwarg) => '${repr(kwarg.key)}: ${kwarg.value.toDebugString()}'),
+          kwargs.entries.map<String>((MapEntry<String, Expression> kwarg) =>
+              '${repr(kwarg.key)}: ${kwarg.value.toDebugString()}'),
           ', ');
     }
 
