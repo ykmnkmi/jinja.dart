@@ -104,5 +104,5 @@ If you found a bug, just create a [new issue][new_issue] or even better fork
 and issue a pull request with your fix.
 
 [filters]: https://github.com/ykmnkmi/dart-jinja/blob/master/lib/src/filters.dart
-[hack]: https://github.com/ykmnkmi/jinja.dart/blob/master/lib/src/environment.dart#L345
+[hack]: https://github.com/ykmnkmi/jinja.dart/blob/master/lib/src/environment.dart#L355
 [new_issue]: https://github.com/ykmnkmi/dart-jinja/issues/new
