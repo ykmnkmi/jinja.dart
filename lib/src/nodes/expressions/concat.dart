@@ -32,5 +32,7 @@ class Concat extends Expression {
   }
 
   @override
-  String toString() => 'Concat($exprs)';
+  String toString() {
+    return 'Concat($exprs)';
+  }
 }

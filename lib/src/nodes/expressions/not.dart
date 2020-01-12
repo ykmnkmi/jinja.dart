@@ -1,17 +1,21 @@
 import '../core.dart';
 
 class Not extends UnaryExpression {
-  Not(this.expr);
+  Not(this.expr) : symbol = 'not ';
 
   @override
   final Expression expr;
 
   @override
-  String get symbol => 'not ';
+  final String symbol;
 
   @override
-  bool resolve(Context context) => !toBool(expr.resolve(context));
+  bool resolve(Context context) {
+    return !toBool(expr.resolve(context));
+  }
 
   @override
-  String toString() => 'Not($expr)';
+  String toString() {
+    return 'Not($expr)';
+  }
 }

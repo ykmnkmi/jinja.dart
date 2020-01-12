@@ -1,7 +1,7 @@
 import '../core.dart';
 
 class And extends BinaryExpression {
-  And(this.left, this.right);
+  And(this.left, this.right) : symbol = 'and';
 
   @override
   final Expression left;
@@ -10,12 +10,15 @@ class And extends BinaryExpression {
   final Expression right;
 
   @override
-  String get symbol => 'and';
+  final String symbol;
 
   @override
-  bool resolve(Context context) =>
-      toBool(left.resolve(context)) && toBool(right.resolve(context));
+  bool resolve(Context context) {
+    return toBool(left.resolve(context)) && toBool(right.resolve(context));
+  }
 
   @override
-  String toString() => 'And($left, $right)';
+  String toString() {
+    return 'And($left, $right)';
+  }
 }

@@ -6,8 +6,11 @@ class ListExpression extends Expression {
   final List<Expression> values;
 
   @override
-  List<Object> resolve(Context context) =>
-      values.map<Object>((Expression value) => value.resolve(context)).toList();
+  List<Object> resolve(Context context) {
+    return values
+        .map<Object>((Expression value) => value.resolve(context))
+        .toList();
+  }
 
   @override
   String toDebugString([int level = 0]) {
@@ -19,7 +22,9 @@ class ListExpression extends Expression {
   }
 
   @override
-  String toString() => 'ListExpression($values)';
+  String toString() {
+    return 'ListExpression($values)';
+  }
 }
 
 class MapExpression extends Expression {
@@ -28,9 +33,10 @@ class MapExpression extends Expression {
   final Map<Expression, Expression> values;
 
   @override
-  Map<Object, Object> resolve(Context context) => values.map<Object, Object>(
-      (Expression key, Expression value) => MapEntry<Object, Object>(
-          key.resolve(context), value.resolve(context)));
+  Map<Object, Object> resolve(Context context) {
+    return values.map<Object, Object>((Expression key, Expression value) =>
+        MapEntry<Object, Object>(key.resolve(context), value.resolve(context)));
+  }
 
   @override
   String toDebugString([int level = 0]) {
@@ -46,7 +52,9 @@ class MapExpression extends Expression {
   }
 
   @override
-  String toString() => 'MapExpression($values)';
+  String toString() {
+    return 'MapExpression($values)';
+  }
 }
 
 class TupleExpression extends Expression implements CanAssign {
@@ -55,15 +63,21 @@ class TupleExpression extends Expression implements CanAssign {
   final List<Expression> items;
 
   @override
-  List<Object> resolve(Context context) =>
-      items.map((Expression value) => value.resolve(context)).toList();
+  List<Object> resolve(Context context) {
+    return items
+        .map<Object>((Expression value) => value.resolve(context))
+        .toList();
+  }
 
   @override
-  bool get canAssign => items.every((Expression item) => item is Name);
+  bool get canAssign {
+    return items.every((Expression item) => item is Name);
+  }
 
   @override
-  List<String> get keys =>
-      items.map<String>((Expression item) => (item as Name).name).toList();
+  List<String> get keys {
+    return items.map<String>((Expression item) => (item as Name).name).toList();
+  }
 
   @override
   String toDebugString([int level = 0]) {
@@ -75,5 +89,7 @@ class TupleExpression extends Expression implements CanAssign {
   }
 
   @override
-  String toString() => 'TupleExpression($items)';
+  String toString() {
+    return 'TupleExpression($items)';
+  }
 }

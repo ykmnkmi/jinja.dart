@@ -1,26 +1,33 @@
 import '../core.dart';
 
 class Neg extends UnaryExpression {
-  Neg(this.expr);
+  Neg(this.expr) : symbol = '-';
 
   @override
   final Expression expr;
 
   @override
-  String get symbol => '-';
+  final String symbol;
 
   @override
   Object resolve(Context context) {
-    Object result = expr.resolve(context);
-    if (result is num) return -result;
-    // TODO: исправить
+    final Object result = expr.resolve(context);
+
+    if (result is num) {
+      return -result;
+    }
+
+    // TODO: добавить: текст ошибки
     throw Exception();
   }
 
   @override
-  String toDebugString([int level = 0]) =>
-      '${' ' * level}-${expr.toDebugString()}';
+  String toDebugString([int level = 0]) {
+    return '${' ' * level}-${expr.toDebugString()}';
+  }
 
   @override
-  String toString() => 'Neg($expr)';
+  String toString() {
+    return 'Neg($expr)';
+  }
 }

@@ -1,7 +1,7 @@
 import '../core.dart';
 
 class Add extends BinaryExpression {
-  Add(this.left, this.right);
+  Add(this.left, this.right) : symbol = '+';
 
   @override
   final Expression left;
@@ -10,23 +10,33 @@ class Add extends BinaryExpression {
   final Expression right;
 
   @override
-  String get symbol => '+';
+  final String symbol;
 
   @override
   Object resolve(Context context) {
     final Object left = this.left.resolve(context);
     final Object right = this.right.resolve(context);
 
-    if (left is num && right is num) return left + right;
-    if (left is String && right is String) return left + right;
-    if (left is List && right is List) return left + right;
+    if (left is num && right is num) {
+      return left + right;
+    }
 
-    // TODO: исправить
+    if (left is String && right is String) {
+      return left + right;
+    }
+
+    if (left is List && right is List) {
+      return left + right;
+    }
+
+    // TODO: добавить: текст ошибки
     throw Exception();
   }
 
   @override
-  String toString() => 'Add($left, $right)';
+  String toString() {
+    return 'Add($left, $right)';
+  }
 }
 
 class Sub extends BinaryExpression {
@@ -46,12 +56,16 @@ class Sub extends BinaryExpression {
     final Object left = this.left.resolve(context);
     final Object right = this.right.resolve(context);
 
-    if (left is num && right is num) return left - right;
+    if (left is num && right is num) {
+      return left - right;
+    }
 
-    // TODO: исправить
+    // TODO: добавить: текст ошибки
     throw Exception();
   }
 
   @override
-  String toString() => 'Sub($left, $right)';
+  String toString() {
+    return 'Sub($left, $right)';
+  }
 }

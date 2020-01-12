@@ -1,7 +1,7 @@
 import '../core.dart';
 
 class Or extends BinaryExpression {
-  Or(this.left, this.right);
+  Or(this.left, this.right) : symbol = 'or';
 
   @override
   final Expression left;
@@ -10,12 +10,15 @@ class Or extends BinaryExpression {
   final Expression right;
 
   @override
-  String get symbol => 'or';
+  final String symbol;
 
   @override
-  bool resolve(Context context) =>
-      toBool(left.resolve(context)) || toBool(right.resolve(context));
+  bool resolve(Context context) {
+    return toBool(left.resolve(context)) || toBool(right.resolve(context));
+  }
 
   @override
-  String toString() => 'Or($left, $right)';
+  String toString() {
+    return 'Or($left, $right)';
+  }
 }

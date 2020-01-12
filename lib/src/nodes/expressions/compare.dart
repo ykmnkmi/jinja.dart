@@ -2,7 +2,7 @@ import '../../exceptions.dart';
 import '../core.dart';
 
 class MoreEqual extends BinaryExpression {
-  MoreEqual(this.left, this.right);
+  MoreEqual(this.left, this.right) : symbol = '>=';
 
   @override
   final Expression left;
@@ -11,7 +11,7 @@ class MoreEqual extends BinaryExpression {
   final Expression right;
 
   @override
-  String get symbol => '>=';
+  final String symbol;
 
   @override
   bool resolve(Context context) {
@@ -22,16 +22,18 @@ class MoreEqual extends BinaryExpression {
       return left.compareTo(right) >= 0;
     }
 
-    // TODO: исправить
+    // TODO: добавить: текст ошибки
     throw TemplateRuntimeError();
   }
 
   @override
-  String toString() => 'MoreEqual($left, $right)';
+  String toString() {
+    return 'MoreEqual($left, $right)';
+  }
 }
 
 class More extends BinaryExpression {
-  More(this.left, this.right);
+  More(this.left, this.right) : symbol = '>';
 
   @override
   final Expression left;
@@ -40,27 +42,29 @@ class More extends BinaryExpression {
   final Expression right;
 
   @override
-  String get symbol => '>';
+  final String symbol;
 
   @override
   bool resolve(Context context) {
-    Object left = this.left.resolve(context);
+    final Object left = this.left.resolve(context);
     final Object right = this.right.resolve(context);
 
     if (left is Comparable && right is Comparable) {
       return left.compareTo(right) > 0;
     }
 
-    // TODO: исправить
+    // TODO: добавить: текст ошибки
     throw TemplateRuntimeError();
   }
 
   @override
-  String toString() => 'More($left, $right)';
+  String toString() {
+    return 'More($left, $right)';
+  }
 }
 
 class Less extends BinaryExpression {
-  Less(this.left, this.right);
+  Less(this.left, this.right) : symbol = '<';
 
   @override
   final Expression left;
@@ -69,27 +73,29 @@ class Less extends BinaryExpression {
   final Expression right;
 
   @override
-  String get symbol => '<';
+  final String symbol;
 
   @override
   bool resolve(Context context) {
-    Object left = this.left.resolve(context);
+    final Object left = this.left.resolve(context);
     final Object right = this.right.resolve(context);
 
     if (left is Comparable && right is Comparable) {
       return left.compareTo(right) < 0;
     }
 
-    // TODO: исправить
+    // TODO: добавить: текст ошибки
     throw TemplateRuntimeError();
   }
 
   @override
-  String toString() => 'Less($left, $right)';
+  String toString() {
+    return 'Less($left, $right)';
+  }
 }
 
 class LessEqual extends BinaryExpression {
-  LessEqual(this.left, this.right);
+  LessEqual(this.left, this.right) : symbol = '<=';
 
   @override
   final Expression left;
@@ -98,27 +104,29 @@ class LessEqual extends BinaryExpression {
   final Expression right;
 
   @override
-  String get symbol => '<=';
+  final String symbol;
 
   @override
   bool resolve(Context context) {
-    Object left = this.left.resolve(context);
+    final Object left = this.left.resolve(context);
     final Object right = this.right.resolve(context);
 
     if (left is Comparable && right is Comparable) {
       return left.compareTo(right) <= 0;
     }
 
-    // TODO: исправить
+    // TODO: добавить: текст ошибки
     throw TemplateRuntimeError();
   }
 
   @override
-  String toString() => 'LessEqual($left, $right)';
+  String toString() {
+    return 'LessEqual($left, $right)';
+  }
 }
 
 class Equal extends BinaryExpression {
-  Equal(this.left, this.right);
+  Equal(this.left, this.right) : symbol = '==';
 
   @override
   final Expression left;
@@ -127,12 +135,15 @@ class Equal extends BinaryExpression {
   final Expression right;
 
   @override
-  String get symbol => '==';
+  final String symbol;
 
   @override
-  bool resolve(Context context) =>
-      left.resolve(context) == right.resolve(context);
+  bool resolve(Context context) {
+    return left.resolve(context) == right.resolve(context);
+  }
 
   @override
-  String toString() => 'Equal($left, $right)';
+  String toString() {
+    return 'Equal($left, $right)';
+  }
 }

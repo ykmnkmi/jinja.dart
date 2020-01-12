@@ -13,20 +13,34 @@ class Field extends Expression {
     final Object value = expr.resolve(context);
 
     if (value == null || value is Undefined) {
+      // TODO: проверить: текст ошибки
       throw UndefinedError();
     }
 
-    if (value is LoopContext) return value[attr];
-    if (value is NameSpace) return value[attr];
-    if (value is Map) return context.environment.getItem(value, attr);
+    if (value is LoopContext) {
+      return value[attr];
+    }
+
+    if (value is NameSpace) {
+      return value[attr];
+    }
+
+    if (value is Map) {
+      return context.environment.getItem(value, attr);
+    }
+
     return context.environment.getField(value, attr);
   }
 
   @override
-  String toDebugString([int level = 0]) => '${expr.toDebugString(level)}.$attr';
+  String toDebugString([int level = 0]) {
+    return '${expr.toDebugString(level)}.$attr';
+  }
 
   @override
-  String toString() => 'Field($expr, $attr)';
+  String toString() {
+    return 'Field($expr, $attr)';
+  }
 }
 
 class Item extends Expression {
@@ -43,9 +57,12 @@ class Item extends Expression {
   }
 
   @override
-  String toDebugString([int level = 0]) =>
-      '${expr.toDebugString(level)}[${item.toDebugString()}]';
+  String toDebugString([int level = 0]) {
+    return '${expr.toDebugString(level)}[${item.toDebugString()}]';
+  }
 
   @override
-  String toString() => 'Item($expr, $item)';
+  String toString() {
+    return 'Item($expr, $item)';
+  }
 }

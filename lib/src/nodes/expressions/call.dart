@@ -29,7 +29,7 @@ class Call extends Expression {
     if (argsDyn != null) {
       final Object argsDyn = this.argsDyn.resolve(context);
 
-      if (argsDyn is Iterable<Object>) {
+      if (argsDyn is Iterable) {
         args.addAll(argsDyn);
       } else {
         // TODO: добавить: текст ошибки
@@ -64,12 +64,18 @@ class Call extends Expression {
     }
 
     if (argsDyn != null) {
-      if (args.isNotEmpty || kwargs.isNotEmpty) buffer.write(', ');
+      if (args.isNotEmpty || kwargs.isNotEmpty) {
+        buffer.write(', ');
+      }
+
       buffer.write('*${argsDyn.toDebugString()}');
     }
 
     if (kwargs.isNotEmpty) {
-      if (args.isNotEmpty) buffer.write(', ');
+      if (args.isNotEmpty) {
+        buffer.write(', ');
+      }
+
       buffer.writeAll(
           kwargs.entries.map<String>((MapEntry<String, Expression> kwarg) =>
               '${repr(kwarg.key)}: ${kwarg.value.toDebugString()}'),
@@ -91,10 +97,23 @@ class Call extends Expression {
   @override
   String toString() {
     final StringBuffer buffer = StringBuffer('Call($expr');
-    if (args != null && args.isNotEmpty) buffer.write(', args: $args');
-    if (kwargs != null && kwargs.isNotEmpty) buffer.write(', kwargs: $kwargs');
-    if (argsDyn != null) buffer.write(', argsDyn: $argsDyn');
-    if (kwargsDyn != null) buffer.write(', kwargsDyn: $kwargsDyn');
+
+    if (args != null && args.isNotEmpty) {
+      buffer.write(', args: $args');
+    }
+
+    if (kwargs != null && kwargs.isNotEmpty) {
+      buffer.write(', kwargs: $kwargs');
+    }
+
+    if (argsDyn != null) {
+      buffer.write(', argsDyn: $argsDyn');
+    }
+
+    if (kwargsDyn != null) {
+      buffer.write(', kwargsDyn: $kwargsDyn');
+    }
+
     buffer.write(')');
     return buffer.toString();
   }

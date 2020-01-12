@@ -1,7 +1,7 @@
 import '../core.dart';
 
 class Mul extends BinaryExpression {
-  Mul(this.left, this.right);
+  Mul(this.left, this.right) : symbol = '*';
 
   @override
   final Expression left;
@@ -10,26 +10,33 @@ class Mul extends BinaryExpression {
   final Expression right;
 
   @override
-  String get symbol => '*';
+  final String symbol;
 
   @override
   Object resolve(Context context) {
     final Object left = this.left.resolve(context);
     final Object right = this.right.resolve(context);
 
-    if (left is num && right is num) return left * right;
-    if (left is String && right is int) return left * right;
+    if (left is num && right is num) {
+      return left * right;
+    }
 
-    // TODO: исправить
+    if (left is String && right is int) {
+      return left * right;
+    }
+
+    // TODO: добавить: текст ошибки
     throw Exception();
   }
 
   @override
-  String toString() => 'Mul($left, $right)';
+  String toString() {
+    return 'Mul($left, $right)';
+  }
 }
 
 class Div extends BinaryExpression {
-  Div(this.left, this.right);
+  Div(this.left, this.right) : symbol = '/';
 
   @override
   final Expression left;
@@ -38,25 +45,29 @@ class Div extends BinaryExpression {
   final Expression right;
 
   @override
-  String get symbol => '/';
+  final String symbol;
 
   @override
   num resolve(Context context) {
     final Object left = this.left.resolve(context);
     final Object right = this.right.resolve(context);
 
-    if (left is num && right is num) return left / right;
+    if (left is num && right is num) {
+      return left / right;
+    }
 
-    // TODO: исправить
+    // TODO: добавить: текст ошибки
     throw Exception();
   }
 
   @override
-  String toString() => 'Div($left, $right)';
+  String toString() {
+    return 'Div($left, $right)';
+  }
 }
 
 class FloorDiv extends BinaryExpression {
-  FloorDiv(this.left, this.right);
+  FloorDiv(this.left, this.right) : symbol = '//';
 
   @override
   final Expression left;
@@ -65,25 +76,29 @@ class FloorDiv extends BinaryExpression {
   final Expression right;
 
   @override
-  String get symbol => '//';
+  final String symbol;
 
   @override
   int resolve(Context context) {
     final Object left = this.left.resolve(context);
     final Object right = this.right.resolve(context);
 
-    if (left is num && right is num) return left ~/ right;
+    if (left is num && right is num) {
+      return left ~/ right;
+    }
 
-    // TODO: исправить
+    // TODO: добавить: текст ошибки
     throw Exception();
   }
 
   @override
-  String toString() => 'FloorDiv($left, $right)';
+  String toString() {
+    return 'FloorDiv($left, $right)';
+  }
 }
 
 class Mod extends BinaryExpression {
-  Mod(this.left, this.right);
+  Mod(this.left, this.right) : symbol = '%';
 
   @override
   final Expression left;
@@ -92,19 +107,23 @@ class Mod extends BinaryExpression {
   final Expression right;
 
   @override
-  String get symbol => '%';
+  final String symbol;
 
   @override
   num resolve(Context context) {
     final Object left = this.left.resolve(context);
     final Object right = this.right.resolve(context);
 
-    if (left is num && right is num) return left % right;
+    if (left is num && right is num) {
+      return left % right;
+    }
 
-    // TODO: исправить
+    // TODO: добавить: текст ошибки
     throw Exception();
   }
 
   @override
-  String toString() => 'Mod($left, $right)';
+  String toString() {
+    return 'Mod($left, $right)';
+  }
 }

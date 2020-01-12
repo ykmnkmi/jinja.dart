@@ -10,8 +10,14 @@ class Condition extends Expression {
 
   @override
   dynamic resolve(Context context) {
-    if (test.resolve(context)) return expr1.resolve(context);
-    if (expr2 != null) return expr2.resolve(context);
+    if (test.resolve(context)) {
+      return expr1.resolve(context);
+    }
+
+    if (expr2 != null) {
+      return expr2.resolve(context);
+    }
+
     return null;
   }
 
@@ -32,7 +38,11 @@ class Condition extends Expression {
   @override
   String toString() {
     final StringBuffer buffer = StringBuffer('Condition($test, $expr1');
-    if (expr2 != null) buffer.write(', $expr2');
+
+    if (expr2 != null) {
+      buffer.write(', $expr2');
+    }
+
     buffer.write(')');
     return buffer.toString();
   }
