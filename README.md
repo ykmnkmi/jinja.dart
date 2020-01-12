@@ -82,7 +82,8 @@ outStringSink.write(template.render(key: value));
 
 Note
 ----
-Why is this [hack]() used?
+Why is this [hack](hack) used?
+
 In the final version for the production version, templates will be
 generated and the render function will have named parameters that
 are used in the template code
