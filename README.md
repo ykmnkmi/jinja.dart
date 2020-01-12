@@ -1,41 +1,40 @@
-# Jinja 2 for Dart 2
+# Jinja for Dart
 
 [![Pub](https://img.shields.io/pub/v/jinja.svg)](https://pub.dartlang.org/packages/jinja)
 
-[Jinja 2](http://jinja.pocoo.org/) server-side template engine port for Dart 2. Variables, expressions, control structures and template inheritance.
+[Jinja](https://www.palletsprojects.com/p/jinja/) server-side template engine port for Dart 2. Variables, expressions, control structures and template inheritance.
 
 Breaking changes
 ----------------
-Current:
+Before for accessing object fields or call methods dart:mirrors used.
 ```dart
 import 'package:jinja/jinja.dart';
 
 // ...
 
-var env = Environment( /* ... */ );
+final Environment env = Environment( /* ... */ );
 final Template template = env.fromString('{{ users[0].name }}');
 
 // ...
 
-outStringSink.write(template.renderMap({'users': listOfUsers}));
-// outStringSink.write(template.render(users: listOfUsers));
+outStringSink.write(template.render(users: listOfUsers));
+// outStringSink.write(template.renderMap({'users': listOfUsers}));
 ```
 
 Now:
 ```dart
 import 'package:jinja/jinja.dart';
-// for field expression
 import 'package:jinja/get_field.dart' show getField;
 
 // ...
 
-var env = Environment(getField: getField, /* ... */ );
+final Environment = Environment(getField: getField, /* ... */ );
 final Template template = env.fromString('{{ users[0].name }}');
 
 // ...
 
-outStringSink.write(template.renderMap({'users': listOfUsers}));
-// outStringSink.write(template.render(users: listOfUsers));
+outStringSink.write(template.render(users: listOfUsers));
+// outStringSink.write(template.renderMap({'users': listOfUsers}));
 ```
 
 Done
@@ -74,12 +73,25 @@ import 'package:jinja/jinja.dart';
 
 // code ...
 
-var env = Environment(blockStart: '...');
+final Environment = Environment(blockStart: '...');
 final Template template = env.fromString('...source...');
 
-outStringSink.write(template.renderMap({'key': value}));
-// outStringSink.write(template.render(key: value));
+outStringSink.write(template.render(key: value));
+// outStringSink.write(template.renderMap({'key': value}));
 ```
+
+Note
+----
+Why is this [hack]() used?
+In the final version for the production version, templates will be
+generated and the render function will have named parameters that
+are used in the template code
+
+Second option, create new packages:
+  - jinja_core - core, filters, tests, utils
+  - jinja_config - yaml based environment config
+  - jinja_generator - generate _pure_ dart code
+  - jinja_nodes - or use nodes
 
 Docs
 ----
@@ -91,4 +103,5 @@ If you found a bug, just create a [new issue][new_issue] or even better fork
 and issue a pull request with your fix.
 
 [filters]: https://github.com/ykmnkmi/dart-jinja/blob/master/lib/src/filters.dart
+[hack]: https://github.com/ykmnkmi/jinja.dart/blob/master/lib/src/environment.dart#L345
 [new_issue]: https://github.com/ykmnkmi/dart-jinja/issues/new
