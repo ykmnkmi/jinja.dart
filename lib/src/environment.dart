@@ -12,6 +12,7 @@ typedef FieldGetter = Object Function(Object object, String field);
 typedef ItemGetter = Object Function(Object object, Object key);
 
 Object defaultFieldGetter(Object object, String field) {
+  // TODO: проверить: текст ошибки
   throw TemplateRuntimeError('getField not implemented');
 }
 
@@ -19,6 +20,7 @@ Object defaultItemGetter(Object object, Object key) {
   try {
     return (object as Map<Object, Object>)[key];
   } catch (e) {
+    // TODO: добавить: текст ошибки
     throw TemplateRuntimeError('$e');
   }
 }
@@ -294,8 +296,7 @@ class Template extends Node {
   dynamic _render;
   Function get render => _render as Function;
 
-  @protected
-  void addBlocks(StringSink outSink, Context context) {
+  void _addBlocks(StringSink outSink, Context context) {
     final NameSpace self = NameSpace();
 
     for (MapEntry<String, BlockStatement> blockEntry in blocks.entries) {
@@ -309,14 +310,14 @@ class Template extends Node {
 
   @override
   void accept(StringSink outSink, Context context) {
-    addBlocks(outSink, context);
+    _addBlocks(outSink, context);
     body.accept(outSink, context);
   }
 
   String renderMap([Map<String, Object> data]) {
     final StringBuffer buffer = StringBuffer();
     final Context context = Context(data: data, env: env);
-    addBlocks(buffer, context);
+    _addBlocks(buffer, context);
     body.accept(buffer, context);
     return buffer.toString();
   }

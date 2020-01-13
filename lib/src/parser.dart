@@ -36,12 +36,13 @@ class Parser {
         blockStartReg =
             getOpenReg(environment.blockStart, environment.leftStripBlocks),
         blockEndReg = getEndReg(environment.blockEnd, environment.trimBlocks),
-        keywords = <String>{'not', 'and', 'or', 'is', 'if', 'else'};
+        keywords = <String>{'not', 'and', 'or', 'is', 'if', 'else'},
+        _onParseNodeController = StreamController<Name>.broadcast(sync: true),
+        _templateModifiers = <TemplateModifier>[];
 
   final Environment environment;
   final String path;
 
-  @protected
   final SpanScanner scanner;
 
   final RegExp blockStartReg;
@@ -67,17 +68,15 @@ class Parser {
     return RegExp(RegExp.escape(rule) + blockEndReg.pattern);
   }
 
-  @protected
-  final StreamController<Name> onParseNameController =
-      StreamController<Name>.broadcast(sync: true);
+  final StreamController<Node> _onParseNodeController;
+  Stream<Name> get onParseName => _onParseNodeController.stream
+      .where((Node node) => node is Name)
+      .cast<Name>();
 
-  Stream<Name> get onParseName => onParseNameController.stream;
-
-  @protected
-  final List<TemplateModifier> templateModifiers = <TemplateModifier>[];
+  final List<TemplateModifier> _templateModifiers;
 
   void addTemplateModifier(TemplateModifier modifier) {
-    templateModifiers.add(modifier);
+    _templateModifiers.add(modifier);
   }
 
   @alwaysThrows
@@ -129,7 +128,7 @@ class Parser {
     final Template template =
         Template.parsed(body: body, env: environment, path: path);
 
-    for (TemplateModifier modifier in templateModifiers) {
+    for (TemplateModifier modifier in _templateModifiers) {
       modifier(template);
     }
 
@@ -754,7 +753,6 @@ class Parser {
       final String name = scanner.lastMatch[1];
       final Name nameExpr = Name(name);
       expr = nameExpr;
-      onParseNameController.add(nameExpr);
     } else if (scanner.scan(stringStartReg)) {
       String body;
 
@@ -788,6 +786,7 @@ class Parser {
       error('primary expression expected');
     }
 
+    _onParseNodeController.add(expr);
     return expr;
   }
 
