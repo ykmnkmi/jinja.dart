@@ -21,8 +21,8 @@ outStringSink.write(template.render(users: listOfUsers));
 // outStringSink.write(template.renderMap({'users': listOfUsers}));
 ```
 
-Now to access the fields and methods of the object, (except namespase, loop, self), you need to import the `get_field` method from the `package:jinja/get_field.dart` file and pass it to the `Environment`.
-Or another method for access.
+Now to access the fields and methods of the object, (except namespase, loop, self), you need to import the `get_field` method from the `package:jinja/get_field.dart` file and pass it to the `Environment` constructor.
+Or create or use another method for accessing.
 ```dart
 import 'package:jinja/jinja.dart';
 
