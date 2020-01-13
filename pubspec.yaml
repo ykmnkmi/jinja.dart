@@ -4,7 +4,6 @@ description: >-
   Variables, expressions, control structures and template inheritance.
 version: 0.2.0
 homepage: https://github.com/ykmnkmi/jinja.dart
-author: Suleimen Olzhas <amajisenpai@gmail.com>
 
 environment:
   sdk: '>=2.7.0 <3.0.0'

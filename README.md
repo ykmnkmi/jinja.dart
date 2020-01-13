@@ -21,8 +21,8 @@ outStringSink.write(template.render(users: listOfUsers));
 // outStringSink.write(template.renderMap({'users': listOfUsers}));
 ```
 
-Now to access the fields and methods of the object, (except namespase, loop, self), you need to import the `get_field` method from the `package:jinja/get_field.dart` file and pass it to the `Environment` constructor.
-Or create or use another method for accessing.
+Now to access the fields and methods of the object, (except `namespase`, `loop`, `self` fields and methods), you need to import the `get_field` method from the `package:jinja/get_field.dart` file and pass it to the `Environment` constructor.<br>
+Or pass another method.
 ```dart
 import 'package:jinja/jinja.dart';
 
@@ -86,9 +86,7 @@ Note
 ----
 Why is this [hack][hack] used?
 
-In the final version for the production version, templates will be
-generated and the render function will have named parameters that
-are used in the template code
+In the final version for the production version, templates will be generated and the render function will have named parameters that are used in the template code.
 
 Second option, create new packages:
   - jinja_core - core, filters, tests, utils
@@ -102,8 +100,7 @@ In progress ...
 
 Contributing
 ------------
-If you found a bug, just create a [new issue][new_issue] or even better fork
-and issue a pull request with your fix.
+If you found a bug, just create a [new issue][new_issue] or even better fork and issue a pull request with your fix.
 
 [filters]: https://github.com/ykmnkmi/dart-jinja/blob/master/lib/src/filters.dart
 [hack]: https://github.com/ykmnkmi/jinja.dart/blob/master/lib/src/environment.dart#L355
