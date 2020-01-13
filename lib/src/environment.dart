@@ -28,7 +28,7 @@ Object defaultItemGetter(Object object, Object key) {
 typedef Finalizer = Object Function(Object value);
 
 Object defaultFinalizer(Object value) {
-  value = value ?? '';
+  value ??= '';
 
   if (value is String) {
     return value;
@@ -274,11 +274,7 @@ class Template extends Node {
           );
 
     _shared[config.hashCode] = env;
-
-    if (loader != null) {
-      loader.load(env);
-    }
-
+    loader?.load(env);
     return Parser(env, source).parse();
   }
 

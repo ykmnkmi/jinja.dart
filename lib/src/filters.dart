@@ -138,12 +138,12 @@ int doCount(Object value) {
   return null;
 }
 
-Object doDefault(Object value, [Object $default = '', bool boolean = false]) {
+Object doDefault(Object value, [Object d = '', bool boolean = false]) {
   if (boolean) {
-    return toBool(value) ? value : $default;
+    return toBool(value) ? value : d;
   }
 
-  return value is! Undefined ? value : $default;
+  return value is! Undefined ? value : d;
 }
 
 Markup doEscape(Object value) {
@@ -192,24 +192,24 @@ Object doFirst(Iterable<Object> values) {
   return values.first;
 }
 
-double doFloat(Object value, [double $default = 0.0]) {
+double doFloat(Object value, [double d = 0.0]) {
   if (value is num) {
     return value.toDouble();
   }
 
-  return double.tryParse(value.toString()) ?? $default;
+  return double.tryParse(value.toString()) ?? d;
 }
 
 Markup doForceEscape(Object value) {
   return Markup.escape(value.toString());
 }
 
-int doInt(Object value, [int $default = 0, int base = 10]) {
+int doInt(Object value, [int d = 0, int base = 10]) {
   if (value is num) {
     return value.toInt();
   }
 
-  return int.tryParse(value.toString(), radix: base) ?? $default;
+  return int.tryParse(value.toString(), radix: base) ?? d;
 }
 
 String doJoin(Environment env, Iterable<Object> values,
