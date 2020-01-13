@@ -6,7 +6,7 @@
 
 Breaking changes
 ----------------
-Before for accessing object fields or call methods dart:mirrors used.
+Before `object.field` or `object.method()` expressions uses `dart:mirrors` methods.
 ```dart
 import 'package:jinja/jinja.dart';
 
@@ -21,9 +21,11 @@ outStringSink.write(template.render(users: listOfUsers));
 // outStringSink.write(template.renderMap({'users': listOfUsers}));
 ```
 
-Now:
+Now to access the fields and methods of the object, (except namespase, loop, self), you need to import the `get_field` method from the `package:jinja/get_field.dart` file and pass it to the `Environment`.
+Or another method for access.
 ```dart
 import 'package:jinja/jinja.dart';
+
 import 'package:jinja/get_field.dart' show getField;
 
 // ...

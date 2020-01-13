@@ -1,5 +1,8 @@
 ## 0.2.0
 - minimal SDK version: 2.7.0
+- add `package:jinja/get_field.dart`
+- remove `package:jinja/filters.dart`
+- remove `package:jinja/tests.dart`
 - environment:
     - `getField` and `getItem` methods
     - `leftStripBlock` and `keepTrailingNewLine` fields
