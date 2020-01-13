@@ -1,4 +1,4 @@
-import 'dart:math' show Random;
+import 'dart:math' show Random, pow;
 
 import 'environment.dart';
 import 'markup.dart';
@@ -28,6 +28,7 @@ final Map<String, Function> filters = <String, Function>{
   'sum': doSum..filterType = FilterType.environment,
 
   'abs': doAbs,
+  'batch': doBatch,
   'capitalize': doCapitalize,
   'center': doCenter,
   'count': doCount,
@@ -35,6 +36,7 @@ final Map<String, Function> filters = <String, Function>{
   'default': doDefault,
   'e': doEscape,
   'escape': doEscape,
+  'filesizeformat': doFileSizeFormat,
   'first': doFirst,
   'float': doFloat,
   'forceescape': doForceEscape,
@@ -48,9 +50,7 @@ final Map<String, Function> filters = <String, Function>{
   'trim': doTrim,
   'upper': doUpper,
 
-  // 'batch': doBatch,
   // 'dictsort': doDictSort,
-  // 'filesizeformat': doFileSizeFormat,
   // 'format': doFormat,
   // 'groupby': doGroupBy,
   // 'indent': doIndent,
@@ -84,6 +84,28 @@ num doAbs(num n) => n.abs();
 
 Object doAttr(Environment env, Object value, String attribute) {
   return env.getItem(value, attribute) ?? env.getField(value, attribute);
+}
+
+Iterable<List<Object>> doBatch(Iterable<Object> values, int lineCount,
+    [Object fillWith]) sync* {
+  List<Object> tmp = <Object>[];
+
+  for (Object item in values) {
+    if (tmp.length == lineCount) {
+      yield tmp;
+      tmp = <Object>[];
+    }
+
+    tmp.add(item);
+  }
+
+  if (tmp.isNotEmpty) {
+    if (fillWith != null) {
+      tmp.addAll(List<Object>.filled(lineCount - tmp.length, fillWith));
+    }
+
+    yield tmp;
+  }
 }
 
 String doCapitalize(String value) {
@@ -126,6 +148,44 @@ Object doDefault(Object value, [Object $default = '', bool boolean = false]) {
 
 Markup doEscape(Object value) {
   return value is Markup ? value : Markup.escape(value.toString());
+}
+
+// TODO: проверить: текст ошибки
+String doFileSizeFormat(Object value, [bool binary = false]) {
+  final double bytes =
+      value is num ? value.toDouble() : double.parse(value.toString());
+  final int base = binary ? 1024 : 1000;
+
+  const List<List<String>> prefixes = <List<String>>[
+    <String>['KiB', 'kB'],
+    <String>['MiB', 'MB'],
+    <String>['GiB', 'GB'],
+    <String>['TiB', 'TB'],
+    <String>['PiB', 'PB'],
+    <String>['EiB', 'EB'],
+    <String>['ZiB', 'ZB'],
+    <String>['YiB', 'YB'],
+  ];
+
+  if (bytes == 1.0) {
+    return '1 Byte';
+  } else if (bytes < base) {
+    final String size = bytes.toStringAsFixed(1);
+    return '${size.endsWith('.0') ? size.substring(0, size.length - 2) : size} Bytes';
+  } else {
+    final int k = binary ? 0 : 1;
+    num unit;
+
+    for (int i = 0; i < prefixes.length; i++) {
+      unit = pow(base, i + 2);
+
+      if (bytes < unit) {
+        return '${(base * bytes / unit).toStringAsFixed(1)} ${prefixes[i][k]}';
+      }
+    }
+
+    return '${(base * bytes / unit).toStringAsFixed(1)} ${prefixes.last[k]}';
+  }
 }
 
 Object doFirst(Iterable<Object> values) {

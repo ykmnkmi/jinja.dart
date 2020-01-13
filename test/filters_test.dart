@@ -13,6 +13,15 @@ void main() {
       expect(template.renderMap(), equals('&lt;FOO&gt;'));
     });
 
+    test('batch', () {
+      final Template template = env.fromString(
+          "{{ foo | batch(3) | list }}|{{ foo | batch(3, 'X') | list }}");
+      expect(
+          template.render(foo: range(10).toList()),
+          equals('[[0, 1, 2], [3, 4, 5], [6, 7, 8], [9]]|'
+              "[[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 'X', 'X']]"));
+    });
+
     test('capitalize', () {
       final Template template = env.fromString('{{ "foo bar"|capitalize }}');
       expect(template.renderMap(), equals('Foo bar'));
@@ -34,6 +43,23 @@ void main() {
     test('escape', () {
       final Template template = env.fromString('''{{ '<">&'|escape }}''');
       expect(template.renderMap(), equals('&lt;&#34;&gt;&amp;'));
+    });
+
+    test('filesizeformat', () {
+      final Template template = env.fromString('{{ 100|filesizeformat }}|'
+          '{{ 1000|filesizeformat }}|'
+          '{{ 1000000|filesizeformat }}|'
+          '{{ 1000000000|filesizeformat }}|'
+          '{{ 1000000000000|filesizeformat }}|'
+          '{{ 100|filesizeformat(true) }}|'
+          '{{ 1000|filesizeformat(true) }}|'
+          '{{ 1000000|filesizeformat(true) }}|'
+          '{{ 1000000000|filesizeformat(true) }}|'
+          '{{ 1000000000000|filesizeformat(true) }}');
+      expect(
+          template.renderMap(),
+          equals('100 Bytes|1.0 kB|1.0 MB|1.0 GB|1.0 TB|100 Bytes|'
+              '1000 Bytes|976.6 KiB|953.7 MiB|931.3 GiB'));
     });
 
     test('first', () {
