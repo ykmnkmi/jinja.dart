@@ -1,6 +1,6 @@
 # Jinja for Dart
 
-[![Dart CI](https://github.com/ykmnkmi/jinja.dart/workflows/Dart%20CI/badge.svg)](https://github.com/ykmnkmi/jinja.dart/actions) [![Pub](https://img.shields.io/pub/v/jinja.svg)](https://pub.dartlang.org/packages/jinja)
+[![Pub](https://img.shields.io/pub/v/jinja.svg)](https://pub.dartlang.org/packages/jinja)
 
 [Jinja](https://www.palletsprojects.com/p/jinja/) server-side template engine port for Dart 2. Variables, expressions, control structures and template inheritance.
 
