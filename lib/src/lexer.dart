@@ -47,7 +47,7 @@ class Lexer {
             RegExp(RegExp.escape(environment.commentStart), unicode: true),
         commentEnd =
             RegExp(RegExp.escape(environment.commentEnd), unicode: true) {
-    final List<List<Object>> tagRules = <List<Object>>[
+    final tagRules = <List<Object>>[
       // block
       <Object>[
         environment.blockStart,
@@ -104,13 +104,13 @@ class Lexer {
   List<Rule> rules;
 
   Iterable<Token> tokenize(String source) sync* {
-    final StringScanner scanner = StringScanner(source);
-    final StringBuffer buffer = StringBuffer();
+    final scanner = StringScanner(source);
+    final buffer = StringBuffer();
 
-    bool match = false;
+    var match = false;
 
     while (!scanner.isDone) {
-      for (Rule rule in rules) {
+      for (var rule in rules) {
         if (match = rule.matches(scanner)) {
           if (buffer.isNotEmpty) {
             yield Token.data(buffer.toString());

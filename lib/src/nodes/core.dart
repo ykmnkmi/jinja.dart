@@ -18,7 +18,7 @@ abstract class Expression extends Node {
 
   @override
   void accept(StringSink outSink, Context context) {
-    Object value = resolve(context);
+    var value = resolve(context);
 
     if (value is Node) {
       value.accept(outSink, context);
@@ -51,7 +51,7 @@ abstract class BinaryExpression extends Expression {
 
   @override
   String toDebugString([int level = 0]) {
-    final StringBuffer buffer = StringBuffer(' ' * level);
+    final buffer = StringBuffer(' ' * level);
     buffer.write('${left.toDebugString()} $symbol ${right.toDebugString()}');
     return buffer.toString();
   }

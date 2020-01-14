@@ -66,7 +66,7 @@ class Environment {
     FieldGetter getField = defaultFieldGetter,
     ItemGetter getItem = defaultItemGetter,
   }) {
-    final Environment env = Environment._(
+    final env = Environment._(
       blockStart: blockStart,
       blockEnd: blockEnd,
       variableStart: variableStart,
@@ -141,7 +141,7 @@ class Environment {
 
   /// If `path` is not `null` template stored in environment cache.
   Template fromString(String source, {String path}) {
-    final Template template = Parser(this, source, path: path).parse();
+    final template = Parser(this, source, path: path).parse();
     if (path != null) {
       templates[path] = template;
     }
@@ -163,7 +163,7 @@ class Environment {
       {List<Object> args = const <Object>[],
       Map<Symbol, Object> kwargs = const <Symbol, Object>{}}) {
     if (filters.containsKey(name) && filters[name] != null) {
-      final Function filter = filters[name];
+      final filter = filters[name];
 
       switch (filter.filterType) {
         case FilterType.context:
@@ -224,7 +224,7 @@ class Template extends Node {
     FieldGetter getField = defaultFieldGetter,
     ItemGetter getItem = defaultItemGetter,
   }) {
-    final Set<Object> config = <Object>{
+    final config = <Object>{
       blockStart,
       blockEnd,
       variableStart,
@@ -246,7 +246,7 @@ class Template extends Node {
       getItem,
     };
 
-    final Environment env = _shared.containsKey(config)
+    final env = _shared.containsKey(config)
         ? _shared[config.hashCode]
         : Environment._(
             blockStart: blockStart,
@@ -290,9 +290,9 @@ class Template extends Node {
   Function get render => _render as Function;
 
   void _addBlocks(StringSink outSink, Context context) {
-    final NameSpace self = NameSpace();
+    final self = NameSpace();
 
-    for (MapEntry<String, BlockStatement> blockEntry in blocks.entries) {
+    for (var blockEntry in blocks.entries) {
       self[blockEntry.key] = () {
         blockEntry.value.accept(outSink, context);
       };
@@ -308,8 +308,8 @@ class Template extends Node {
   }
 
   String renderMap([Map<String, Object> data]) {
-    final StringBuffer buffer = StringBuffer();
-    final Context context = Context(data: data, env: env);
+    final buffer = StringBuffer();
+    final context = Context(data: data, env: env);
     _addBlocks(buffer, context);
     body.accept(buffer, context);
     return buffer.toString();
@@ -322,7 +322,7 @@ class Template extends Node {
 
   @override
   String toDebugString([int level = 0]) {
-    final StringBuffer buffer = StringBuffer();
+    final buffer = StringBuffer();
 
     if (path != null) {
       buffer.write(' ' * level);

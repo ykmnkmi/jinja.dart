@@ -7,7 +7,7 @@ class Not extends UnaryExpression {
   final Expression expr;
 
   @override
-  final String symbol;
+  final symbol;
 
   @override
   bool resolve(Context context) {

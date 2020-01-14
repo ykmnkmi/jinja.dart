@@ -10,12 +10,12 @@ class Mul extends BinaryExpression {
   final Expression right;
 
   @override
-  final String symbol;
+  final symbol;
 
   @override
   Object resolve(Context context) {
-    final Object left = this.left.resolve(context);
-    final Object right = this.right.resolve(context);
+    final left = this.left.resolve(context);
+    final right = this.right.resolve(context);
 
     if (left is num && right is num) {
       return left * right;
@@ -45,12 +45,12 @@ class Div extends BinaryExpression {
   final Expression right;
 
   @override
-  final String symbol;
+  final symbol;
 
   @override
   num resolve(Context context) {
-    final Object left = this.left.resolve(context);
-    final Object right = this.right.resolve(context);
+    final left = this.left.resolve(context);
+    final right = this.right.resolve(context);
 
     if (left is num && right is num) {
       return left / right;
@@ -76,12 +76,12 @@ class FloorDiv extends BinaryExpression {
   final Expression right;
 
   @override
-  final String symbol;
+  final symbol;
 
   @override
   int resolve(Context context) {
-    final Object left = this.left.resolve(context);
-    final Object right = this.right.resolve(context);
+    final left = this.left.resolve(context);
+    final right = this.right.resolve(context);
 
     if (left is num && right is num) {
       return left ~/ right;
@@ -107,12 +107,12 @@ class Mod extends BinaryExpression {
   final Expression right;
 
   @override
-  final String symbol;
+  final symbol;
 
   @override
   num resolve(Context context) {
-    final Object left = this.left.resolve(context);
-    final Object right = this.right.resolve(context);
+    final left = this.left.resolve(context);
+    final right = this.right.resolve(context);
 
     if (left is num && right is num) {
       return left % right;

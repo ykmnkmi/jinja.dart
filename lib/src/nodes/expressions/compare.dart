@@ -11,12 +11,12 @@ class MoreEqual extends BinaryExpression {
   final Expression right;
 
   @override
-  final String symbol;
+  final symbol;
 
   @override
   bool resolve(Context context) {
-    final Object left = this.left.resolve(context);
-    final Object right = this.right.resolve(context);
+    final left = this.left.resolve(context);
+    final right = this.right.resolve(context);
 
     if (left is Comparable && right is Comparable) {
       return left.compareTo(right) >= 0;
@@ -42,12 +42,12 @@ class More extends BinaryExpression {
   final Expression right;
 
   @override
-  final String symbol;
+  final symbol;
 
   @override
   bool resolve(Context context) {
-    final Object left = this.left.resolve(context);
-    final Object right = this.right.resolve(context);
+    final left = this.left.resolve(context);
+    final right = this.right.resolve(context);
 
     if (left is Comparable && right is Comparable) {
       return left.compareTo(right) > 0;
@@ -73,12 +73,12 @@ class Less extends BinaryExpression {
   final Expression right;
 
   @override
-  final String symbol;
+  final symbol;
 
   @override
   bool resolve(Context context) {
-    final Object left = this.left.resolve(context);
-    final Object right = this.right.resolve(context);
+    final left = this.left.resolve(context);
+    final right = this.right.resolve(context);
 
     if (left is Comparable && right is Comparable) {
       return left.compareTo(right) < 0;
@@ -104,12 +104,12 @@ class LessEqual extends BinaryExpression {
   final Expression right;
 
   @override
-  final String symbol;
+  final symbol;
 
   @override
   bool resolve(Context context) {
-    final Object left = this.left.resolve(context);
-    final Object right = this.right.resolve(context);
+    final left = this.left.resolve(context);
+    final right = this.right.resolve(context);
 
     if (left is Comparable && right is Comparable) {
       return left.compareTo(right) <= 0;
@@ -135,7 +135,7 @@ class Equal extends BinaryExpression {
   final Expression right;
 
   @override
-  final String symbol;
+  final symbol;
 
   @override
   bool resolve(Context context) {

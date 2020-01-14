@@ -22,7 +22,7 @@ abstract class Loader {
   }
 
   void load(Environment env) {
-    for (String path in listSources()) {
+    for (var path in listSources()) {
       env.fromString(getSource(path), path: path);
     }
   }
@@ -45,7 +45,7 @@ abstract class Loader {
 class FileSystemLoader extends Loader {
   FileSystemLoader({
     this.autoReload = false,
-    this.extensions = const <String>['html'],
+    this.extensions = const <String>{'html'},
     String path = '/templates',
     this.followLinks = true,
   }) : directory = Directory(path) {
@@ -55,14 +55,14 @@ class FileSystemLoader extends Loader {
   }
 
   final bool autoReload;
-  final List<String> extensions;
+  final Set<String> extensions;
   final Directory directory;
   final bool followLinks;
 
   @override
   String getSource(String path) {
-    final String templatePath = _path.join(directory.path, path);
-    final File templateFile = File(templatePath);
+    final templatePath = _path.join(directory.path, path);
+    final templateFile = File(templatePath);
 
     if (!templateFile.existsSync()) {
       throw Exception('template not found: $path');
@@ -90,7 +90,7 @@ class FileSystemLoader extends Loader {
           .where(
               (FileSystemEvent event) => event.type == FileSystemEvent.modify)
           .listen((FileSystemEvent event) {
-        final String path = _path.relative(event.path, from: directory.path);
+        final path = _path.relative(event.path, from: directory.path);
         env.fromString(getSource(path), path: path);
       });
     }

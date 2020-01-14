@@ -30,7 +30,7 @@ class Test extends Expression {
 
   @override
   String toDebugString([int level = 0]) {
-    final StringBuffer buffer = StringBuffer(' ' * level);
+    final buffer = StringBuffer(' ' * level);
 
     if (expr != null) {
       buffer.write(expr.toDebugString());
@@ -65,8 +65,8 @@ class Test extends Expression {
 
       buffer.writeAll(
           kwargs.entries.map<String>((MapEntry<String, Expression> kwarg) {
-        final String key = repr(kwarg.key);
-        final String value = kwarg.value.toDebugString();
+        final key = repr(kwarg.key);
+        final value = kwarg.value.toDebugString();
         return '$key: $value';
       }), ', ');
     }
@@ -77,7 +77,7 @@ class Test extends Expression {
 
   @override
   String toString() {
-    final StringBuffer buffer = StringBuffer('Test($name');
+    final buffer = StringBuffer('Test($name');
 
     if (expr != null) {
       buffer.write(', $expr');

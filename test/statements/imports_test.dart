@@ -3,7 +3,7 @@ import 'package:jinja/src/exceptions.dart';
 import 'package:test/test.dart';
 
 void main() {
-  final Environment env = Environment(
+  final env = Environment(
     globals: <String, Object>{'bar': 23},
     loader: MapLoader(<String, String>{
       // TODO: включить после реализаци модулей
@@ -16,10 +16,10 @@ void main() {
   // TODO: добавить тест: import
 
   group('include', () {
-    final Map<String, Object> foo42 = <String, Object>{'foo': 42};
+    final foo42 = <String, Object>{'foo': 42};
 
     test('context include', () {
-      Template template = env.fromString('{% include "header" %}');
+      var template = env.fromString('{% include "header" %}');
       expect(template.renderMap(foo42), equals('[42|23]'));
 
       template = env.fromString('{% include "header" with context %}');
@@ -30,7 +30,7 @@ void main() {
     });
 
     test('choise includes', () {
-      Template template = env.fromString('{% include ["missing", "header"] %}');
+      var template = env.fromString('{% include ["missing", "header"] %}');
       expect(template.renderMap(foo42), equals('[42|23]'));
 
       template = env
@@ -62,10 +62,10 @@ void main() {
     });
 
     test('include ignore missing', () {
-      Template template = env.fromString('{% include "missing" %}');
+      var template = env.fromString('{% include "missing" %}');
       expect(() => template.renderMap(), throwsA(isA<TemplateNotFound>()));
 
-      for (String extra in <String>['', 'with context', 'without context']) {
+      for (var extra in <String>['', 'with context', 'without context']) {
         template =
             env.fromString('{% include "missing" ignore missing $extra %}');
         expect(template.renderMap(), equals(''));
@@ -73,14 +73,14 @@ void main() {
     });
 
     test('context include with overrides', () {
-      final Environment env = Environment(
+      final env = Environment(
         loader: MapLoader(<String, String>{
           'main': '{% for item in [1, 2, 3] %}{% include "item" %}{% endfor %}',
           'item': '{{ item }}',
         }),
       );
 
-      final Template template = env.getTemplate('main');
+      final template = env.getTemplate('main');
       expect(template.renderMap(), equals('123'));
     });
 

@@ -18,16 +18,16 @@ class Call extends Expression {
 
   @override
   Object resolve(Context context) {
-    final List<Object> args = this
+    final args = this
         .args
         .map<Object>((Expression arg) => arg.resolve(context))
         .toList();
-    final Map<Symbol, Object> kwargs = this.kwargs.map<Symbol, Object>(
+    final kwargs = this.kwargs.map<Symbol, Object>(
         (String key, Expression value) =>
             MapEntry<Symbol, Object>(Symbol(key), value.resolve(context)));
 
     if (argsDyn != null) {
-      final Object argsDyn = this.argsDyn.resolve(context);
+      final argsDyn = this.argsDyn.resolve(context);
 
       if (argsDyn is Iterable) {
         args.addAll(argsDyn);
@@ -38,7 +38,7 @@ class Call extends Expression {
     }
 
     if (kwargsDyn != null) {
-      final Object kwargsDyn = this.kwargsDyn.resolve(context);
+      final kwargsDyn = this.kwargsDyn.resolve(context);
 
       if (kwargsDyn is Map<String, Expression>) {
         kwargs.addAll(kwargsDyn.map<Symbol, Object>(
@@ -55,7 +55,7 @@ class Call extends Expression {
 
   @override
   String toDebugString([int level = 0]) {
-    final StringBuffer buffer = StringBuffer(expr.toDebugString(level));
+    final buffer = StringBuffer(expr.toDebugString(level));
     buffer.write('(');
 
     if (args.isNotEmpty) {
@@ -96,7 +96,7 @@ class Call extends Expression {
 
   @override
   String toString() {
-    final StringBuffer buffer = StringBuffer('Call($expr');
+    final buffer = StringBuffer('Call($expr');
 
     if (args != null && args.isNotEmpty) {
       buffer.write(', args: $args');

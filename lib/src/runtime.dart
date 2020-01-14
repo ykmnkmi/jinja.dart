@@ -30,7 +30,7 @@ class NameSpace {
 
   @override
   Object noSuchMethod(Invocation invocation) {
-    String name = invocation.memberName.toString();
+    var name = invocation.memberName.toString();
 
     if (invocation.isSetter) {
       // 'name='
@@ -62,7 +62,7 @@ class NameSpaceFactory extends Function {
   @override
   Object noSuchMethod(Invocation invocation) {
     if (invocation.memberName == #call) {
-      final Map<String, Object> data = <String, Object>{};
+      final data = <String, Object>{};
 
       if (invocation.positionalArguments.length == 1) {
         final Object arg = invocation.positionalArguments.first;
@@ -70,7 +70,7 @@ class NameSpaceFactory extends Function {
         if (arg is Map<String, Object>) {
           data.addAll(arg);
         } else if (arg is List<Object>) {
-          for (Object pair in arg) {
+          for (var pair in arg) {
             List<Object> list;
 
             if (pair is Iterable<Object>) {

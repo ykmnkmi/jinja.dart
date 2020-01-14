@@ -10,7 +10,7 @@ class And extends BinaryExpression {
   final Expression right;
 
   @override
-  final String symbol;
+  final symbol;
 
   @override
   bool resolve(Context context) {

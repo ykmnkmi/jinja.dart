@@ -10,12 +10,12 @@ class Add extends BinaryExpression {
   final Expression right;
 
   @override
-  final String symbol;
+  final symbol;
 
   @override
   Object resolve(Context context) {
-    final Object left = this.left.resolve(context);
-    final Object right = this.right.resolve(context);
+    final left = this.left.resolve(context);
+    final right = this.right.resolve(context);
 
     if (left is num && right is num) {
       return left + right;
@@ -53,8 +53,8 @@ class Sub extends BinaryExpression {
 
   @override
   Object resolve(Context context) {
-    final Object left = this.left.resolve(context);
-    final Object right = this.right.resolve(context);
+    final left = this.left.resolve(context);
+    final right = this.right.resolve(context);
 
     if (left is num && right is num) {
       return left - right;

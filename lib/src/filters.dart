@@ -26,10 +26,10 @@ typedef AttrGetter = Object Function(Object object);
 
 AttrGetter makeAttribute(Environment environment, String attribute,
     {Object Function(Object) postprocess, Object d}) {
-  final List<String> attributes = prepareAttributeParts(attribute);
+  final attributes = prepareAttributeParts(attribute);
 
   Object attributeGetter(Object item) {
-    for (String part in attributes) {
+    for (var part in attributes) {
       item = doAttr(environment, item, part);
 
       if (item is Undefined) {
@@ -127,9 +127,9 @@ Object doAttr(Environment environment, Object value, String attribute) {
 
 Iterable<List<Object>> doBatch(Iterable<Object> values, int lineCount,
     [Object fillWith]) sync* {
-  List<Object> tmp = <Object>[];
+  var tmp = <Object>[];
 
-  for (Object item in values) {
+  for (var item in values) {
     if (tmp.length == lineCount) {
       yield tmp;
       tmp = <Object>[];
@@ -156,8 +156,8 @@ String doCenter(String value, int width) {
     return value;
   }
 
-  final int padLength = (width - value.length) ~/ 2;
-  final String pad = ' ' * padLength;
+  final padLength = (width - value.length) ~/ 2;
+  final pad = ' ' * padLength;
   return pad + value + pad;
 }
 
@@ -191,11 +191,11 @@ Markup doEscape(Object value) {
 
 // TODO: проверить: текст ошибки
 String doFileSizeFormat(Object value, [bool binary = false]) {
-  final double bytes =
+  final bytes =
       value is num ? value.toDouble() : double.parse(value.toString());
-  final int base = binary ? 1024 : 1000;
+  final base = binary ? 1024 : 1000;
 
-  const List<List<String>> prefixes = <List<String>>[
+  const prefixes = <List<String>>[
     <String>['KiB', 'kB'],
     <String>['MiB', 'MB'],
     <String>['GiB', 'GB'],
@@ -209,13 +209,13 @@ String doFileSizeFormat(Object value, [bool binary = false]) {
   if (bytes == 1.0) {
     return '1 Byte';
   } else if (bytes < base) {
-    final String size = bytes.toStringAsFixed(1);
+    final size = bytes.toStringAsFixed(1);
     return '${size.endsWith('.0') ? size.substring(0, size.length - 2) : size} Bytes';
   } else {
-    final int k = binary ? 0 : 1;
+    final k = binary ? 0 : 1;
     num unit;
 
-    for (int i = 0; i < prefixes.length; i++) {
+    for (var i = 0; i < prefixes.length; i++) {
       unit = pow(base, i + 2);
 
       if (bytes < unit) {
@@ -282,7 +282,7 @@ String doLower(Object value) {
 
 final Random _rnd = Random();
 Object doRandom(List<Object> values) {
-  final int length = values.length;
+  final length = values.length;
   return values[_rnd.nextInt(length)];
 }
 

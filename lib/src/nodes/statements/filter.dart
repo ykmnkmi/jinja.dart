@@ -15,12 +15,12 @@ class FilterBlockStatement extends Statement {
     if (body is Expression) {
       result = (body as Expression).resolve(context);
     } else {
-      final StringBuffer temp = StringBuffer();
+      final temp = StringBuffer();
       body.accept(temp, context);
       result = temp.toString();
     }
 
-    for (Filter filter in filters) {
+    for (var filter in filters) {
       result = filter.filter(context, result);
     }
 
@@ -29,10 +29,10 @@ class FilterBlockStatement extends Statement {
 
   @override
   String toDebugString([int level = 0]) {
-    final StringBuffer buffer = StringBuffer(' ' * level);
+    final buffer = StringBuffer(' ' * level);
     buffer.write('filter ${filters.first.toDebugString()}');
 
-    for (Filter filter in filters.sublist(1)) {
+    for (var filter in filters.sublist(1)) {
       buffer.write(' | ${filter.toDebugString()}');
     }
 

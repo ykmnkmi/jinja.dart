@@ -1,7 +1,7 @@
 class TemplateError extends Error {
   TemplateError([this.message]);
 
-  final String message;
+  final Object message;
 
   @override
   String toString() {
@@ -50,7 +50,7 @@ class TemplateSyntaxError extends TemplateError {
 
   @override
   String toString() {
-    final StringBuffer buffer = StringBuffer('TemplateSyntaxError');
+    final buffer = StringBuffer('TemplateSyntaxError');
     if (path != null) {
       buffer.write(' in \'$path\'');
     }

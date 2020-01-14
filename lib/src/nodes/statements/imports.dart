@@ -16,11 +16,11 @@ class IncludeStatement extends Statement {
 
   @override
   void accept(StringSink outSink, Context context) {
-    final Object oneOrList = paths.resolve(context);
+    final oneOrList = paths.resolve(context);
     Template template;
 
     if (oneOrList is List<Object>) {
-      for (Object path in oneOrList) {
+      for (var path in oneOrList) {
         if (path is String) {
           template = context.environment.templates[path];
         } else if (path is Template) {
@@ -50,7 +50,7 @@ class IncludeStatement extends Statement {
 
   @override
   String toDebugString([int level = 0]) {
-    final StringBuffer buffer = StringBuffer(' ' * level);
+    final buffer = StringBuffer(' ' * level);
     buffer.write('inlcude ${paths.toDebugString()}');
 
     if (!withContext) {

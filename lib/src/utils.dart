@@ -1,7 +1,7 @@
 import 'runtime.dart';
 
 Iterable<int> range(int n) sync* {
-  for (int i = 0; i < n; i++) {
+  for (var i = 0; i < n; i++) {
     yield i;
   }
 }
@@ -18,25 +18,24 @@ bool toBool(Object value) {
 
 String repr(Object object, [bool reprString = true]) {
   if (object is Iterable) {
-    final StringBuffer buffer = StringBuffer();
+    final buffer = StringBuffer();
     buffer.write('[');
     buffer.writeAll(object.map<String>(repr), ', ');
     buffer.write(']');
     return buffer.toString();
   } else if (object is Map) {
-    final StringBuffer buffer = StringBuffer();
+    final buffer = StringBuffer();
     buffer.write('{');
     buffer.writeAll(
         object.entries.map<String>((MapEntry<Object, Object> entry) {
-      final String key = repr(entry.key);
-      final String value = repr(entry.value);
+      final key = repr(entry.key);
+      final value = repr(entry.value);
       return '$key: $value';
     }), ', ');
     buffer.write('}');
     return buffer.toString();
   } else if (object is String && reprString) {
-    final String string =
-        object.replaceAll('\'', '\\\'').replaceAll('\n', '\\n');
+    final string = object.replaceAll('\'', '\\\'').replaceAll('\n', '\\n');
     return "'$string'";
   } else {
     return object.toString();
@@ -44,6 +43,6 @@ String repr(Object object, [bool reprString = true]) {
 }
 
 String getSymbolName(Symbol symbol) {
-  final String fullName = symbol.toString();
+  final fullName = symbol.toString();
   return fullName.substring(8, fullName.length - 2);
 }

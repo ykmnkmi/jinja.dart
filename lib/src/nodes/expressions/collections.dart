@@ -14,7 +14,7 @@ class ListExpression extends Expression {
 
   @override
   String toDebugString([int level = 0]) {
-    final StringBuffer buffer = StringBuffer('${' ' * level}[');
+    final buffer = StringBuffer('${' ' * level}[');
     buffer.writeAll(
         values.map<String>((Expression value) => value.toDebugString()), ',');
     buffer.write(']');
@@ -40,7 +40,7 @@ class MapExpression extends Expression {
 
   @override
   String toDebugString([int level = 0]) {
-    final StringBuffer buffer = StringBuffer(' ' * level);
+    final buffer = StringBuffer(' ' * level);
 
     values.forEach((Expression key, Expression value) {
       buffer.write(key.toDebugString());
@@ -81,7 +81,7 @@ class TupleExpression extends Expression implements CanAssign {
 
   @override
   String toDebugString([int level = 0]) {
-    final StringBuffer buffer = StringBuffer('${' ' * level}[');
+    final buffer = StringBuffer('${' ' * level}[');
     buffer.writeAll(
         items.map<String>((Expression item) => item.toDebugString()), ', ');
     buffer.write(']');

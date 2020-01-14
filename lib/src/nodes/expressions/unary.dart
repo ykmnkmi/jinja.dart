@@ -7,11 +7,11 @@ class Neg extends UnaryExpression {
   final Expression expr;
 
   @override
-  final String symbol;
+  final symbol;
 
   @override
   Object resolve(Context context) {
-    final Object result = expr.resolve(context);
+    final result = expr.resolve(context);
 
     if (result is num) {
       return -result;

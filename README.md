@@ -12,8 +12,8 @@ import 'package:jinja/jinja.dart';
 
 // ...
 
-final Environment env = Environment( /* ... */ );
-final Template template = env.fromString('{{ users[0].name }}');
+final env = Environment( /* ... */ );
+final template = env.fromString('{{ users[0].name }}');
 
 // ...
 
@@ -31,7 +31,7 @@ import 'package:jinja/get_field.dart' show getField;
 // ...
 
 final Environment = Environment(getField: getField, /* ... */ );
-final Template template = env.fromString('{{ users[0].name }}');
+final template = env.fromString('{{ users[0].name }}');
 
 // ...
 
@@ -76,7 +76,7 @@ import 'package:jinja/jinja.dart';
 // code ...
 
 final Environment = Environment(blockStart: '...');
-final Template template = env.fromString('...source...');
+final template = env.fromString('...source...');
 
 outStringSink.write(template.render(key: value));
 // outStringSink.write(template.renderMap({'key': value}));

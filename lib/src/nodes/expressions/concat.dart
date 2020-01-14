@@ -7,16 +7,16 @@ class Concat extends Expression {
 
   @override
   void accept(StringSink outSink, Context context) {
-    for (Expression expr in exprs) {
+    for (var expr in exprs) {
       expr.accept(outSink, context);
     }
   }
 
   @override
   String resolve(Context context) {
-    final StringBuffer buffer = StringBuffer();
+    final buffer = StringBuffer();
 
-    for (Expression expr in exprs) {
+    for (var expr in exprs) {
       expr.accept(buffer, context);
     }
 
@@ -25,7 +25,7 @@ class Concat extends Expression {
 
   @override
   String toDebugString([int level = 0]) {
-    final StringBuffer buffer = StringBuffer(' ' * level);
+    final buffer = StringBuffer(' ' * level);
     buffer.writeAll(
         exprs.map<String>((Expression expr) => expr.toDebugString()), ' ~ ');
     return buffer.toString();
