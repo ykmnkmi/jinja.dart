@@ -1,3 +1,6 @@
+## 0.2.1
+- add pedantic, format
+
 ## 0.2.0
 - minimal SDK version: 2.7.0
 - add `package:jinja/get_field.dart`
