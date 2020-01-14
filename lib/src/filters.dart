@@ -22,6 +22,39 @@ extension FilterFunction on Function {
   }
 }
 
+typedef AttrGetter = Object Function(Object object);
+
+AttrGetter makeAttribute(Environment environment, String attribute,
+    {Object Function(Object) postprocess, Object d}) {
+  final List<String> attributes = prepareAttributeParts(attribute);
+
+  Object attributeGetter(Object item) {
+    for (String part in attributes) {
+      item = doAttr(environment, item, part);
+
+      if (item is Undefined) {
+        if (d != null) {
+          item = d;
+        }
+
+        break;
+      }
+    }
+
+    if (postprocess != null) {
+      item = postprocess(item);
+    }
+
+    return item;
+  }
+
+  return attributeGetter;
+}
+
+List<String> prepareAttributeParts(String attribute) {
+  return attribute.split('.');
+}
+
 final Map<String, Function> filters = <String, Function>{
   'attr': doAttr..filterType = FilterType.environment,
   'join': doJoin..filterType = FilterType.environment,
@@ -82,8 +115,14 @@ final Map<String, Function> filters = <String, Function>{
 
 num doAbs(num n) => n.abs();
 
-Object doAttr(Environment env, Object value, String attribute) {
-  return env.getItem(value, attribute) ?? env.getField(value, attribute);
+Object doAttr(Environment environment, Object value, String attribute) {
+  try {
+    return environment.getItem(value, attribute) ??
+        environment.getField(value, attribute) ??
+        environment.undefined;
+  } catch (_) {
+    return environment.undefined;
+  }
 }
 
 Iterable<List<Object>> doBatch(Iterable<Object> values, int lineCount,
@@ -212,12 +251,10 @@ int doInt(Object value, [int d = 0, int base = 10]) {
   return int.tryParse(value.toString(), radix: base) ?? d;
 }
 
-String doJoin(Environment env, Iterable<Object> values,
+String doJoin(Environment environment, Iterable<Object> values,
     [String d = '', String attribute]) {
   if (attribute != null) {
-    return values
-        .map<Object>((Object value) => doAttr(env, value, attribute))
-        .join(d);
+    return values.map<Object>(makeAttribute(environment, attribute)).join(d);
   }
 
   return values.join(d);
@@ -253,10 +290,10 @@ String doString(Object value) {
   return repr(value, false);
 }
 
-num doSum(Environment env, Iterable<Object> values,
+num doSum(Environment environment, Iterable<Object> values,
     {String attribute, num start = 0}) {
   if (attribute != null) {
-    values = values.map<Object>((Object val) => doAttr(env, val, attribute));
+    values = values.map<Object>(makeAttribute(environment, attribute));
   }
 
   return values.cast<num>().fold<num>(start, (num s, num n) => s + n);

@@ -1,7 +1,6 @@
 import 'package:meta/meta.dart';
 
 import 'defaults.dart';
-import 'exceptions.dart';
 import 'filters.dart' show FilterFunction, FilterType;
 import 'loaders.dart';
 import 'nodes.dart';
@@ -12,16 +11,14 @@ typedef FieldGetter = Object Function(Object object, String field);
 typedef ItemGetter = Object Function(Object object, Object key);
 
 Object defaultFieldGetter(Object object, String field) {
-  // TODO: проверить: текст ошибки
-  throw TemplateRuntimeError('getField not implemented');
+  return null;
 }
 
 Object defaultItemGetter(Object object, Object key) {
   try {
     return (object as Map<Object, Object>)[key];
   } catch (e) {
-    // TODO: добавить: текст ошибки
-    throw TemplateRuntimeError('$e');
+    return null;
   }
 }
 

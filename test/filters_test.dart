@@ -1,16 +1,30 @@
 import 'package:jinja/jinja.dart';
+import 'package:jinja/get_field.dart';
 import 'package:jinja/src/markup.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:test/test.dart';
+
+class User {
+  User(this.name);
+
+  final String name;
+}
 
 void main() {
   group('filter', () {
     final Environment env = Environment();
 
     test('chaining', () {
-      final Template template =
-          env.fromString('''{{ ['<foo>', '<bar>']|first|upper|escape }}''');
+      final Template template = env
+          .fromString('''{{ ['<foo>', '<bar>']| first | upper | escape }}''');
       expect(template.renderMap(), equals('&lt;FOO&gt;'));
+    });
+
+    test('attr', () {
+      final Environment env = Environment(getField: getField);
+      final Template template = env.fromString('{{ user | attr("name") }}');
+      final User user = User('jane');
+      expect(template.render(user: user), equals('jane'));
     });
 
     test('batch', () {
@@ -23,39 +37,39 @@ void main() {
     });
 
     test('capitalize', () {
-      final Template template = env.fromString('{{ "foo bar"|capitalize }}');
+      final Template template = env.fromString('{{ "foo bar" | capitalize }}');
       expect(template.renderMap(), equals('Foo bar'));
     });
 
     test('center', () {
-      final Template template = env.fromString('{{ "foo"|center(9) }}');
+      final Template template = env.fromString('{{ "foo" | center(9) }}');
       expect(template.renderMap(), equals('   foo   '));
     });
 
     test('default', () {
-      final Template template = env
-          .fromString("{{ missing|default('no') }}|{{ false|default('no') }}|"
-              "{{ false|default('no', true) }}|{{ given|default('no') }}");
+      final Template template = env.fromString(
+          "{{ missing | default('no') }}|{{ false | default('no') }}|"
+          "{{ false | default('no', true) }}|{{ given | default('no') }}");
       expect(template.renderMap(<String, Object>{'given': 'yes'}),
           equals('no|false|no|yes'));
     });
 
     test('escape', () {
-      final Template template = env.fromString('''{{ '<">&'|escape }}''');
+      final Template template = env.fromString('''{{ '<">&' | escape }}''');
       expect(template.renderMap(), equals('&lt;&#34;&gt;&amp;'));
     });
 
     test('filesizeformat', () {
-      final Template template = env.fromString('{{ 100|filesizeformat }}|'
-          '{{ 1000|filesizeformat }}|'
-          '{{ 1000000|filesizeformat }}|'
-          '{{ 1000000000|filesizeformat }}|'
-          '{{ 1000000000000|filesizeformat }}|'
-          '{{ 100|filesizeformat(true) }}|'
-          '{{ 1000|filesizeformat(true) }}|'
-          '{{ 1000000|filesizeformat(true) }}|'
-          '{{ 1000000000|filesizeformat(true) }}|'
-          '{{ 1000000000000|filesizeformat(true) }}');
+      final Template template = env.fromString('{{ 100 | filesizeformat }}|'
+          '{{ 1000 | filesizeformat }}|'
+          '{{ 1000000 | filesizeformat }}|'
+          '{{ 1000000000 | filesizeformat }}|'
+          '{{ 1000000000000 | filesizeformat }}|'
+          '{{ 100 | filesizeformat(true) }}|'
+          '{{ 1000 | filesizeformat(true) }}|'
+          '{{ 1000000 | filesizeformat(true) }}|'
+          '{{ 1000000000 | filesizeformat(true) }}|'
+          '{{ 1000000000000 | filesizeformat(true) }}');
       expect(
           template.renderMap(),
           equals('100 Bytes|1.0 kB|1.0 MB|1.0 GB|1.0 TB|100 Bytes|'
@@ -63,13 +77,13 @@ void main() {
     });
 
     test('first', () {
-      final Template template = env.fromString('{{ foo|first }}');
+      final Template template = env.fromString('{{ foo | first }}');
       expect(
           template.renderMap(<String, Object>{'foo': range(10)}), equals('0'));
     });
 
     test('force escape', () {
-      final Template template = env.fromString('{{ x|forceescape }}');
+      final Template template = env.fromString('{{ x | forceescape }}');
       expect(template.renderMap(<String, Object>{'x': Markup('<div />')}),
           equals('&lt;div /&gt;'));
     });
@@ -81,7 +95,7 @@ void main() {
 
     test('join attribute', () {
       final Template template =
-          env.fromString('''{{ users|join(', ', 'username') }}''');
+          env.fromString('''{{ users | join(', ', 'username') }}''');
       expect(
           template.renderMap(<String, Object>{
             'users': <String>['foo', 'bar']

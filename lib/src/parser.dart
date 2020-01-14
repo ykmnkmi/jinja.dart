@@ -37,7 +37,7 @@ class Parser {
             getOpenReg(environment.blockStart, environment.leftStripBlocks),
         blockEndReg = getEndReg(environment.blockEnd, environment.trimBlocks),
         keywords = <String>{'not', 'and', 'or', 'is', 'if', 'else'},
-        _onParseNodeController = StreamController<Name>.broadcast(sync: true),
+        _onParseNameController = StreamController<Name>.broadcast(sync: true),
         _templateModifiers = <TemplateModifier>[];
 
   final Environment environment;
@@ -68,10 +68,8 @@ class Parser {
     return RegExp(RegExp.escape(rule) + blockEndReg.pattern);
   }
 
-  final StreamController<Node> _onParseNodeController;
-  Stream<Name> get onParseName => _onParseNodeController.stream
-      .where((Node node) => node is Name)
-      .cast<Name>();
+  final StreamController<Name> _onParseNameController;
+  Stream<Name> get onParseName => _onParseNameController.stream;
 
   final List<TemplateModifier> _templateModifiers;
 
@@ -752,6 +750,7 @@ class Parser {
     } else if (scanner.scan(nameReg)) {
       final String name = scanner.lastMatch[1];
       final Name nameExpr = Name(name);
+      _onParseNameController.add(nameExpr);
       expr = nameExpr;
     } else if (scanner.scan(stringStartReg)) {
       String body;
@@ -786,7 +785,6 @@ class Parser {
       error('primary expression expected');
     }
 
-    _onParseNodeController.add(expr);
     return expr;
   }
 
