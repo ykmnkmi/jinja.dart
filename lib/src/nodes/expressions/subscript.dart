@@ -25,10 +25,6 @@ class Field extends Expression {
       return value[attr];
     }
 
-    if (value is Map) {
-      return context.environment.getItem(value, attr);
-    }
-
     return context.environment.getField(value, attr);
   }
 

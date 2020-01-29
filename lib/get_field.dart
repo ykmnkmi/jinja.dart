@@ -10,3 +10,9 @@ Object getField(Object object, String field) {
     throw TemplateRuntimeError('$e');
   }
 }
+
+extension on Map {
+  Object items() {
+    return entries.map((entry) => <Object>[entry.key, entry.value]);
+  }
+}
