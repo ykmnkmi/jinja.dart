@@ -10,7 +10,7 @@ class Add extends BinaryExpression {
   final Expression right;
 
   @override
-  final symbol;
+  final String symbol;
 
   @override
   Object resolve(Context context) {

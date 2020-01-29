@@ -7,7 +7,7 @@ class Neg extends UnaryExpression {
   final Expression expr;
 
   @override
-  final symbol;
+  final String symbol;
 
   @override
   Object resolve(Context context) {

@@ -10,7 +10,7 @@ class Mul extends BinaryExpression {
   final Expression right;
 
   @override
-  final symbol;
+  final String symbol;
 
   @override
   Object resolve(Context context) {
@@ -45,7 +45,7 @@ class Div extends BinaryExpression {
   final Expression right;
 
   @override
-  final symbol;
+  final String symbol;
 
   @override
   num resolve(Context context) {
@@ -76,7 +76,7 @@ class FloorDiv extends BinaryExpression {
   final Expression right;
 
   @override
-  final symbol;
+  final String symbol;
 
   @override
   int resolve(Context context) {
@@ -107,7 +107,7 @@ class Mod extends BinaryExpression {
   final Expression right;
 
   @override
-  final symbol;
+  final String symbol;
 
   @override
   num resolve(Context context) {

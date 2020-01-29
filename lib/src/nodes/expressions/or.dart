@@ -10,7 +10,7 @@ class Or extends BinaryExpression {
   final Expression right;
 
   @override
-  final symbol;
+  final String symbol;
 
   @override
   bool resolve(Context context) {

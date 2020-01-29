@@ -11,7 +11,7 @@ class MoreEqual extends BinaryExpression {
   final Expression right;
 
   @override
-  final symbol;
+  final String symbol;
 
   @override
   bool resolve(Context context) {
@@ -42,7 +42,7 @@ class More extends BinaryExpression {
   final Expression right;
 
   @override
-  final symbol;
+  final String symbol;
 
   @override
   bool resolve(Context context) {
@@ -73,7 +73,7 @@ class Less extends BinaryExpression {
   final Expression right;
 
   @override
-  final symbol;
+  final String symbol;
 
   @override
   bool resolve(Context context) {
@@ -104,7 +104,7 @@ class LessEqual extends BinaryExpression {
   final Expression right;
 
   @override
-  final symbol;
+  final String symbol;
 
   @override
   bool resolve(Context context) {
@@ -135,7 +135,7 @@ class Equal extends BinaryExpression {
   final Expression right;
 
   @override
-  final symbol;
+  final String symbol;
 
   @override
   bool resolve(Context context) {
