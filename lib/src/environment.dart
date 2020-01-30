@@ -15,11 +15,15 @@ Object defaultFieldGetter(Object object, String field) {
 }
 
 Object defaultItemGetter(Object object, Object key) {
-  try {
-    return (object as Map<Object, Object>)[key];
-  } catch (e) {
-    return null;
+  if (object is List<Object> && key is int) {
+    return object[key];
   }
+
+  if (object is Map<Object, Object>) {
+    return object[key];
+  }
+
+  return null;
 }
 
 typedef Finalizer = Object Function(Object value);
