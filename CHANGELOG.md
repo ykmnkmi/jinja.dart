@@ -1,3 +1,7 @@
+## 0.2.2
+- default `Environment.getField` returns `null`;
+- fix list index
+
 ## 0.2.1
 - add pedantic, format
 

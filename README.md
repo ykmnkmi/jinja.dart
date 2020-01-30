@@ -7,6 +7,7 @@
 Breaking changes
 ----------------
 Before `object.field` or `object.method()` expressions uses `dart:mirrors` methods.
+
 ```dart
 import 'package:jinja/jinja.dart';
 
@@ -22,7 +23,7 @@ outStringSink.write(template.render(users: listOfUsers));
 ```
 
 Now to access the fields and methods of the object, (except `namespase`, `loop`, `self` fields and methods), you need to import the `get_field` method from the `package:jinja/get_field.dart` file and pass it to the `Environment` constructor.<br>
-Or pass another method.
+Or write and pass own method, like [here][jinja_reflectable_example].
 ```dart
 import 'package:jinja/jinja.dart';
 
@@ -88,11 +89,11 @@ Why is this [hack][hack] used?
 
 In the final version for the production version, templates will be generated and the render function will have named parameters that are used in the template code.
 
-Second option, create new packages:
-  - jinja_core - core, filters, tests, utils
-  - jinja_config - yaml based environment config
-  - jinja_generator - generate _pure_ dart code
-  - jinja_nodes - or use nodes
+- jinja_core - core, filters, tests, utils
+- jinja_config - yaml based environment config
+- jinja_ast - parsing
+- jinja_nodes - render nodes
+- jinja_generator - generate _pure_ dart code from AST
 
 Docs
 ----
@@ -102,6 +103,7 @@ Contributing
 ------------
 If you found a bug, just create a [new issue][new_issue] or even better fork and issue a pull request with your fix.
 
+[jinja_reflectable_example]: https://github.com/ykmnkmi/jinja_reflectable_example/blob/master/bin/main.dart
 [filters]: https://github.com/ykmnkmi/dart-jinja/blob/master/lib/src/filters.dart
 [hack]: https://github.com/ykmnkmi/jinja.dart/blob/master/lib/src/environment.dart#L355
 [new_issue]: https://github.com/ykmnkmi/dart-jinja/issues/new
