@@ -3,28 +3,36 @@ import 'package:string_scanner/string_scanner.dart';
 
 enum TokenType {
   // base tokens
-  blockEnd,
-  blockStart,
-  variableEnd,
-  variableStart,
-  commentEnd,
-  commentStart,
-  data,
-  space,
-  newLine,
   error,
+  newLine,
+  space,
+  data,
+  commentStart,
+  commentEnd,
+  variableStart,
+  variableEnd,
+  blockStart,
+  blockEnd,
 }
 
 class Token {
-  static const Token newLine = Token(TokenType.newLine);
+  factory Token.newLine(int line) => Token(line, TokenType.space, '\n');
 
-  factory Token.data(String value) => Token(TokenType.data, value);
-  factory Token.space(String value) => Token(TokenType.space, value);
-  factory Token.error(String value) => Token(TokenType.error, value);
+  factory Token.space(int line, String value) =>
+      Token(line, TokenType.space, value);
 
-  const Token(this.type, [this.value]);
+  factory Token.data(int line, String value) =>
+      Token(line, TokenType.data, value);
+
+  factory Token.error(int line, String value) =>
+      Token(line, TokenType.error, value);
+
+  const Token(this.line, this.type, [this.value]);
+
+  final int line;
 
   final TokenType type;
+
   final String value;
 
   @override
@@ -33,6 +41,31 @@ class Token {
 
 final RegExp spaceRe = RegExp('[ \t]+');
 final RegExp newLineRe = RegExp('\n');
+
+class Tokens extends Iterable<Token> {
+  Tokens(this.iterable, this.name, this.fileName);
+
+  final Iterable<Token> iterable;
+
+  final String name;
+
+  final String fileName;
+
+  @override
+  Iterator<Token> get iterator => TokenIterator(this);
+}
+
+class TokenIterator implements Iterator<Token> {
+  TokenIterator(this.tokens);
+
+  final Tokens tokens;
+
+  @override
+  Token get current => null;
+
+  @override
+  bool moveNext() => null;
+}
 
 class Lexer {
   Lexer(Environment environment)
@@ -52,45 +85,44 @@ class Lexer {
       <Object>[
         environment.blockStart,
         Rule.scan(
-            blockStart, (StringScanner scanner) => Token(TokenType.blockStart))
+            blockStart, (scanner) => Token(scanner.line, TokenType.blockStart))
       ],
       <Object>[
         environment.blockEnd,
         Rule.scan(
-            blockEnd, (StringScanner scanner) => Token(TokenType.blockEnd))
+            blockEnd, (scanner) => Token(scanner.line, TokenType.blockEnd))
       ],
       // variable
       <Object>[
         environment.variableStart,
         Rule.scan(variableStart,
-            (StringScanner scanner) => Token(TokenType.variableStart))
+            (scanner) => Token(scanner.line, TokenType.variableStart))
       ],
       <Object>[
         environment.variableEnd,
         Rule.scan(variableEnd,
-            (StringScanner scanner) => Token(TokenType.variableEnd))
+            (scanner) => Token(scanner.line, TokenType.variableEnd))
       ],
       // comment
       <Object>[
         environment.commentStart,
         Rule.scan(commentStart,
-            (StringScanner scanner) => Token(TokenType.commentStart))
+            (scanner) => Token(scanner.line, TokenType.commentStart))
       ],
       <Object>[
         environment.commentEnd,
         Rule.scan(
-            commentEnd, (StringScanner scanner) => Token(TokenType.commentEnd))
+            commentEnd, (scanner) => Token(scanner.line, TokenType.commentEnd))
       ],
     ];
 
-    tagRules.sort((List<Object> a, List<Object> b) =>
-        (a.first as String).compareTo(b.first as String));
+    tagRules.sort((a, b) => (a.first as String).compareTo(b.first as String));
 
     rules = <Rule>[
-      Rule.scan(newLineRe, (StringScanner scanner) => Token.newLine),
+      Rule.scan(newLineRe, (scanner) => Token.newLine(scanner.line)),
       Rule.scan(spaceRe,
-          (StringScanner scanner) => Token.space(scanner.lastMatch.group(0))),
-      ...tagRules.map<Rule>((List<Object> tagRule) => tagRule.last as Rule),
+          (scanner) => Token.space(scanner.line, scanner.lastMatch.group(0))),
+      ...tagRules.map<Rule>((tagRule) => tagRule.last as Rule),
     ];
   }
 
@@ -104,7 +136,7 @@ class Lexer {
   List<Rule> rules;
 
   Iterable<Token> tokenize(String source) sync* {
-    final scanner = StringScanner(source);
+    final scanner = SpanScanner(source);
     final buffer = StringBuffer();
 
     var match = false;
@@ -113,7 +145,7 @@ class Lexer {
       for (var rule in rules) {
         if (match = rule.matches(scanner)) {
           if (buffer.isNotEmpty) {
-            yield Token.data(buffer.toString());
+            yield Token.data(scanner.line, buffer.toString());
             buffer.clear();
           }
 
@@ -126,15 +158,20 @@ class Lexer {
         buffer.writeCharCode(scanner.readChar());
       }
     }
+
+    if (buffer.isNotEmpty) {
+      yield Token.data(scanner.line, buffer.toString());
+      buffer.clear();
+    }
   }
 }
 
 class Rule {
-  factory Rule.scan(Pattern pattern, Token Function(StringScanner) match) =>
-      Rule((StringScanner scanner) => scanner.scan(pattern), match);
+  factory Rule.scan(Pattern pattern, Token Function(SpanScanner) match) =>
+      Rule((scanner) => scanner.scan(pattern), match);
 
   const Rule(this.matches, this.match);
 
-  final bool Function(StringScanner scanner) matches;
-  final Token Function(StringScanner scanner) match;
+  final bool Function(SpanScanner) matches;
+  final Token Function(SpanScanner) match;
 }

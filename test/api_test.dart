@@ -4,16 +4,16 @@ import 'package:test/test.dart' hide escape;
 
 void main() {
   group('extended api', () {
-    // TODO(test): item and attribute
-    // test('item and attribute', () {
-    //   final env = Environment(getField: getField);
-    //   var template = env.fromString('{{ foo.items() | list }}');
-    //   expect(template.render(foo: {'items': 42}), equals("[('items', 42)]"));
-    //   template = env.fromString('foo | attr("items")() | list }}');
-    //   expect(template.render(foo: {'items': 42}), equals("[('items', 42)]"));
-    //   template = env.fromString('{{ foo["items"] }}');
-    //   expect(template.render(foo: {'items': 42}), equals('42'));
-    // });
+    test('item and attribute', () {
+      final env = Environment(getField: getField);
+      var template = env.fromString('{{ foo["items"] }}');
+      expect(template.render(foo: {'items': 42}), equals('42'));
+      // TODO(test): проработать
+      // template = env.fromString('{{ foo.items() | list }}');
+      // expect(template.render(foo: {'items': 42}), equals("[('items', 42)]"));
+      // template = env.fromString('foo | attr("items")() | list }}');
+      // expect(template.render(foo: {'items': 42}), equals("[('items', 42)]"));
+    });
 
     test('finalize', () {
       final env = Environment(finalize: (obj) => obj ?? '');

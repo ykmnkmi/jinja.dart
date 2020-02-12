@@ -78,7 +78,7 @@ void main() {
         expect(template.renderMap(), equals(char));
       }
 
-      // TODO: проверять
+      // TODO: проверить
       // expect(env.fromString('{{ "\N{HOT SPRINGS}" }}').render(), equals('\u2668'));
     });
   });
@@ -191,7 +191,7 @@ hello
       expect(template.renderMap(), equals('hello    '));
     });
 
-// TODO: разблокировать: после реализации строковых коментариев
+// TODO: проверить: после реализации строковых коментариев
 //     test('lstrip angle bracket', () {
 //       final env = Environment(
 //         blockStart: '<%',
@@ -212,7 +212,7 @@ hello
 //       expect(template.render(seq: range(5)), equals(range(5).map((int n) => '$n\n').join()));
 //     });
 
-// TODO: разблокировать: после реализации строковых коментариев
+// TODO: проверить: после реализации строковых коментариев
 //     test('lstrip angle bracket compact', () {
 //       final env = Environment(
 //         blockStart: '<%',
