@@ -17,11 +17,15 @@ class Field extends Expression {
       throw UndefinedError();
     }
 
-    if (value is LoopContext) {
+    if (value is Map<String, Object>) {
       return value[attr];
     }
 
     if (value is NameSpace) {
+      return value[attr];
+    }
+
+    if (value is LoopContext) {
       return value[attr];
     }
 
