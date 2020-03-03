@@ -22,27 +22,26 @@ String repr(Object object, [bool reprString = true]) {
     buffer.write('[');
     buffer.writeAll(object.map<String>(repr), ', ');
     buffer.write(']');
-    return buffer.toString();
+    return '$buffer';
   } else if (object is Map) {
     final buffer = StringBuffer();
     buffer.write('{');
-    buffer.writeAll(
-        object.entries.map<String>((MapEntry<Object, Object> entry) {
+    buffer.writeAll(object.entries.map<String>((entry) {
       final key = repr(entry.key);
       final value = repr(entry.value);
       return '$key: $value';
     }), ', ');
     buffer.write('}');
-    return buffer.toString();
+    return '$buffer';
   } else if (object is String && reprString) {
-    final string = object.replaceAll('\'', '\\\'').replaceAll('\n', '\\n');
+    final string = object.replaceAll('\'', '\\\'');
     return "'$string'";
   } else {
-    return object.toString();
+    return '$object';
   }
 }
 
 String getSymbolName(Symbol symbol) {
-  final fullName = symbol.toString();
+  final fullName = '$symbol';
   return fullName.substring(8, fullName.length - 2);
 }

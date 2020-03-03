@@ -23,7 +23,7 @@ outStringSink.write(template.render(users: listOfUsers));
 ```
 
 Now to access the fields and methods of the object, (except `namespase`, `loop`, `self` fields and methods), you need to import the `get_field` method from the `package:jinja/get_field.dart` file and pass it to the `Environment` constructor.<br>
-Or write and pass own method, like [here][jinja_reflectable_example].
+Or write and pass your method, like [here][jinja_reflectable_example].
 ```dart
 import 'package:jinja/jinja.dart';
 
@@ -87,7 +87,7 @@ Note
 ----
 Why is this [hack][hack] used?
 
-In the final version for the production version, templates will be generated and the render function will have named parameters that are used in the template code.
+In the final version for the production, templates will be generated and the render function will have named parameters that are used in the template code.
 
 - jinja_core - core, filters, tests, utils
 - jinja_config - yaml based environment config

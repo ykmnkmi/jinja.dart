@@ -2,70 +2,45 @@ import 'package:jinja/src/environment.dart';
 import 'package:string_scanner/string_scanner.dart';
 
 enum TokenType {
-  // base tokens
-  error,
-  newLine,
-  space,
-  data,
+  // core
   commentStart,
   commentEnd,
   variableStart,
   variableEnd,
-  blockStart,
+  blockBegin,
   blockEnd,
+
+  // base tokens
+  data,
+  space,
+  newLine,
+  eof,
 }
 
 class Token {
-  factory Token.newLine(int line) => Token(line, TokenType.space, '\n');
+  factory Token.data(int line, String value) =>
+      Token(line, TokenType.data, value);
 
   factory Token.space(int line, String value) =>
       Token(line, TokenType.space, value);
 
-  factory Token.data(int line, String value) =>
-      Token(line, TokenType.data, value);
+  factory Token.newLine(int line) => Token(line, TokenType.space, '\n');
 
-  factory Token.error(int line, String value) =>
-      Token(line, TokenType.error, value);
+  factory Token.eof(int line, String value) =>
+      Token(line, TokenType.eof, value);
 
   const Token(this.line, this.type, [this.value]);
 
   final int line;
-
   final TokenType type;
-
   final String value;
 
   @override
-  String toString() => '[$type${value == null ? ']' : '|$value]'}';
+  String toString() => '$type${value == null ? '' : '|$value'}';
 }
 
 final RegExp spaceRe = RegExp('[ \t]+');
 final RegExp newLineRe = RegExp('\n');
-
-class Tokens extends Iterable<Token> {
-  Tokens(this.iterable, this.name, this.fileName);
-
-  final Iterable<Token> iterable;
-
-  final String name;
-
-  final String fileName;
-
-  @override
-  Iterator<Token> get iterator => TokenIterator(this);
-}
-
-class TokenIterator implements Iterator<Token> {
-  TokenIterator(this.tokens);
-
-  final Tokens tokens;
-
-  @override
-  Token get current => null;
-
-  @override
-  bool moveNext() => null;
-}
 
 class Lexer {
   Lexer(Environment environment)
@@ -79,13 +54,25 @@ class Lexer {
         commentStart =
             RegExp(RegExp.escape(environment.commentStart), unicode: true),
         commentEnd =
-            RegExp(RegExp.escape(environment.commentEnd), unicode: true) {
+            RegExp(RegExp.escape(environment.commentEnd), unicode: true),
+        rules = <Rule>[] {
     final tagRules = <List<Object>>[
+      // comment
+      <Object>[
+        environment.commentStart,
+        Rule.scan(commentStart,
+            (scanner) => Token(scanner.line, TokenType.commentStart))
+      ],
+      <Object>[
+        environment.commentEnd,
+        Rule.scan(
+            commentEnd, (scanner) => Token(scanner.line, TokenType.commentEnd))
+      ],
       // block
       <Object>[
         environment.blockStart,
         Rule.scan(
-            blockStart, (scanner) => Token(scanner.line, TokenType.blockStart))
+            blockStart, (scanner) => Token(scanner.line, TokenType.blockBegin))
       ],
       <Object>[
         environment.blockEnd,
@@ -103,27 +90,13 @@ class Lexer {
         Rule.scan(variableEnd,
             (scanner) => Token(scanner.line, TokenType.variableEnd))
       ],
-      // comment
-      <Object>[
-        environment.commentStart,
-        Rule.scan(commentStart,
-            (scanner) => Token(scanner.line, TokenType.commentStart))
-      ],
-      <Object>[
-        environment.commentEnd,
-        Rule.scan(
-            commentEnd, (scanner) => Token(scanner.line, TokenType.commentEnd))
-      ],
-    ];
+    ]..sort((a, b) => (b[0] as String).compareTo(a[0] as String));
 
-    tagRules.sort((a, b) => (a.first as String).compareTo(b.first as String));
-
-    rules = <Rule>[
-      Rule.scan(newLineRe, (scanner) => Token.newLine(scanner.line)),
-      Rule.scan(spaceRe,
-          (scanner) => Token.space(scanner.line, scanner.lastMatch.group(0))),
-      ...tagRules.map<Rule>((tagRule) => tagRule.last as Rule),
-    ];
+    rules
+      ..addAll(tagRules.map<Rule>((tagRule) => tagRule[1] as Rule))
+      ..add(Rule.scan(spaceRe,
+          (scanner) => Token.space(scanner.line, scanner.lastMatch[0])))
+      ..add(Rule.scan(newLineRe, (scanner) => Token.newLine(scanner.line)));
   }
 
   final RegExp blockStart;
@@ -133,23 +106,22 @@ class Lexer {
   final RegExp commentStart;
   final RegExp commentEnd;
 
-  List<Rule> rules;
+  final List<Rule> rules;
 
   Iterable<Token> tokenize(String source) sync* {
     final scanner = SpanScanner(source);
     final buffer = StringBuffer();
-
     var match = false;
 
     while (!scanner.isDone) {
       for (var rule in rules) {
-        if (match = rule.matches(scanner)) {
+        if (match = rule.matcher(scanner)) {
           if (buffer.isNotEmpty) {
-            yield Token.data(scanner.line, buffer.toString());
+            yield Token.data(scanner.line, '$buffer');
             buffer.clear();
           }
 
-          yield rule.match(scanner);
+          yield rule.tokenFactory(scanner);
           break;
         }
       }
@@ -160,7 +132,7 @@ class Lexer {
     }
 
     if (buffer.isNotEmpty) {
-      yield Token.data(scanner.line, buffer.toString());
+      yield Token.data(scanner.line, '$buffer');
       buffer.clear();
     }
   }
@@ -168,10 +140,17 @@ class Lexer {
 
 class Rule {
   factory Rule.scan(Pattern pattern, Token Function(SpanScanner) match) =>
-      Rule((scanner) => scanner.scan(pattern), match);
+      Rule(pattern, (scanner) => scanner.scan(pattern), match);
 
-  const Rule(this.matches, this.match);
+  const Rule(this.pattern, this.matcher, this.tokenFactory);
 
-  final bool Function(SpanScanner) matches;
-  final Token Function(SpanScanner) match;
+  final Pattern pattern;
+  final bool Function(SpanScanner) matcher;
+  final Token Function(SpanScanner) tokenFactory;
+
+  @override
+  String toString() {
+    final ePattern = '$pattern'.replaceAll(RegExp('\n'), r'\n');
+    return 'Rule($ePattern)';
+  }
 }

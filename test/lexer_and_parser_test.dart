@@ -1,4 +1,5 @@
 import 'package:jinja/jinja.dart';
+import 'package:jinja/src/lexer.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:test/test.dart';
 
@@ -66,21 +67,23 @@ void main() {
     });
 
     test('string escapes', () {
-      for (var char in <String>[
-        r'\0',
-        r'\2668',
-        r'\xe4',
-        r'\t',
-        r'\r',
-        r'\n'
-      ]) {
+      for (var char in <String>['\0', '\2668', '\xe4', '\t', '\r', '\n']) {
         final template = env.fromString('{{ ${repr(char)} }}');
         expect(template.renderMap(), equals(char));
       }
 
-      // TODO: проверить
+      // TODO: ждем: реализации в sdk
       // expect(env.fromString('{{ "\N{HOT SPRINGS}" }}').render(), equals('\u2668'));
     });
+
+    // TODO: проверить: после реализации Environment.newlineSequence
+    // test('normalizing', () {
+    //   for (var seq in <String>['\r', '\r\n', '\n']) {
+    //     final env = Environment(newlineSequence: seq);
+    //     final template = env.fromString('1\n2\r\n3\n4\n');
+    //     expect(template.renderMap().replaceAll(seq, 'X'), equals('1X2X3X4'));
+    //   }
+    // });
   });
 
   group('leftStripBlocks', () {
