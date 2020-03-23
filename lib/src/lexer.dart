@@ -3,12 +3,12 @@ import 'package:string_scanner/string_scanner.dart';
 
 enum TokenType {
   // core
-  commentStart,
-  commentEnd,
-  variableStart,
-  variableEnd,
   blockBegin,
   blockEnd,
+  variableStart,
+  variableEnd,
+  commentStart,
+  commentEnd,
 
   // base tokens
   data,
@@ -100,10 +100,15 @@ class Lexer {
   }
 
   final RegExp blockStart;
+
   final RegExp blockEnd;
+
   final RegExp variableStart;
+
   final RegExp variableEnd;
+
   final RegExp commentStart;
+
   final RegExp commentEnd;
 
   final List<Rule> rules;
@@ -145,7 +150,9 @@ class Rule {
   const Rule(this.pattern, this.matcher, this.tokenFactory);
 
   final Pattern pattern;
+
   final bool Function(SpanScanner) matcher;
+
   final Token Function(SpanScanner) tokenFactory;
 
   @override
