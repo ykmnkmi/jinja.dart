@@ -1,0 +1,21 @@
+
+# Stripped down from https://github.com/dart-lang/pub/blob/master/.travis.yml
+
+language: dart
+
+dart:
+  - dev
+
+os:
+  - linux
+  - osx
+  #- windows # Windows CI does not work but it works on real Windows machines (and also VMs)
+
+dart_task:
+  - test: .
+  - dartfmt
+  - dartanalyzer: --fatal-infos --fatal-warnings .
+
+cache:
+  directories:
+    - $HOME/.pub-cache

@@ -290,8 +290,8 @@ class Template extends Node {
 
   final Map<String, BlockStatement> blocks;
 
-  Function _render;
-  Function get render => _render;
+  dynamic _render;
+  dynamic get render => _render;
 
   void _addBlocks(StringSink outSink, Context context) {
     final self = NameSpace();
