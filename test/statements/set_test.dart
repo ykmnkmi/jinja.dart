@@ -10,14 +10,14 @@ void main() {
     test('simple', () {
       final template = envTrim.fromString('{% set foo = 1 %}{{ foo }}');
       expect(template.renderMap(), equals('1'));
-      // TODO: добавить тест: module foo == 1
+      // TODO: добавить тест: module foo == 1 = add test ..
     });
 
     test('block', () {
       final template =
           envTrim.fromString('{% set foo %}42{% endset %}{{ foo }}');
       expect(template.renderMap(), equals('42'));
-      // TODO: добавить тест: module foo == '42'
+      // TODO: добавить тест: module foo == '42' = add test ..
     });
 
     test('block escaping', () {
@@ -84,7 +84,7 @@ void main() {
       expect(template.render(v: 4), equals('false'));
     });
 
-    // TODO: добавить тест: namespace macro
+    // TODO: добавить тест: namespace macro = add test ..
 
     test('block escapeing filtered', () {
       final env = Environment(autoEscape: true);
@@ -100,7 +100,7 @@ void main() {
           '{% set foo | trim | length | string %} 42    {% endset %}'
           '{{ foo }}');
       expect(template.renderMap(), equals('2'));
-      // TODO: добавить тест: module foo == '2'
+      // TODO: добавить тест: module foo == '2' = add test ..
     });
 
     test('block filtered set', () {
@@ -116,7 +116,7 @@ void main() {
           '{% endset %}'
           '{{ foo }}');
       expect(template.renderMap(), equals('11'));
-      // TODO: добавить тест: module foo == '11'
+      // TODO: добавить тест: module foo == '11' = add test ..
     });
   });
 }

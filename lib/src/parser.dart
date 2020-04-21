@@ -1,4 +1,5 @@
-// TODO: добавить Scanner, TokenStream и переписать Praser
+// TODO: добавить Scanner, TokenStream и переписать Parser
+// TODO: Add Scanner, TokenStream and rewrite Parser
 
 import 'dart:async';
 
@@ -138,6 +139,8 @@ class Parser {
         : Interpolation(nodes);
   }
 
+  /// This method is where the actual parsing is happening
+  /// The element are detected by their tags (comments, statements, expressions, etc.)
   List<Node> subParse(List<Pattern> endRules) {
     final buffer = StringBuffer();
     final body = <Node>[];
@@ -169,7 +172,7 @@ class Parser {
           expect(variableEndReg);
         } else if (scanner.scan(blockStartReg)) {
           // TODO: *** lstrip: проверка блока перекрывает переменную
-
+          // TODO: *** lstrip: check of the block shadows body variable
           flush();
 
           if (scanner.lastMatch.groupCount > 0 &&
@@ -245,7 +248,7 @@ class Parser {
 
       tagsStack.removeLast();
       popTag = false;
-      error('uknown tag: $tagName');
+      error('unknown tag: $tagName');
     } finally {
       if (popTag) {
         tagsStack.removeLast();
@@ -254,6 +257,7 @@ class Parser {
   }
 
   // TODO: не проходит тест на несколько extends элементов
+  // TODO: don´t test multiple elements (?)
   ExtendsStatement parseExtends() {
     final path = parsePrimary();
     expect(blockEndReg);

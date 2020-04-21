@@ -13,7 +13,7 @@ class Field extends Expression {
     final value = expr.resolve(context);
 
     if (value == null || value is Undefined) {
-      // TODO: проверить: текст ошибки
+      // TODO: проверить: текст ошибки = add: error message
       throw UndefinedError();
     }
 

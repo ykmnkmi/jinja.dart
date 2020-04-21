@@ -32,7 +32,7 @@ class Call extends Expression {
       if (argsDyn is Iterable) {
         args.addAll(argsDyn);
       } else {
-        // TODO: добавить: текст ошибки
+        // TODO: добавить: текст ошибки = add: error message
         throw TemplateRuntimeError();
       }
     }
@@ -45,12 +45,22 @@ class Call extends Expression {
             (String key, Expression value) =>
                 MapEntry<Symbol, Object>(Symbol(key), value.resolve(context))));
       } else {
-        // TODO: добавить: текст ошибки
+        // TODO: добавить: текст ошибки = add: error message
         throw TemplateRuntimeError();
       }
     }
 
-    return Function.apply(expr.resolve(context) as Function, args, kwargs);
+    dynamic resolved = expr.resolve(context);
+    if (args.isEmpty && kwargs.isEmpty) {
+      return resolved();
+    }
+    if (kwargs.isEmpty) {
+      return resolved(args.length == 1 ? args[0] : args);
+    }
+    if (args.isEmpty) {
+      return resolved(kwargs: {...kwargs});
+    }
+    return resolved(args, kwargs: {...kwargs});
   }
 
   @override

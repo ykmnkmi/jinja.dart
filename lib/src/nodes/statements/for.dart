@@ -2,6 +2,7 @@ import '../../context.dart';
 import '../../runtime.dart';
 import '../core.dart';
 
+/// Class representing a node which makes up a for statement
 class ForStatement extends Statement {
   ForStatement(this.targets, this.iterable, this.body, {this.orElse})
       : _targetsLen = targets.length;
@@ -47,12 +48,12 @@ class ForStatement extends Statement {
       next = values[i + 1];
     }
 
-    bool changed(Object item) {
+    bool changed(dynamic item) {
       if (i == 0) {
         return true;
       }
 
-      if (item == values[i - 1]) {
+      if ((item is List ? item[0] : item) == values[i - 1]) {
         return false;
       }
 
@@ -102,10 +103,11 @@ class ForStatement extends Statement {
 
   @override
   void accept(StringSink outSink, Context context) {
+    // resolve the iterable which is looped from context.
     final iterable = this.iterable.resolve(context);
 
     if (iterable == null) {
-      // TODO: сравнить сообщение ошибки
+      // TODO: сравнить сообщение ошибки = compare error message(?)
       throw ArgumentError.notNull('iterable');
     }
 

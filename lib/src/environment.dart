@@ -312,8 +312,11 @@ class Template extends Node {
   }
 
   String renderMap([Map<String, Object> data]) {
-    final buffer = StringBuffer();
+    final buffer = StringBuffer(); // StringBuffer where the output goes
+    // An environment(=settings) and data(=variables) passed by the user or derived from standard settings form a context.
+    // Contexts are often nested, they contain other contexts (scope).
     final context = Context(data: data, env: env);
+    // Blocks are used for template inheritance, see (https://jinja.palletsprojects.com/en/2.11.x/templates/#template-inheritance)
     _addBlocks(buffer, context);
     body.accept(buffer, context);
     return buffer.toString();
@@ -338,7 +341,7 @@ class Template extends Node {
   }
 }
 
-// TODO: убрать костыль
+// TODO: убрать костыль = remove/improve workaround
 // ignore: deprecated_extends_function
 class RenderWrapper extends Function {
   RenderWrapper(this.function);

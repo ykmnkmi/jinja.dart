@@ -71,7 +71,7 @@ class SetBlockStatement extends SetStatement {
     final buffer = StringBuffer(' ' * level);
     buffer.write('set $target');
 
-    // TODO: проверить: Set.toDebugString()
+    // TODO: проверить: Set.toDebugString() = check: Set.toDebugString()
     // if (filter != null) {
     //   buffer.writeln(' | ${filter.toDebugString()}');
     // } else {
