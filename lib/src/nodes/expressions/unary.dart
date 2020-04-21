@@ -17,7 +17,7 @@ class Neg extends UnaryExpression {
       return -result;
     }
 
-    // TODO: добавить: текст ошибки
+    // TODO: добавить: текст ошибки = add: error message
     throw Exception();
   }
 

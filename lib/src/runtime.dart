@@ -9,7 +9,7 @@ class Undefined {
 }
 
 class NameSpace {
-  static final Function namespace = NameSpaceFactory();
+  static final namespace = NameSpaceFactory();
 
   NameSpace([Map<String, Object> data])
       : data = data != null ? Map<String, Object>.of(data) : <String, Object>{};
@@ -52,7 +52,7 @@ class NameSpace {
   }
 }
 
-// TODO: убрать костыль
+// TODO: убрать костыль = remove/improve workaround
 // ignore: deprecated_extends_function
 class NameSpaceFactory extends Function {
   NameSpace call() {
@@ -71,8 +71,12 @@ class NameSpaceFactory extends Function {
           data.addAll(arg);
         } else if (arg is List<Object>) {
           for (var pair in arg) {
+            if (pair is Map) {
+              data.addAll(pair
+                  .map((dynamic a, dynamic b) => MapEntry(a.toString(), b)));
+              continue;
+            }
             List<Object> list;
-
             if (pair is Iterable<Object>) {
               list = pair.toList();
             } else if (pair is String) {
@@ -82,7 +86,7 @@ class NameSpaceFactory extends Function {
                   'element #${arg.indexOf(pair)} to a sequence');
             }
 
-            if (list.length < 2 || list.length > 2) {
+            if (list.length != 2) {
               throw ArgumentError(
                   'map update sequence element #${arg.indexOf(pair)}, '
                   'has length ${list.length}; 2 is required');
@@ -93,7 +97,7 @@ class NameSpaceFactory extends Function {
             }
           }
         } else {
-          // TODO: поправить: текст ошибки
+          // TODO: поправить: текст ошибки = correct: error message
           throw TypeError();
         }
       } else if (invocation.positionalArguments.length > 1) {
@@ -101,12 +105,17 @@ class NameSpaceFactory extends Function {
             'got ${invocation.positionalArguments.length}');
       }
 
-      data.addAll(invocation.namedArguments.map<String, Object>(
-          (Symbol key, Object value) =>
-              MapEntry<String, Object>(getSymbolName(key), value)));
+      invocation.namedArguments.forEach((Symbol key, Object value) {
+        if (value is Map<Symbol, Object>) {
+          data.addAll(value.map((Symbol key, Object value) =>
+              MapEntry(getSymbolName(key), value)));
+        } else {
+          data.addEntries(
+              [MapEntry<String, Object>(getSymbolName(key), value)]);
+        }
+      });
       return NameSpace(data);
     }
-
     return super.noSuchMethod(invocation);
   }
 }
@@ -136,7 +145,7 @@ class LoopContext {
   }
 }
 
-// TODO: убрать костыль
+// TODO: убрать костыль = remove/improve workaround
 // ignore: deprecated_extends_function
 class CycleWrapper extends Function {
   CycleWrapper(this.function);
@@ -148,7 +157,7 @@ class CycleWrapper extends Function {
   @override
   Object noSuchMethod(Invocation invocation) {
     if (invocation.memberName == #call) {
-      return function(invocation.positionalArguments);
+      return function(invocation.positionalArguments[0] as List<Object>);
     }
 
     return super.noSuchMethod(invocation);

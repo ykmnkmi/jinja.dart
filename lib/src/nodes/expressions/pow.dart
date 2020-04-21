@@ -23,7 +23,7 @@ class Pow extends BinaryExpression {
       return pow(left, right);
     }
 
-    // TODO: добавить: текст ошибки
+    // TODO: добавить: текст ошибки = add: error message
     throw Exception();
   }
 

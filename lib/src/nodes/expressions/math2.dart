@@ -25,7 +25,7 @@ class Mul extends BinaryExpression {
       return left * right;
     }
 
-    // TODO: добавить: текст ошибки
+    // TODO: добавить: текст ошибки = add: error message
     throw Exception();
   }
 
@@ -56,7 +56,7 @@ class Div extends BinaryExpression {
       return left / right;
     }
 
-    // TODO: добавить: текст ошибки
+    // TODO: добавить: текст ошибки = add: error message
     throw Exception();
   }
 
@@ -87,7 +87,7 @@ class FloorDiv extends BinaryExpression {
       return left ~/ right;
     }
 
-    // TODO: добавить: текст ошибки
+    // TODO: добавить: текст ошибки = add: error message
     throw Exception();
   }
 
@@ -118,7 +118,7 @@ class Mod extends BinaryExpression {
       return left % right;
     }
 
-    // TODO: добавить: текст ошибки
+    // TODO: добавить: текст ошибки = add: error message
     throw Exception();
   }
 

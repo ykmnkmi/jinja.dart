@@ -29,7 +29,7 @@ class Add extends BinaryExpression {
       return left + right;
     }
 
-    // TODO: добавить: текст ошибки
+    // TODO: добавить: текст ошибки = add: error message
     throw Exception();
   }
 
@@ -60,7 +60,7 @@ class Sub extends BinaryExpression {
       return left - right;
     }
 
-    // TODO: добавить: текст ошибки
+    // TODO: добавить: текст ошибки = add: error message
     throw Exception();
   }
 

@@ -22,7 +22,7 @@ class MoreEqual extends BinaryExpression {
       return left.compareTo(right) >= 0;
     }
 
-    // TODO: добавить: текст ошибки
+    // TODO: добавить: текст ошибки = add: error message
     throw TemplateRuntimeError();
   }
 
@@ -53,7 +53,7 @@ class More extends BinaryExpression {
       return left.compareTo(right) > 0;
     }
 
-    // TODO: добавить: текст ошибки
+    // TODO: добавить: текст ошибки = add: error message
     throw TemplateRuntimeError();
   }
 
@@ -84,7 +84,7 @@ class Less extends BinaryExpression {
       return left.compareTo(right) < 0;
     }
 
-    // TODO: добавить: текст ошибки
+    // TODO: добавить: текст ошибки = add: error message
     throw TemplateRuntimeError();
   }
 
@@ -115,7 +115,7 @@ class LessEqual extends BinaryExpression {
       return left.compareTo(right) <= 0;
     }
 
-    // TODO: добавить: текст ошибки
+    // TODO: добавить: текст ошибки = add: error message
     throw TemplateRuntimeError();
   }
 

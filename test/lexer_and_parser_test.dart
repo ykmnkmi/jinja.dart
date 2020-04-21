@@ -1,5 +1,5 @@
 import 'package:jinja/jinja.dart';
-import 'package:jinja/src/lexer.dart';
+//import 'package:jinja/src/lexer.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:test/test.dart';
 
@@ -72,11 +72,12 @@ void main() {
         expect(template.renderMap(), equals(char));
       }
 
-      // TODO: ждем: реализации в sdk
+      // TODO: ждем: реализации в sdk = waiting for a realization in the [Dart] sdk (?)
       // expect(env.fromString('{{ "\N{HOT SPRINGS}" }}').render(), equals('\u2668'));
     });
 
     // TODO: проверить: после реализации Environment.newlineSequence
+    // TODO: check: after implementing Environment.newlineSequence
     // test('normalizing', () {
     //   for (var seq in <String>['\r', '\r\n', '\n']) {
     //     final env = Environment(newlineSequence: seq);
@@ -195,6 +196,7 @@ hello
     });
 
 // TODO: проверить: после реализации строковых коментариев
+// TODO: check: after implementing comments
 //     test('lstrip angle bracket', () {
 //       final env = Environment(
 //         blockStart: '<%',
@@ -216,6 +218,7 @@ hello
 //     });
 
 // TODO: проверить: после реализации строковых коментариев
+// TODO: check: after implementing comments
 //     test('lstrip angle bracket compact', () {
 //       final env = Environment(
 //         blockStart: '<%',
@@ -258,7 +261,7 @@ hello
     test('php syntax', () {
       final env = Environment(
         blockStart: '<?',
-        blockEnd: '?>',
+        blockEnd: 'jbg',
         variableStart: '<?=',
         variableEnd: '?>',
         commentStart: '<!--',
