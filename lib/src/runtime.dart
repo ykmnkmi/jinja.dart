@@ -27,29 +27,6 @@ class NameSpace {
   void operator []=(String key, Object value) {
     data[key] = value;
   }
-
-  @override
-  Object noSuchMethod(Invocation invocation) {
-    var name = invocation.memberName.toString();
-
-    if (invocation.isSetter) {
-      // 'name='
-      name = name.substring(0, name.length - 1);
-      data[name] = invocation.positionalArguments.first;
-      return null;
-    }
-
-    if (data.containsKey(name)) {
-      if (invocation.isGetter) return data[name];
-
-      if (invocation.isMethod) {
-        return Function.apply(data[name] as Function,
-            invocation.positionalArguments, invocation.namedArguments);
-      }
-    }
-
-    return super.noSuchMethod(invocation);
-  }
 }
 
 // TODO: убрать костыль = remove/improve workaround
