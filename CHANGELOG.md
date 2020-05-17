@@ -1,3 +1,7 @@
+## 0.2.4
+
+- dart issue [41362](https://github.com/dart-lang/sdk/issues/41362)
+
 ## 0.2.3
 - access map values by field expression `map.key`
 
