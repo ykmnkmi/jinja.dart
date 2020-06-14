@@ -6,4 +6,4 @@ bin/
 pubspec.lock
 build/
 doc/api/
-**/**.exe
+**/**.py

@@ -34,21 +34,21 @@ abstract class Loader {
 /// Loads templates from the file system.  This loader can find templates
 /// in folders on the file system and is the preferred way to load them:
 ///
-///     var loader = FileSystemLoader(path: '/path/to/folder', ext: ['html', 'xml']))
+///     var loader = FileSystemLoader(path: './path/to/folder', ext: ['html', 'xml']))
 ///
-/// Default value path `/templates` and file ext. `['html']`.
+/// Default value path `./templates` and file ext. `['html']`.
 ///
 /// To follow symbolic links, set the [followLinks] parameter to `true`
 ///
-///     var loader = FileSystemLoader(path: '/path', followLinks: true)
+///     var loader = FileSystemLoader(path: './path', followLinks: true)
 ///
 class FileSystemLoader extends Loader {
   FileSystemLoader({
     this.autoReload = false,
     this.extensions = const <String>{'html'},
-    String path = '/templates',
+    String path = './templates',
     this.followLinks = true,
-  }) : directory = Directory(path) {
+  }) : directory = Directory(_path.canonicalize(path)) {
     if (!directory.existsSync()) {
       throw Exception('wrong path: $path');
     }
