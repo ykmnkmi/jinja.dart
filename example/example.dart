@@ -19,7 +19,7 @@ void main() {
     trimBlocks: true,
   );
 
-  final template = env.getTemplate('users.html');
+  final template = env.getTemplate('templates\\users.html');
 
   stdout.write(template.render(users: [
     {'fullname': 'Jhon Doe', 'email': 'jhondoe@dev.py'},

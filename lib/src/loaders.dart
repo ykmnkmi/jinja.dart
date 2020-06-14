@@ -74,6 +74,8 @@ class FileSystemLoader extends Loader {
   @override
   List<String> listSources() => directory
       .listSync(recursive: true, followLinks: followLinks)
+      .where(
+          (FileSystemEntity entity) => FileSystemEntity.isFileSync(entity.path))
       .map<String>((FileSystemEntity entity) =>
           _path.relative(entity.path, from: directory.path))
       .where((String path) =>
