@@ -10,8 +10,16 @@ void main() {
     String searchPath;
 
     setUpAll(() {
-      searchPath =
-          p.join(Platform.script.resolve('.').toFilePath(), 'res', 'templates');
+      if (Platform.script.isScheme('file')) {
+        searchPath = p.join(
+            Platform.script
+                .resolve('.')
+                .toFilePath(windows: Platform.isWindows),
+            'res',
+            'templates');
+      } else {
+        searchPath = p.join('test', 'res', 'templates');
+      }
     });
 
     void testCommon(Environment env) {
