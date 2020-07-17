@@ -146,6 +146,7 @@ class Environment {
   /// If `path` is not `null` template stored in environment cache.
   Template fromString(String source, {String path}) {
     final template = Parser(this, source, path: path).parse();
+
     if (path != null) {
       templates[path] = template;
     }
@@ -155,17 +156,21 @@ class Environment {
 
   /// If [path] not found throws `Exception`.
   Template getTemplate(String path) {
-    if (!templates.containsKey(path)) {
-      throw ArgumentError('template not found: $path');
+    if (templates.containsKey(path)) {
+      return templates[path];
     }
 
-    return templates[path];
+    print(templates);
+    throw ArgumentError('template not found: $path');
   }
 
   /// If [name] not found throws [Exception].
-  Object callFilter(Context context, String name,
-      {List<Object> args = const <Object>[],
-      Map<Symbol, Object> kwargs = const <Symbol, Object>{}}) {
+  Object callFilter(
+    Context context,
+    String name, {
+    List<Object> args = const <Object>[],
+    Map<Symbol, Object> kwargs = const <Symbol, Object>{},
+  }) {
     if (filters.containsKey(name) && filters[name] != null) {
       final filter = filters[name];
 
@@ -184,15 +189,17 @@ class Environment {
   }
 
   /// If [name] not found throws [Exception].
-  bool callTest(String name,
-      {List<Object> args = const <Object>[],
-      Map<Symbol, Object> kwargs = const <Symbol, Object>{}}) {
-    if (!tests.containsKey(name)) {
-      throw ArgumentError('test not found: $name');
+  bool callTest(
+    String name, {
+    List<Object> args = const <Object>[],
+    Map<Symbol, Object> kwargs = const <Symbol, Object>{},
+  }) {
+    if (tests.containsKey(name)) {
+      // ignore: return_of_invalid_type
+      return Function.apply(tests[name], args, kwargs) as bool;
     }
 
-    // ignore: return_of_invalid_type
-    return Function.apply(tests[name], args, kwargs);
+    throw ArgumentError('test not found: $name');
   }
 }
 
@@ -275,17 +282,21 @@ class Template extends Node {
           );
 
     _shared[config.hashCode] = env;
-    loader?.load(env);
+
+    if (loader != null) {
+      loader.load(env);
+    }
+
     return Parser(env, source).parse();
   }
 
-  Template.parsed({@required this.body, @required this.env, this.path})
+  Template.parsed(this.env, this.body, [this.path])
       : blocks = <String, BlockStatement>{} {
-    _render = RenderWrapper(([Map<String, Object> data]) => renderMap(data));
+    _render = _RenderWrapper(([Map<String, Object> data]) => renderMap(data));
   }
 
-  final Node body;
   final Environment env;
+  final Node body;
   final String path;
 
   final Map<String, BlockStatement> blocks;
@@ -296,7 +307,7 @@ class Template extends Node {
   void _addBlocks(StringSink outSink, Context context) {
     final self = NameSpace();
 
-    for (var blockEntry in blocks.entries) {
+    for (final blockEntry in blocks.entries) {
       self[blockEntry.key] = () {
         blockEntry.value.accept(outSink, context);
       };
@@ -312,11 +323,8 @@ class Template extends Node {
   }
 
   String renderMap([Map<String, Object> data]) {
-    final buffer = StringBuffer(); // StringBuffer where the output goes
-    // An environment(=settings) and data(=variables) passed by the user or derived from standard settings form a context.
-    // Contexts are often nested, they contain other contexts (scope).
+    final buffer = StringBuffer();
     final context = Context(data: data, env: env);
-    // Blocks are used for template inheritance, see (https://jinja.palletsprojects.com/en/2.11.x/templates/#template-inheritance)
     _addBlocks(buffer, context);
     body.accept(buffer, context);
     return buffer.toString();
@@ -324,6 +332,10 @@ class Template extends Node {
 
   @override
   String toString() {
+    if (path == null) {
+      return 'Template($body)';
+    }
+
     return 'Template($path, $body)';
   }
 
@@ -341,10 +353,10 @@ class Template extends Node {
   }
 }
 
-// TODO: убрать костыль = remove/improve workaround
+// TODO: remove/improve workaround
 // ignore: deprecated_extends_function
-class RenderWrapper extends Function {
-  RenderWrapper(this.function);
+class _RenderWrapper extends Function {
+  _RenderWrapper(this.function);
 
   final Function function;
 
@@ -356,7 +368,7 @@ class RenderWrapper extends Function {
   Object noSuchMethod(Invocation invocation) {
     if (invocation.memberName == #call) {
       return function(invocation.namedArguments.map<String, Object>(
-          (Symbol key, Object value) =>
+          (key, Object value) =>
               MapEntry<String, Object>(getSymbolName(key), value)));
     }
 

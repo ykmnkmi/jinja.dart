@@ -149,8 +149,7 @@ void main() {
       template = env.fromString('''
             {%- for item in range(10) if item is even %}[{{
                 loop.index }}:{{ item }}]{% endfor %}''');
-      expect(template.renderMap(),
-          '[1:0][2:2][3:4][4:6][5:8]');
+      expect(template.renderMap(), '[1:0][2:2][3:4][4:6][5:8]');
     });
 
     // TODO: добавить тест: loop unassignable = add test ..

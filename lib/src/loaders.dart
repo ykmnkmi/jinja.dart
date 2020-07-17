@@ -1,6 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 
-import 'package:path/path.dart' as _path;
+import 'package:path/path.dart' as p;
 
 import 'environment.dart';
 
@@ -22,21 +23,24 @@ abstract class Loader {
   }
 
   void load(Environment env) {
-    for (var path in listSources()) {
-      env.fromString(getSource(path), path: path);
+    for (final template in listSources()) {
+      env.fromString(getSource(template), path: template);
     }
   }
 
   @override
-  String toString() => 'Loader()';
+  String toString() {
+    return '$runtimeType';
+  }
 }
 
 /// Loads templates from the file system.  This loader can find templates
 /// in folders on the file system and is the preferred way to load them:
 ///
-///     var loader = FileSystemLoader(path: './path/to/folder', ext: ['html', 'xml']))
+///     var loader = FileSystemLoader(path: 'templates', ext: ['html', 'xml']))
+///     var loader = FileSystemLoader(paths: ['overrides/templates', 'default/templates'], ext: ['html', 'xml']))
 ///
-/// Default value path `./templates` and file ext. `['html']`.
+/// Default values for path `templates` and file ext. `['html']`.
 ///
 /// To follow symbolic links, set the [followLinks] parameter to `true`
 ///
@@ -44,63 +48,108 @@ abstract class Loader {
 ///
 class FileSystemLoader extends Loader {
   FileSystemLoader({
-    this.autoReload = false,
-    this.extensions = const <String>{'html'},
-    String path = './templates',
+    String path = 'templates',
+    List<String> paths,
     this.followLinks = true,
-  }) : directory = Directory(_path.canonicalize(path)) {
-    if (!directory.existsSync()) {
-      throw Exception('wrong path: $path');
+    this.extensions = const <String>{'html'},
+    this.encoding = utf8,
+    this.autoReload = false,
+  }) : paths = paths ?? <String>[path] {
+    for (final path in this.paths) {
+      if (!FileSystemEntity.isDirectorySync(path)) {
+        // TODO: improve error message
+        throw Exception('folder must be exist: $path');
+      }
     }
   }
 
-  final bool autoReload;
-  final Set<String> extensions;
-  final Directory directory;
+  final List<String> paths;
   final bool followLinks;
+  final Set<String> extensions;
+  final Encoding encoding;
+  final bool autoReload;
+
+  @deprecated
+  Directory get directory => Directory(paths.last);
 
   @override
-  String getSource(String path) {
-    final templatePath = _path.join(directory.path, path);
-    final templateFile = File(templatePath);
+  String getSource(String template) {
+    String contents;
 
-    if (!templateFile.existsSync()) {
-      throw Exception('template not found: $path');
+    for (final path in paths) {
+      final templatePath = p.join(path, template);
+      final templateFile = File(templatePath);
+
+      if (templateFile.existsSync()) {
+        contents = templateFile.readAsStringSync(encoding: encoding);
+      }
     }
 
-    return templateFile.readAsStringSync();
+    if (contents == null) {
+      // TODO: improve error message
+      throw Exception('template not found: $template');
+    }
+
+    return contents;
   }
 
   @override
-  List<String> listSources() => directory
-      .listSync(recursive: true, followLinks: followLinks)
-      .where(
-          (FileSystemEntity entity) => FileSystemEntity.isFileSync(entity.path))
-      .map<String>((FileSystemEntity entity) =>
-          _path.relative(entity.path, from: directory.path))
-      .where((String path) =>
-          extensions.contains(_path.extension(path).substring(1)))
-      .toList();
+  List<String> listSources() {
+    final found = <String>[];
+
+    for (final path in paths) {
+      final directory = Directory(path);
+
+      if (directory.existsSync()) {
+        final entities =
+            directory.listSync(recursive: true, followLinks: followLinks);
+
+        for (final entity in entities) {
+          var template = p.relative(entity.path, from: path);
+          var ext = p.extension(template);
+
+          if (ext.isNotEmpty) {
+            ext = ext.substring(1);
+          }
+
+          if (FileSystemEntity.typeSync(entity.path) ==
+                  FileSystemEntityType.file &&
+              extensions.contains(ext)) {
+            template = template.replaceAll(p.separator, '/');
+
+            if (!found.contains(template)) {
+              found.add(template);
+            }
+          }
+        }
+      }
+    }
+
+    found.sort();
+    return found;
+  }
 
   @override
   void load(Environment env) {
     super.load(env);
 
     if (autoReload) {
-      directory
-          .watch(recursive: true)
-          .where(
-              (FileSystemEvent event) => event.type == FileSystemEvent.modify)
-          .listen((FileSystemEvent event) {
-        final path = _path.relative(event.path, from: directory.path);
-        env.fromString(getSource(path), path: path);
-      });
+      for (final path in paths) {
+        Directory(path)
+            .watch(recursive: true)
+            .where((event) => event.type == FileSystemEvent.modify)
+            .listen((event) {
+          final template = p.relative(event.path, from: path);
+          env.fromString(getSource(template), path: template);
+        });
+        ;
+      }
     }
   }
 
   @override
   String toString() {
-    return 'FileSystemLoader($directory)';
+    return 'FileSystemLoader($paths)';
   }
 }
 
@@ -113,12 +162,12 @@ class FileSystemLoader extends Loader {
 /// Because auto reloading is rarely useful this is disabled per default.
 ///
 class MapLoader extends Loader {
-  MapLoader(this.dict);
+  MapLoader(this.dict) : hasSourceAccess = false;
 
   final Map<String, String> dict;
 
   @override
-  final bool hasSourceAccess = false;
+  final bool hasSourceAccess;
 
   @override
   List<String> listSources() {

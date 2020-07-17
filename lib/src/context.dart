@@ -16,12 +16,11 @@ class Context {
   final ExtendedBlockContext blockContext;
 
   bool has(String name) {
-    return contexts
-        .any((Map<String, Object> context) => context.containsKey(name));
+    return contexts.any((context) => context.containsKey(name));
   }
 
   bool removeLast(String name) {
-    for (var context in contexts.reversed) {
+    for (final context in contexts.reversed) {
       if (context.containsKey(name)) {
         context.remove(name);
         return true;
@@ -32,7 +31,7 @@ class Context {
   }
 
   Object operator [](String key) {
-    for (var context in contexts.reversed) {
+    for (final context in contexts.reversed) {
       if (context.containsKey(key)) {
         return context[key];
       }
@@ -49,11 +48,13 @@ class Context {
     contexts.last[key] = value;
   }
 
-  void push([Map<String, Object> context = const <String, Object>{}]) {
+  void push(Map<String, Object> context) {
     contexts.add(context);
   }
 
-  Map<String, Object> pop() => contexts.removeLast();
+  void pop() {
+    contexts.removeLast();
+  }
 
   void apply(Map<String, Object> data, ContextFn closure) {
     push(data);

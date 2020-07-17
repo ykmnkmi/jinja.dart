@@ -189,7 +189,6 @@ Markup doEscape(Object value) {
   return value is Markup ? value : Markup.escape(value.toString());
 }
 
-// TODO: проверить: текст ошибки = check: error message
 String doFileSizeFormat(Object value, [bool binary = false]) {
   final bytes =
       value is num ? value.toDouble() : double.parse(value.toString());
