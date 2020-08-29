@@ -7,15 +7,15 @@ import 'nodes.dart';
 import 'parser.dart';
 import 'runtime.dart';
 
-typedef FieldGetter = Object Function(Object object, String field);
-typedef ItemGetter = Object Function(Object object, Object key);
+typedef FieldGetter = Object? Function(Object object, String field);
+typedef ItemGetter = Object? Function(Object object, Object key);
 
-Object defaultFieldGetter(Object object, String field) {
+Object? defaultFieldGetter(Object object, String field) {
   return null;
 }
 
-Object defaultItemGetter(Object object, Object key) {
-  if (object is List<Object>) {
+Object? defaultItemGetter(Object object, Object key) {
+  if (object is List<Object?>) {
     return object.asMap()[key];
   }
 
@@ -28,7 +28,7 @@ Object defaultItemGetter(Object object, Object key) {
 
 typedef Finalizer = Object Function(Object value);
 
-Object defaultFinalizer(Object value) {
+Object defaultFinalizer(Object? value) {
   value ??= '';
 
   if (value is String) {
@@ -62,7 +62,7 @@ class Environment {
     Undefined undefined = const Undefined(),
     Finalizer finalize = defaultFinalizer,
     bool autoEscape = false,
-    Loader loader,
+    Loader? loader,
     Map<String, Function> filters = const <String, Function>{},
     Map<String, Function> envFilters = const <String, Function>{},
     Map<String, Function> tests = const <String, Function>{},
@@ -120,31 +120,31 @@ class Environment {
     this.getItem,
   }) : templates = <String, Template>{};
 
-  final String blockStart;
-  final String blockEnd;
-  final String variableStart;
-  final String variableEnd;
-  final String commentStart;
-  final String commentEnd;
-  final bool trimBlocks;
-  final bool leftStripBlocks;
-  final bool keepTrailingNewLine;
-  final bool optimize;
-  final Undefined undefined;
-  final Finalizer finalize;
-  final bool autoEscape;
-  final bool shared;
+  final String? blockStart;
+  final String? blockEnd;
+  final String? variableStart;
+  final String? variableEnd;
+  final String? commentStart;
+  final String? commentEnd;
+  final bool? trimBlocks;
+  final bool? leftStripBlocks;
+  final bool? keepTrailingNewLine;
+  final bool? optimize;
+  final Undefined? undefined;
+  final Finalizer? finalize;
+  final bool? autoEscape;
+  final bool? shared;
   final Map<String, Function> filters;
   final Map<String, Function> tests;
   final Map<String, Object> globals;
 
-  final FieldGetter getField;
-  final ItemGetter getItem;
+  final FieldGetter? getField;
+  final ItemGetter? getItem;
 
   final Map<String, Template> templates;
 
   /// If `path` is not `null` template stored in environment cache.
-  Template fromString(String source, {String path}) {
+  Template fromString(String source, {String? path}) {
     final template = Parser(this, source, path: path).parse();
 
     if (path != null) {
@@ -157,7 +157,7 @@ class Environment {
   /// If [path] not found throws `Exception`.
   Template getTemplate(String path) {
     if (templates.containsKey(path)) {
-      return templates[path];
+      return templates[path]!;
     }
 
     print(templates);
@@ -165,14 +165,14 @@ class Environment {
   }
 
   /// If [name] not found throws [Exception].
-  Object callFilter(
+  Object? callFilter(
     Context context,
     String name, {
     List<Object> args = const <Object>[],
     Map<Symbol, Object> kwargs = const <Symbol, Object>{},
   }) {
     if (filters.containsKey(name) && filters[name] != null) {
-      final filter = filters[name];
+      final filter = filters[name]!;
 
       switch (filter.filterType) {
         case FilterType.context:
@@ -196,7 +196,7 @@ class Environment {
   }) {
     if (tests.containsKey(name)) {
       // ignore: return_of_invalid_type
-      return Function.apply(tests[name], args, kwargs) as bool;
+      return Function.apply(tests[name]!, args, kwargs) as bool;
     }
 
     throw ArgumentError('test not found: $name');
@@ -228,14 +228,14 @@ class Template extends Node {
     Undefined undefined = const Undefined(),
     Finalizer finalize = defaultFinalizer,
     bool autoEscape = false,
-    Loader loader,
+    Loader? loader,
     Map<String, Function> filters = const <String, Function>{},
     Map<String, Function> tests = const <String, Function>{},
     Map<String, Object> globals = const <String, Object>{},
     FieldGetter getField = defaultFieldGetter,
     ItemGetter getItem = defaultItemGetter,
   }) {
-    final config = <Object>{
+    final config = <Object?>{
       blockStart,
       blockEnd,
       variableStart,
@@ -258,7 +258,7 @@ class Template extends Node {
     };
 
     final env = _shared.containsKey(config)
-        ? _shared[config.hashCode]
+        ? _shared[config.hashCode]!
         : Environment._(
             blockStart: blockStart,
             blockEnd: blockEnd,
@@ -292,12 +292,12 @@ class Template extends Node {
 
   Template.parsed(this.env, this.body, [this.path])
       : blocks = <String, BlockStatement>{} {
-    _render = _RenderWrapper(([Map<String, Object> data]) => renderMap(data));
+    _render = _RenderWrapper(([Map<String, Object>? data]) => renderMap(data));
   }
 
   final Environment env;
   final Node body;
-  final String path;
+  final String? path;
 
   final Map<String, BlockStatement> blocks;
 
@@ -322,7 +322,7 @@ class Template extends Node {
     body.accept(outSink, context);
   }
 
-  String renderMap([Map<String, Object> data]) {
+  String renderMap([Map<String, Object>? data]) {
     final buffer = StringBuffer();
     final context = Context(data: data, env: env);
     _addBlocks(buffer, context);
@@ -360,16 +360,16 @@ class _RenderWrapper extends Function {
 
   final Function function;
 
-  Object call() {
+  Object? call() {
     return function();
   }
 
   @override
-  Object noSuchMethod(Invocation invocation) {
+  Object? noSuchMethod(Invocation invocation) {
     if (invocation.memberName == #call) {
-      return function(invocation.namedArguments.map<String, Object>(
-          (key, Object value) =>
-              MapEntry<String, Object>(getSymbolName(key), value)));
+      return function(invocation.namedArguments.map<String, Object?>(
+          (Symbol key, Object? value) =>
+              MapEntry<String, Object?>(getSymbolName(key), value)));
     }
 
     return super.noSuchMethod(invocation);

@@ -33,7 +33,7 @@ class Token {
 
   final int line;
   final TokenType type;
-  final String value;
+  final String? value;
 
   @override
   String toString() => '$type${value == null ? '' : '|$value'}';
@@ -95,7 +95,7 @@ class Lexer {
     rules
       ..addAll(tagRules.map<Rule>((tagRule) => tagRule[1] as Rule))
       ..add(Rule.scan(spaceRe,
-          (scanner) => Token.space(scanner.line, scanner.lastMatch[0])))
+          (scanner) => Token.space(scanner.line, scanner.lastMatch![0]!)))
       ..add(Rule.scan(newLineRe, (scanner) => Token.newLine(scanner.line)));
   }
 

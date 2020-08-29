@@ -5,26 +5,29 @@ class Undefined {
   const Undefined();
 
   @override
-  String toString() => '';
+  String toString() {
+    return '';
+  }
 }
 
 class NameSpace {
   static final namespace = NameSpaceFactory();
 
-  NameSpace([Map<String, Object> data])
-      : data = data != null ? Map<String, Object>.of(data) : <String, Object>{};
+  NameSpace([Map<String, Object?>? data])
+      : data =
+            data != null ? Map<String, Object?>.of(data) : <String, Object?>{};
 
-  final Map<String, Object> data;
+  final Map<String, Object?> data;
 
-  Iterable<MapEntry<String, Object>> get entries {
+  Iterable<MapEntry<String, Object?>> get entries {
     return data.entries;
   }
 
-  Object operator [](String key) {
+  Object? operator [](String key) {
     return data[key];
   }
 
-  void operator []=(String key, Object value) {
+  void operator []=(String key, Object? value) {
     data[key] = value;
   }
 }
@@ -37,12 +40,12 @@ class NameSpaceFactory extends Function {
   }
 
   @override
-  Object noSuchMethod(Invocation invocation) {
+  Object? noSuchMethod(Invocation invocation) {
     if (invocation.memberName == #call) {
-      final data = <String, Object>{};
+      final data = <String, Object?>{};
 
       if (invocation.positionalArguments.length == 1) {
-        final Object arg = invocation.positionalArguments.first;
+        final Object? arg = invocation.positionalArguments.first;
 
         if (arg is Map<String, Object>) {
           data.addAll(arg);
@@ -82,13 +85,13 @@ class NameSpaceFactory extends Function {
             'got ${invocation.positionalArguments.length}');
       }
 
-      invocation.namedArguments.forEach((Symbol key, Object value) {
-        if (value is Map<Symbol, Object>) {
-          data.addAll(value.map((Symbol key, Object value) =>
-              MapEntry(getSymbolName(key), value)));
+      invocation.namedArguments.forEach((Symbol key, Object? value) {
+        if (value is Map<Symbol, Object?>) {
+          data.addAll(value.map((Symbol key, Object? value) =>
+              MapEntry<String, Object?>(getSymbolName(key), value)));
         } else {
           data.addEntries(
-              [MapEntry<String, Object>(getSymbolName(key), value)]);
+              [MapEntry<String, Object?>(getSymbolName(key), value)]);
         }
       });
       return NameSpace(data);
@@ -118,7 +121,7 @@ class LoopContext {
   final Map<String, Object> data;
 
   Object operator [](String key) {
-    return data[key];
+    return data[key]!;
   }
 }
 
@@ -132,7 +135,7 @@ class CycleWrapper extends Function {
   Object call();
 
   @override
-  Object noSuchMethod(Invocation invocation) {
+  Object? noSuchMethod(Invocation invocation) {
     if (invocation.memberName == #call) {
       return function(invocation.positionalArguments[0] as List<Object>);
     }

@@ -38,7 +38,7 @@ class Parser {
         _templateModifiers = <TemplateModifier>[];
 
   final Environment environment;
-  final String path;
+  final String? path;
   final SpanScanner scanner;
   final RegExp blockStartReg;
   final RegExp blockEndReg;
@@ -72,7 +72,7 @@ class Parser {
   }
 
   @alwaysThrows
-  void error(String message, [LineScannerState state]) {
+  void error(String message, [LineScannerState? state]) {
     throw TemplateSyntaxError(
       message,
       path: path,
@@ -81,38 +81,40 @@ class Parser {
     );
   }
 
-  String expected(Pattern pattern, {int match = 1, String name}) {
-    if (scanner.scan(pattern)) {
-      return scanner.lastMatch[match];
-    }
-
-    if (name == null) {
-      if (pattern is RegExp) {
-        final source = pattern.pattern;
-        name = '/$source/';
-      } else {
-        name = '$pattern'.replaceAll('\\', '\\\\').replaceAll('"', '\\"');
-        name = '"$name"';
+  String expected(Pattern pattern, {int match = 1, String? name}) {
+    if (!scanner.scan(pattern)) {
+      if (name == null) {
+        if (pattern is RegExp) {
+          final source = pattern.pattern;
+          name = '/$source/';
+        } else {
+          name = '$pattern'.replaceAll('\\', '\\\\').replaceAll('"', '\\"');
+          name = '"$name"';
+        }
       }
+
+      error('$name expected');
     }
 
-    error('$name expected');
+    return scanner.lastMatch![match]!;
   }
 
-  void expect(Pattern pattern, {String name}) {
-    if (scanner.scan(pattern)) return;
-
-    if (name == null) {
-      if (pattern is RegExp) {
-        final source = pattern.pattern;
-        name = '/$source/';
-      } else {
-        name = '$pattern'.replaceAll('\\', '\\\\').replaceAll('"', '\\"');
-        name = '"$name"';
+  void expect(Pattern pattern, {String? name}) {
+    if (!scanner.scan(pattern)) {
+      if (name == null) {
+        if (pattern is RegExp) {
+          final source = pattern.pattern;
+          name = '/$source/';
+        } else {
+          name = '$pattern'.replaceAll('\\', '\\\\').replaceAll('"', '\\"');
+          name = '"$name"';
+        }
       }
+
+      error('$name expected');
     }
 
-    error('$name expected');
+    return;
   }
 
   Template parse() {

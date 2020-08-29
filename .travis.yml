@@ -3,14 +3,19 @@ language: dart
 dart:
   - dev
 
-os:
-  - linux
-  - windows
-  # - osx
+jobs:
+  include:
+    - stage: test
+      name: "vm tests"
+      dart: be/raw/latest
+      os: linux
+      script: pub run --enable-experiment=non-nullable test -p vm
 
-dart_task:
-  - dartanalyzer: --fatal-infos --fatal-warnings .
-  - test: .
+stages:
+  - test
+
+branches:
+  only: [master, null_safety]
 
 cache:
   directories:

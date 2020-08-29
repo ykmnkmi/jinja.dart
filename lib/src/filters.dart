@@ -13,11 +13,11 @@ enum FilterType {
 }
 
 extension FilterFunction on Function {
-  FilterType get filterType {
+  FilterType? get filterType {
     return _filterTypes[this];
   }
 
-  set filterType(FilterType type) {
+  set filterType(FilterType? type) {
     _filterTypes[this] = type;
   }
 }
@@ -25,11 +25,11 @@ extension FilterFunction on Function {
 typedef AttrGetter = Object Function(Object object);
 
 AttrGetter makeAttribute(Environment environment, String attribute,
-    {Object Function(Object) postprocess, Object d}) {
+    {Object Function(Object)? postProcess, Object? d}) {
   final attributes = prepareAttributeParts(attribute);
 
   Object attributeGetter(Object item) {
-    for (var part in attributes) {
+    for (final part in attributes) {
       item = doAttr(environment, item, part);
 
       if (item is Undefined) {
@@ -41,8 +41,8 @@ AttrGetter makeAttribute(Environment environment, String attribute,
       }
     }
 
-    if (postprocess != null) {
-      item = postprocess(item);
+    if (postProcess != null) {
+      item = postProcess(item);
     }
 
     return item;
@@ -126,10 +126,10 @@ Object doAttr(Environment environment, Object value, String attribute) {
 }
 
 Iterable<List<Object>> doBatch(Iterable<Object> values, int lineCount,
-    [Object fillWith]) sync* {
+    [Object? fillWith]) sync* {
   var tmp = <Object>[];
 
-  for (var item in values) {
+  for (final item in values) {
     if (tmp.length == lineCount) {
       yield tmp;
       tmp = <Object>[];
@@ -161,7 +161,7 @@ String doCenter(String value, int width) {
   return pad + value + pad;
 }
 
-int doCount(Object value) {
+int? doCount(Object value) {
   if (value is String) {
     return value.length;
   }
@@ -212,7 +212,7 @@ String doFileSizeFormat(Object value, [bool binary = false]) {
     return '${size.endsWith('.0') ? size.substring(0, size.length - 2) : size} Bytes';
   } else {
     final k = binary ? 0 : 1;
-    num unit;
+    late num unit;
 
     for (var i = 0; i < prefixes.length; i++) {
       unit = pow(base, i + 2);
@@ -251,7 +251,7 @@ int doInt(Object value, [int d = 0, int base = 10]) {
 }
 
 String doJoin(Environment environment, Iterable<Object> values,
-    [String d = '', String attribute]) {
+    [String d = '', String? attribute]) {
   if (attribute != null) {
     return values.map<Object>(makeAttribute(environment, attribute)).join(d);
   }
@@ -264,7 +264,7 @@ Object doLast(Iterable<Object> values) {
 }
 
 List<Object> doList(Object value) {
-  if (value is Iterable) {
+  if (value is Iterable<Object>) {
     return value.toList();
   }
 
@@ -290,7 +290,7 @@ String doString(Object value) {
 }
 
 num doSum(Environment environment, Iterable<Object> values,
-    {String attribute, num start = 0}) {
+    {String? attribute, num start = 0}) {
   if (attribute != null) {
     values = values.map<Object>(makeAttribute(environment, attribute));
   }

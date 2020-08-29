@@ -1,7 +1,7 @@
 class TemplateError extends Error {
   TemplateError([this.message]);
 
-  final Object message;
+  final Object? message;
 
   @override
   String toString() {
@@ -14,7 +14,7 @@ class TemplateError extends Error {
 }
 
 class TemplateNotFound extends TemplateError {
-  TemplateNotFound([String message]) : super(message);
+  TemplateNotFound([String? message]) : super(message);
 
   @override
   String toString() {
@@ -27,7 +27,7 @@ class TemplateNotFound extends TemplateError {
 }
 
 class TemplatesNotFound extends TemplateNotFound {
-  TemplatesNotFound([String message]) : super(message);
+  TemplatesNotFound([String? message]) : super(message);
 
   @override
   String toString() {
@@ -40,13 +40,12 @@ class TemplatesNotFound extends TemplateNotFound {
 }
 
 class TemplateSyntaxError extends TemplateError {
-  TemplateSyntaxError(String message, {this.path, int line, this.column})
-      : line = line + 1,
-        super(message);
+  TemplateSyntaxError(String message, {this.path, this.line, this.column})
+      : super(message);
 
-  final Object path;
-  final int line;
-  final int column;
+  final Object? path;
+  final int? line;
+  final int? column;
 
   @override
   String toString() {
@@ -56,7 +55,7 @@ class TemplateSyntaxError extends TemplateError {
     }
 
     if (line != null) {
-      buffer.write(' on line $line');
+      buffer.write(' on line ${line! + 1}');
       if (column != null) buffer.write(' column $column');
     }
 
@@ -66,7 +65,7 @@ class TemplateSyntaxError extends TemplateError {
 }
 
 class TemplateRuntimeError extends TemplateError {
-  TemplateRuntimeError([String message]) : super(message);
+  TemplateRuntimeError([String? message]) : super(message);
 
   @override
   String toString() {
@@ -79,7 +78,7 @@ class TemplateRuntimeError extends TemplateError {
 }
 
 class UndefinedError extends TemplateRuntimeError {
-  UndefinedError([String message]) : super(message);
+  UndefinedError([String? message]) : super(message);
 
   @override
   String toString() {

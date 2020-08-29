@@ -49,7 +49,7 @@ abstract class Loader {
 class FileSystemLoader extends Loader {
   FileSystemLoader({
     String path = 'templates',
-    List<String> paths,
+    List<String>? paths,
     this.followLinks = true,
     this.extensions = const <String>{'html'},
     this.encoding = utf8,
@@ -74,7 +74,7 @@ class FileSystemLoader extends Loader {
 
   @override
   String getSource(String template) {
-    String contents;
+    String? contents;
 
     for (final path in paths) {
       final templatePath = p.join(path, template);
@@ -177,7 +177,7 @@ class MapLoader extends Loader {
   @override
   String getSource(String path) {
     if (dict.containsKey(path)) {
-      return dict[path];
+      return dict[path]!;
     }
 
     throw Exception('template not found: $path');

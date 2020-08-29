@@ -6,7 +6,7 @@ Iterable<int> range(int n) sync* {
   }
 }
 
-bool toBool(Object value) {
+bool toBool(Object? value) {
   if (value is Undefined || value == null) return false;
   if (value is bool) return value;
   if (value is num) return value != 0.0;
@@ -17,13 +17,13 @@ bool toBool(Object value) {
 }
 
 String repr(Object object, [bool reprString = true]) {
-  if (object is Iterable) {
+  if (object is Iterable<Object>) {
     final buffer = StringBuffer();
     buffer.write('[');
     buffer.writeAll(object.map<String>(repr), ', ');
     buffer.write(']');
     return '$buffer';
-  } else if (object is Map) {
+  } else if (object is Map<Object, Object>) {
     final buffer = StringBuffer();
     buffer.write('{');
     buffer.writeAll(object.entries.map<String>((entry) {

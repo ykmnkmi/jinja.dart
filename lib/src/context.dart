@@ -4,7 +4,7 @@ import 'nodes.dart';
 typedef ContextFn = void Function(Context context);
 
 class Context {
-  Context({Map<String, Object> data, Environment env})
+  Context({Map<String, Object>? data, Environment? env})
       : contexts = data != null
             ? <Map<String, Object>>[data]
             : <Map<String, Object>>[<String, Object>{}],
@@ -30,7 +30,7 @@ class Context {
     return false;
   }
 
-  Object operator [](String key) {
+  Object? operator [](String key) {
     for (final context in contexts.reversed) {
       if (context.containsKey(key)) {
         return context[key];
