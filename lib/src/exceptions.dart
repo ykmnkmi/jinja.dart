@@ -1,7 +1,7 @@
 class TemplateError extends Error {
   TemplateError([this.message]);
 
-  final Object? message;
+  final dynamic message;
 
   @override
   String toString() {
@@ -14,7 +14,7 @@ class TemplateError extends Error {
 }
 
 class TemplateNotFound extends TemplateError {
-  TemplateNotFound([String? message]) : super(message);
+  TemplateNotFound([dynamic message]) : super(message);
 
   @override
   String toString() {
@@ -27,7 +27,7 @@ class TemplateNotFound extends TemplateError {
 }
 
 class TemplatesNotFound extends TemplateNotFound {
-  TemplatesNotFound([String? message]) : super(message);
+  TemplatesNotFound([dynamic message]) : super(message);
 
   @override
   String toString() {
@@ -65,7 +65,7 @@ class TemplateSyntaxError extends TemplateError {
 }
 
 class TemplateRuntimeError extends TemplateError {
-  TemplateRuntimeError([String? message]) : super(message);
+  TemplateRuntimeError([dynamic message]) : super(message);
 
   @override
   String toString() {

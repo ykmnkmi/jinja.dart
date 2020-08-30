@@ -5,14 +5,15 @@ import '../core.dart';
 
 abstract class SetStatement extends Statement {
   String get target;
-  String get field;
 
-  void assign(Context context, Object value) {
+  String? get field;
+
+  void assign(Context context, dynamic value) {
     if (field != null) {
       final nameSpace = context[target];
 
       if (nameSpace is NameSpace) {
-        nameSpace[field] = value;
+        nameSpace[field!] = value;
         return;
       }
 
@@ -27,12 +28,12 @@ class SetInlineStatement extends SetStatement {
   SetInlineStatement(this.target, this.value, {this.field});
 
   @override
-  final target;
-
-  @override
-  final field;
+  final String target;
 
   final Expression value;
+
+  @override
+  final String? field;
 
   @override
   void accept(StringSink outSink, Context context) {
@@ -41,7 +42,12 @@ class SetInlineStatement extends SetStatement {
 
   @override
   String toDebugString([int level = 0]) {
-    return '${' ' * level}set $target = ${value.toDebugString()}';
+    final buffer = StringBuffer(' ' * level)
+      ..write('set ')
+      ..write(target)
+      ..write(' = ')
+      ..write(value.toDebugString());
+    return buffer.toString();
   }
 
   @override
@@ -54,12 +60,12 @@ class SetBlockStatement extends SetStatement {
   SetBlockStatement(this.target, this.body, {this.field});
 
   @override
-  final target;
-
-  @override
-  final field;
+  final String target;
 
   final Node body;
+
+  @override
+  final String? field;
 
   @override
   void accept(StringSink outSink, Context context) {
@@ -68,18 +74,18 @@ class SetBlockStatement extends SetStatement {
 
   @override
   String toDebugString([int level = 0]) {
-    final buffer = StringBuffer(' ' * level);
-    buffer.write('set $target');
+    final buffer = StringBuffer(' ' * level)
+      ..write('set ')
+      ..write(target)
+      ..write(body.toDebugString(level + 1));
+    return buffer.toString();
 
-    // TODO: проверить: Set.toDebugString() = check: Set.toDebugString()
+    // TODO: check: Set.toDebugString()
     // if (filter != null) {
     //   buffer.writeln(' | ${filter.toDebugString()}');
     // } else {
     //   buffer.writeln();
     // }
-
-    buffer.write(body.toDebugString(level + 1));
-    return buffer.toString();
   }
 
   @override

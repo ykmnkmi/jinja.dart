@@ -6,11 +6,12 @@ class FilterBlockStatement extends Statement {
   FilterBlockStatement(this.filters, this.body);
 
   final List<Filter> filters;
+
   final Node body;
 
   @override
   void accept(StringSink outSink, Context context) {
-    Object result;
+    var result;
 
     if (body is Expression) {
       result = (body as Expression).resolve(context);
@@ -20,7 +21,7 @@ class FilterBlockStatement extends Statement {
       result = temp.toString();
     }
 
-    for (var filter in filters) {
+    for (final filter in filters) {
       result = filter.filter(context, result);
     }
 
@@ -30,16 +31,20 @@ class FilterBlockStatement extends Statement {
   @override
   String toDebugString([int level = 0]) {
     final buffer = StringBuffer(' ' * level);
-    buffer.write('filter ${filters.first.toDebugString()}');
+    buffer..write('filter ')..write(filters.first.toDebugString());
 
-    for (var filter in filters.sublist(1)) {
-      buffer.write(' | ${filter.toDebugString()}');
+    for (final filter in filters.sublist(1)) {
+      buffer..write(' | ')..write(filter.toDebugString());
     }
 
-    buffer.write('\n${body.toDebugString(level + 1)}');
+    buffer
+      ..writeln()
+      ..write(body.toDebugString(level + 1));
     return buffer.toString();
   }
 
   @override
-  String toString() => 'FilterBlock($filters, $body)';
+  String toString() {
+    return 'FilterBlock($filters, $body)';
+  }
 }

@@ -20,17 +20,16 @@ class Interpolation extends Statement {
 
   @override
   void accept(StringSink outSink, Context context) {
-    for (var node in nodes) {
+    for (final node in nodes) {
       node.accept(outSink, context);
     }
   }
 
   @override
   String toDebugString([int level = 0]) {
-    final buffer = StringBuffer(' ' * level);
-    buffer.writeln('# interpolation');
-    buffer.writeAll(
-        nodes.map<String>((Node node) => node.toDebugString(level + 1)), '\n');
+    final buffer = StringBuffer(' ' * level)
+      ..writeln('# interpolation')
+      ..writeAll(nodes.map((node) => node.toDebugString(level + 1)), '\n');
     return buffer.toString();
   }
 

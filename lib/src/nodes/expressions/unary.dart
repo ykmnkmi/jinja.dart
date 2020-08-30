@@ -10,20 +10,23 @@ class Neg extends UnaryExpression {
   final String symbol;
 
   @override
-  Object resolve(Context context) {
+  dynamic resolve(Context context) {
     final result = expr.resolve(context);
 
     if (result is num) {
       return -result;
     }
 
-    // TODO: добавить: текст ошибки = add: error message
+    // TODO: add: error message
     throw Exception();
   }
 
   @override
   String toDebugString([int level = 0]) {
-    return '${' ' * level}-${expr.toDebugString()}';
+    final buffer = StringBuffer(' ' * level)
+      ..write('-')
+      ..write(expr.toDebugString());
+    return buffer.toString();
   }
 
   @override

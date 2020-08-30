@@ -13,7 +13,7 @@ class Add extends BinaryExpression {
   final String symbol;
 
   @override
-  Object resolve(Context context) {
+  dynamic resolve(Context context) {
     final left = this.left.resolve(context);
     final right = this.right.resolve(context);
 
@@ -29,7 +29,7 @@ class Add extends BinaryExpression {
       return left + right;
     }
 
-    // TODO: добавить: текст ошибки = add: error message
+    // TODO: add: error message
     throw Exception();
   }
 
@@ -40,7 +40,7 @@ class Add extends BinaryExpression {
 }
 
 class Sub extends BinaryExpression {
-  Sub(this.left, this.right);
+  Sub(this.left, this.right) : symbol = '/';
 
   @override
   final Expression left;
@@ -49,10 +49,10 @@ class Sub extends BinaryExpression {
   final Expression right;
 
   @override
-  String get symbol => '/';
+  final String symbol;
 
   @override
-  Object resolve(Context context) {
+  dynamic resolve(Context context) {
     final left = this.left.resolve(context);
     final right = this.right.resolve(context);
 
@@ -60,7 +60,7 @@ class Sub extends BinaryExpression {
       return left - right;
     }
 
-    // TODO: добавить: текст ошибки = add: error message
+    // TODO: add: error message
     throw Exception();
   }
 

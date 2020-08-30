@@ -85,7 +85,7 @@ void main() {
       final template = env.fromString('''{% for item in seq -%}
             {{ loop.changed(item) }},
         {%- endfor %}''');
-      expect(template.render(seq: <int>[null, null, 1, 2, 2, 3, 4, 4, 4]),
+      expect(template.render(seq: <int?>[null, null, 1, 2, 2, 3, 4, 4, 4]),
           equals('true,false,true,true,false,true,true,false,false,'));
     });
 

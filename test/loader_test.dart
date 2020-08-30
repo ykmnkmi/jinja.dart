@@ -7,7 +7,7 @@ import 'package:test/test.dart' hide escape;
 
 void main() {
   group('FileSystemLoader', () {
-    String searchPath;
+    late String searchPath;
 
     setUpAll(() {
       if (Platform.script.isScheme('file')) {

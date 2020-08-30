@@ -4,23 +4,22 @@ import '../../exceptions.dart';
 import '../core.dart';
 
 class IncludeStatement extends Statement {
-  IncludeStatement(
-    this.paths, {
-    this.ignoreMissing = false,
-    this.withContext = true,
-  });
+  IncludeStatement(this.paths,
+      {this.ignoreMissing = false, this.withContext = true});
 
   final Expression paths;
+
   final bool ignoreMissing;
+
   final bool withContext;
 
   @override
   void accept(StringSink outSink, Context context) {
     final oneOrList = paths.resolve(context);
-    Template template;
+    Template? template;
 
-    if (oneOrList is List<Object>) {
-      for (var path in oneOrList) {
+    if (oneOrList is List) {
+      for (final path in oneOrList) {
         if (path is String) {
           template = context.environment.templates[path];
         } else if (path is Template) {
@@ -41,7 +40,7 @@ class IncludeStatement extends Statement {
       if (withContext) {
         template.accept(outSink, context);
       } else {
-        template.accept(outSink, Context(env: context.environment));
+        template.accept(outSink, Context(context.environment));
       }
     } else if (!ignoreMissing) {
       throw TemplatesNotFound();
@@ -51,7 +50,7 @@ class IncludeStatement extends Statement {
   @override
   String toDebugString([int level = 0]) {
     final buffer = StringBuffer(' ' * level);
-    buffer.write('inlcude ${paths.toDebugString()}');
+    buffer..write('inlcude ')..write(paths.toDebugString());
 
     if (!withContext) {
       buffer.write(' without context');
@@ -65,5 +64,7 @@ class IncludeStatement extends Statement {
   }
 
   @override
-  String toString() => 'Include($paths)';
+  String toString() {
+    return 'Include($paths)';
+  }
 }

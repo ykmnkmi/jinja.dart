@@ -5,8 +5,10 @@ class Condition extends Expression {
   Condition(this.test, this.expr1, [this.expr2]);
 
   final Test test;
+
   final Expression expr1;
-  final Expression expr2;
+
+  final Expression? expr2;
 
   @override
   dynamic resolve(Context context) {
@@ -15,7 +17,7 @@ class Condition extends Expression {
     }
 
     if (expr2 != null) {
-      return expr2.resolve(context);
+      return expr2!.resolve(context);
     }
 
     return null;
@@ -26,10 +28,18 @@ class Condition extends Expression {
     final buffer = StringBuffer(' ' * level);
 
     if (expr2 != null) {
-      buffer.write('${expr1.toDebugString()} ');
-      buffer.write('if ${test.toDebugString()} or ${expr2.toDebugString()}');
+      buffer
+        ..write(expr1.toDebugString())
+        ..write(' ')
+        ..write('if ')
+        ..write(test.toDebugString())
+        ..write(' or ')
+        ..write(expr2!.toDebugString());
     } else {
-      buffer.write('${expr1.toDebugString()} if ${test.toDebugString()}');
+      buffer
+        ..write(expr1.toDebugString())
+        ..write(' if ')
+        ..write(test.toDebugString());
     }
 
     return buffer.toString();
@@ -37,10 +47,11 @@ class Condition extends Expression {
 
   @override
   String toString() {
-    final buffer = StringBuffer('Condition($test, $expr1');
+    final buffer = StringBuffer('Condition(');
+    buffer..write(test)..write(', ')..write(expr1);
 
     if (expr2 != null) {
-      buffer.write(', $expr2');
+      buffer..write(', ')..write(expr2);
     }
 
     buffer.write(')');

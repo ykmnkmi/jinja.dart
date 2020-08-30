@@ -15,7 +15,7 @@ class Pow extends BinaryExpression {
   final String symbol;
 
   @override
-  Object resolve(Context context) {
+  dynamic resolve(Context context) {
     final left = this.left.resolve(context);
     final right = this.right.resolve(context);
 
@@ -23,7 +23,7 @@ class Pow extends BinaryExpression {
       return pow(left, right);
     }
 
-    // TODO: добавить: текст ошибки = add: error message
+    // TODO: add: error message
     throw Exception();
   }
 

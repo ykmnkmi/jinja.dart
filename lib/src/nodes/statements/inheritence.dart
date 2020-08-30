@@ -20,10 +20,10 @@ class ExtendsStatement extends Statement {
     } else if (pathOrTemplate is String) {
       template = context.environment.getTemplate(pathOrTemplate);
     } else {
-      throw TemplatesNotFound('$pathOrTemplate');
+      throw TemplatesNotFound(pathOrTemplate);
     }
 
-    for (var block in blocks) {
+    for (final block in blocks) {
       context.blockContext.push(block.name, block);
     }
 
@@ -33,10 +33,12 @@ class ExtendsStatement extends Statement {
   @override
   String toDebugString([int level = 0]) {
     final buffer = StringBuffer(' ' * level);
-    buffer.write('# extends: ${pathOrTemplate.toDebugString()}');
+    buffer..write('# extends: ')..write(pathOrTemplate.toDebugString());
 
-    for (var block in blocks) {
-      buffer.write('\n${block.toDebugString(level)}');
+    for (final block in blocks) {
+      buffer
+        ..writeln()
+        ..write(block.toDebugString(level));
     }
 
     return buffer.toString();
@@ -49,11 +51,14 @@ class ExtendsStatement extends Statement {
 }
 
 class BlockStatement extends Statement {
-  BlockStatement(this.name, this.path, this.body, [this.scoped = false]);
+  BlockStatement(this.name, this.body, {this.path, this.scoped = false});
 
   final String name;
-  final String path;
+
   final Node body;
+
+  final String? path;
+
   final bool scoped;
 
   @override
@@ -61,11 +66,11 @@ class BlockStatement extends Statement {
     final blockContext = context.blockContext;
 
     if (blockContext.has(name)) {
-      final child = blockContext.blocks[name].last;
+      final child = blockContext.blocks[name]!.last;
 
       if (child.hasSuper) {
         final childContext = this.childContext(outSink, context);
-        context.apply(childContext, (Context context) {
+        context.apply(childContext, (context) {
           child.accept(outSink, context);
         });
       } else {
@@ -76,8 +81,8 @@ class BlockStatement extends Statement {
     }
   }
 
-  Map<String, Object> childContext(StringSink outSink, Context context) {
-    return <String, Object>{
+  Map<String, dynamic> childContext(StringSink outSink, Context context) {
+    return <String, dynamic>{
       'super': () {
         context.removeLast('super');
         body.accept(outSink, context);
@@ -107,13 +112,9 @@ class BlockStatement extends Statement {
 }
 
 class ExtendedBlockStatement extends BlockStatement {
-  ExtendedBlockStatement(
-    String name,
-    String path,
-    Node body, {
-    bool scoped = false,
-    this.hasSuper = false,
-  }) : super(name, path, body, scoped);
+  ExtendedBlockStatement(String name, Node body,
+      {String? path, bool scoped = false, this.hasSuper = false})
+      : super(name, body, path: path, scoped: scoped);
 
   final bool hasSuper;
 
@@ -128,7 +129,7 @@ class ExtendedBlockStatement extends BlockStatement {
         if (child.hasSuper) {
           final childContext = this.childContext(outSink, context);
 
-          context.apply(childContext, (Context context) {
+          context.apply(childContext, (context) {
             child.accept(outSink, context);
           });
 
@@ -145,7 +146,14 @@ class ExtendedBlockStatement extends BlockStatement {
 
   @override
   String toDebugString([int level = 0]) {
-    return '${' ' * level}block $name [$path]\n${body.toDebugString(level + 1)}';
+    final buffer = StringBuffer(' ' * level)
+      ..write('block ')
+      ..write(name)
+      ..write(' [')
+      ..write(path)
+      ..writeln(']')
+      ..write(body.toDebugString(level + 1));
+    return buffer.toString();
   }
 
   @override
@@ -155,26 +163,29 @@ class ExtendedBlockStatement extends BlockStatement {
 }
 
 class ExtendedBlockContext {
-  final Map<String, List<ExtendedBlockStatement>> blocks =
-      <String, List<ExtendedBlockStatement>>{};
+  ExtendedBlockContext() : blocks = <String, List<ExtendedBlockStatement>>{};
 
-  bool has(String name) => blocks.containsKey(name);
+  final Map<String, List<ExtendedBlockStatement>> blocks;
+
+  bool has(String name) {
+    return blocks.containsKey(name);
+  }
 
   void push(String name, ExtendedBlockStatement block) {
     if (blocks.containsKey(name)) {
-      blocks[name].add(block);
+      blocks[name]!.add(block);
     } else {
       blocks[name] = <ExtendedBlockStatement>[block];
     }
   }
 
-  ExtendedBlockStatement child(ExtendedBlockStatement current) {
+  ExtendedBlockStatement? child(ExtendedBlockStatement current) {
     if (blocks.containsKey(current.name)) {
-      final blocks = this.blocks[current.name];
-      final ci = blocks.indexOf(current);
+      final blocks = this.blocks[current.name]!;
+      final currentIndex = blocks.indexOf(current);
 
-      if (ci > 0) {
-        return blocks[ci - 1];
+      if (currentIndex > 0) {
+        return blocks[currentIndex - 1];
       }
     }
 

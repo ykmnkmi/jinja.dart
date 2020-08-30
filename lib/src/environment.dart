@@ -1,34 +1,34 @@
-import 'package:meta/meta.dart';
+import 'dart:math' show Random;
 
 import 'defaults.dart';
-import 'filters.dart' show FilterFunction, FilterType;
+import 'filters.dart';
 import 'loaders.dart';
 import 'nodes.dart';
 import 'parser.dart';
 import 'runtime.dart';
 
-typedef FieldGetter = Object? Function(Object object, String field);
-typedef ItemGetter = Object? Function(Object object, Object key);
+typedef FieldGetter = dynamic Function(dynamic object, String field);
+typedef ItemGetter = dynamic Function(dynamic object, dynamic key);
 
-Object? defaultFieldGetter(Object object, String field) {
+dynamic defaultFieldGetter(dynamic object, String field) {
   return null;
 }
 
-Object? defaultItemGetter(Object object, Object key) {
-  if (object is List<Object?>) {
+dynamic defaultItemGetter(dynamic object, dynamic key) {
+  if (object is List) {
     return object.asMap()[key];
   }
 
-  if (object is Map<Object, Object>) {
+  if (object is Map) {
     return object[key];
   }
 
   return null;
 }
 
-typedef Finalizer = Object Function(Object value);
+typedef Finalizer = dynamic Function(dynamic value);
 
-Object defaultFinalizer(Object? value) {
+dynamic defaultFinalizer(dynamic value) {
   value ??= '';
 
   if (value is String) {
@@ -45,101 +45,56 @@ Object defaultFinalizer(Object? value) {
 ///
 /// Modifications on environments after the first template was loaded
 /// will lead to surprising effects and undefined behavior.
-@immutable
 class Environment {
   /// If `loader` is not `null`, templates will be loaded
-  factory Environment({
-    String blockStart = '{%',
-    String blockEnd = '%}',
-    String variableStart = '{{',
-    String variableEnd = '}}',
-    String commentStart = '{#',
-    String commentEnd = '#}',
-    bool trimBlocks = false,
-    bool leftStripBlocks = false,
-    bool keepTrailingNewLine = false,
-    bool optimize = true,
-    Undefined undefined = const Undefined(),
-    Finalizer finalize = defaultFinalizer,
-    bool autoEscape = false,
+  Environment({
+    this.blockStart = '{%',
+    this.blockEnd = '%}',
+    this.variableStart = '{{',
+    this.variableEnd = '}}',
+    this.commentStart = '{#',
+    this.commentEnd = '#}',
+    this.trimBlocks = false,
+    this.leftStripBlocks = false,
+    this.keepTrailingNewLine = false,
+    this.optimize = true,
+    this.undefined = const Undefined(),
+    this.finalize = defaultFinalizer,
+    Random? random,
+    this.autoEscape = false,
     Loader? loader,
-    Map<String, Function> filters = const <String, Function>{},
-    Map<String, Function> envFilters = const <String, Function>{},
-    Map<String, Function> tests = const <String, Function>{},
-    Map<String, Object> globals = const <String, Object>{},
-    FieldGetter getField = defaultFieldGetter,
-    ItemGetter getItem = defaultItemGetter,
-  }) {
-    final env = Environment._(
-      blockStart: blockStart,
-      blockEnd: blockEnd,
-      variableStart: variableStart,
-      variableEnd: variableEnd,
-      commentStart: commentStart,
-      commentEnd: commentEnd,
-      trimBlocks: trimBlocks,
-      leftStripBlocks: leftStripBlocks,
-      keepTrailingNewLine: keepTrailingNewLine,
-      optimize: optimize,
-      undefined: undefined,
-      finalize: finalize,
-      autoEscape: autoEscape,
-      filters: Map<String, Function>.of(defaultFilters)..addAll(filters),
-      tests: Map<String, Function>.of(defaultTests)..addAll(tests),
-      globals: Map<String, Object>.of(defaultContext)..addAll(globals),
-      getField: getField,
-      getItem: getItem,
-    );
-
-    if (loader != null) {
-      loader.load(env);
-    }
-
-    return env;
-  }
-
-  Environment._({
-    this.blockStart,
-    this.blockEnd,
-    this.variableStart,
-    this.variableEnd,
-    this.commentStart,
-    this.commentEnd,
-    this.trimBlocks,
-    this.leftStripBlocks,
-    this.keepTrailingNewLine,
-    this.optimize,
-    this.undefined,
-    this.finalize,
-    this.autoEscape,
-    this.shared,
     this.filters = const <String, Function>{},
     this.tests = const <String, Function>{},
     this.globals = const <String, Object>{},
-    this.getField,
-    this.getItem,
-  }) : templates = <String, Template>{};
+    this.getField = defaultFieldGetter,
+    this.getItem = defaultItemGetter,
+  })  : random = Random(),
+        templates = <String, Template>{} {
+    if (loader != null) {
+      loader.load(this);
+    }
+  }
 
-  final String? blockStart;
-  final String? blockEnd;
-  final String? variableStart;
-  final String? variableEnd;
-  final String? commentStart;
-  final String? commentEnd;
-  final bool? trimBlocks;
-  final bool? leftStripBlocks;
-  final bool? keepTrailingNewLine;
-  final bool? optimize;
-  final Undefined? undefined;
-  final Finalizer? finalize;
-  final bool? autoEscape;
-  final bool? shared;
+  final String blockStart;
+  final String blockEnd;
+  final String variableStart;
+  final String variableEnd;
+  final String commentStart;
+  final String commentEnd;
+  final bool trimBlocks;
+  final bool leftStripBlocks;
+  final bool keepTrailingNewLine;
+  final bool optimize;
+  final Undefined undefined;
+  final Finalizer finalize;
+  final Random random;
+  final bool autoEscape;
   final Map<String, Function> filters;
   final Map<String, Function> tests;
-  final Map<String, Object> globals;
+  final Map<String, dynamic> globals;
 
-  final FieldGetter? getField;
-  final ItemGetter? getItem;
+  final FieldGetter getField;
+  final ItemGetter getItem;
 
   final Map<String, Template> templates;
 
@@ -155,33 +110,30 @@ class Environment {
   }
 
   /// If [path] not found throws `Exception`.
+  ///
+  /// `path/to/template`
   Template getTemplate(String path) {
     if (templates.containsKey(path)) {
       return templates[path]!;
     }
 
-    print(templates);
     throw ArgumentError('template not found: $path');
   }
 
   /// If [name] not found throws [Exception].
-  Object? callFilter(
-    Context context,
-    String name, {
-    List<Object> args = const <Object>[],
-    Map<Symbol, Object> kwargs = const <Symbol, Object>{},
-  }) {
+  dynamic callFilter(Context context, String name,
+      {List positional = const [],
+      Map<Symbol, dynamic> named = const <Symbol, dynamic>{}}) {
     if (filters.containsKey(name) && filters[name] != null) {
       final filter = filters[name]!;
 
-      switch (filter.filterType) {
+      switch (getFilterType(filter)) {
         case FilterType.context:
-          return Function.apply(filter, <Object>[context, ...args], kwargs);
+          return Function.apply(filter, [context, ...positional], named);
         case FilterType.environment:
-          return Function.apply(
-              filter, <Object>[context.environment, ...args], kwargs);
+          return Function.apply(filter, [context.environment, ...positional], named);
         default:
-          return Function.apply(filter, args, kwargs);
+          return Function.apply(filter, positional, named);
       }
     }
 
@@ -189,14 +141,12 @@ class Environment {
   }
 
   /// If [name] not found throws [Exception].
-  bool callTest(
-    String name, {
-    List<Object> args = const <Object>[],
-    Map<Symbol, Object> kwargs = const <Symbol, Object>{},
-  }) {
+  bool callTest(String name,
+      {List positional = const [],
+      Map<Symbol, dynamic> named = const <Symbol, dynamic>{}}) {
     if (tests.containsKey(name)) {
       // ignore: return_of_invalid_type
-      return Function.apply(tests[name]!, args, kwargs) as bool;
+      return Function.apply(tests[name]!, positional, named) as bool;
     }
 
     throw ArgumentError('test not found: $name');
@@ -208,11 +158,9 @@ class Environment {
 ///
 /// Normally the template is generated from `Environment` but
 /// it also has a constructor that makes it possible to create a template
-/// instance directly using the constructor.  It takes the same arguments as
+/// instance directly using the constructor. It takes the same arguments as
 /// the environment constructor but it's not possible to specify a loader.
 class Template extends Node {
-  static final Map<int, Environment> _shared = <int, Environment>{};
-
   factory Template(
     String source, {
     String blockStart = '{%',
@@ -228,83 +176,54 @@ class Template extends Node {
     Undefined undefined = const Undefined(),
     Finalizer finalize = defaultFinalizer,
     bool autoEscape = false,
-    Loader? loader,
     Map<String, Function> filters = const <String, Function>{},
     Map<String, Function> tests = const <String, Function>{},
-    Map<String, Object> globals = const <String, Object>{},
+    Map<String, dynamic> globals = const <String, dynamic>{},
     FieldGetter getField = defaultFieldGetter,
     ItemGetter getItem = defaultItemGetter,
   }) {
-    final config = <Object?>{
-      blockStart,
-      blockEnd,
-      variableStart,
-      variableEnd,
-      commentStart,
-      commentEnd,
-      trimBlocks,
-      leftStripBlocks,
-      keepTrailingNewLine,
-      optimize,
-      undefined,
-      finalize,
-      autoEscape,
-      loader,
-      filters,
-      tests,
-      globals,
-      getField,
-      getItem,
-    };
-
-    final env = _shared.containsKey(config)
-        ? _shared[config.hashCode]!
-        : Environment._(
-            blockStart: blockStart,
-            blockEnd: blockEnd,
-            variableStart: variableStart,
-            variableEnd: variableEnd,
-            commentStart: commentStart,
-            commentEnd: commentEnd,
-            trimBlocks: trimBlocks,
-            leftStripBlocks: leftStripBlocks,
-            keepTrailingNewLine: keepTrailingNewLine,
-            optimize: optimize,
-            undefined: undefined,
-            finalize: finalize,
-            autoEscape: autoEscape,
-            shared: true,
-            filters: Map<String, Function>.of(defaultFilters)..addAll(filters),
-            tests: Map<String, Function>.of(defaultTests)..addAll(tests),
-            globals: Map<String, Object>.of(defaultContext)..addAll(globals),
-            getField: getField,
-            getItem: getItem,
-          );
-
-    _shared[config.hashCode] = env;
-
-    if (loader != null) {
-      loader.load(env);
-    }
+    final env = Environment(
+      blockStart: blockStart,
+      blockEnd: blockEnd,
+      variableStart: variableStart,
+      variableEnd: variableEnd,
+      commentStart: commentStart,
+      commentEnd: commentEnd,
+      trimBlocks: trimBlocks,
+      leftStripBlocks: leftStripBlocks,
+      keepTrailingNewLine: keepTrailingNewLine,
+      optimize: optimize,
+      undefined: undefined,
+      finalize: finalize,
+      autoEscape: autoEscape,
+      filters: Map<String, Function>.of(defaultFilters)..addAll(filters),
+      tests: Map<String, Function>.of(defaultTests)..addAll(tests),
+      globals: Map<String, dynamic>.of(defaultContext)..addAll(globals),
+      getField: getField,
+      getItem: getItem,
+    );
 
     return Parser(env, source).parse();
   }
 
-  Template.parsed(this.env, this.body, [this.path])
+  Template.parsed(this.environment, this.body, [this.path])
       : blocks = <String, BlockStatement>{} {
-    _render = _RenderWrapper(([Map<String, Object>? data]) => renderMap(data));
+    _render = RenderWrapper(([Map<String, dynamic>? data]) => renderMap(data));
   }
 
-  final Environment env;
+  final Environment environment;
   final Node body;
   final String? path;
 
   final Map<String, BlockStatement> blocks;
 
   dynamic _render;
-  dynamic get render => _render;
 
-  void _addBlocks(StringSink outSink, Context context) {
+  dynamic get render {
+    return _render;
+  }
+
+  void _addBlocks(Context context, StringSink outSink) {
     final self = NameSpace();
 
     for (final blockEntry in blocks.entries) {
@@ -318,14 +237,14 @@ class Template extends Node {
 
   @override
   void accept(StringSink outSink, Context context) {
-    _addBlocks(outSink, context);
+    _addBlocks(context, outSink);
     body.accept(outSink, context);
   }
 
-  String renderMap([Map<String, Object>? data]) {
+  String renderMap([Map<String, dynamic>? data]) {
     final buffer = StringBuffer();
-    final context = Context(data: data, env: env);
-    _addBlocks(buffer, context);
+    final context = Context(environment, data ?? <String, dynamic>{});
+    _addBlocks(context, buffer);
     body.accept(buffer, context);
     return buffer.toString();
   }
@@ -344,8 +263,10 @@ class Template extends Node {
     final buffer = StringBuffer();
 
     if (path != null) {
-      buffer.write(' ' * level);
-      buffer.writeln('# template: ${repr(path)}');
+      buffer
+        ..write(' ' * level)
+        ..write('# template: ')
+        ..writeln(repr(path));
     }
 
     buffer.write(body.toDebugString(level));
@@ -355,21 +276,20 @@ class Template extends Node {
 
 // TODO: remove/improve workaround
 // ignore: deprecated_extends_function
-class _RenderWrapper extends Function {
-  _RenderWrapper(this.function);
+class RenderWrapper extends Function {
+  RenderWrapper(this.function);
 
   final Function function;
 
-  Object? call() {
+  dynamic call() {
     return function();
   }
 
   @override
-  Object? noSuchMethod(Invocation invocation) {
+  dynamic noSuchMethod(Invocation invocation) {
     if (invocation.memberName == #call) {
-      return function(invocation.namedArguments.map<String, Object?>(
-          (Symbol key, Object? value) =>
-              MapEntry<String, Object?>(getSymbolName(key), value)));
+      return function(invocation.namedArguments
+          .map((key, value) => MapEntry(getSymbolName(key), value)));
     }
 
     return super.noSuchMethod(invocation);

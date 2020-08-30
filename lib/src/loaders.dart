@@ -47,14 +47,14 @@ abstract class Loader {
 ///     var loader = FileSystemLoader(path: './path', followLinks: true)
 ///
 class FileSystemLoader extends Loader {
-  FileSystemLoader({
-    String path = 'templates',
-    List<String>? paths,
-    this.followLinks = true,
-    this.extensions = const <String>{'html'},
-    this.encoding = utf8,
-    this.autoReload = false,
-  }) : paths = paths ?? <String>[path] {
+  FileSystemLoader(
+      {String path = 'templates',
+      List<String>? paths,
+      this.followLinks = true,
+      this.extensions = const <String>{'html'},
+      this.encoding = utf8,
+      this.autoReload = false})
+      : paths = paths ?? <String>[path] {
     for (final path in this.paths) {
       if (!FileSystemEntity.isDirectorySync(path)) {
         // TODO: improve error message
@@ -64,9 +64,13 @@ class FileSystemLoader extends Loader {
   }
 
   final List<String> paths;
+  
   final bool followLinks;
+  
   final Set<String> extensions;
+  
   final Encoding encoding;
+  
   final bool autoReload;
 
   @deprecated

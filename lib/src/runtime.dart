@@ -101,9 +101,9 @@ class NameSpaceFactory extends Function {
 }
 
 class LoopContext {
-  LoopContext(int index0, int length, Object previtem, Object nextitem,
+  LoopContext(int index0, int length, dynamic previtem, dynamic nextitem,
       Function changed)
-      : data = <String, Object>{
+      : data = <String, dynamic>{
           'index0': index0,
           'length': length,
           'previtem': previtem,
@@ -114,30 +114,29 @@ class LoopContext {
           'last': index0 + 1 == length,
           'revindex': length - index0,
           'revindex0': length - index0 - 1,
-          'cycle':
-              CycleWrapper((List<Object> args) => args[index0 % args.length]),
+          'cycle': CycleWrapper((List args) => args[index0 % args.length]),
         };
 
-  final Map<String, Object> data;
+  final Map<String, dynamic> data;
 
-  Object operator [](String key) {
+  dynamic operator [](String key) {
     return data[key]!;
   }
 }
 
-// TODO: убрать костыль = remove/improve workaround
+// TODO: remove/improve workaround
 // ignore: deprecated_extends_function
 class CycleWrapper extends Function {
   CycleWrapper(this.function);
 
-  final Object Function(List<Object> values) function;
+  final dynamic Function(List values) function;
 
-  Object call();
+  dynamic call();
 
   @override
-  Object? noSuchMethod(Invocation invocation) {
+  dynamic noSuchMethod(Invocation invocation) {
     if (invocation.memberName == #call) {
-      return function(invocation.positionalArguments[0] as List<Object>);
+      return function(invocation.positionalArguments[0] as List);
     }
 
     return super.noSuchMethod(invocation);

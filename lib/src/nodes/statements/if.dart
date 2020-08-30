@@ -5,11 +5,12 @@ class IfStatement extends Statement {
   IfStatement(this.pairs, [this.orElse]);
 
   final Map<Expression, Node> pairs;
-  final Node orElse;
+
+  final Node? orElse;
 
   @override
   void accept(StringSink outSink, Context context) {
-    for (var pair in pairs.entries) {
+    for (final pair in pairs.entries) {
       if (toBool(pair.key.resolve(context))) {
         pair.value.accept(outSink, context);
         return;
@@ -23,20 +24,27 @@ class IfStatement extends Statement {
   String toDebugString([int level = 0]) {
     final buffer = StringBuffer(' ' * level);
     final first = pairs.entries.first;
-    buffer.writeln('if ${first.key.toDebugString()}');
-    buffer.write(first.value.toDebugString(level + 1));
 
-    for (var pair in pairs.entries.skip(1)) {
-      buffer.writeln();
-      buffer.write(' ' * level);
-      buffer.writeln('if ${pair.key.toDebugString()}');
-      buffer.write(pair.value.toDebugString(level + 1));
+    buffer
+      ..write('if ')
+      ..writeln(first.key.toDebugString())
+      ..write(first.value.toDebugString(level + 1));
+
+    for (final pair in pairs.entries.skip(1)) {
+      buffer
+        ..writeln()
+        ..write(' ' * level)
+        ..write('if ')
+        ..writeln(pair.key.toDebugString())
+        ..write(pair.value.toDebugString(level + 1));
     }
 
     if (orElse != null) {
-      buffer.writeln();
-      buffer.writeln('${' ' * level}else');
-      buffer.write(orElse.toDebugString(level + 1));
+      buffer
+        ..writeln()
+        ..write(' ' * level)
+        ..writeln('else')
+        ..write(orElse!.toDebugString(level + 1));
     }
 
     return buffer.toString();
@@ -44,10 +52,11 @@ class IfStatement extends Statement {
 
   @override
   String toString() {
-    final buffer = StringBuffer('If($pairs');
+    final buffer = StringBuffer('If(');
+    buffer.write(pairs);
 
     if (orElse != null) {
-      buffer.write(', $orElse');
+      buffer..write(', ')..write(orElse);
     }
 
     buffer.write(')');

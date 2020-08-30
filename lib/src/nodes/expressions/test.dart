@@ -1,31 +1,29 @@
 import '../core.dart';
 
 class Test extends Expression {
-  Test(
-    this.name, {
-    this.expr,
-    this.args = const <Expression>[],
-    this.kwargs = const <String, Expression>{},
-  });
+  Test(this.name,
+      {this.expr,
+      this.positional = const <Expression>[],
+      this.named = const <String, Expression>{}});
 
-  final Expression expr;
+  final Expression? expr;
+
   final String name;
-  final List<Expression> args;
-  final Map<String, Expression> kwargs;
+
+  final List<Expression> positional;
+
+  final Map<String, Expression> named;
 
   @override
   bool resolve(Context context) {
-    return test(context, expr.resolve(context));
+    return test(context, expr?.resolve(context));
   }
 
-  bool test(Context context, Object value) {
+  bool test(Context context, dynamic value) {
     return context.environment.callTest(name,
-        args: <Object>[
-          value,
-          ...args.map<Object>((Expression arg) => arg.resolve(context))
-        ],
-        kwargs: kwargs.map<Symbol, Object>((String key, Expression value) =>
-            MapEntry<Symbol, Object>(Symbol(key), value.resolve(context))));
+        positional: [value, ...positional.map((arg) => arg.resolve(context))],
+        named: named.map(
+            (key, value) => MapEntry(Symbol(key), value.resolve(context))));
   }
 
   @override
@@ -33,42 +31,38 @@ class Test extends Expression {
     final buffer = StringBuffer(' ' * level);
 
     if (expr != null) {
-      buffer.write(expr.toDebugString());
+      buffer.write(expr!.toDebugString());
     }
 
     if (name == 'defined') {
       return buffer.toString();
     }
 
-    buffer.write(' is $name');
+    buffer..write(' is ')..write(name);
 
-    if (args.isEmpty && kwargs.isEmpty) {
+    if (positional.isEmpty && named.isEmpty) {
       return buffer.toString();
     }
 
-    if (args.length == 1 && kwargs.isEmpty) {
-      buffer.write(' ${args[0].toDebugString()}');
+    if (positional.length == 1 && named.isEmpty) {
+      buffer..write(' ')..write(positional[0].toDebugString());
       return buffer.toString();
     }
 
     buffer.write('(');
 
-    if (args.isNotEmpty) {
-      buffer.writeAll(
-          args.map<String>((Expression arg) => arg.toDebugString()), ', ');
+    if (positional.isNotEmpty) {
+      buffer.writeAll(positional.map((arg) => arg.toDebugString()), ', ');
     }
 
-    if (kwargs.isNotEmpty) {
-      if (args.isNotEmpty) {
+    if (named.isNotEmpty) {
+      if (positional.isNotEmpty) {
         buffer.write(', ');
       }
 
-      buffer.writeAll(
-          kwargs.entries.map<String>((MapEntry<String, Expression> kwarg) {
-        final key = repr(kwarg.key);
-        final value = kwarg.value.toDebugString();
-        return '$key: $value';
-      }), ', ');
+      final pairs = named.entries
+          .map((kwarg) => '${repr(kwarg.key)}: ${kwarg.value.toDebugString()}');
+      buffer.writeAll(pairs, ', ');
     }
 
     buffer.write(')');
@@ -77,18 +71,19 @@ class Test extends Expression {
 
   @override
   String toString() {
-    final buffer = StringBuffer('Test($name');
+    final buffer = StringBuffer('Test(');
+    buffer.write(name);
 
     if (expr != null) {
-      buffer.write(', $expr');
+      buffer..write(', ')..write(expr);
     }
 
-    if (args != null && args.isNotEmpty) {
-      buffer.write(', args: $args');
+    if (positional.isNotEmpty) {
+      buffer..write(', positional: ')..write(positional);
     }
 
-    if (kwargs != null && kwargs.isNotEmpty) {
-      buffer.write(', kwargs: $kwargs');
+    if (named.isNotEmpty) {
+      buffer..write(', named: ')..write(named);
     }
 
     buffer.write(')');

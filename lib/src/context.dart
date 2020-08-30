@@ -1,18 +1,17 @@
 import 'environment.dart';
 import 'nodes.dart';
 
-typedef ContextFn = void Function(Context context);
+typedef ContextCallback = void Function(Context context);
 
 class Context {
-  Context({Map<String, Object>? data, Environment? env})
-      : contexts = data != null
-            ? <Map<String, Object>>[data]
-            : <Map<String, Object>>[<String, Object>{}],
-        environment = env ?? Environment(),
+  Context(this.environment, [Map<String, dynamic>? data])
+      : contexts = <Map<String, dynamic>>[data ?? <String, dynamic>{}],
         blockContext = ExtendedBlockContext();
 
   final Environment environment;
-  final List<Map<String, Object>> contexts;
+
+  final List<Map<String, dynamic>> contexts;
+
   final ExtendedBlockContext blockContext;
 
   bool has(String name) {
@@ -30,7 +29,7 @@ class Context {
     return false;
   }
 
-  Object? operator [](String key) {
+  dynamic operator [](String key) {
     for (final context in contexts.reversed) {
       if (context.containsKey(key)) {
         return context[key];
@@ -44,11 +43,11 @@ class Context {
     return environment.undefined;
   }
 
-  void operator []=(String key, Object value) {
+  void operator []=(String key, dynamic value) {
     contexts.last[key] = value;
   }
 
-  void push(Map<String, Object> context) {
+  void push(Map<String, dynamic> context) {
     contexts.add(context);
   }
 
@@ -56,7 +55,7 @@ class Context {
     contexts.removeLast();
   }
 
-  void apply(Map<String, Object> data, ContextFn closure) {
+  void apply(Map<String, dynamic> data, ContextCallback closure) {
     push(data);
 
     try {

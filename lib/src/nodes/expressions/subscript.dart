@@ -6,18 +6,19 @@ class Field extends Expression {
   Field(this.expr, this.attr);
 
   final Expression expr;
+
   final String attr;
 
   @override
-  Object resolve(Context context) {
+  dynamic resolve(Context context) {
     final value = expr.resolve(context);
 
     if (value == null || value is Undefined) {
-      // TODO: проверить: текст ошибки = add: error message
+      // TODO: add: error message
       throw UndefinedError();
     }
 
-    if (value is Map<String, Object>) {
+    if (value is Map<String, dynamic>) {
       return value[attr];
     }
 
@@ -34,7 +35,10 @@ class Field extends Expression {
 
   @override
   String toDebugString([int level = 0]) {
-    return '${expr.toDebugString(level)}.$attr';
+    final buffer = StringBuffer(expr.toDebugString(level))
+      ..write('.')
+      ..write(attr);
+    return buffer.toString();
   }
 
   @override
@@ -47,10 +51,11 @@ class Item extends Expression {
   Item(this.expr, this.item);
 
   final Expression expr;
+
   final Expression item;
 
   @override
-  Object resolve(Context context) {
+  dynamic resolve(Context context) {
     final value = expr.resolve(context);
     final item = this.item.resolve(context);
     return context.environment.getItem(value, item);
@@ -58,7 +63,9 @@ class Item extends Expression {
 
   @override
   String toDebugString([int level = 0]) {
-    return '${expr.toDebugString(level)}[${item.toDebugString()}]';
+    final buffer = StringBuffer(expr.toDebugString(level));
+    buffer..write('[')..write(item.toDebugString())..write(']');
+    return buffer.toString();
   }
 
   @override

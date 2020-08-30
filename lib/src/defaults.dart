@@ -7,7 +7,7 @@ import 'utils.dart';
 final Map<String, Function> defaultFilters = filters;
 final Map<String, Function> defaultTests = tests;
 
-final Map<String, Object> defaultContext = <String, Object>{
+final Map<String, dynamic> defaultContext = <String, dynamic>{
   'namespace': NameSpace.namespace,
   'range': range,
 };

@@ -13,7 +13,7 @@ class Mul extends BinaryExpression {
   final String symbol;
 
   @override
-  Object resolve(Context context) {
+  dynamic resolve(Context context) {
     final left = this.left.resolve(context);
     final right = this.right.resolve(context);
 
@@ -25,7 +25,7 @@ class Mul extends BinaryExpression {
       return left * right;
     }
 
-    // TODO: добавить: текст ошибки = add: error message
+    // TODO: add: error message
     throw Exception();
   }
 
@@ -56,7 +56,7 @@ class Div extends BinaryExpression {
       return left / right;
     }
 
-    // TODO: добавить: текст ошибки = add: error message
+    // TODO: add: error message
     throw Exception();
   }
 
@@ -87,7 +87,7 @@ class FloorDiv extends BinaryExpression {
       return left ~/ right;
     }
 
-    // TODO: добавить: текст ошибки = add: error message
+    // TODO: add: error message
     throw Exception();
   }
 
@@ -118,7 +118,7 @@ class Mod extends BinaryExpression {
       return left % right;
     }
 
-    // TODO: добавить: текст ошибки = add: error message
+    // TODO: add: error message
     throw Exception();
   }
 

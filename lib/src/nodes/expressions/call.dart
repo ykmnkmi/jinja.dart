@@ -2,64 +2,56 @@ import '../../exceptions.dart';
 import '../core.dart';
 
 class Call extends Expression {
-  Call(
-    this.expr, {
-    this.args = const <Expression>[],
-    this.kwargs = const <String, Expression>{},
-    this.argsDyn,
-    this.kwargsDyn,
-  });
+  Call(this.expr, this.arguments);
 
   final Expression expr;
-  final List<Expression> args;
-  final Map<String, Expression> kwargs;
-  final Expression argsDyn;
-  final Expression kwargsDyn;
+
+  final Arguments arguments;
 
   @override
-  Object resolve(Context context) {
-    final args = this
-        .args
-        .map<Object>((Expression arg) => arg.resolve(context))
-        .toList();
-    final kwargs = this.kwargs.map<Symbol, Object>(
-        (String key, Expression value) =>
-            MapEntry<Symbol, Object>(Symbol(key), value.resolve(context)));
+  dynamic resolve(Context context) {
+    final args =
+        arguments.positional.map((arg) => arg.resolve(context)).toList();
+    final kwargs = arguments.named
+        .map((key, value) => MapEntry(Symbol(key), value.resolve(context)));
 
-    if (argsDyn != null) {
-      final argsDyn = this.argsDyn.resolve(context);
+    if (arguments.positionalExpr != null) {
+      final positionalExpr = arguments.positionalExpr!.resolve(context);
 
-      if (argsDyn is Iterable) {
-        args.addAll(argsDyn);
+      if (positionalExpr is Iterable) {
+        args.addAll(positionalExpr);
       } else {
-        // TODO: добавить: текст ошибки = add: error message
+        // TODO: add: error message
         throw TemplateRuntimeError();
       }
     }
 
-    if (kwargsDyn != null) {
-      final kwargsDyn = this.kwargsDyn.resolve(context);
+    if (arguments.namedExpr != null) {
+      final namedExpr = arguments.namedExpr!.resolve(context);
 
-      if (kwargsDyn is Map<String, Expression>) {
-        kwargs.addAll(kwargsDyn.map<Symbol, Object>(
-            (String key, Expression value) =>
-                MapEntry<Symbol, Object>(Symbol(key), value.resolve(context))));
+      if (namedExpr is Map<String, Expression>) {
+        kwargs.addAll(namedExpr.map(
+            (key, value) => MapEntry(Symbol(key), value.resolve(context))));
       } else {
-        // TODO: добавить: текст ошибки = add: error message
+        // TODO: add: error message
         throw TemplateRuntimeError();
       }
     }
 
-    dynamic resolved = expr.resolve(context);
+    final dynamic resolved = expr.resolve(context);
+
     if (args.isEmpty && kwargs.isEmpty) {
       return resolved();
     }
+
     if (kwargs.isEmpty) {
       return resolved(args.length == 1 ? args[0] : args);
     }
+
     if (args.isEmpty) {
       return resolved(kwargs: {...kwargs});
     }
+
     return resolved(args, kwargs: {...kwargs});
   }
 
@@ -68,36 +60,37 @@ class Call extends Expression {
     final buffer = StringBuffer(expr.toDebugString(level));
     buffer.write('(');
 
-    if (args.isNotEmpty) {
+    if (arguments.positional.isNotEmpty) {
       buffer.writeAll(
-          args.map<String>((Expression arg) => arg.toDebugString()), ', ');
+          arguments.positional.map((arg) => arg.toDebugString()), ', ');
     }
 
-    if (argsDyn != null) {
-      if (args.isNotEmpty || kwargs.isNotEmpty) {
+    if (arguments.positionalExpr != null) {
+      if (arguments.positional.isNotEmpty || arguments.named.isNotEmpty) {
         buffer.write(', ');
       }
 
-      buffer.write('*${argsDyn.toDebugString()}');
+      buffer..write('*')..write(arguments.positionalExpr!.toDebugString());
     }
 
-    if (kwargs.isNotEmpty) {
-      if (args.isNotEmpty) {
+    if (arguments.named.isNotEmpty) {
+      if (arguments.positional.isNotEmpty) {
         buffer.write(', ');
       }
 
-      buffer.writeAll(
-          kwargs.entries.map<String>((MapEntry<String, Expression> kwarg) =>
-              '${repr(kwarg.key)}: ${kwarg.value.toDebugString()}'),
-          ', ');
+      final pairs = arguments.named.entries
+          .map((kwarg) => '${repr(kwarg.key)}: ${kwarg.value.toDebugString()}');
+      buffer.writeAll(pairs, ', ');
     }
 
-    if (kwargsDyn != null) {
-      if (args.isNotEmpty || kwargs.isNotEmpty || argsDyn != null) {
+    if (arguments.namedExpr != null) {
+      if (arguments.positional.isNotEmpty ||
+          arguments.named.isNotEmpty ||
+          arguments.positionalExpr != null) {
         buffer.write(', ');
       }
 
-      buffer.write('**${kwargsDyn.toDebugString()}');
+      buffer..write('**')..write(arguments.namedExpr!.toDebugString());
     }
 
     buffer.write(')');
@@ -106,25 +99,43 @@ class Call extends Expression {
 
   @override
   String toString() {
-    final buffer = StringBuffer('Call($expr');
+    final buffer = StringBuffer('Call(');
+    buffer.write(expr);
 
-    if (args != null && args.isNotEmpty) {
-      buffer.write(', args: $args');
+    if (arguments.positional.isNotEmpty) {
+      buffer..write(', positional: ')..write(arguments.positional);
     }
 
-    if (kwargs != null && kwargs.isNotEmpty) {
-      buffer.write(', kwargs: $kwargs');
+    if (arguments.named.isNotEmpty) {
+      buffer..write(', named: ')..write(arguments.named);
     }
 
-    if (argsDyn != null) {
-      buffer.write(', argsDyn: $argsDyn');
+    if (arguments.positionalExpr != null) {
+      buffer..write(', argsDyn: ')..write(arguments.positionalExpr);
     }
 
-    if (kwargsDyn != null) {
-      buffer.write(', kwargsDyn: $kwargsDyn');
+    if (arguments.namedExpr != null) {
+      buffer..write(', kwargsDyn: ')..write(arguments.namedExpr);
     }
 
     buffer.write(')');
     return buffer.toString();
   }
+}
+
+// TODO: add to filter and test, implement string
+class Arguments {
+  Arguments(
+      {this.positional = const <Expression>[],
+      this.named = const <String, Expression>{},
+      this.positionalExpr,
+      this.namedExpr});
+
+  final List<Expression> positional;
+
+  final Map<String, Expression> named;
+
+  final Expression? positionalExpr;
+
+  final Expression? namedExpr;
 }
