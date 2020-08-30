@@ -9,7 +9,7 @@ void main() {
       var template = env.fromString('{{ foo["items"] }}');
       expect(template.render(foo: {'items': 42}), equals('42'));
       
-      // TODO(test): проработать = work though this (=improve this)
+      // TODO(test): work though this
       // template = env.fromString('{{ foo.items() | list }}');
       // expect(template.render(foo: {'items': 42}), equals("[('items', 42)]"));
       // template = env.fromString('foo | attr("items")() | list }}');

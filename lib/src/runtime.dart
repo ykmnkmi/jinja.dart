@@ -10,54 +10,56 @@ class Undefined {
   }
 }
 
+const namespace = NameSpaceFactory();
+
 class NameSpace {
-  static final namespace = NameSpaceFactory();
+  NameSpace([Map<String, dynamic>? data])
+      : data = data != null ? Map.of(data) : {};
 
-  NameSpace([Map<String, Object?>? data])
-      : data =
-            data != null ? Map<String, Object?>.of(data) : <String, Object?>{};
+  final Map<String, dynamic> data;
 
-  final Map<String, Object?> data;
-
-  Iterable<MapEntry<String, Object?>> get entries {
+  Iterable<MapEntry<String, dynamic>> get entries {
     return data.entries;
   }
 
-  Object? operator [](String key) {
+  dynamic operator [](String key) {
     return data[key];
   }
 
-  void operator []=(String key, Object? value) {
+  void operator []=(String key, dynamic value) {
     data[key] = value;
   }
 }
 
-// TODO: убрать костыль = remove/improve workaround
+// TODO: remove/improve workaround
 // ignore: deprecated_extends_function
 class NameSpaceFactory extends Function {
+  const NameSpaceFactory();
+
   NameSpace call() {
     return NameSpace();
   }
 
   @override
-  Object? noSuchMethod(Invocation invocation) {
+  dynamic noSuchMethod(Invocation invocation) {
     if (invocation.memberName == #call) {
-      final data = <String, Object?>{};
+      final data = <String, dynamic>{};
 
       if (invocation.positionalArguments.length == 1) {
-        final Object? arg = invocation.positionalArguments.first;
+        final arg = invocation.positionalArguments.first;
 
-        if (arg is Map<String, Object>) {
+        if (arg is Map<String, dynamic>) {
           data.addAll(arg);
-        } else if (arg is List<Object>) {
-          for (var pair in arg) {
+        } else if (arg is List) {
+          for (final pair in arg) {
             if (pair is Map) {
-              data.addAll(pair
-                  .map((dynamic a, dynamic b) => MapEntry(a.toString(), b)));
+              data.addAll(pair.map((a, b) => MapEntry(a.toString(), b)));
               continue;
             }
-            List<Object> list;
-            if (pair is Iterable<Object>) {
+
+            List list;
+
+            if (pair is Iterable) {
               list = pair.toList();
             } else if (pair is String) {
               list = pair.split('');
@@ -77,7 +79,7 @@ class NameSpaceFactory extends Function {
             }
           }
         } else {
-          // TODO: поправить: текст ошибки = correct: error message
+          // TODO: correct: error message
           throw TypeError();
         }
       } else if (invocation.positionalArguments.length > 1) {
@@ -85,17 +87,18 @@ class NameSpaceFactory extends Function {
             'got ${invocation.positionalArguments.length}');
       }
 
-      invocation.namedArguments.forEach((Symbol key, Object? value) {
-        if (value is Map<Symbol, Object?>) {
-          data.addAll(value.map((Symbol key, Object? value) =>
-              MapEntry<String, Object?>(getSymbolName(key), value)));
+      invocation.namedArguments.forEach((key, value) {
+        if (value is Map<Symbol, dynamic>) {
+          data.addAll(
+              value.map((key, value) => MapEntry(getSymbolName(key), value)));
         } else {
-          data.addEntries(
-              [MapEntry<String, Object?>(getSymbolName(key), value)]);
+          data.addEntries([MapEntry(getSymbolName(key), value)]);
         }
       });
+
       return NameSpace(data);
     }
+
     return super.noSuchMethod(invocation);
   }
 }

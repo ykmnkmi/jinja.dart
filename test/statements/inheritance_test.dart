@@ -198,8 +198,8 @@ void main() {
           template.render(seq: range(5)), equals('[0|0][1|2][2|4][3|6][4|8]'));
     });
 
-    // TODO: добавить тест: scoped block after inheritance = add test ..
-    // TODO: добавить тест: fixed macro scoping bug = add test ..
+    // TODO: add test: scoped block after inheritance
+    // TODO: add test: fixed macro scoping bug
 
     test('double extends', () {
       expect(() => Template(doubleextends),

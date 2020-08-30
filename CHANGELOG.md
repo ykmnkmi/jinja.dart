@@ -1,9 +1,11 @@
-## 0.2.5
-<!-- - issue [7](https://github.com/ykmnkmi/jinja.dart/issues/7) -->
+## 0.3.0-nullsafety (working)
+
+- add null safety
 - change constructor `Template.parsed` to `Template.parsed(this.env, this.body, [this.path])`
-- add `encoding` parameter `FileSystemLoader` constructor
 - internal fixes
+- add `encoding` parameter `FileSystemLoader` constructor
 - add loader tests
+<!-- - issue [7](https://github.com/ykmnkmi/jinja.dart/issues/7) -->
 
 ## 0.2.4
 - dart issue [41362](https://github.com/dart-lang/sdk/issues/41362)

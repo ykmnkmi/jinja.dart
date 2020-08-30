@@ -72,11 +72,10 @@ void main() {
         expect(template.renderMap(), equals(char));
       }
 
-      // TODO: ждем: реализации в sdk = waiting for a realization in the [Dart] sdk (?)
+      // TODO: waiting for a realization in the dart sdk
       // expect(env.fromString('{{ "\N{HOT SPRINGS}" }}').render(), equals('\u2668'));
     });
 
-    // TODO: проверить: после реализации Environment.newlineSequence
     // TODO: check: after implementing Environment.newlineSequence
     // test('normalizing', () {
     //   for (var seq in <String>['\r', '\r\n', '\n']) {
@@ -195,7 +194,6 @@ hello
       expect(template.renderMap(), equals('hello    '));
     });
 
-// TODO: проверить: после реализации строковых коментариев
 // TODO: check: after implementing comments
 //     test('lstrip angle bracket', () {
 //       final env = Environment(
@@ -217,7 +215,6 @@ hello
 //       expect(template.render(seq: range(5)), equals(range(5).map((int n) => '$n\n').join()));
 //     });
 
-// TODO: проверить: после реализации строковых коментариев
 // TODO: check: after implementing comments
 //     test('lstrip angle bracket compact', () {
 //       final env = Environment(

@@ -10,14 +10,14 @@ void main() {
     test('simple', () {
       final template = envTrim.fromString('{% set foo = 1 %}{{ foo }}');
       expect(template.renderMap(), equals('1'));
-      // TODO: добавить тест: module foo == 1 = add test ..
+      // TODO: add: module foo == 1
     });
 
     test('block', () {
       final template =
           envTrim.fromString('{% set foo %}42{% endset %}{{ foo }}');
       expect(template.renderMap(), equals('42'));
-      // TODO: добавить тест: module foo == '42' = add test ..
+      // TODO: add: module foo == '42'
     });
 
     test('block escaping', () {
@@ -68,7 +68,7 @@ void main() {
       final template = envTrim.fromString('{% set ns = namespace(d, self=37) %}'
           '{% set ns.b = 42 %}'
           '{{ ns.a }}|{{ ns.self }}|{{ ns.b }}');
-      expect(template.render(d: <String, Object>{'a': 13}), equals('13|37|42'));
+      expect(template.render(d: {'a': 13}), equals('13|37|42'));
     });
 
     test('namespace loop', () {
@@ -84,7 +84,7 @@ void main() {
       expect(template.render(v: 4), equals('false'));
     });
 
-    // TODO: добавить тест: namespace macro = add test ..
+    // TODO: add: namespace macro
 
     test('block escapeing filtered', () {
       final env = Environment(autoEscape: true);
@@ -100,14 +100,14 @@ void main() {
           '{% set foo | trim | length | string %} 42    {% endset %}'
           '{{ foo }}');
       expect(template.renderMap(), equals('2'));
-      // TODO: добавить тест: module foo == '2' = add test ..
+      // TODO: add: module foo == '2'
     });
 
     test('block filtered set', () {
-      dynamic myfilter(Object value, Object arg) {
+      final myfilter = (value, arg) {
         assert(arg == ' xxx ');
         return value;
-      }
+      };
 
       envTrim.filters['myfilter'] = myfilter;
       final template = envTrim.fromString('{% set a = " xxx " %}'
@@ -116,7 +116,7 @@ void main() {
           '{% endset %}'
           '{{ foo }}');
       expect(template.renderMap(), equals('11'));
-      // TODO: добавить тест: module foo == '11' = add test ..
+      // TODO: add: module foo == '11'
     });
   });
 }

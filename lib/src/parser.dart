@@ -432,7 +432,7 @@ class Parser {
   SetStatement parseSet() {
     final setEndReg = getEndRegFor('endset');
     final target = expected(nameReg);
-    late String field;
+    String? field;
 
     if (scanner.scan(dotReg) && scanner.scan(nameReg)) {
       field = scanner.lastMatch![1]!;
@@ -963,10 +963,10 @@ class Parser {
   }
 
   Call parseCall(Expression expr) {
-    return Call(expr, parseCallArguments());
+    return Call(expr, parseCallArguments(expectLParenReg: true));
   }
 
-  Arguments parseCallArguments({bool expectLParenReg = true}) {
+  Arguments parseCallArguments({bool expectLParenReg = false}) {
     if (expectLParenReg) {
       expect(lParenReg);
     }

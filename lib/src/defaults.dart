@@ -8,6 +8,6 @@ final Map<String, Function> defaultFilters = filters;
 final Map<String, Function> defaultTests = tests;
 
 final Map<String, dynamic> defaultContext = <String, dynamic>{
-  'namespace': NameSpace.namespace,
+  'namespace': namespace,
   'range': range,
 };

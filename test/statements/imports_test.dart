@@ -6,14 +6,14 @@ void main() {
   final env = Environment(
     globals: <String, Object>{'bar': 23},
     loader: MapLoader(<String, String>{
-      // TODO: включить после реализаци модулей = include after implementing modules
+      // TODO: include after implementing modules
       // module: '{% macro test() %}[{{ foo }}|{{ bar }}]{% endmacro %}'
       'header': '[{{ foo }}|{{ 23 }}]',
       'o_printer': '({{ o }})',
     }),
   );
 
-  // TODO: добавить тест: import = add test ..
+  // TODO: add test: import
 
   group('include', () {
     final foo42 = <String, Object>{'foo': 42};
@@ -40,7 +40,7 @@ void main() {
       template = env.fromString('{% include ["missing", "missing2"] %}');
       expect(() => template.renderMap(), throwsA(isA<TemplatesNotFound>()));
 
-      // TODO: ссылка https://github.com/pallets/jinja/blob/master/tests/test_imports.py#L122 = link: ..
+      // TODO: https://github.com/pallets/jinja/blob/master/tests/test_imports.py#L122
 
       void testIncludes(Template template, Map<String, Object> context) {
         context['foo'] = 42;
@@ -84,7 +84,7 @@ void main() {
       expect(template.renderMap(), equals('123'));
     });
 
-    // TODO: добавить тест: unoptimized scopes = add test ..
-    // TODO: добавить тест: import from with context = add test ..
+    // TODO: add test: unoptimized scopes
+    // TODO: add test: import from with context
   });
 }

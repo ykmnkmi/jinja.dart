@@ -1,4 +1,4 @@
-import 'dart:math' show Random, pow;
+import 'dart:math' show pow;
 
 import 'environment.dart';
 import 'markup.dart';
@@ -156,10 +156,9 @@ String doFileSizeFormat(dynamic value, [bool binary = false]) {
   if (bytes == 1.0) {
     return '1 Byte';
   } else if (bytes < base) {
-    final size = bytes.toStringAsFixed(1);
-    return size.endsWith('.0')
-        ? size.substring(0, size.length - 2)
-        : size + ' Bytes';
+    var size = bytes.toStringAsFixed(1);
+    size = (size.endsWith('.0') ? size.substring(0, size.length - 2) : size);
+    return '$size Bytes';
   } else {
     final k = binary ? 0 : 1;
     late num unit;

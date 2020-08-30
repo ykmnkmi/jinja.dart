@@ -63,12 +63,15 @@ class Environment {
     Random? random,
     this.autoEscape = false,
     Loader? loader,
-    this.filters = const <String, Function>{},
-    this.tests = const <String, Function>{},
-    this.globals = const <String, Object>{},
+    Map<String, Function> filters = const <String, Function>{},
+    Map<String, Function> tests = const <String, Function>{},
+    Map<String, dynamic> globals = const <String, dynamic>{},
     this.getField = defaultFieldGetter,
     this.getItem = defaultItemGetter,
   })  : random = Random(),
+        filters = Map<String, Function>.of(defaultFilters)..addAll(filters),
+        tests = Map<String, Function>.of(defaultTests)..addAll(tests),
+        globals = Map<String, dynamic>.of(defaultContext)..addAll(globals),
         templates = <String, Template>{} {
     if (loader != null) {
       loader.load(this);
@@ -122,8 +125,7 @@ class Environment {
 
   /// If [name] not found throws [Exception].
   dynamic callFilter(Context context, String name,
-      {List positional = const [],
-      Map<Symbol, dynamic> named = const <Symbol, dynamic>{}}) {
+      {List positional = const [], Map<Symbol, dynamic> named = const {}}) {
     if (filters.containsKey(name) && filters[name] != null) {
       final filter = filters[name]!;
 
@@ -131,7 +133,8 @@ class Environment {
         case FilterType.context:
           return Function.apply(filter, [context, ...positional], named);
         case FilterType.environment:
-          return Function.apply(filter, [context.environment, ...positional], named);
+          return Function.apply(
+              filter, [context.environment, ...positional], named);
         default:
           return Function.apply(filter, positional, named);
       }
@@ -142,8 +145,7 @@ class Environment {
 
   /// If [name] not found throws [Exception].
   bool callTest(String name,
-      {List positional = const [],
-      Map<Symbol, dynamic> named = const <Symbol, dynamic>{}}) {
+      {List positional = const [], Map<Symbol, dynamic> named = const {}}) {
     if (tests.containsKey(name)) {
       // ignore: return_of_invalid_type
       return Function.apply(tests[name]!, positional, named) as bool;

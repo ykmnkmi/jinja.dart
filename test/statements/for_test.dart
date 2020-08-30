@@ -113,10 +113,10 @@ void main() {
       expect(() => template.renderMap(), throwsArgumentError);
     });
 
-    // TODO: добавить тест: recursive = add test ..
-    // TODO: добавить тест: recursive lookaround = add test ..
-    // TODO: добавить тест: recursive depth0 = add test ..
-    // TODO: добавить тест: recursive depth = add test ..
+    // TODO: add test: recursive
+    // TODO: add test: recursive lookaround
+    // TODO: add test: recursive depth0
+    // TODO: add test: recursive depth
 
     test('looploop', () {
       final template = env.fromString('''{% for row in table %}
@@ -152,7 +152,7 @@ void main() {
       expect(template.renderMap(), '[1:0][2:2][3:4][4:6][5:8]');
     });
 
-    // TODO: добавить тест: loop unassignable = add test ..
+    // TODO: add test: loop unassignable
 
     test('scoped special var', () {
       final template =
@@ -173,9 +173,9 @@ void main() {
       expect(template.renderMap(data), 'truefalsetruefalse');
     });
 
-    // TODO: добавить тест: recursive empty loop iter = add test ..
-    // TODO: добавить тест: call in loop = add test ..
-    // TODO: добавить тест: scoping bug = add test ..
+    // TODO: add test: recursive empty loop iter
+    // TODO: add test: call in loop
+    // TODO: add test: scoping bug
 
     test('unpacking', () {
       final template = env.fromString('{% for a, b, c in [[1, 2, 3]] %}'
