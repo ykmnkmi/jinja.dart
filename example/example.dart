@@ -6,11 +6,11 @@ void main() {
   final path = Platform.script.resolve('.').toFilePath();
 
   final env = Environment(
-    globals: <String, Object>{
+    globals: <String, dynamic>{
       'now': () {
         final dt = DateTime.now().toLocal();
-        final hour = dt.hour < 10 ? '0${dt.hour}' : dt.hour.toString();
-        final minute = dt.minute < 10 ? '0${dt.minute}' : dt.minute.toString();
+        final hour = dt.hour.toString().padLeft(2, '0');
+        final minute = dt.minute.toString().padLeft(2, '0');
         return '$hour:$minute';
       },
     },
@@ -21,8 +21,10 @@ void main() {
 
   final template = env.getTemplate('users.html');
 
-  stdout.write(template.render(users: [
-    {'fullname': 'Jhon Doe', 'email': 'jhondoe@dev.py'},
-    {'fullname': 'Jane Doe', 'email': 'janedoe@dev.py'},
-  ]));
+  stdout.write(template.render(
+    users: [
+      {'fullname': 'Jhon Doe', 'email': 'jhondoe@dev.py'},
+      {'fullname': 'Jane Doe', 'email': 'janedoe@dev.py'},
+    ],
+  ));
 }
