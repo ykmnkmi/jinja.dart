@@ -5,6 +5,7 @@
 - internal fixes
 - add `encoding` parameter `FileSystemLoader` constructor
 - add loader tests
+- fix filter block
 <!-- - issue [7](https://github.com/ykmnkmi/jinja.dart/issues/7) -->
 
 ## 0.2.4

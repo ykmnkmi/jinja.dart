@@ -14,7 +14,8 @@ const namespace = NameSpaceFactory();
 
 class NameSpace {
   NameSpace([Map<String, dynamic>? data])
-      : data = data != null ? Map.of(data) : {};
+      : data =
+            data != null ? Map<String, dynamic>.of(data) : <String, dynamic>{};
 
   final Map<String, dynamic> data;
 

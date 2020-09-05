@@ -501,7 +501,7 @@ class Parser {
 
     final filters = <Filter>[];
 
-    while (scanner.scan(pipeReg)) {
+    do {
       final filter = parseFilter(hasLeadingPipe: false);
 
       // TODO: check
@@ -510,7 +510,7 @@ class Parser {
       // }
 
       filters.add(filter);
-    }
+    } while (scanner.scan(pipeReg));
 
     expect(blockEndReg);
 

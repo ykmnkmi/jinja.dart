@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 
 void main() {
   final env = Environment(
-    globals: <String, Object>{'bar': 23},
+    globals: <String, dynamic>{'bar': 23},
     loader: MapLoader(<String, String>{
       // TODO: include after implementing modules
       // module: '{% macro test() %}[{{ foo }}|{{ bar }}]{% endmacro %}'
@@ -16,7 +16,7 @@ void main() {
   // TODO: add test: import
 
   group('include', () {
-    final foo42 = <String, Object>{'foo': 42};
+    final foo42 = <String, dynamic>{'foo': 42};
 
     test('context include', () {
       var template = env.fromString('{% include "header" %}');
@@ -42,23 +42,23 @@ void main() {
 
       // TODO: https://github.com/pallets/jinja/blob/master/tests/test_imports.py#L122
 
-      void testIncludes(Template template, Map<String, Object> context) {
+      void testIncludes(Template template, Map<String, dynamic> context) {
         context['foo'] = 42;
         expect(template.renderMap(context), equals('[42|23]'));
       }
 
       template = env.fromString('{% include ["missing", "header"] %}');
-      testIncludes(template, <String, Object>{});
+      testIncludes(template, <String, dynamic>{});
       template = env.fromString('{% include x %}');
-      testIncludes(template, <String, Object>{
+      testIncludes(template, <String, dynamic>{
         'x': <String>['missing', 'header'],
       });
       template = env.fromString('{% include [x, "header"] %}');
-      testIncludes(template, <String, Object>{'x': 'missing'});
+      testIncludes(template, <String, dynamic>{'x': 'missing'});
       template = env.fromString('{% include x %}');
-      testIncludes(template, <String, Object>{'x': 'header'});
+      testIncludes(template, <String, dynamic>{'x': 'header'});
       template = env.fromString('{% include [x] %}');
-      testIncludes(template, <String, Object>{'x': 'header'});
+      testIncludes(template, <String, dynamic>{'x': 'header'});
     });
 
     test('include ignore missing', () {

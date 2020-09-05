@@ -1,5 +1,7 @@
 import 'dart:math' show Random;
 
+import 'package:path/path.dart' as p;
+
 import 'defaults.dart';
 import 'filters.dart';
 import 'loaders.dart';
@@ -116,6 +118,7 @@ class Environment {
   ///
   /// `path/to/template`
   Template getTemplate(String path) {
+    path = p.normalize(path);
     if (templates.containsKey(path)) {
       return templates[path]!;
     }

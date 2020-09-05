@@ -34,8 +34,8 @@ void main() {
 
       final template = envTrim.fromString('{% set foo.bar = 1 %}');
       expect(
-          () => template.render(foo: <Object, Object>{}),
-          throwsA(predicate<Object>((Object e) =>
+          () => template.render(foo: <dynamic, dynamic>{}),
+          throwsA(predicate((e) =>
               e is TemplateRuntimeError &&
               e.message == 'non-namespace object')));
     });
@@ -44,8 +44,8 @@ void main() {
       final template = envTrim.fromString('{% set ns = namespace() %}'
           '{% set ns.bar = "hi" %}');
       expect(
-          () => template.render(namespace: () => <Object, Object>{}),
-          throwsA(predicate<Object>((Object e) =>
+          () => template.render(namespace: () => {}),
+          throwsA(predicate((e) =>
               e is TemplateRuntimeError &&
               e.message == 'non-namespace object')));
     });

@@ -8,12 +8,6 @@ void main() {
       final env = Environment(getField: getField);
       var template = env.fromString('{{ foo["items"] }}');
       expect(template.render(foo: {'items': 42}), equals('42'));
-      
-      // TODO(test): work though this
-      // template = env.fromString('{{ foo.items() | list }}');
-      // expect(template.render(foo: {'items': 42}), equals("[('items', 42)]"));
-      // template = env.fromString('foo | attr("items")() | list }}');
-      // expect(template.render(foo: {'items': 42}), equals("[('items', 42)]"));
     });
 
     test('finalize', () {

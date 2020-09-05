@@ -1,7 +1,6 @@
 import 'dart:io';
 
-import 'package:jinja/src/environment.dart';
-import 'package:jinja/src/loaders.dart';
+import 'package:jinja/jinja.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart' hide escape;
 

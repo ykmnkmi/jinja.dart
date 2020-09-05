@@ -52,7 +52,7 @@ void main() {
           '{{ (10 ** 2) is number }}|'
           '{{ 3.14159 is number }}');
       expect(
-          template.render(mydict: <Object, Object>{}),
+          template.render(mydict: <dynamic, dynamic>{}),
           equals('false|true|false|true|true|false|true|true|true|true|false|'
               'true|true|true|false|true|true|true'));
     });
