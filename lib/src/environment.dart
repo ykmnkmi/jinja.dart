@@ -49,28 +49,28 @@ dynamic defaultFinalizer(dynamic value) {
 /// will lead to surprising effects and undefined behavior.
 class Environment {
   /// If `loader` is not `null`, templates will be loaded
-  Environment({
-    this.blockStart = '{%',
-    this.blockEnd = '%}',
-    this.variableStart = '{{',
-    this.variableEnd = '}}',
-    this.commentStart = '{#',
-    this.commentEnd = '#}',
-    this.trimBlocks = false,
-    this.leftStripBlocks = false,
-    this.keepTrailingNewLine = false,
-    this.optimize = true,
-    this.undefined = const Undefined(),
-    this.finalize = defaultFinalizer,
-    Random? random,
-    this.autoEscape = false,
-    Loader? loader,
-    Map<String, Function> filters = const <String, Function>{},
-    Map<String, Function> tests = const <String, Function>{},
-    Map<String, dynamic> globals = const <String, dynamic>{},
-    this.getField = defaultFieldGetter,
-    this.getItem = defaultItemGetter,
-  })  : random = Random(),
+  Environment(
+      {this.blockStart = '{%',
+      this.blockEnd = '%}',
+      this.variableStart = '{{',
+      this.variableEnd = '}}',
+      this.commentStart = '{#',
+      this.commentEnd = '#}',
+      this.trimBlocks = false,
+      this.leftStripBlocks = false,
+      this.keepTrailingNewLine = false,
+      this.optimize = true,
+      this.undefined = const Undefined(),
+      this.finalize = defaultFinalizer,
+      Random? random,
+      this.autoEscape = false,
+      Loader? loader,
+      Map<String, Function> filters = const <String, Function>{},
+      Map<String, Function> tests = const <String, Function>{},
+      Map<String, dynamic> globals = const <String, dynamic>{},
+      this.getField = defaultFieldGetter,
+      this.getItem = defaultItemGetter})
+      : random = Random(),
         filters = Map<String, Function>.of(defaultFilters)..addAll(filters),
         tests = Map<String, Function>.of(defaultTests)..addAll(tests),
         globals = Map<String, dynamic>.of(defaultContext)..addAll(globals),
@@ -118,9 +118,10 @@ class Environment {
   ///
   /// `path/to/template`
   Template getTemplate(String path) {
-    path = p.normalize(path);
-    if (templates.containsKey(path)) {
-      return templates[path]!;
+    final normalizedPath = p.normalize(path);
+
+    if (templates.containsKey(normalizedPath)) {
+      return templates[normalizedPath]!;
     }
 
     throw ArgumentError('template not found: $path');
@@ -134,10 +135,13 @@ class Environment {
 
       switch (getFilterType(filter)) {
         case FilterType.context:
-          return Function.apply(filter, [context, ...positional], named);
+          final args = <dynamic>[context];
+          args.addAll(positional);
+          return Function.apply(filter, args, named);
         case FilterType.environment:
-          return Function.apply(
-              filter, [context.environment, ...positional], named);
+          final args = <dynamic>[context.environment];
+          args.addAll(positional);
+          return Function.apply(filter, args, named);
         default:
           return Function.apply(filter, positional, named);
       }
@@ -166,27 +170,25 @@ class Environment {
 /// instance directly using the constructor. It takes the same arguments as
 /// the environment constructor but it's not possible to specify a loader.
 class Template extends Node {
-  factory Template(
-    String source, {
-    String blockStart = '{%',
-    String blockEnd = '%}',
-    String variableStart = '{{',
-    String variableEnd = '}}',
-    String commentStart = '{#',
-    String commentEnd = '#}',
-    bool trimBlocks = false,
-    bool leftStripBlocks = false,
-    bool keepTrailingNewLine = false,
-    bool optimize = true,
-    Undefined undefined = const Undefined(),
-    Finalizer finalize = defaultFinalizer,
-    bool autoEscape = false,
-    Map<String, Function> filters = const <String, Function>{},
-    Map<String, Function> tests = const <String, Function>{},
-    Map<String, dynamic> globals = const <String, dynamic>{},
-    FieldGetter getField = defaultFieldGetter,
-    ItemGetter getItem = defaultItemGetter,
-  }) {
+  factory Template(String source,
+      {String blockStart = '{%',
+      String blockEnd = '%}',
+      String variableStart = '{{',
+      String variableEnd = '}}',
+      String commentStart = '{#',
+      String commentEnd = '#}',
+      bool trimBlocks = false,
+      bool leftStripBlocks = false,
+      bool keepTrailingNewLine = false,
+      bool optimize = true,
+      Undefined undefined = const Undefined(),
+      Finalizer finalize = defaultFinalizer,
+      bool autoEscape = false,
+      Map<String, Function> filters = const <String, Function>{},
+      Map<String, Function> tests = const <String, Function>{},
+      Map<String, dynamic> globals = const <String, dynamic>{},
+      FieldGetter getField = defaultFieldGetter,
+      ItemGetter getItem = defaultItemGetter}) {
     final env = Environment(
       blockStart: blockStart,
       blockEnd: blockEnd,

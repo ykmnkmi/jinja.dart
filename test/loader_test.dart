@@ -9,6 +9,7 @@ void main() {
     late String searchPath;
 
     setUpAll(() {
+      // check if script generated and runned in isolate
       if (Platform.script.isScheme('file')) {
         searchPath = p.join(
             Platform.script

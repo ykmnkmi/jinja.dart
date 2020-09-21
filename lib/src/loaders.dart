@@ -9,6 +9,9 @@ import 'environment.dart';
 /// Subclass this and override [getSource], [listSources] and [load]
 /// to implement a custom loading mechanism.
 abstract class Loader {
+  /// Get template source from file.
+  ///
+  /// Throws exception if file not found
   String getSource(String path) {
     throw Exception('template not found: $path');
   }
@@ -44,37 +47,32 @@ abstract class Loader {
 ///
 /// To follow symbolic links, set the [followLinks] parameter to `true`
 ///
-///     var loader = FileSystemLoader(path: './path', followLinks: true)
+///     var loader = FileSystemLoader(path: 'path', followLinks: true)
 ///
 class FileSystemLoader extends Loader {
   FileSystemLoader(
       {String path = 'templates',
       List<String>? paths,
       this.followLinks = true,
-      this.extensions = const <String>{'html'},
+      this.extensions = const {'html'},
       this.encoding = utf8,
       this.autoReload = false})
-      : paths = paths ?? <String>[path] {
-    for (final path in this.paths) {
-      if (!FileSystemEntity.isDirectorySync(path)) {
-        // TODO: improve error message
-        throw Exception('folder must be exist: $path');
-      }
-    }
-  }
+      : paths = paths ?? <String>[path];
 
   final List<String> paths;
-  
+
   final bool followLinks;
-  
+
   final Set<String> extensions;
-  
+
   final Encoding encoding;
-  
+
   final bool autoReload;
 
   @deprecated
-  Directory get directory => Directory(paths.last);
+  Directory get directory {
+    return Directory(paths.last);
+  }
 
   @override
   String getSource(String template) {
@@ -102,6 +100,11 @@ class FileSystemLoader extends Loader {
     final found = <String>[];
 
     for (final path in paths) {
+      if (!FileSystemEntity.isDirectorySync(path)) {
+        // TODO: improve error message
+        throw Exception('templte folder not found: $path');
+      }
+
       final directory = Directory(path);
 
       if (directory.existsSync()) {
@@ -109,18 +112,16 @@ class FileSystemLoader extends Loader {
             directory.listSync(recursive: true, followLinks: followLinks);
 
         for (final entity in entities) {
-          var template = p.relative(entity.path, from: path);
+          final template = p.relative(entity.path, from: path);
           var ext = p.extension(template);
 
-          if (ext.isNotEmpty) {
+          if (ext.isNotEmpty && ext.startsWith('.')) {
             ext = ext.substring(1);
           }
 
-          if (FileSystemEntity.typeSync(entity.path) ==
-                  FileSystemEntityType.file &&
-              extensions.contains(ext)) {
-            template = template.replaceAll(p.separator, '/');
-
+          if (extensions.contains(ext) &&
+              FileSystemEntity.typeSync(entity.path) ==
+                  FileSystemEntityType.file) {
             if (!found.contains(template)) {
               found.add(template);
             }
@@ -139,14 +140,17 @@ class FileSystemLoader extends Loader {
 
     if (autoReload) {
       for (final path in paths) {
-        Directory(path)
-            .watch(recursive: true)
-            .where((event) => event.type == FileSystemEvent.modify)
-            .listen((event) {
-          final template = p.relative(event.path, from: path);
-          env.fromString(getSource(template), path: template);
+        Directory(path).watch(recursive: true).listen((event) {
+          switch (event.type) {
+            case FileSystemEvent.create:
+            case FileSystemEvent.modify:
+              final template = p.relative(event.path, from: path);
+              env.fromString(getSource(template), path: template);
+              break;
+            default:
+            // log or not log
+          }
         });
-        ;
       }
     }
   }
@@ -162,8 +166,6 @@ class FileSystemLoader extends Loader {
 /// This loader is useful for testing:
 ///
 ///     var loader = MapLoader({'index.html': 'source here'})
-///
-/// Because auto reloading is rarely useful this is disabled per default.
 ///
 class MapLoader extends Loader {
   MapLoader(this.dict) : hasSourceAccess = false;

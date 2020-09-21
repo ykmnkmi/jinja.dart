@@ -1,11 +1,10 @@
 ## 0.3.0-nullsafety (working)
-
 - add null safety
-- change constructor `Template.parsed` to `Template.parsed(this.env, this.body, [this.path])`
-- internal fixes
-- add `encoding` parameter `FileSystemLoader` constructor
+- add `encoding` parameter to `FileSystemLoader` constructor
 - add loader tests
-- fix filter block
+- template:
+    - change `Template.parsed` constructor definition to `Template.parsed(this.env, this.body, [this.path])`
+- internal fixes
 <!-- - issue [7](https://github.com/ykmnkmi/jinja.dart/issues/7) -->
 
 ## 0.2.4
@@ -30,7 +29,7 @@
     - `getField` and `getItem` methods
     - `leftStripBlock` and `keepTrailingNewLine` fields
 - field and method calling expressions that used mirrors now uses `Environment.getField` method</br>
-  default getField throws runtime error, to use field expression import and pass to environment `getField` method from `package:jinja/get_field.dart`, this method uses dart:mirrors</br>
+  default getField throws runtime error, to use field expression based on reflection import and pass to environment `getField` method from `package:jinja/get_field.dart`, or write custom method based on code generation</br>
 - filters:
   - add environment filters:
     - batch

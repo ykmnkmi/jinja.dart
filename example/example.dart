@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:jinja/jinja.dart';
 
 void main() {
-  final path = Platform.script.resolve('.').toFilePath();
+  final path = Platform.script.resolve('templates').toFilePath();
 
   final env = Environment(
     globals: <String, dynamic>{
