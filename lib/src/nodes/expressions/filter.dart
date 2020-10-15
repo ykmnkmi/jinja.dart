@@ -15,11 +15,11 @@ class Filter extends Expression {
   final Map<String, Expression> named;
 
   @override
-  dynamic resolve(Context context) {
+  Object? resolve(Context context) {
     return filter(context, expr?.resolve(context));
   }
 
-  dynamic filter(Context context, dynamic value) {
+  Object? filter(Context context, Object? value) {
     return context.environment.callFilter(context, name,
         positional: [value, ...positional.map((arg) => arg.resolve(context))],
         named: named.map(

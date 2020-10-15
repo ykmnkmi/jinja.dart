@@ -6,7 +6,9 @@ Iterable<int> range(int n) sync* {
   }
 }
 
-bool toBool(dynamic value) {
+bool toBool(Object? value) {
+  assert(value != null);
+
   if (value is Undefined || value == null) {
     return false;
   }
@@ -34,20 +36,27 @@ bool toBool(dynamic value) {
   return true;
 }
 
-String repr(dynamic object, [bool reprString = true]) {
+String repr(Object? object) {
+  assert(object != null);
+
   if (object is Iterable) {
     final buffer = StringBuffer('[')
       ..writeAll(object.map(repr), ', ')
       ..write(']');
     return buffer.toString();
   } else if (object is Map) {
-    final entries = object.entries
-        .map((entry) => '${repr(entry.key)}: ${repr(entry.value)}');
-    final buffer = StringBuffer('{')
-      ..writeAll(entries, ', ')
+    final buffer = StringBuffer('{');
+    final pairs = [];
+
+    object.forEach((key, value) {
+      pairs.add('${repr(key)}: ${repr(value)}');
+    });
+
+    buffer
+      ..writeAll(pairs, ', ')
       ..write('}');
     return buffer.toString();
-  } else if (object is String && reprString) {
+  } else if (object is String) {
     final string = object.replaceAll('\'', '\\\'');
     return "'$string'";
   } else {

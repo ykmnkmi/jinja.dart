@@ -26,7 +26,7 @@ bool ne(dynamic value, dynamic other) {
   return value != other;
 }
 
-bool istCallable(dynamic value) {
+bool isCallable(dynamic value) {
   return value is Function;
 }
 
@@ -119,7 +119,7 @@ bool isUpper(String value) {
 }
 
 final Map<String, Function> tests = <String, Function>{
-  'callable': istCallable,
+  'callable': isCallable,
   'defined': isDefined,
   'divisibleby': isDivisibleBy,
   'eq': eq,

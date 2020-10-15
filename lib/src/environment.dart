@@ -9,14 +9,14 @@ import 'nodes.dart';
 import 'parser.dart';
 import 'runtime.dart';
 
-typedef FieldGetter = dynamic Function(dynamic object, String field);
-typedef ItemGetter = dynamic Function(dynamic object, dynamic key);
+typedef FieldGetter = Object? Function(Object? object, String field);
+typedef ItemGetter = Object? Function(Object? object, Object? key);
 
-dynamic defaultFieldGetter(dynamic object, String field) {
+Object? defaultFieldGetter(Object? object, String field) {
   return null;
 }
 
-dynamic defaultItemGetter(dynamic object, dynamic key) {
+Object? defaultItemGetter(Object? object, Object? key) {
   if (object is List) {
     return object.asMap()[key];
   }
@@ -28,16 +28,18 @@ dynamic defaultItemGetter(dynamic object, dynamic key) {
   return null;
 }
 
-typedef Finalizer = dynamic Function(dynamic value);
+typedef Finalizer = Object Function(Object? value);
 
-dynamic defaultFinalizer(dynamic value) {
-  value ??= '';
+Object defaultFinalizer(Object? value) {
+  if (value == null) {
+    return '';
+  }
 
   if (value is String) {
     return value;
   }
 
-  return repr(value, false);
+  return repr(value);
 }
 
 /// The core component of Jinja 2 is the Environment. It contains
@@ -70,7 +72,7 @@ class Environment {
       Map<String, dynamic> globals = const <String, dynamic>{},
       this.getField = defaultFieldGetter,
       this.getItem = defaultItemGetter})
-      : random = Random(),
+      : random = random ?? Random(),
         filters = Map<String, Function>.of(defaultFilters)..addAll(filters),
         tests = Map<String, Function>.of(defaultTests)..addAll(tests),
         globals = Map<String, dynamic>.of(defaultContext)..addAll(globals),
@@ -128,7 +130,7 @@ class Environment {
   }
 
   /// If [name] not found throws [Exception].
-  dynamic callFilter(Context context, String name,
+  Object? callFilter(Context context, String name,
       {List positional = const [], Map<Symbol, dynamic> named = const {}}) {
     if (filters.containsKey(name) && filters[name] != null) {
       final filter = filters[name]!;
@@ -154,7 +156,6 @@ class Environment {
   bool callTest(String name,
       {List positional = const [], Map<Symbol, dynamic> named = const {}}) {
     if (tests.containsKey(name)) {
-      // ignore: return_of_invalid_type
       return Function.apply(tests[name]!, positional, named) as bool;
     }
 
@@ -183,6 +184,7 @@ class Template extends Node {
       bool optimize = true,
       Undefined undefined = const Undefined(),
       Finalizer finalize = defaultFinalizer,
+      Random? random,
       bool autoEscape = false,
       Map<String, Function> filters = const <String, Function>{},
       Map<String, Function> tests = const <String, Function>{},
@@ -202,6 +204,7 @@ class Template extends Node {
       optimize: optimize,
       undefined: undefined,
       finalize: finalize,
+      random: random,
       autoEscape: autoEscape,
       filters: Map<String, Function>.of(defaultFilters)..addAll(filters),
       tests: Map<String, Function>.of(defaultTests)..addAll(tests),
@@ -224,9 +227,9 @@ class Template extends Node {
 
   final Map<String, BlockStatement> blocks;
 
-  dynamic _render;
+  late Function _render;
 
-  dynamic get render {
+  Function get render {
     return _render;
   }
 
@@ -281,22 +284,32 @@ class Template extends Node {
   }
 }
 
-// TODO: remove/improve workaround
 // ignore: deprecated_extends_function
 class RenderWrapper extends Function {
-  RenderWrapper(this.function);
+  RenderWrapper(this.renderMap);
 
-  final Function function;
+  final String Function([Map<String, dynamic>? data]) renderMap;
 
-  dynamic call() {
-    return function();
+  String call() {
+    return renderMap();
   }
 
   @override
   dynamic noSuchMethod(Invocation invocation) {
     if (invocation.memberName == #call) {
-      return function(invocation.namedArguments
-          .map((key, value) => MapEntry(getSymbolName(key), value)));
+      final map = <String, Object>{};
+
+      for (final symbol in invocation.namedArguments.keys) {
+        final Object? value = invocation.namedArguments[symbol];
+
+        if (value == null) {
+          continue;
+        }
+
+        map[getSymbolName(symbol)] = value;
+      }
+
+      return renderMap(map);
     }
 
     return super.noSuchMethod(invocation);
