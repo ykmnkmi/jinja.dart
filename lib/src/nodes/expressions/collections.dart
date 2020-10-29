@@ -6,7 +6,7 @@ class ListExpression extends Expression {
   final List<Expression> values;
 
   @override
-  List resolve(Context context) {
+  List<Object?> resolve(Context context) {
     return values.map((value) => value.resolve(context)).toList();
   }
 
@@ -31,7 +31,7 @@ class MapExpression extends Expression {
   final Map<Expression, Expression> values;
 
   @override
-  Map resolve(Context context) {
+  Map<Object?, Object?> resolve(Context context) {
     return values.map(
         (key, value) => MapEntry(key.resolve(context), value.resolve(context)));
   }
@@ -61,7 +61,7 @@ class TupleExpression extends Expression implements CanAssign {
   final List<Expression> items;
 
   @override
-  List resolve(Context context) {
+  List<Object?> resolve(Context context) {
     return items.map((value) => value.resolve(context)).toList();
   }
 

@@ -37,11 +37,11 @@ class ForStatement extends Statement {
     }
   }
 
-  Map<String, dynamic> getDataForContext(
-      List values, int i, Undefined undefined) {
+  Map<String, Object?> getDataForContext(
+      List<Object?> values, int i, Undefined undefined) {
     final current = values[i];
-    var prev = undefined as dynamic;
-    var next = undefined as dynamic;
+    Object? prev = undefined;
+    Object? next = undefined;
 
     if (i > 0) {
       prev = values[i - 1];
@@ -51,7 +51,7 @@ class ForStatement extends Statement {
       next = values[i + 1];
     }
 
-    final changed = (item) {
+    final changed = (Object? item) {
       if (i == 0) {
         return true;
       }
@@ -63,7 +63,7 @@ class ForStatement extends Statement {
       return true;
     };
 
-    final data = <String, dynamic>{
+    final data = <String, Object?>{
       'loop': LoopContext(i, values.length, prev, next, changed)
     };
 
@@ -76,7 +76,7 @@ class ForStatement extends Statement {
     return data;
   }
 
-  void render(List list, Context context, StringSink outSink) {
+  void render(List<Object?> list, Context context, StringSink outSink) {
     for (var i = 0; i < list.length; i++) {
       final data = getDataForContext(list, i, context.environment.undefined);
       context.apply(data, (context) {
@@ -85,11 +85,13 @@ class ForStatement extends Statement {
     }
   }
 
-  void loopIterable(Iterable values, Context context, StringSink outSink) {
+  void loopIterable(
+      Iterable<Object?> values, Context context, StringSink outSink) {
     render(values.toList(), context, outSink);
   }
 
-  void loopMap(Map dict, Context context, StringSink outSink) {
+  void loopMap(
+      Map<Object?, Object?> dict, Context context, StringSink outSink) {
     final list = dict.entries.map((entry) => [entry.key, entry.value]).toList();
     render(list, context, outSink);
   }
@@ -166,9 +168,9 @@ class ForStatementWithFilter extends ForStatement {
 
   final Expression? filter;
 
-  Map<String, dynamic> getDataForFilter(List values, int i) {
+  Map<String, Object?> getDataForFilter(List<Object?> values, int i) {
     final current = values[i];
-    final data = <String, dynamic>{};
+    final data = <String, Object?>{};
 
     if (targets.length == 1) {
       if (current is MapEntry) {
@@ -183,9 +185,9 @@ class ForStatementWithFilter extends ForStatement {
     return data;
   }
 
-  List filterValues(Iterable values, Context context) {
+  List<Object?> filterValues(Iterable<Object?> values, Context context) {
     final list = values.toList();
-    final filteredList = [];
+    final filteredList = <Object?>[];
 
     for (var i = 0; i < list.length; i++) {
       final data = getDataForFilter(list, i);
@@ -201,12 +203,14 @@ class ForStatementWithFilter extends ForStatement {
   }
 
   @override
-  void loopIterable(Iterable values, Context context, StringSink outSink) {
+  void loopIterable(
+      Iterable<Object?> values, Context context, StringSink outSink) {
     render(filterValues(values, context), context, outSink);
   }
 
   @override
-  void loopMap(Map dict, Context context, StringSink outSink) {
+  void loopMap(
+      Map<Object?, Object?> dict, Context context, StringSink outSink) {
     final pairs = dict.entries.map((entry) => [entry.key, entry.value]);
     render(filterValues(pairs, context), context, outSink);
   }

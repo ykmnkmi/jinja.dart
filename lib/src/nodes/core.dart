@@ -14,7 +14,7 @@ abstract class Node {
 abstract class Statement extends Node {}
 
 abstract class Expression extends Node {
-  dynamic resolve(Context context) {
+  Object? resolve(Context context) {
     return null;
   }
 

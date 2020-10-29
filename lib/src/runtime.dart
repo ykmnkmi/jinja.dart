@@ -58,7 +58,7 @@ class NameSpaceFactory extends Function {
               continue;
             }
 
-            List list;
+            List<Object?> list;
 
             if (pair is Iterable) {
               list = pair.toList();
@@ -118,7 +118,7 @@ class LoopContext {
           'last': index0 + 1 == length,
           'revindex': length - index0,
           'revindex0': length - index0 - 1,
-          'cycle': CycleWrapper((List args) => args[index0 % args.length]),
+          'cycle': CycleWrapper((args) => args[index0 % args.length]),
         };
 
   final Map<String, dynamic> data;
@@ -133,12 +133,12 @@ class LoopContext {
 class CycleWrapper extends Function {
   CycleWrapper(this.function);
 
-  final dynamic Function(List values) function;
+  final Object? Function(List<Object?> values) function;
 
-  dynamic call();
+  Object? call();
 
   @override
-  dynamic noSuchMethod(Invocation invocation) {
+  Object? noSuchMethod(Invocation invocation) {
     if (invocation.memberName == #call) {
       return function(invocation.positionalArguments[0] as List);
     }

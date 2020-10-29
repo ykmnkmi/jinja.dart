@@ -131,17 +131,18 @@ class Environment {
 
   /// If [name] not found throws [Exception].
   Object? callFilter(Context context, String name,
-      {List positional = const [], Map<Symbol, dynamic> named = const {}}) {
+      {List<Object?> positional = const [],
+      Map<Symbol, Object?> named = const {}}) {
     if (filters.containsKey(name) && filters[name] != null) {
       final filter = filters[name]!;
 
       switch (getFilterType(filter)) {
         case FilterType.context:
-          final args = <dynamic>[context];
+          final args = <Object?>[context];
           args.addAll(positional);
           return Function.apply(filter, args, named);
         case FilterType.environment:
-          final args = <dynamic>[context.environment];
+          final args = <Object?>[context.environment];
           args.addAll(positional);
           return Function.apply(filter, args, named);
         default:
@@ -154,7 +155,8 @@ class Environment {
 
   /// If [name] not found throws [Exception].
   bool callTest(String name,
-      {List positional = const [], Map<Symbol, dynamic> named = const {}}) {
+      {List<Object?> positional = const [],
+      Map<Symbol, Object?> named = const {}}) {
     if (tests.containsKey(name)) {
       return Function.apply(tests[name]!, positional, named) as bool;
     }
@@ -188,7 +190,7 @@ class Template extends Node {
       bool autoEscape = false,
       Map<String, Function> filters = const <String, Function>{},
       Map<String, Function> tests = const <String, Function>{},
-      Map<String, dynamic> globals = const <String, dynamic>{},
+      Map<String, Object?> globals = const <String, Object?>{},
       FieldGetter getField = defaultFieldGetter,
       ItemGetter getItem = defaultItemGetter}) {
     final env = Environment(
@@ -208,7 +210,7 @@ class Template extends Node {
       autoEscape: autoEscape,
       filters: Map<String, Function>.of(defaultFilters)..addAll(filters),
       tests: Map<String, Function>.of(defaultTests)..addAll(tests),
-      globals: Map<String, dynamic>.of(defaultContext)..addAll(globals),
+      globals: Map<String, Object?>.of(defaultContext)..addAll(globals),
       getField: getField,
       getItem: getItem,
     );
@@ -218,7 +220,7 @@ class Template extends Node {
 
   Template.parsed(this.environment, this.body, [this.path])
       : blocks = <String, BlockStatement>{} {
-    _render = RenderWrapper(([Map<String, dynamic>? data]) => renderMap(data));
+    _render = RenderWrapper(([Map<String, Object?>? data]) => renderMap(data));
   }
 
   final Environment environment;
@@ -227,9 +229,9 @@ class Template extends Node {
 
   final Map<String, BlockStatement> blocks;
 
-  late Function _render;
+  late dynamic _render;
 
-  Function get render {
+  dynamic get render {
     return _render;
   }
 
@@ -284,29 +286,22 @@ class Template extends Node {
   }
 }
 
-// ignore: deprecated_extends_function
-class RenderWrapper extends Function {
+class RenderWrapper {
   RenderWrapper(this.renderMap);
 
-  final String Function([Map<String, dynamic>? data]) renderMap;
+  final String Function([Map<String, Object?>? data]) renderMap;
 
   String call() {
     return renderMap();
   }
 
   @override
-  dynamic noSuchMethod(Invocation invocation) {
+  Object? noSuchMethod(Invocation invocation) {
     if (invocation.memberName == #call) {
-      final map = <String, Object>{};
+      final map = <String, Object?>{};
 
       for (final symbol in invocation.namedArguments.keys) {
-        final Object? value = invocation.namedArguments[symbol];
-
-        if (value == null) {
-          continue;
-        }
-
-        map[getSymbolName(symbol)] = value;
+        map[getSymbolName(symbol)] = invocation.namedArguments[symbol];
       }
 
       return renderMap(map);

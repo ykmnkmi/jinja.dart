@@ -2,35 +2,35 @@ import 'markup.dart';
 import 'runtime.dart';
 import 'utils.dart';
 
-bool eq(dynamic value, dynamic other) {
+bool eq(Object? value, Object? other) {
   return value == other;
 }
 
-bool ge(Comparable value, Comparable other) {
+bool ge(Comparable<Object?> value, Comparable<Object?> other) {
   return value.compareTo(other) >= 0;
 }
 
-bool gt(Comparable value, Comparable other) {
+bool gt(Comparable<Object?> value, Comparable<Object?> other) {
   return value.compareTo(other) > 0;
 }
 
-bool le(Comparable value, Comparable other) {
+bool le(Comparable<Object?> value, Comparable<Object?> other) {
   return value.compareTo(other) <= 0;
 }
 
-bool lt(Comparable value, Comparable other) {
+bool lt(Comparable<Object?> value, Comparable<Object?> other) {
   return value.compareTo(other) < 0;
 }
 
-bool ne(dynamic value, dynamic other) {
+bool ne(Object? value, Object? other) {
   return value != other;
 }
 
-bool isCallable(dynamic value) {
+bool isCallable(Object? value) {
   return value is Function;
 }
 
-bool isDefined(dynamic value) {
+bool isDefined(Object? value) {
   return toBool(value);
 }
 
@@ -42,7 +42,7 @@ bool isDivisibleBy(num value, num divider) {
   return value % divider == 0;
 }
 
-bool isEscaped(dynamic value) {
+bool isEscaped(Object? value) {
   return value is Markup;
 }
 
@@ -50,7 +50,7 @@ bool isEven(num value) {
   return value % 2 == 0;
 }
 
-bool isIn(dynamic value, dynamic values) {
+bool isIn(Object? value, Object? values) {
   if (values is String) {
     if (value is Pattern) {
       return values.contains(value);
@@ -70,7 +70,7 @@ bool isIn(dynamic value, dynamic values) {
   throw Exception('$values must be one of String, List or Map subclass');
 }
 
-bool isIterable(dynamic value) {
+bool isIterable(Object? value) {
   return value is Iterable;
 }
 
@@ -78,15 +78,15 @@ bool isLower(String value) {
   return value == value.toLowerCase();
 }
 
-bool isMapping(dynamic value) {
+bool isMapping(Object? value) {
   return value is Map;
 }
 
-bool isNone(dynamic value) {
+bool isNone(Object? value) {
   return value == null;
 }
 
-bool isNumber(dynamic value) {
+bool isNumber(Object? value) {
   return value is num;
 }
 
@@ -94,11 +94,11 @@ bool isOdd(num value) {
   return value % 2 == 1;
 }
 
-bool isSameAs(dynamic value, dynamic other) {
+bool isSameAs(Object? value, Object? other) {
   return value == other;
 }
 
-bool isSequence(dynamic values) {
+bool isSequence(Object? values) {
   if (values is Iterable || values is Map || values is String) {
     return true;
   }
@@ -106,11 +106,11 @@ bool isSequence(dynamic values) {
   return false;
 }
 
-bool isString(dynamic value) {
+bool isString(Object? value) {
   return value is String;
 }
 
-bool isUndefined(dynamic value) {
+bool isUndefined(Object? value) {
   return value is Undefined;
 }
 

@@ -1,9 +1,9 @@
-## 0.3.0-dev+1
+## 0.3.0-dev+2
 - add null safety
 - add `encoding` parameter to `FileSystemLoader` constructor
 - add loader tests
 - template:
-    - change `Template.parsed` constructor definition to `Template.parsed(this.env, this.body, [this.path])`
+  - change `Template.parsed` constructor definition to `Template.parsed(this.env, this.body, [this.path])`
 - internal fixes
 <!-- - issue [7](https://github.com/ykmnkmi/jinja.dart/issues/7) -->
 

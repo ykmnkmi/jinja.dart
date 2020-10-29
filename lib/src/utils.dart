@@ -46,7 +46,7 @@ String repr(Object? object) {
     return buffer.toString();
   } else if (object is Map) {
     final buffer = StringBuffer('{');
-    final pairs = [];
+    final pairs = <Object?>[];
 
     object.forEach((key, value) {
       pairs.add('${repr(key)}: ${repr(value)}');

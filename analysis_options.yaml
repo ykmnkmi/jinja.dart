@@ -5,5 +5,8 @@ analyzer:
     - non-nullable
   exclude:
     - example/**
+  language:
+    strict-inference: true
+    strict-raw-types: true
   strong-mode:
     implicit-casts: false
