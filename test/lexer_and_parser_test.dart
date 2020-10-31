@@ -42,7 +42,7 @@ void main() {
       );
 
       final template = env.fromString(r'''{% for item in seq
-            %}${{'foo': item} | upper}{% endfor %}''');
+            %}${{'foo': item} | string | upper}{% endfor %}''');
       expect(template.render(seq: <int>[0, 1, 2]),
           equals("{'FOO': 0}{'FOO': 1}{'FOO': 2}"));
     });

@@ -11,7 +11,7 @@ class FilterBlockStatement extends Statement {
 
   @override
   void accept(StringSink outSink, Context context) {
-    var result;
+    Object? result;
 
     if (body is Expression) {
       result = (body as Expression).resolve(context);

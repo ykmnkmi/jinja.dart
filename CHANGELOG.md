@@ -1,4 +1,4 @@
-## 0.3.0-dev+2
+## 0.3.0-dev+3
 - add null safety
 - add `encoding` parameter to `FileSystemLoader` constructor
 - add loader tests

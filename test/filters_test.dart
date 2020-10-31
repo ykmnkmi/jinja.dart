@@ -14,12 +14,6 @@ void main() {
   group('filter', () {
     final env = Environment();
 
-    test('chaining', () {
-      final template = env
-          .fromString('''{{ ['<foo>', '<bar>']| first | upper | escape }}''');
-      expect(template.renderMap(), equals('&lt;FOO&gt;'));
-    });
-
     test('attr', () {
       final env = Environment(getField: getField);
       final template = env.fromString('{{ user | attr("name") }}');
@@ -44,6 +38,12 @@ void main() {
     test('center', () {
       final template = env.fromString('{{ "foo" | center(9) }}');
       expect(template.renderMap(), equals('   foo   '));
+    });
+
+    test('chaining', () {
+      final template = env
+          .fromString('''{{ ['<foo>', '<bar>']| first | upper | escape }}''');
+      expect(template.renderMap(), equals('&lt;FOO&gt;'));
     });
 
     test('default', () {
