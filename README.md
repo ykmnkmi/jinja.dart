@@ -75,7 +75,7 @@ import 'package:jinja/jinja.dart';
 
 // code ...
 
-final Environment = Environment(blockStart: '...');
+final environment = Environment(blockStart: '...');
 final template = env.fromString('...source...');
 
 outStringSink.write(template.render(key: value));
