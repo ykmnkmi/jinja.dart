@@ -93,7 +93,8 @@ Example:
 <!-- user.html -->
 <p>hello {{ name }}!</p>
 ```
-will transformed to
+will transformed to:
+
 ```dart
 import 'package:renderable/renderable.dart';
 
