@@ -22,11 +22,10 @@ outStringSink.write(template.render(users: listOfUsers));
 // outStringSink.write(template.renderMap({'users': listOfUsers}));
 ```
 
-Now to access the fields and methods of the object, (except `namespase`, `loop`, `self` fields and methods), you need to write your own method? orto import the `get_field` method from the `package:jinja/get_field.dart` file and pass it to the `Environment` constructor.<br>
+Now to access the fields and methods of the object, (except `namespase`, `loop`, `self` fields and methods), you need to write your own method or import the `get_field` method from the `package:jinja/get_field.dart` file and pass it to the `Environment` constructor.<br>
 Or write and pass your method, like [here][jinja_reflectable_example].
 ```dart
 import 'package:jinja/jinja.dart';
-
 import 'package:jinja/get_field.dart' show getField;
 
 // ...
@@ -103,6 +102,6 @@ If you found a bug, just create a [new issue][new_issue] or even better fork and
 
 [jinja_reflectable_example]: https://github.com/ykmnkmi/jinja_reflectable_example/blob/master/bin/main.dart
 [filters]: https://github.com/ykmnkmi/dart-jinja/blob/master/lib/src/filters.dart
-[hack]: https://github.com/ykmnkmi/jinja.dart/blob/master/lib/src/environment.dart#360
-[renderable]: https://github.com/ykmnkmi/renderable
+[hack]: https://github.com/ykmnkmi/jinja.dart/blob/master/lib/src/environment.dart#299
+[renderable]: https://github.com/ykmnkmi/renderable.dart
 [new_issue]: https://github.com/ykmnkmi/dart-jinja/issues/new
