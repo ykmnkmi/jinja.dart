@@ -10,46 +10,45 @@ class Undefined {
   }
 }
 
-const namespace = NameSpaceFactory();
+const namespace = _NameSpaceFactory();
 
 class NameSpace {
-  NameSpace([Map<String, dynamic>? data])
+  NameSpace([Map<String, Object?>? data])
       : data =
-            data != null ? Map<String, dynamic>.of(data) : <String, dynamic>{};
+            data != null ? Map<String, Object?>.of(data) : <String, Object?>{};
 
-  final Map<String, dynamic> data;
+  final Map<String, Object?> data;
 
-  Iterable<MapEntry<String, dynamic>> get entries {
+  Iterable<MapEntry<String, Object?>> get entries {
     return data.entries;
   }
 
-  dynamic operator [](String key) {
+  Object? operator [](String key) {
     return data[key];
   }
 
-  void operator []=(String key, dynamic value) {
+  void operator []=(String key, Object? value) {
     data[key] = value;
   }
 }
 
 // TODO: remove/improve workaround
-// ignore: deprecated_extends_function
-class NameSpaceFactory extends Function {
-  const NameSpaceFactory();
+class _NameSpaceFactory {
+  const _NameSpaceFactory();
 
   NameSpace call() {
     return NameSpace();
   }
 
   @override
-  dynamic noSuchMethod(Invocation invocation) {
+  Object? noSuchMethod(Invocation invocation) {
     if (invocation.memberName == #call) {
-      final data = <String, dynamic>{};
+      final data = <String, Object?>{};
 
       if (invocation.positionalArguments.length == 1) {
         final arg = invocation.positionalArguments.first;
 
-        if (arg is Map<String, dynamic>) {
+        if (arg is Map<String, Object?>) {
           data.addAll(arg);
         } else if (arg is List) {
           for (final pair in arg) {
@@ -89,7 +88,7 @@ class NameSpaceFactory extends Function {
       }
 
       invocation.namedArguments.forEach((key, value) {
-        if (value is Map<Symbol, dynamic>) {
+        if (value is Map<Symbol, Object?>) {
           data.addAll(
               value.map((key, value) => MapEntry(getSymbolName(key), value)));
         } else {
@@ -105,9 +104,9 @@ class NameSpaceFactory extends Function {
 }
 
 class LoopContext {
-  LoopContext(int index0, int length, dynamic previtem, dynamic nextitem,
+  LoopContext(int index0, int length, Object? previtem, Object? nextitem,
       Function changed)
-      : data = <String, dynamic>{
+      : data = <String, Object?>{
           'index0': index0,
           'length': length,
           'previtem': previtem,
@@ -118,20 +117,19 @@ class LoopContext {
           'last': index0 + 1 == length,
           'revindex': length - index0,
           'revindex0': length - index0 - 1,
-          'cycle': CycleWrapper((args) => args[index0 % args.length]),
+          'cycle': _CycleWrapper((args) => args[index0 % args.length]),
         };
 
-  final Map<String, dynamic> data;
+  final Map<String, Object?> data;
 
-  dynamic operator [](String key) {
+  Object? operator [](String key) {
     return data[key]!;
   }
 }
 
 // TODO: remove/improve workaround
-// ignore: deprecated_extends_function
-class CycleWrapper extends Function {
-  CycleWrapper(this.function);
+class _CycleWrapper {
+  _CycleWrapper(this.function);
 
   final Object? Function(List<Object?> values) function;
 

@@ -1,5 +1,7 @@
-## 0.3.0-dev+3
+## 0.3.0 (working)
+- minimal SDK version: 2.7.0
 - add null safety
+- add `math.Random` `random` field to `Environment` and `Template` classes
 - add `encoding` parameter to `FileSystemLoader` constructor
 - add loader tests
 - template:

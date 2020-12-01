@@ -9,14 +9,14 @@ void main() {
 
     test('simple', () {
       final template = envTrim.fromString('{% set foo = 1 %}{{ foo }}');
-      expect(template.renderMap(), equals('1'));
+      expect(template.render(), equals('1'));
       // TODO: add: module foo == 1
     });
 
     test('block', () {
       final template =
           envTrim.fromString('{% set foo %}42{% endset %}{{ foo }}');
-      expect(template.renderMap(), equals('42'));
+      expect(template.render(), equals('42'));
       // TODO: add: module foo == '42'
     });
 
@@ -44,7 +44,7 @@ void main() {
       final template = envTrim.fromString('{% set ns = namespace() %}'
           '{% set ns.bar = "hi" %}');
       expect(
-          () => template.render(namespace: () => {}),
+          () => template.render(namespace: () => <String, Object>{}),
           throwsA(predicate((e) =>
               e is TemplateRuntimeError &&
               e.message == 'non-namespace object')));
@@ -54,14 +54,14 @@ void main() {
       final template = envTrim.fromString('{% set ns = namespace() %}'
           '{% set ns.bar = "42" %}'
           '{{ ns.bar }}');
-      expect(template.renderMap(), equals('42'));
+      expect(template.render(), equals('42'));
     });
 
     test('namespace block', () {
       final template = envTrim.fromString('{% set ns = namespace() %}'
           '{% set ns.bar %}42{% endset %}'
           '{{ ns.bar }}');
-      expect(template.renderMap(), equals('42'));
+      expect(template.render(), equals('42'));
     });
 
     test('init namespace', () {
@@ -99,7 +99,7 @@ void main() {
       final template = envTrim.fromString(
           '{% set foo | trim | length | string %} 42    {% endset %}'
           '{{ foo }}');
-      expect(template.renderMap(), equals('2'));
+      expect(template.render(), equals('2'));
       // TODO: add: module foo == '2'
     });
 
@@ -115,7 +115,7 @@ void main() {
           ' {% set b = " yy " %} 42 {{ a }}{{ b }}   '
           '{% endset %}'
           '{{ foo }}');
-      expect(template.renderMap(), equals('11'));
+      expect(template.render(), equals('11'));
       // TODO: add: module foo == '11'
     });
   });

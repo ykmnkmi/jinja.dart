@@ -83,7 +83,7 @@ class Name extends Expression implements CanAssign {
   final String name;
 
   @override
-  dynamic resolve(Context context) {
+  Object? resolve(Context context) {
     return context[name];
   }
 
@@ -111,10 +111,10 @@ class Name extends Expression implements CanAssign {
 class Literal extends Expression {
   Literal(this.value);
 
-  final dynamic value;
+  final Object? value;
 
   @override
-  dynamic resolve(Context context) {
+  Object? resolve(Context context) {
     return value;
   }
 

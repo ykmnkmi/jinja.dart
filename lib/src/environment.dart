@@ -17,12 +17,16 @@ Object? defaultFieldGetter(Object? object, String field) {
 }
 
 Object? defaultItemGetter(Object? object, Object? key) {
-  if (object is List) {
-    return object.asMap()[key];
-  }
-
   if (object is Map) {
     return object[key];
+  }
+
+  if (object is List) {
+    if (key is int) {
+      object[key];
+    }
+
+    return object.asMap()[key];
   }
 
   return null;
@@ -69,13 +73,13 @@ class Environment {
       Loader? loader,
       Map<String, Function> filters = const <String, Function>{},
       Map<String, Function> tests = const <String, Function>{},
-      Map<String, dynamic> globals = const <String, dynamic>{},
+      Map<String, Object?> globals = const <String, Object?>{},
       this.getField = defaultFieldGetter,
       this.getItem = defaultItemGetter})
       : random = random ?? Random(),
         filters = Map<String, Function>.of(defaultFilters)..addAll(filters),
         tests = Map<String, Function>.of(defaultTests)..addAll(tests),
-        globals = Map<String, dynamic>.of(defaultContext)..addAll(globals),
+        globals = Map<String, Object?>.of(defaultContext)..addAll(globals),
         templates = <String, Template>{} {
     if (loader != null) {
       loader.load(this);
@@ -173,26 +177,28 @@ class Environment {
 /// instance directly using the constructor. It takes the same arguments as
 /// the environment constructor but it's not possible to specify a loader.
 class Template extends Node {
-  factory Template(String source,
-      {String blockStart = '{%',
-      String blockEnd = '%}',
-      String variableStart = '{{',
-      String variableEnd = '}}',
-      String commentStart = '{#',
-      String commentEnd = '#}',
-      bool trimBlocks = false,
-      bool leftStripBlocks = false,
-      bool keepTrailingNewLine = false,
-      bool optimize = true,
-      Undefined undefined = const Undefined(),
-      Finalizer finalize = defaultFinalizer,
-      Random? random,
-      bool autoEscape = false,
-      Map<String, Function> filters = const <String, Function>{},
-      Map<String, Function> tests = const <String, Function>{},
-      Map<String, Object?> globals = const <String, Object?>{},
-      FieldGetter getField = defaultFieldGetter,
-      ItemGetter getItem = defaultItemGetter}) {
+  factory Template(
+    String source, {
+    String blockStart = '{%',
+    String blockEnd = '%}',
+    String variableStart = '{{',
+    String variableEnd = '}}',
+    String commentStart = '{#',
+    String commentEnd = '#}',
+    bool trimBlocks = false,
+    bool leftStripBlocks = false,
+    bool keepTrailingNewLine = false,
+    bool optimize = true,
+    Undefined undefined = const Undefined(),
+    Finalizer finalize = defaultFinalizer,
+    Random? random,
+    bool autoEscape = false,
+    Map<String, Function> filters = const <String, Function>{},
+    Map<String, Function> tests = const <String, Function>{},
+    Map<String, Object?> globals = const <String, Object?>{},
+    FieldGetter getField = defaultFieldGetter,
+    ItemGetter getItem = defaultItemGetter,
+  }) {
     final env = Environment(
       blockStart: blockStart,
       blockEnd: blockEnd,
@@ -220,7 +226,7 @@ class Template extends Node {
 
   Template.parsed(this.environment, this.body, [this.path])
       : blocks = <String, BlockStatement>{} {
-    _render = RenderWrapper(([Map<String, Object?>? data]) => renderMap(data));
+    _render = _RenderWrapper(([Map<String, Object?>? data]) => renderMap(data));
   }
 
   final Environment environment;
@@ -253,9 +259,9 @@ class Template extends Node {
     body.accept(outSink, context);
   }
 
-  String renderMap([Map<String, dynamic>? data]) {
+  String renderMap([Map<String, Object?>? data]) {
     final buffer = StringBuffer();
-    final context = Context(environment, data ?? <String, dynamic>{});
+    final context = Context(environment, data ?? <String, Object?>{});
     _addBlocks(context, buffer);
     body.accept(buffer, context);
     return buffer.toString();
@@ -286,8 +292,8 @@ class Template extends Node {
   }
 }
 
-class RenderWrapper {
-  RenderWrapper(this.renderMap);
+class _RenderWrapper {
+  _RenderWrapper(this.renderMap);
 
   final String Function([Map<String, Object?>? data]) renderMap;
 
