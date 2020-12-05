@@ -23,10 +23,11 @@ Object? defaultItemGetter(Object? object, Object? key) {
 
   if (object is List) {
     if (key is int) {
-      object[key];
+      return object[key];
     }
 
-    return object.asMap()[key];
+      // TODO: error message
+    throw TypeError();
   }
 
   return null;
