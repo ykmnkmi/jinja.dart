@@ -129,6 +129,6 @@ If you found a bug, just create a [new issue][new_issue] or even better fork and
 
 [jinja_reflectable_example]: https://github.com/ykmnkmi/jinja_reflectable_example/blob/master/bin/main.dart
 [filters]: https://github.com/ykmnkmi/dart-jinja/blob/master/lib/src/filters.dart
-[hack]: https://github.com/ykmnkmi/jinja.dart/blob/master/lib/src/environment.dart#299
+[hack]: https://github.com/ykmnkmi/jinja.dart/blob/master/lib/src/environment.dart#L299
 [renderable]: https://github.com/ykmnkmi/renderable.dart
 [new_issue]: https://github.com/ykmnkmi/dart-jinja/issues/new
