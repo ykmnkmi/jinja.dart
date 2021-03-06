@@ -1,13 +1,11 @@
-## 0.3.0 (working)
-- minimal SDK version: 2.7.0
-- add null safety
+## 0.3.0
+- migrate to null safety
 - add `math.Random` `random` field to `Environment` and `Template` classes
 - add `encoding` parameter to `FileSystemLoader` constructor
 - add loader tests
 - template:
   - change `Template.parsed` constructor definition to `Template.parsed(this.env, this.body, [this.path])`
 - internal fixes
-<!-- - issue [7](https://github.com/ykmnkmi/jinja.dart/issues/7) -->
 
 ## 0.2.4
 - dart issue [41362](https://github.com/dart-lang/sdk/issues/41362)

@@ -26,7 +26,7 @@ Object? defaultItemGetter(Object? object, Object? key) {
       return object[key];
     }
 
-      // TODO: error message
+    // TODO: error message
     throw TypeError();
   }
 
