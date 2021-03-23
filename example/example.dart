@@ -6,7 +6,7 @@ void main() {
   final path = Platform.script.resolve('templates').toFilePath();
 
   final env = Environment(
-    globals: <String, dynamic>{
+    globals: <String, Object?>{
       'now': () {
         final dt = DateTime.now().toLocal();
         final hour = dt.hour.toString().padLeft(2, '0');
@@ -14,17 +14,17 @@ void main() {
         return '$hour:$minute';
       },
     },
-    loader: FileSystemLoader(path: path),
+    loader: FileSystemLoader(autoReload: true, path: path),
     leftStripBlocks: true,
     trimBlocks: true,
   );
 
-  final template = env.getTemplate('users.html');
-
-  stdout.write(template.render(
-    users: [
-      {'fullname': 'Jhon Doe', 'email': 'jhondoe@dev.py'},
-      {'fullname': 'Jane Doe', 'email': 'janedoe@dev.py'},
-    ],
-  ));
+  stdin.listen((event) {
+    stdout.write(env.getTemplate('users.html').render(
+      users: [
+        {'fullname': 'Jhon Doe', 'email': 'jhondoe@dev.py'},
+        {'fullname': 'Jane Doe', 'email': 'janedoe@dev.py'},
+      ],
+    ));
+  });
 }

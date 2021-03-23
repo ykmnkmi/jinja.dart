@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
+import 'package:meta/meta.dart';
 
 import 'environment.dart';
 
@@ -74,6 +75,19 @@ class FileSystemLoader extends Loader {
     return Directory(paths.last);
   }
 
+  @protected
+  bool isTemplate(String path, [String? from]) {
+    final template = p.relative(path, from: from);
+    var ext = p.extension(template);
+
+    if (ext.startsWith('.')) {
+      ext = ext.substring(1);
+    }
+
+    return extensions.contains(ext) &&
+        FileSystemEntity.typeSync(path) == FileSystemEntityType.file;
+  }
+
   @override
   String getSource(String template) {
     String? contents;
@@ -102,7 +116,7 @@ class FileSystemLoader extends Loader {
     for (final path in paths) {
       if (!FileSystemEntity.isDirectorySync(path)) {
         // TODO: improve error message
-        throw Exception('templte folder not found: $path');
+        throw Exception('template folder not found: $path');
       }
 
       final directory = Directory(path);
@@ -112,16 +126,8 @@ class FileSystemLoader extends Loader {
             directory.listSync(recursive: true, followLinks: followLinks);
 
         for (final entity in entities) {
-          final template = p.relative(entity.path, from: path);
-          var ext = p.extension(template);
-
-          if (ext.isNotEmpty && ext.startsWith('.')) {
-            ext = ext.substring(1);
-          }
-
-          if (extensions.contains(ext) &&
-              FileSystemEntity.typeSync(entity.path) ==
-                  FileSystemEntityType.file) {
+          if (isTemplate(entity.path, path)) {
+            final template = p.relative(entity.path, from: path);
             if (!found.contains(template)) {
               found.add(template);
             }
@@ -139,16 +145,20 @@ class FileSystemLoader extends Loader {
     super.load(env);
 
     if (autoReload) {
+      print(paths);
       for (final path in paths) {
-        Directory(path).watch(recursive: true).listen((event) {
+        Directory(path)
+            .watch(recursive: true)
+            .where((event) => isTemplate(event.path, path))
+            .listen((event) {
           switch (event.type) {
             case FileSystemEvent.create:
             case FileSystemEvent.modify:
               final template = p.relative(event.path, from: path);
-              env.fromString(getSource(template), path: template);
+              final source = getSource(template);
+              env.fromString(source, path: template);
               break;
             default:
-            // log or not log
           }
         });
       }

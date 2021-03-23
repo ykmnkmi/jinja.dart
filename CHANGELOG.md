@@ -1,5 +1,11 @@
+## 0.3.1-dev.0
+<!-- - issue [7](https://github.com/ykmnkmi/jinja.dart/issues/7) -->
+- issue [8](https://github.com/ykmnkmi/jinja.dart/issues/8)
+- add autoreload to example
+
 ## 0.3.0
 - migrate to null safety
+- minimal SDK version: 2.12.0
 - add `math.Random` `random` field to `Environment` and `Template` classes
 - add `encoding` parameter to `FileSystemLoader` constructor
 - add loader tests
@@ -77,50 +83,50 @@
 - Fixes
 
 ## 0.0.8
-- Add and update filters
-- Update escaping
-- Update package tests
-- Formatting & fixes
+- add and update filters
+- update escaping
+- update package tests
+- formatting & fixes
 
 ## 0.0.7+1
-- Set (one variable assign statement)
-- Recursive For-Loop
-- Unpacking argument expression
-- Formatting & fixes
+- set (one variable assign statement)
+- recursive For-Loop
+- unpacking argument expression
+- formatting & fixes
 
 ## 0.0.7
-- Add global namespace to env and update context
-- Add all missing builtin tests
-- Fix expression group parsing
-- Update package tests
-- Formatting & fixes
+- add global namespace to env and update context
+- add all missing builtin tests
+- fix expression group parsing
+- update package tests
+- formatting & fixes
 
 ## 0.0.6
-- Add undefined & env.finalize
-- Add and switch to env call template, filter, test methods
-- Add **is** and **in** expressions
-- Add sum filter
-- Formatting & fixes
+- add undefined & env.finalize
+- add and switch to env call template, filter, test methods
+- add **is** and **in** expressions
+- add sum filter
+- formatting & fixes
 
 ## 0.0.5
-- Add batch and escape filters
-- Template and context required env
-- Environment fromSource can store template
-- Formatting & fixes
+- add batch and escape filters
+- template and context required env
+- environment fromSource can store template
+- formatting & fixes
 
 ## 0.0.4
-- Add test for for-loop & if-condition
-- Add defined filter
-- Immutable context
-- Little Docs
-- Formatting & fixes
+- add test for for-loop & if-condition
+- add defined filter
+- immutable context
+- little docs
+- formatting & fixes
 
 ## 0.0.3
-- Fixes & formatting
-- More filters & tests, package tests
+- fixes & formatting
+- more filters & tests, package tests
 
 ## 0.0.2
-- Fixes & formatting
+- fixes & formatting
 
 ## 0.0.1
-- Base statements, variables, inheritance, filters & tests and example
+- base statements, variables, inheritance, filters & tests and example
