@@ -1,7 +1,5 @@
-## 0.3.1-dev.0
-<!-- - issue [7](https://github.com/ykmnkmi/jinja.dart/issues/7) -->
-- issue [8](https://github.com/ykmnkmi/jinja.dart/issues/8)
-- add autoreload to example
+## 0.3.1
+- add `FileSystemLoader` autoload filtering
 
 ## 0.3.0
 - migrate to null safety
