@@ -145,7 +145,6 @@ class FileSystemLoader extends Loader {
     super.load(env);
 
     if (autoReload) {
-      print(paths);
       for (final path in paths) {
         Directory(path)
             .watch(recursive: true)
