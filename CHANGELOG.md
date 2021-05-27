@@ -1,3 +1,6 @@
+## 0.3.3
+- replace `pedantic` with `lints` package
+
 ## 0.3.2
 - remove forgotten print
 

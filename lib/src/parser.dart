@@ -23,14 +23,11 @@ class Parser {
 
   Parser(this.environment, String source, {this.path})
       : scanner = SpanScanner(source, sourceUrl: path),
-        commentStartReg =
-            getOpenReg(environment.commentStart, environment.leftStripBlocks),
-        commentEndReg =
-            getEndReg(environment.commentEnd, environment.trimBlocks),
+        commentStartReg = getOpenReg(environment.commentStart, environment.leftStripBlocks),
+        commentEndReg = getEndReg(environment.commentEnd, environment.trimBlocks),
         variableStartReg = getOpenReg(environment.variableStart),
         variableEndReg = getEndReg(environment.variableEnd),
-        blockStartReg =
-            getOpenReg(environment.blockStart, environment.leftStripBlocks),
+        blockStartReg = getOpenReg(environment.blockStart, environment.leftStripBlocks),
         blockEndReg = getEndReg(environment.blockEnd, environment.trimBlocks),
         keywords = {'not', 'and', 'or', 'is', 'if', 'else'},
         extendsStatements = <ExtendsStatement>[],
@@ -67,9 +64,7 @@ class Parser {
 
   RegExp getEndRegFor(String rule, [bool withStart = false]) {
     if (withStart) {
-      return RegExp(
-          blockStartReg.pattern + RegExp.escape(rule) + blockEndReg.pattern,
-          multiLine: true);
+      return RegExp(blockStartReg.pattern + RegExp.escape(rule) + blockEndReg.pattern, multiLine: true);
     }
 
     return RegExp(RegExp.escape(rule) + blockEndReg.pattern);
@@ -89,9 +84,7 @@ class Parser {
 
   Never error(String message, [LineScannerState? state]) {
     throw TemplateSyntaxError(message,
-        path: path,
-        line: state?.line ?? scanner.state.line,
-        column: state?.column ?? scanner.state.column);
+        path: path, line: state?.line ?? scanner.state.line, column: state?.column ?? scanner.state.column);
   }
 
   String expected(Pattern pattern, {int match = 1, String? name}) {
@@ -143,9 +136,7 @@ class Parser {
 
   Node parseBody([List<Pattern> endRules = const <Pattern>[]]) {
     final nodes = subParse(endRules);
-    return environment.optimize
-        ? Interpolation.orNode(nodes)
-        : Interpolation(nodes);
+    return environment.optimize ? Interpolation.orNode(nodes) : Interpolation(nodes);
   }
 
   List<Node> subParse(List<Pattern> endRules) {
@@ -182,8 +173,7 @@ class Parser {
           // TODO: *** lstrip: check of the block shadows body variable
           flush();
 
-          if (scanner.lastMatch!.groupCount > 0 &&
-              scanner.lastMatch![0]!.trimRight().endsWith('+')) {
+          if (scanner.lastMatch!.groupCount > 0 && scanner.lastMatch![0]!.trimRight().endsWith('+')) {
             final spaces = scanner.lastMatch![1]!;
 
             if (spaces.isNotEmpty) {
@@ -319,8 +309,7 @@ class Parser {
     expect(blockEndReg);
 
     if (extendsStatements.isNotEmpty) {
-      final block = ExtendedBlockStatement(name, body,
-          path: path, scoped: scoped, hasSuper: hasSuper);
+      final block = ExtendedBlockStatement(name, body, path: path, scoped: scoped, hasSuper: hasSuper);
 
       for (final extendsStatement in extendsStatements) {
         extendsStatement.blocks.add(block);
@@ -355,8 +344,7 @@ class Parser {
 
     expect(blockEndReg);
 
-    return IncludeStatement(oneOrList,
-        ignoreMissing: ignoreMissing, withContext: withContext);
+    return IncludeStatement(oneOrList, ignoreMissing: ignoreMissing, withContext: withContext);
   }
 
   ForStatement parseFor() {
@@ -388,8 +376,7 @@ class Parser {
     expect(forEndReg);
 
     return filter != null
-        ? ForStatementWithFilter(targets, iterable, body, filter,
-            orElse: orElse)
+        ? ForStatementWithFilter(targets, iterable, body, filter, orElse: orElse)
         : ForStatement(targets, iterable, body, orElse: orElse);
   }
 
@@ -521,13 +508,11 @@ class Parser {
     return FilterBlockStatement(filters, body);
   }
 
-  List<String> parseAssignTarget(
-      {bool withTuple = true, List<Pattern> extraEndRules = const []}) {
+  List<String> parseAssignTarget({bool withTuple = true, List<Pattern> extraEndRules = const []}) {
     late CanAssign target;
 
     if (withTuple) {
-      final tuple =
-          parseTuple(simplified: true, extraEndRules: extraEndRules) as dynamic;
+      final tuple = parseTuple(simplified: true, extraEndRules: extraEndRules) as dynamic;
 
       if (tuple is CanAssign) {
         target = tuple;
@@ -753,54 +738,66 @@ class Parser {
   }
 
   Expression parsePrimary() {
-    late Expression expr;
-
     if (scanner.scan('false')) {
-      expr = Literal(false);
-    } else if (scanner.scan('true')) {
-      expr = Literal(true);
-    } else if (scanner.scan('none')) {
-      expr = Literal(null);
-    } else if (scanner.scan(nameReg)) {
+      return Literal(false);
+    }
+
+    if (scanner.scan('true')) {
+      return Literal(true);
+    }
+
+    if (scanner.scan('none')) {
+      return Literal(null);
+    }
+
+    if (scanner.scan(nameReg)) {
       final name = scanner.lastMatch![1]!;
       final nameExpr = Name(name);
       _onParseNameController.add(nameExpr);
-      expr = nameExpr;
-    } else if (scanner.scan(stringStartReg)) {
+      return nameExpr;
+    }
+
+    if (scanner.scan(stringStartReg)) {
       late String body;
 
       switch (scanner.lastMatch![1]!) {
         case '"':
-          body = expected(stringContentDQReg,
-              name: 'string content and double quote');
+          body = expected(stringContentDQReg, name: 'string content and double quote');
           break;
         case '\'':
-          body = expected(stringContentSQReg,
-              name: 'string content and single quote');
+          body = expected(stringContentSQReg, name: 'string content and single quote');
       }
 
-      expr = Literal(body);
-    } else if (scanner.scan(digitReg)) {
+      return Literal(body);
+    }
+
+    if (scanner.scan(digitReg)) {
       final integer = scanner.lastMatch![1]!;
 
       if (scanner.scan(fractionalReg)) {
-        expr = Literal(double.tryParse(integer + scanner.lastMatch![0]!));
-      } else {
-        expr = Literal(int.tryParse(integer));
+        return Literal(double.tryParse(integer + scanner.lastMatch![0]!));
       }
-    } else if (scanner.matches(lBracketReg)) {
-      expr = parseList();
-    } else if (scanner.matches(lBraceReg)) {
-      expr = parseMap();
-    } else if (scanner.scan(lParenReg)) {
-      expr = parseTuple();
 
-      expect(rParenReg);
-    } else {
-      error('primary expression expected');
+      return Literal(int.tryParse(integer));
     }
 
-    return expr;
+    if (scanner.matches(lBracketReg)) {
+      return parseList();
+    }
+
+    if (scanner.matches(lBraceReg)) {
+      return parseMap();
+    }
+
+    if (scanner.scan(lParenReg)) {
+      final expr = parseTuple();
+
+      expect(rParenReg);
+
+      return expr;
+    }
+
+    error('primary expression expected');
   }
 
   Expression parseTuple(
@@ -882,8 +879,7 @@ class Parser {
     }
 
     if (environment.optimize && items.every((item) => item is Literal)) {
-      return Literal(
-          items.map((item) => (item as Literal).value).toList(growable: false));
+      return Literal(items.map((item) => (item as Literal).value).toList(growable: false));
     }
 
     return ListExpression(items);
@@ -906,11 +902,8 @@ class Parser {
       items[key] = parseExpression();
     }
 
-    if (environment.optimize &&
-        items.entries
-            .every((item) => item.key is Literal && item.value is Literal)) {
-      return Literal(items.map((key, value) =>
-          MapEntry((key as Literal).value, (value as Literal).value)));
+    if (environment.optimize && items.entries.every((item) => item.key is Literal && item.value is Literal)) {
+      return Literal(items.map((key, value) => MapEntry((key as Literal).value, (value as Literal).value)));
     }
 
     return MapExpression(items);
@@ -991,9 +984,7 @@ class Parser {
         namedExpr = parseExpression();
       } else if (scanner.scan('*')) {
         positionalExpr = parseExpression();
-      } else if (scanner.scan(assignReg) &&
-          positionalExpr == null &&
-          namedExpr == null) {
+      } else if (scanner.scan(assignReg) && positionalExpr == null && namedExpr == null) {
         final arg = scanner.lastMatch![1]!;
         final key = arg == 'default' ? r'$default' : arg;
         named[key] = parseExpression();
@@ -1006,11 +997,7 @@ class Parser {
       requireComma = true;
     }
 
-    return Arguments(
-        positional: positional,
-        named: named,
-        positionalExpr: positionalExpr,
-        namedExpr: namedExpr);
+    return Arguments(positional: positional, named: named, positionalExpr: positionalExpr, namedExpr: namedExpr);
   }
 
   Filter parseFilter({Expression? expr, bool hasLeadingPipe = true}) {
@@ -1036,8 +1023,7 @@ class Parser {
       expect(lParenReg);
 
       final arguments = parseCallArguments();
-      expr = Filter(name,
-          expr: expr, positional: arguments.positional, named: arguments.named);
+      expr = Filter(name, expr: expr, positional: arguments.positional, named: arguments.named);
     } else {
       expr = Filter(name, expr: expr);
     }
@@ -1058,8 +1044,7 @@ class Parser {
       final arguments = parseCallArguments();
       positional.addAll(arguments.positional);
       named.addAll(arguments.named);
-    } else if (scanner.matches(inlineSpacePlusReg) &&
-        !testAll([elseReg, orReg, andReg, variableEndReg, blockEndReg])) {
+    } else if (scanner.matches(inlineSpacePlusReg) && !testAll([elseReg, orReg, andReg, variableEndReg, blockEndReg])) {
       expect(spacePlusReg);
 
       final arg = parsePrimary();
