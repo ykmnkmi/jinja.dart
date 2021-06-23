@@ -148,5 +148,23 @@ void main() {
       expect(template.renderMap(),
           equals('true|true|false|true|false|true|false|true|false'));
     });
+
+    test('variables with underscore', () {
+      final template =
+          env.fromString('{{ var_0 }} {{ var__1 }} {{ _var_2_ }} {{ _var3 }} '
+              '{{ _var_4 }} {{ var5_ }} {{ var_6_}} {{ ____ }}');
+      expect(
+          template.renderMap({
+            'var_0': '0',
+            'var__1': '1',
+            '_var_2_': '2',
+            '_var3': '3',
+            '_var_4': '4',
+            'var5_': '5',
+            'var_6_': '6',
+            '____': '_',
+          }),
+          '0 1 2 3 4 5 6 _');
+    });
   });
 }

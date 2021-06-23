@@ -1101,5 +1101,5 @@ class Parser {
   static final RegExp stringContentDQReg = RegExp('([^"]*)"');
   static final RegExp stringContentSQReg = RegExp("([^']*)'");
   static final RegExp stringStartReg = RegExp('(\\\'|\\")');
-  static final RegExp nameReg = RegExp('([a-zA-Z][a-zA-Z0-9]*)');
+  static final RegExp nameReg = RegExp('([a-zA-Z_][a-zA-Z0-9_]*)');
 }
