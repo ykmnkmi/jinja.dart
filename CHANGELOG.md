@@ -1,3 +1,7 @@
+## 0.3.4
+- variables can be written with the `_` character
+- internal changes
+
 ## 0.3.3
 - replace `pedantic` with `lints` package
 
