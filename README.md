@@ -4,8 +4,12 @@
 
 [Jinja](https://www.palletsprojects.com/p/jinja/) server-side template engine port for Dart 2. Variables, expressions, control structures and template inheritance.
 
-Breaking changes
-----------------
+Breaking changes 0.4
+--------------------
+_work in progress_
+
+Breaking changes 0.3
+--------------------
 Before `object.field` or `object.method()` expressions uses `dart:mirrors` methods.
 
 ```dart
@@ -96,7 +100,7 @@ Example:
 will transformed to:
 
 ```dart
-import 'package:renderable/renderable.dart';
+import 'package:jinja/renderable.dart';
 
 class UserTemplate implements Template {
   const UserTemplate();
