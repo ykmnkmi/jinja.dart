@@ -1,6 +1,6 @@
 import 'package:jinja/ast.dart';
 import 'package:jinja/jinja.dart';
-import 'package:jinja/runtime.dart' hide isTrue;
+import 'package:jinja/runtime.dart' show range;
 import 'package:test/test.dart';
 
 import 'environment.dart';
@@ -32,13 +32,13 @@ void main() {
     };
 
     test('raw', () {
-      final tmpl = parse('{% raw %}foo{% endraw %}|'
+      final tmpl = env.fromString('{% raw %}foo{% endraw %}|'
           '{%raw%}{{ bar }}|{% baz %}{%       endraw    %}');
       expect(tmpl.render(), equals('foo|{{ bar }}|{% baz %}'));
     });
 
     test('raw2', () {
-      final tmpl = parse('1  {%- raw -%}   2   {%- endraw -%}   3');
+      final tmpl = env.fromString('1  {%- raw -%}   2   {%- endraw -%}   3');
       expect(tmpl.render(), equals('123'));
     });
 
@@ -65,7 +65,7 @@ void main() {
         variableEnd: '}',
       );
       final tmpl = env.fromString(r'''{% for item in seq
-            %}${{'foo': item} | upper}{% endfor %}''');
+            %}${{'foo': item}|string|upper}{% endfor %}''');
       expect(tmpl.render(seq123), equals('{FOO: 0}{FOO: 1}{FOO: 2}'));
     });
 
@@ -86,19 +86,10 @@ void main() {
           equals('<ul>\n  <li>0</li>\n  <li>1</li>\n  <li>2</li>\n</ul>'));
     });
 
-    test('string escapes', () {
-      var tmpl = parse('{{ ${represent('\t')} }}');
-      expect(tmpl.render(), equals('\t'));
-      tmpl = parse('{{ ${represent('\r')} }}');
-      expect(tmpl.render(), equals('\r'));
-      tmpl = parse('{{ ${represent('\n')} }}');
-      expect(tmpl.render(), equals('\n'));
-    });
-
     // not supported
     // test('bytefallback', () {
     //   final environment = Environment();
-    //   final template = environment.fromString('{{ \'foo\' | pprint }}|{{ \'bär\' | pprint }}');
+    //   final template = environment.fromString('{{ \'foo\'|pprint }}|{{ \'bär\'|pprint }}');
     //   expect(template.render(), equals(pformat('foo') + '|' + pformat('bär')));
     // });
 
@@ -108,7 +99,7 @@ void main() {
           return;
         }
 
-        final tokens = Lexer(environment).tokenize('{{ $test }}');
+        final tokens = Lexer(env).tokenize('{{ $test }}');
         expect(
             tokens[1], equals(predicate<Token>((token) => token.test(expekt))));
       });
@@ -116,54 +107,59 @@ void main() {
 
     test('normalizing', () {
       for (final newLine in ['\r', '\r\n', '\n']) {
-        expect(
-            Environment(newLine: newLine)
-                .fromString('1\n2\r\n3\n4\n')
-                .render()
-                .replaceAll(newLine, 'X'),
-            equals('1X2X3X4'));
+        final env = Environment(newLine: newLine);
+        final tmpl = env.fromString('1\n2\r\n3\n4\n');
+        expect(tmpl.render().replaceAll(newLine, 'X'), equals('1X2X3X4'));
       }
     });
 
     test('trailing newline', () {
-      var environment = Environment(keepTrailingNewLine: true);
+      var env = Environment(keepTrailingNewLine: true);
+      var tmpl = env.fromString('');
+      expect(tmpl.render(), equals(''));
+      tmpl = env.fromString('no\nnewline');
+      expect(tmpl.render(), equals('no\nnewline'));
+      tmpl = env.fromString('with\nnewline\n');
+      expect(tmpl.render(), equals('with\nnewline\n'));
+      tmpl = env.fromString('with\nseveral\n\n\n');
+      expect(tmpl.render(), equals('with\nseveral\n\n\n'));
 
-      expect(environment.fromString('').render(), equals(''));
-      expect(environment.fromString('no\nnewline').render(),
-          equals('no\nnewline'));
-      expect(environment.fromString('with\nnewline\n').render(),
-          equals('with\nnewline\n'));
-      expect(environment.fromString('with\nseveral\n\n\n').render(),
-          equals('with\nseveral\n\n\n'));
-
-      environment = Environment(keepTrailingNewLine: false);
-      expect(environment.fromString('').render(), equals(''));
-      expect(environment.fromString('no\nnewline').render(),
-          equals('no\nnewline'));
-      expect(environment.fromString('with\nnewline\n').render(),
-          equals('with\nnewline'));
-      expect(environment.fromString('with\nseveral\n\n\n').render(),
-          equals('with\nseveral\n\n'));
+      env = Environment(keepTrailingNewLine: false);
+      expect(env.fromString('').render(), equals(''));
+      tmpl = env.fromString('no\nnewline');
+      expect(tmpl.render(), equals('no\nnewline'));
+      tmpl = env.fromString('with\nnewline\n');
+      expect(tmpl.render(), equals('with\nnewline'));
+      tmpl = env.fromString('with\nseveral\n\n\n');
+      expect(tmpl.render(), equals('with\nseveral\n\n'));
     });
 
     test('name', () {
-      expect(parse('{{ foo }}'), isA<Template>());
-      expect(parse('{{ _ }}'), isA<Template>());
+      expect(env.fromString('{{ foo }}'), isA<Template>());
+      expect(env.fromString('{{ _ }}'), isA<Template>());
       // invalid ascii start
-      expect(() => parse('{{ 1a }}'), throwsA(isA<TemplateSyntaxError>()));
+      expect(() => env.fromString('{{ 1a }}'),
+          throwsA(isA<TemplateSyntaxError>()));
       // invalid ascii continue
-      expect(() => parse('{{ a- }}'), throwsA(isA<TemplateSyntaxError>()));
+      expect(() => env.fromString('{{ a- }}'),
+          throwsA(isA<TemplateSyntaxError>()));
     });
 
     test('lineno with strip', () {
-      final tokens = Lexer(environment)
-          .tokenize('<html>\n    <body>\n    {%- block content -%}\n'
-              '        <hr>\n        {{ item }}\n    {% endblock %}\n'
-              '    </body>\n</html>');
+      final tokens = env.lex('''
+<html>
+    <body>
+    {%- block content -%}
+        <hr>
+        {{ item }}
+    {% endblock %}
+    </body>
+</html>''');
 
       for (final token in tokens) {
         if (token.test('name', 'item')) {
           expect(token.line, equals(5));
+          break;
         }
       }
     });

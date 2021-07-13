@@ -5,50 +5,52 @@ import '../environment.dart';
 void main() {
   group('If', () {
     test('simple', () {
-      expect(render('{% if true %}...{% endif %}'), equals('...'));
+      final tmpl = env.fromString('{% if true %}...{% endif %}');
+      expect(tmpl.render(), equals('...'));
     });
 
     test('elif', () {
-      expect(render('''{% if false %}XXX{% elif true
-            %}...{% else %}XXX{% endif %}'''), equals('...'));
+      final tmpl = env.fromString('''{% if false %}XXX{% elif true
+            %}...{% else %}XXX{% endif %}''');
+      expect(tmpl.render(), equals('...'));
     });
 
     test('elif deep', () {
-      final list = <String>[
-        for (var i = 0; i < 999; i++) '{% elif a == ${i + 1} %}${i + 1}'
-      ];
-      final template =
-          parse('{% if a == 0 %}0${list.join()}{% else %}x{% endif %}');
-      expect(template.render({'a': 0}), equals('0'));
-      expect(template.render({'a': 10}), equals('10'));
-      expect(template.render({'a': 999}), equals('999'));
-      expect(template.render({'a': 1000}), equals('x'));
+      final elifs = <String>[
+        for (var i = 1; i < 1000; i++) '{% elif a == $i %}$i'
+      ].join();
+      final tmpl =
+          env.fromString('{% if a == 0 %}0$elifs{% else %}x{% endif %}');
+      expect(tmpl.render({'a': 0}), equals('0'));
+      expect(tmpl.render({'a': 10}), equals('10'));
+      expect(tmpl.render({'a': 999}), equals('999'));
+      expect(tmpl.render({'a': 1000}), equals('x'));
     });
 
     test('else', () {
-      expect(
-          render('{% if false %}XXX{% else %}...{% endif %}'), equals('...'));
+      final tmpl = env.fromString('{% if false %}XXX{% else %}...{% endif %}');
+      expect(tmpl.render(), equals('...'));
     });
 
     test('empty', () {
-      expect(render('[{% if true %}{% else %}{% endif %}]'), equals('[]'));
+      final tmpl = env.fromString('[{% if true %}{% else %}{% endif %}]');
+      expect(tmpl.render(), equals('[]'));
     });
 
     test('complete', () {
+      final tmpl = env.fromString(
+          '{% if a %}A{% elif b %}B{% elif c == d %}C{% else %}D{% endif %}');
       expect(
-          render(
-              '{% if a %}A{% elif b %}B{% elif c == d %}C{% else %}D{% endif %}',
-              {'a': 0, 'b': false, 'c': 42, 'd': 42.0}),
-          equals('C'));
+          tmpl.render({'a': 0, 'b': false, 'c': 42, 'd': 42.0}), equals('C'));
     });
 
     test('no scope', () {
-      expect(
-          render(
-              '{% if a %}{% set foo = 1 %}{% endif %}{{ foo }}', {'a': true}),
-          equals('1'));
-      expect(render('{% if true %}{% set foo = 1 %}{% endif %}{{ foo }}'),
-          equals('1'));
+      var tmpl =
+          env.fromString('{% if a %}{% set foo = 1 %}{% endif %}{{ foo }}');
+      expect(tmpl.render({'a': true}), equals('1'));
+      tmpl =
+          env.fromString('{% if true %}{% set foo = 1 %}{% endif %}{{ foo }}');
+      expect(tmpl.render(), equals('1'));
     });
   });
 }

@@ -7,7 +7,7 @@ import 'environment.dart';
 void main() {
   group('Parser', () {
     test('php syntax', () {
-      final environment = Environment(
+      final env = Environment(
         blockBegin: '<?',
         blockEnd: '?>',
         variableBegin: '<?=',
@@ -16,16 +16,13 @@ void main() {
         commentEnd: '-->',
       );
 
-      expect(
-          environment
-              .fromString('<!-- I\'m a comment, I\'m not interesting -->'
-                  '<? for item in seq -?>\n    <?= item ?>\n<?- endfor ?>')
-              .render({'seq': range(5)}),
-          equals('01234'));
+      final tmpl = env.fromString('<!-- I\'m a comment -->'
+          '<? for item in seq -?>\n    <?= item ?>\n<?- endfor ?>');
+      expect(tmpl.render({'seq': range(5)}), equals('01234'));
     });
 
     test('erb syntax', () {
-      final environment = Environment(
+      final env = Environment(
         blockBegin: '<%',
         blockEnd: '%>',
         variableBegin: '<%=',
@@ -34,16 +31,13 @@ void main() {
         commentEnd: '%>',
       );
 
-      expect(
-          environment
-              .fromString('<%# I\'m a comment, I\'m not interesting %>'
-                  '<% for item in seq -%>\n    <%= item %><%- endfor %>')
-              .render({'seq': range(5)}),
-          equals('01234'));
+      final tmpl = env.fromString('<%# I\'m a comment %>'
+          '<% for item in seq -%>\n    <%= item %><%- endfor %>');
+      expect(tmpl.render({'seq': range(5)}), equals('01234'));
     });
 
     test('comment syntax', () {
-      final environment = Environment(
+      final env = Environment(
         blockBegin: '<!--',
         blockEnd: '-->',
         variableBegin: '\${',
@@ -52,29 +46,25 @@ void main() {
         commentEnd: '-->',
       );
 
-      expect(
-          environment
-              .fromString('<!--# I\'m a comment, I\'m not interesting -->'
-                  '<!-- for item in seq --->    \${item}<!--- endfor -->')
-              .render({'seq': range(5)}),
-          equals('01234'));
+      final tmpl = env.fromString('<!--# I\'m a comment -->'
+          '<!-- for item in seq --->    \${item}<!--- endfor -->');
+      expect(tmpl.render({'seq': range(5)}), equals('01234'));
     });
 
     test('balancing', () {
-      expect(render('''{{{'foo':'bar'}.foo}}'''), equals('bar'));
+      final tmpl = env.fromString('''{{{'foo':'bar'}.foo}}''');
+      expect(tmpl.render(), equals('bar'));
     });
 
     // TODO: after macro: enable test
-    test('start comment', () {
-      expect(
-          render('{# foo comment\nand bar comment #}'
-                  '{% macro blub() %}foo{% endmacro %}\n{{ blub() }}')
-              .trim(),
-          equals('foor'));
-    }, skip: true);
+    // test('start comment', () {
+    //   final tmpl = env.fromString('{# foo comment\nand bar comment #}'
+    //       '{% macro blub() %}foo{% endmacro %}\n{{ blub() }}');
+    //   expect(tmpl.render().trim(), equals('foor'));
+    // });
 
     test('line syntax', () {
-      final environment = Environment(
+      final env = Environment(
         blockBegin: '<%',
         blockEnd: '%>',
         variableBegin: '\${',
@@ -86,21 +76,22 @@ void main() {
       );
 
       final sequence = range(5).toList();
-      expect(
-          environment
-              .fromString('<%# regular comment %>\n% for item in seq:\n'
-                  '    \${item} ## the rest of the stuff\n% endfor')
-              .render({'seq': sequence})
-              .split(RegExp('\\s+'))
-              .map((string) => string.trim())
-              .where((string) => string.isNotEmpty)
-              .map((string) => int.parse(string.trim()))
-              .toList(),
-          equals(sequence));
+      final tmpl = env.fromString('<%# regular comment %>\n% for item in seq:\n'
+          '    \${item} ## the rest of the stuff\n% endfor');
+      final result = tmpl
+          .render({'seq': sequence})
+          .split(RegExp('\\s+'))
+          .map<String>((string) => string.trim())
+          .where((string) => string.isNotEmpty)
+          .map<int>((string) => int.parse(string.trim()))
+          .toList();
+      expect(result, equals(sequence));
     });
 
     test('line syntax priority', () {
-      var environment = Environment(
+      final seq = <int>[1, 2];
+
+      var env = Environment(
         variableBegin: '\${',
         variableEnd: '}',
         commentBegin: '/*',
@@ -109,17 +100,13 @@ void main() {
         lineStatementPrefix: '##',
       );
 
-      expect(
-          environment
-              .fromString('/* ignore me.\n   I\'m a multiline comment */\n'
-                  '## for item in seq:\n* \${item}          '
-                  '# this is just extra stuff\n## endfor\n')
-              .render({
-            'seq': [1, 2]
-          }).trim(),
-          equals('* 1\n* 2'));
+      var tmpl =
+          env.fromString('/* ignore me.\n   I\'m a multiline comment */\n'
+              '## for item in seq:\n* \${item}          '
+              '# this is just extra stuff\n## endfor\n');
+      expect(tmpl.render({'seq': seq}).trim(), equals('* 1\n* 2'));
 
-      environment = Environment(
+      env = Environment(
         variableBegin: '\${',
         variableEnd: '}',
         commentBegin: '/*',
@@ -128,28 +115,24 @@ void main() {
         lineStatementPrefix: '#',
       );
 
-      expect(
-          environment
-              .fromString('/* ignore me.\n   I\'m a multiline comment */\n'
-                  '# for item in seq:\n* \${item}          '
-                  '## this is just extra stuff\n    '
-                  '## extra stuff i just want to ignore\n# endfor')
-              .render({
-            'seq': [1, 2]
-          }).trim(),
-          equals('* 1\n\n* 2'));
+      tmpl = env.fromString('/* ignore me.\n   I\'m a multiline comment */\n'
+          '# for item in seq:\n* \${item}          '
+          '## this is just extra stuff\n    '
+          '## extra stuff i just want to ignore\n# endfor');
+      expect(tmpl.render({'seq': seq}).trim(), equals('* 1\n\n* 2'));
     });
 
     test('error messages', () {
       void assertError(String source, String expekted) {
         void callback() {
-          Template(source);
+          env.fromString(source);
         }
 
-        expect(
-            callback,
-            throwsA(predicate<TemplateSyntaxError>(
-                (error) => error.message == expekted)));
+        bool matcher(TemplateSyntaxError error) {
+          return error.message == expekted;
+        }
+
+        expect(callback, throwsA(predicate<TemplateSyntaxError>(matcher)));
       }
 
       assertError(

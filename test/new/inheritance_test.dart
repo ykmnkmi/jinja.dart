@@ -167,31 +167,31 @@ void main() {
     });
 
     // TODO: after macro: enable test
-    test('scoped block after inheritance', () {
-      final environment = Environment(
-        loader: MapLoader({
-          'layout.html': '{% block useless %}{% endblock %}',
-          'index.html': '''
-            {%- extends 'layout.html' %}
-            {% from 'helpers.html' import foo with context %}
-            {% block useless %}
-                {% for x in [1, 2, 3] %}
-                    {% block testing scoped %}
-                        {{ foo(x) }}
-                    {% endblock %}
-                {% endfor %}
-            {% endblock %}''',
-          'helpers.html': '{% macro foo(x) %}{{ the_foo + x }}{% endmacro %}',
-        }),
-      );
+    // test('scoped block after inheritance', () {
+    //   final environment = Environment(
+    //     loader: MapLoader({
+    //       'layout.html': '{% block useless %}{% endblock %}',
+    //       'index.html': '''
+    //         {%- extends 'layout.html' %}
+    //         {% from 'helpers.html' import foo with context %}
+    //         {% block useless %}
+    //             {% for x in [1, 2, 3] %}
+    //                 {% block testing scoped %}
+    //                     {{ foo(x) }}
+    //                 {% endblock %}
+    //             {% endfor %}
+    //         {% endblock %}''',
+    //       'helpers.html': '{% macro foo(x) %}{{ the_foo + x }}{% endmacro %}',
+    //     }),
+    //   );
 
-      final iterable = environment
-          .getTemplate('index.html')
-          .render({'the_foo': 42})
-          .split(RegExp('\\s+'))
-          .where((part) => part.isNotEmpty);
-      expect(iterable, orderedEquals(<String>['43', '44', '45']));
-    }, skip: true);
+    //   final iterable = environment
+    //       .getTemplate('index.html')
+    //       .render({'the_foo': 42})
+    //       .split(RegExp('\\s+'))
+    //       .where((part) => part.isNotEmpty);
+    //   expect(iterable, orderedEquals(<String>['43', '44', '45']));
+    // });
   });
 
   test('level1 required', () {

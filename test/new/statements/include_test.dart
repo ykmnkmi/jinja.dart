@@ -3,7 +3,7 @@ import 'package:test/test.dart';
 
 void main() {
   group('Include', () {
-    late final environment = Environment(
+    late final env = Environment(
       loader: MapLoader({
         'module': '{% macro test() %}[{{ foo }}|{{ bar }}]{% endmacro %}',
         'header': '[{{ foo }}|{{ 23 }}]',
@@ -12,41 +12,30 @@ void main() {
       globals: {'bar': 23},
     );
 
-    Template parse(String source) {
-      return environment.fromString(source);
-    }
-
-    String render(String source, [Map<String, Object?>? data]) {
-      return parse(source).render(data);
-    }
-
     test('context include', () {
-      expect(render('{% include "header" %}', {'foo': 42}), equals('[42|23]'));
-      expect(render('{% include "header" with context %}', {'foo': 42}),
-          equals('[42|23]'));
-      expect(render('{% include "header" without context %}', {'foo': 42}),
-          equals('[|23]'));
+      var tmpl = env.fromString('{% include "header" %}');
+      expect(tmpl.render({'foo': 42}), equals('[42|23]'));
+      tmpl = env.fromString('{% include "header" with context %}');
+      expect(tmpl.render({'foo': 42}), equals('[42|23]'));
+      tmpl = env.fromString('{% include "header" without context %}');
+      expect(tmpl.render({'foo': 42}), equals('[|23]'));
     });
 
     test('include ignoring missing', () {
-      expect(() => render('{% include "missing" %}'),
-          throwsA(isA<TemplateNotFound>()));
-      expect(render('{% include "missing" ignore missing "" %}'), equals(''));
-      expect(render('{% include "missing" ignore missing "with context" %}'),
-          equals(''));
-      expect(render('{% include "missing" ignore missing "without context" %}'),
-          equals(''));
+      final tmpl = env.fromString('{% include "missing" %}');
+      expect(() => tmpl.render(), throwsA(isA<TemplateNotFound>()));
     });
 
     test('context include with overrides', () {
-      var environment = Environment(
+      final env = Environment(
         loader: MapLoader({
           'main': '{% for item in [1, 2, 3] %}{% include "item" %}{% endfor %}',
           'item': '{{ item }}',
         }),
       );
 
-      expect(environment.getTemplate('main').render(), equals('123'));
+      final tmpl = env.getTemplate('main');
+      expect(tmpl.render(), equals('123'));
     });
 
     // TODO: after macro: add test: unoptimized_scopes

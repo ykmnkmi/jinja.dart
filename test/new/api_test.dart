@@ -60,7 +60,7 @@ void main() {
     test('env autoescape', () {
       final environment = Environment(
         finalize: (Environment environment, dynamic value) {
-          return '${environment.variableBegin} ${represent(value)} ${environment.variableEnd}';
+          return '${environment.variableBegin} ${repr(value)} ${environment.variableEnd}';
         },
       );
 
