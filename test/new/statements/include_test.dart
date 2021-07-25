@@ -14,16 +14,16 @@ void main() {
 
     test('context include', () {
       var tmpl = env.fromString('{% include "header" %}');
-      expect(tmpl.render({'foo': 42}), equals('[42|23]'));
+      expect(tmpl.renderMap({'foo': 42}), equals('[42|23]'));
       tmpl = env.fromString('{% include "header" with context %}');
-      expect(tmpl.render({'foo': 42}), equals('[42|23]'));
+      expect(tmpl.renderMap({'foo': 42}), equals('[42|23]'));
       tmpl = env.fromString('{% include "header" without context %}');
-      expect(tmpl.render({'foo': 42}), equals('[|23]'));
+      expect(tmpl.renderMap({'foo': 42}), equals('[|23]'));
     });
 
     test('include ignoring missing', () {
       final tmpl = env.fromString('{% include "missing" %}');
-      expect(() => tmpl.render(), throwsA(isA<TemplateNotFound>()));
+      expect(() => tmpl.renderMap(), throwsA(isA<TemplateNotFound>()));
     });
 
     test('context include with overrides', () {
@@ -35,7 +35,7 @@ void main() {
       );
 
       final tmpl = env.getTemplate('main');
-      expect(tmpl.render(), equals('123'));
+      expect(tmpl.renderMap(), equals('123'));
     });
 
     // TODO: after macro: add test: unoptimized_scopes

@@ -2,52 +2,52 @@ import 'markup.dart';
 import 'runtime.dart';
 import 'utils.dart';
 
-bool eq(Object? value, Object? other) {
-  return value == other;
+bool isBoolean(Object? object) {
+  return object is bool;
 }
 
-bool ge(Comparable<Object?> value, Comparable<Object?> other) {
-  return value.compareTo(other) >= 0;
-}
-
-bool gt(Comparable<Object?> value, Comparable<Object?> other) {
-  return value.compareTo(other) > 0;
-}
-
-bool le(Comparable<Object?> value, Comparable<Object?> other) {
-  return value.compareTo(other) <= 0;
-}
-
-bool lt(Comparable<Object?> value, Comparable<Object?> other) {
-  return value.compareTo(other) < 0;
-}
-
-bool ne(Object? value, Object? other) {
-  return value != other;
-}
-
-bool isCallable(Object? value) {
-  return value is Function;
+bool isCallable(Object? object) {
+  return object is Function;
 }
 
 bool isDefined(Object? value) {
-  return toBool(value);
+  return value is! Undefined;
 }
 
 bool isDivisibleBy(num value, num divider) {
-  if (divider == 0) {
-    return false;
-  }
+  return divider == 0 ? false : value % divider == 0;
+}
 
-  return value % divider == 0;
+bool isEqual(Object? value, Object? other) {
+  return value == other;
 }
 
 bool isEscaped(Object? value) {
-  return value is Markup;
+  if (value is Markup) {
+    return true;
+  }
+
+  return false;
 }
 
-bool isEven(num value) {
-  return value % 2 == 0;
+bool isEven(int value) {
+  return value.isEven;
+}
+
+bool isFalse(Object? value) {
+  return value == false;
+}
+
+bool isFloat(Object? value) {
+  return value is double;
+}
+
+bool isGreaterThanOrEqual(Object? value, Object? other) {
+  return (value as dynamic >= other) as bool;
+}
+
+bool isGreaterThan(Object? value, Object? other) {
+  return (value as dynamic > other) as bool;
 }
 
 bool isIn(Object? value, Object? values) {
@@ -56,7 +56,7 @@ bool isIn(Object? value, Object? values) {
       return values.contains(value);
     }
 
-    throw Exception('$value must be subclass of Pattern');
+    throw TypeError();
   }
 
   if (values is Iterable) {
@@ -67,11 +67,27 @@ bool isIn(Object? value, Object? values) {
     return values.containsKey(value);
   }
 
-  throw Exception('$values must be one of String, List or Map subclass');
+  return (values as dynamic).contains(value) as bool;
+}
+
+bool isInteger(Object? value) {
+  return value is int;
 }
 
 bool isIterable(Object? value) {
-  return value is Iterable;
+  if (value is Iterable) {
+    return true;
+  }
+
+  return false;
+}
+
+bool isLessThanOrEqual(Object? value, Object? other) {
+  return (value as dynamic <= other) as bool;
+}
+
+bool isLessThan(Object? value, Object? other) {
+  return (value as dynamic < other) as bool;
 }
 
 bool isLower(String value) {
@@ -79,70 +95,97 @@ bool isLower(String value) {
 }
 
 bool isMapping(Object? value) {
-  return value is Map;
-}
-
-bool isNone(Object? value) {
-  return value == null;
-}
-
-bool isNumber(Object? value) {
-  return value is num;
-}
-
-bool isOdd(num value) {
-  return value % 2 == 1;
-}
-
-bool isSameAs(Object? value, Object? other) {
-  return value == other;
-}
-
-bool isSequence(Object? values) {
-  if (values is Iterable || values is Map || values is String) {
+  if (value is Map) {
     return true;
   }
 
   return false;
 }
 
-bool isString(Object? value) {
-  return value is String;
+bool isNone(Object? value) {
+  if (value == null) {
+    return true;
+  }
+
+  return false;
 }
 
-bool isUndefined(Object? value) {
-  return value is Undefined;
+bool isNotEqual(Object? value, Object? other) {
+  return value != other;
+}
+
+bool isNumber(Object? object) {
+  return object is num;
+}
+
+bool isOdd(int value) {
+  return value.isOdd;
+}
+
+bool isSameAs(Object? value, Object? other) {
+  return identical(value, other);
+}
+
+bool isSequence(Object? value) {
+  try {
+    (value as dynamic).length;
+    (value as dynamic)[0];
+    return true;
+  } on RangeError {
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+bool isString(Object? object) {
+  return object is String;
+}
+
+bool isTrue(Object? value) {
+  return value == true;
 }
 
 bool isUpper(String value) {
   return value == value.toUpperCase();
 }
 
-final Map<String, Function> tests = <String, Function>{
+const Map<String, Function> tests = {
+  '!=': isNotEqual,
+  '<': isLessThan,
+  '<=': isLessThanOrEqual,
+  '==': isEqual,
+  '>': isGreaterThan,
+  '>=': isGreaterThanOrEqual,
+  'boolean': isBoolean,
   'callable': isCallable,
   'defined': isDefined,
   'divisibleby': isDivisibleBy,
-  'eq': eq,
-  'equalto': eq,
+  'eq': isEqual,
+  'equalto': isEqual,
   'escaped': isEscaped,
   'even': isEven,
-  'ge': ge,
-  'greaterthan': gt,
-  'gt': gt,
+  'false': isFalse,
+  'float': isFloat,
+  'ge': isGreaterThanOrEqual,
+  'greaterthan': isGreaterThan,
+  'gt': isGreaterThan,
   'in': isIn,
+  'integer': isInteger,
   'iterable': isIterable,
-  'le': le,
-  'lessthan': lt,
+  'le': isLessThanOrEqual,
+  'lessthan': isLessThan,
   'lower': isLower,
-  'lt': lt,
+  'lt': isLessThan,
   'mapping': isMapping,
-  'ne': ne,
+  'ne': isNotEqual,
   'none': isNone,
   'number': isNumber,
   'odd': isOdd,
   'sameas': isSameAs,
   'sequence': isSequence,
   'string': isString,
+  'true': isTrue,
   'undefined': isUndefined,
   'upper': isUpper,
 };

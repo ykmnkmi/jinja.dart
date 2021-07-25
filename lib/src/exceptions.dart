@@ -1,91 +1,76 @@
-class TemplateError extends Error {
+/// Baseclass for all template errors.
+abstract class TemplateError implements Exception {
   TemplateError([this.message]);
 
-  final dynamic message;
+  final Object? message;
 
   @override
   String toString() {
     if (message == null) {
-      return 'TemplateError';
+      return '$runtimeType';
     }
 
-    return 'TemplateError: $message';
+    return '$runtimeType: $message';
   }
 }
 
+/// Raised if a template does not exist.
 class TemplateNotFound extends TemplateError {
-  TemplateNotFound([dynamic message]) : super(message);
-
-  @override
-  String toString() {
-    if (message == null) {
-      return 'TemplateNotFound';
-    }
-
-    return 'TemplateNotFound: $message';
-  }
+  TemplateNotFound({Object? template, Object? message})
+      : super(message ?? template);
 }
 
+/// Like [TemplateNotFound] but raised if multiple templates are selected.
 class TemplatesNotFound extends TemplateNotFound {
-  TemplatesNotFound([dynamic message]) : super(message);
-
-  @override
-  String toString() {
-    if (message == null) {
-      return 'TemplatesNotFound';
-    }
-
-    return 'TemplatesNotFound: $message';
-  }
+  TemplatesNotFound({List<Object?>? names, Object? message})
+      : super(message: message);
 }
 
+/// Raised to tell the user that there is a problem with the template.
 class TemplateSyntaxError extends TemplateError {
-  TemplateSyntaxError(String message, {this.path, this.line, this.column})
-      : super(message);
+  TemplateSyntaxError(String message, {this.line, this.path}) : super(message);
 
-  final Object? path;
   final int? line;
-  final int? column;
+
+  final String? path;
 
   @override
   String toString() {
-    final buffer = StringBuffer('TemplateSyntaxError');
+    var prefix = 'TemplateSyntaxError';
+
     if (path != null) {
-      buffer.write(' in \'$path\'');
+      if (prefix.contains(',')) {
+        prefix += ', file: $path';
+      }
+
+      prefix += ' file: $path';
     }
 
     if (line != null) {
-      buffer.write(' on line ${line! + 1}');
-      if (column != null) buffer.write(' column $column');
+      if (prefix.contains(',')) {
+        prefix += ', line: $line';
+      } else {
+        prefix += ' line: $line';
+      }
     }
 
-    buffer.write(': $message');
-    return buffer.toString();
+    return '$prefix: $message';
   }
 }
 
+/// A generic runtime error in the template engine.
+///
+/// Under some situations Jinja may raise this exception.
 class TemplateRuntimeError extends TemplateError {
-  TemplateRuntimeError([dynamic message]) : super(message);
-
-  @override
-  String toString() {
-    if (message == null) {
-      return 'TemplateRuntimeError';
-    }
-
-    return 'TemplateRuntimeError: $message';
-  }
+  TemplateRuntimeError([Object? message]) : super(message);
 }
 
+/// Raised if a template tries to operate on [Undefined].
 class UndefinedError extends TemplateRuntimeError {
-  UndefinedError([String? message]) : super(message);
+  UndefinedError([Object? message]) : super(message);
+}
 
-  @override
-  String toString() {
-    if (message == null) {
-      return 'UndefinedError';
-    }
-
-    return 'UndefinedError: $message';
-  }
+/// This error is raised if a filter was called with inappropriate arguments.
+class FilterArgumentError extends TemplateRuntimeError {
+  FilterArgumentError([Object? message]) : super(message);
 }

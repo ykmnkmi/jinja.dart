@@ -137,38 +137,6 @@ void main() {
       expect(template.renderMap(), equals('BA'));
     });
 
-    test('dynamic inheritance', () {
-      final env = Environment(
-        loader: MapLoader(<String, String>{
-          'master1': 'MASTER1{% block x %}{% endblock %}',
-          'master2': 'MASTER2{% block x %}{% endblock %}',
-          'child': '{% extends master %}{% block x %}CHILD{% endblock %}',
-        }),
-      );
-
-      final template = env.getTemplate('child');
-
-      for (var i in <int>[1, 2]) {
-        expect(template.render(master: 'master$i'), equals('MASTER${i}CHILD'));
-      }
-    });
-
-    test('multi inheritance', () {
-      final env = Environment(
-        loader: MapLoader(<String, String>{
-          'master1': 'MASTER1{% block x %}{% endblock %}',
-          'master2': 'MASTER2{% block x %}{% endblock %}',
-          'child': '''{% if master %}{% extends master %}{% else %}{% extends
-                'master1' %}{% endif %}{% block x %}CHILD{% endblock %}''',
-        }),
-      );
-
-      final template = env.getTemplate('child');
-      expect(template.render(master: 'master1'), equals('MASTER1CHILD'));
-      expect(template.render(master: 'master2'), equals('MASTER2CHILD'));
-      expect(template.renderMap(), equals('MASTER1CHILD'));
-    });
-
     test('scoped block', () {
       final env = Environment(
         loader: MapLoader(<String, String>{

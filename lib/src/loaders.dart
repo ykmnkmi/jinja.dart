@@ -5,36 +5,75 @@ import 'package:path/path.dart' as p;
 import 'package:meta/meta.dart';
 
 import 'environment.dart';
+import 'exceptions.dart';
 
 /// Base abstract class for all loaders.
-/// Subclass this and override [getSource], [listSources] and [load]
+/// Subclass this and override [getSource], [listTemplates] and [load]
 /// to implement a custom loading mechanism.
 abstract class Loader {
   /// Get template source from file.
   ///
-  /// Throws exception if file not found
-  String getSource(String path) {
-    throw Exception('template not found: $path');
+  /// Throws [TemplateNotFound] if file not found
+  /// or [UnsupportedError] if don't has access to source.
+  String getSource(String template) {
+    if (!hasSourceAccess) {
+      throw UnsupportedError('this loader cannot provide access to the source');
+    }
+
+    throw TemplateNotFound(template: template);
   }
 
   bool get hasSourceAccess {
     return true;
   }
 
-  /// Iterates over all templates.
+  @Deprecated('Use `listTemplates` instead. Will be removed in 0.5.0.')
   List<String> listSources() {
-    throw Exception('this loader cannot iterate over all templates');
+    return listTemplates();
   }
 
-  void load(Environment env) {
-    for (final template in listSources()) {
-      env.fromString(getSource(template), path: template);
-    }
+  /// Iterates over all templates.
+  List<String> listTemplates() {
+    throw UnsupportedError('this loader cannot iterate over all templates');
+  }
+
+  Template load(Environment environment, String template);
+}
+
+/// Loads a template from a map. It's passed a map of strings bound to
+/// template names.
+/// This loader is useful for testing:
+///
+///     var loader = MapLoader({'index.html': 'source here'})
+///
+class MapLoader extends Loader {
+  MapLoader(this.mapping);
+
+  final Map<String, String> mapping;
+
+  @override
+  bool get hasSourceAccess {
+    return false;
   }
 
   @override
-  String toString() {
-    return '$runtimeType';
+  String getSource(String template) {
+    if (mapping.containsKey(template)) {
+      return mapping[template]!;
+    }
+
+    throw TemplateNotFound(template: template);
+  }
+
+  @override
+  List<String> listTemplates() {
+    return mapping.keys.toList();
+  }
+
+  @override
+  Template load(Environment environment, String template) {
+    final source = getSource(template);
+    return environment.fromString(source, path: template);
   }
 }
 
@@ -51,14 +90,13 @@ abstract class Loader {
 ///     var loader = FileSystemLoader(path: 'path', followLinks: true)
 ///
 class FileSystemLoader extends Loader {
-  FileSystemLoader(
-      {String path = 'templates',
-      List<String>? paths,
-      this.followLinks = true,
-      this.extensions = const {'html'},
-      this.encoding = utf8,
-      this.autoReload = false})
-      : paths = paths ?? <String>[path];
+  FileSystemLoader({
+    String? path,
+    List<String>? paths,
+    this.followLinks = true,
+    this.extensions = const <String>{'html'},
+    this.encoding = utf8,
+  }) : paths = paths ?? <String>[path ?? 'templates'];
 
   final List<String> paths;
 
@@ -68,14 +106,19 @@ class FileSystemLoader extends Loader {
 
   final Encoding encoding;
 
-  final bool autoReload;
+  File? findFile(String template) {
+    final pieces = template.split('/');
 
-  @deprecated
-  Directory get directory {
-    return Directory(paths.last);
+    for (final path in paths) {
+      final templatePath = p.joinAll(<String>[path, ...pieces]);
+      final templateFile = File(templatePath);
+
+      if (templateFile.existsSync()) {
+        return templateFile;
+      }
+    }
   }
 
-  @protected
   bool isTemplate(String path, [String? from]) {
     final template = p.relative(path, from: from);
     var ext = p.extension(template);
@@ -90,35 +133,20 @@ class FileSystemLoader extends Loader {
 
   @override
   String getSource(String template) {
-    String? contents;
+    final file = findFile(template);
 
-    for (final path in paths) {
-      final templatePath = p.join(path, template);
-      final templateFile = File(templatePath);
-
-      if (templateFile.existsSync()) {
-        contents = templateFile.readAsStringSync(encoding: encoding);
-      }
+    if (file == null) {
+      throw TemplateNotFound(template: template);
     }
 
-    if (contents == null) {
-      // TODO: improve error message
-      throw Exception('template not found: $template');
-    }
-
-    return contents;
+    return file.readAsStringSync(encoding: encoding);
   }
 
   @override
-  List<String> listSources() {
+  List<String> listTemplates() {
     final found = <String>[];
 
     for (final path in paths) {
-      if (!FileSystemEntity.isDirectorySync(path)) {
-        // TODO: improve error message
-        throw Exception('template folder not found: $path');
-      }
-
       final directory = Directory(path);
 
       if (directory.existsSync()) {
@@ -127,7 +155,10 @@ class FileSystemLoader extends Loader {
 
         for (final entity in entities) {
           if (isTemplate(entity.path, path)) {
-            final template = p.relative(entity.path, from: path);
+            final template = p
+                .relative(entity.path, from: path)
+                .replaceAll(Platform.pathSeparator, '/');
+
             if (!found.contains(template)) {
               found.add(template);
             }
@@ -141,65 +172,19 @@ class FileSystemLoader extends Loader {
   }
 
   @override
-  void load(Environment env) {
-    super.load(env);
+  Template load(Environment environment, String template) {
+    final file = findFile(template);
 
-    if (autoReload) {
-      for (final path in paths) {
-        Directory(path)
-            .watch(recursive: true)
-            .where((event) => isTemplate(event.path, path))
-            .listen((event) {
-          switch (event.type) {
-            case FileSystemEvent.create:
-            case FileSystemEvent.modify:
-              final template = p.relative(event.path, from: path);
-              final source = getSource(template);
-              env.fromString(source, path: template);
-              break;
-            default:
-          }
-        });
-      }
+    if (file == null) {
+      throw TemplateNotFound(template: template);
     }
+
+    final source = file.readAsStringSync(encoding: encoding);
+    return environment.fromString(source, path: template);
   }
 
   @override
   String toString() {
     return 'FileSystemLoader($paths)';
-  }
-}
-
-/// Loads a template from a map. It's passed a map of strings bound to
-/// template names.
-/// This loader is useful for testing:
-///
-///     var loader = MapLoader({'index.html': 'source here'})
-///
-class MapLoader extends Loader {
-  MapLoader(this.dict) : hasSourceAccess = false;
-
-  final Map<String, String> dict;
-
-  @override
-  final bool hasSourceAccess;
-
-  @override
-  List<String> listSources() {
-    return dict.keys.toList();
-  }
-
-  @override
-  String getSource(String path) {
-    if (dict.containsKey(path)) {
-      return dict[path]!;
-    }
-
-    throw Exception('template not found: $path');
-  }
-
-  @override
-  String toString() {
-    return 'MapLoader($dict)';
   }
 }

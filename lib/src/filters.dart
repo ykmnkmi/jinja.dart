@@ -1,44 +1,32 @@
-import 'dart:math' show pow;
+library filters;
+
+import 'dart:convert';
+import 'dart:math' as math;
+
+import 'package:textwrap/textwrap.dart';
 
 import 'environment.dart';
+import 'exceptions.dart';
 import 'markup.dart';
 import 'runtime.dart';
 import 'utils.dart';
 
-typedef AttrGetter = Object? Function(Object? object);
-
-enum FilterType {
-  context,
-  environment,
+List<String> prepareAttributeParts(String attribute) {
+  return attribute.split('.');
 }
 
-final Expando<FilterType> _filterTypes = Expando<FilterType>();
-
-Function asContextFilter(Function filter) {
-  _filterTypes[filter] = FilterType.context;
-  return filter;
-}
-
-Function asEnvironmentFilter(Function filter) {
-  _filterTypes[filter] = FilterType.environment;
-  return filter;
-}
-
-FilterType? getFilterType(Function filter) {
-  return _filterTypes[filter];
-}
-
-AttrGetter makeAttribute(Environment environment, String attribute,
-    {Object? Function(Object?)? postProcess, Object? d}) {
-  final attributes = prepareAttributeParts(attribute);
+Object? Function(Object?) makeAttributeGetter(
+    Environment environment, String attributeOrAttributes,
+    {Object? Function(Object?)? postProcess, Object? defaultValue}) {
+  final attributes = prepareAttributeParts(attributeOrAttributes);
 
   Object? attributeGetter(Object? item) {
     for (final part in attributes) {
-      item = doAttr(environment, item, part);
+      item = doAttribute(environment, item, part);
 
-      if (item is Undefined) {
-        if (d != null) {
-          item = d;
+      if (item == null) {
+        if (defaultValue != null) {
+          item = defaultValue;
         }
 
         break;
@@ -55,102 +43,98 @@ AttrGetter makeAttribute(Environment environment, String attribute,
   return attributeGetter;
 }
 
-List<String> prepareAttributeParts(String attribute) {
-  return attribute.split('.');
+num doAbs(num number) {
+  return number.abs();
 }
 
-num doAbs(num n) {
-  return n.abs();
+Object? doAttribute(Environment environment, Object? object, String attribute) {
+  return environment.getAttribute(object, attribute);
 }
 
-Object? doAttr(Environment environment, Object? value, String attribute) {
-  try {
-    return environment.getItem(value, attribute) ??
-        environment.getField(value, attribute) ??
-        environment.undefined;
-  } catch (_) {
-    return environment.undefined;
-  }
-}
-
-Iterable<List<Object?>> doBatch(Iterable<Object?> values, int lineCount,
+Iterable<List<Object?>> doBatch(Iterable<Object?> items, int lineCount,
     [Object? fillWith]) sync* {
-  var tmp = <Object?>[];
+  var temp = <Object?>[];
 
-  for (final item in values) {
-    if (tmp.length == lineCount) {
-      yield tmp;
-      tmp = <Object?>[];
+  for (final item in items) {
+    if (temp.length == lineCount) {
+      yield temp;
+      temp = <Object?>[];
     }
 
-    tmp.add(item);
+    temp.add(item);
   }
 
-  if (tmp.isNotEmpty) {
+  if (temp.isNotEmpty) {
     if (fillWith != null) {
-      tmp.addAll(List<Object>.filled(lineCount - tmp.length, fillWith));
+      temp.addAll(List<Object?>.filled(lineCount - temp.length, fillWith));
     }
 
-    yield tmp;
+    yield temp;
   }
 }
 
-String doCapitalize(String value) {
-  return value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase();
+String doCapitalize(String string) {
+  if (string.length == 1) {
+    return string.toUpperCase();
+  }
+
+  return string.substring(0, 1).toUpperCase() +
+      string.substring(1).toLowerCase();
 }
 
-String doCenter(String value, int width) {
-  if (value.length >= width) {
+String doCenter(String string, int width) {
+  if (string.length >= width) {
+    return string;
+  }
+
+  final padLength = (width - string.length) ~/ 2;
+  final pad = ' ' * padLength;
+  return pad + string + pad;
+}
+
+int doLength(Object? items) {
+  return (items as dynamic).length as int;
+}
+
+Object? doDefault(Object? value,
+    [Object? defaultValue = '', bool asBoolean = false]) {
+  if (value is Undefined || (asBoolean && !boolean(value))) {
+    return defaultValue;
+  }
+
+  return value;
+}
+
+Markup doEscape(Object? value) {
+  if (value is Markup) {
     return value;
   }
 
-  final padLength = (width - value.length) ~/ 2;
-  final pad = ' ' * padLength;
-  return pad + value + pad;
+  return Markup(value as String);
 }
 
-int? doCount(Object? value) {
-  if (value is String) {
-    return value.length;
-  }
+String doFileSizeFormat(Object? value, [bool binary = false]) {
+  const suffixes = <List<String>>[
+    [' KiB', ' kB'],
+    [' MiB', ' MB'],
+    [' GiB', ' GB'],
+    [' TiB', ' TB'],
+    [' PiB', ' PB'],
+    [' EiB', ' EB'],
+    [' ZiB', ' ZB'],
+    [' YiB', ' YB'],
+  ];
 
-  if (value is Iterable) {
-    return value.length;
-  }
-
-  if (value is Map) {
-    return value.length;
-  }
-
-  return null;
-}
-
-Object doDefault(Object? value, [Object d = '', bool boolean = false]) {
-  if (boolean) {
-    return toBool(value) ? value! : d;
-  }
-
-  return value is Undefined ? d : value!;
-}
-
-Markup doEscape(Object value) {
-  return value is Markup ? value : Markup.escape(value.toString());
-}
-
-String doFileSizeFormat(Object value, [bool binary = false]) {
   final base = binary ? 1024 : 1000;
 
   double bytes;
 
-  if (value is double) {
-    bytes = value;
-  } else if (value is int) {
+  if (value is num) {
     bytes = value.toDouble();
   } else if (value is String) {
     bytes = double.parse(value);
   } else {
-    // TODO: add message
-    throw Exception();
+    throw TypeError();
   }
 
   if (bytes == 1.0) {
@@ -165,22 +149,11 @@ String doFileSizeFormat(Object value, [bool binary = false]) {
 
     return size + suffix;
   } else {
-    const suffixes = [
-      [' KiB', ' kB'],
-      [' MiB', ' MB'],
-      [' GiB', ' GB'],
-      [' TiB', ' TB'],
-      [' PiB', ' PB'],
-      [' EiB', ' EB'],
-      [' ZiB', ' ZB'],
-      [' YiB', ' YB'],
-    ];
-
     final k = binary ? 0 : 1;
     late num unit;
 
     for (var i = 0; i < suffixes.length; i++) {
-      unit = pow(base, i + 2);
+      unit = math.pow(base, i + 2);
 
       if (bytes < unit) {
         return (base * bytes / unit).toStringAsFixed(1) + suffixes[i][k];
@@ -195,90 +168,132 @@ Object? doFirst(Iterable<Object?> values) {
   return values.first;
 }
 
-double doFloat(Object? value, [double d = 0.0]) {
-  if (value is double) {
-    return value;
-  }
-
-  if (value is int) {
-    return value.toDouble();
-  }
-
+double doFloat(Object? value, {double d = 0.0}) {
   if (value is String) {
-    return double.tryParse(value) ?? d;
+    try {
+      return double.parse(value);
+    } on FormatException {
+      return d;
+    }
   }
 
-  // TODO: add message
-  throw Exception();
+  try {
+    return (value as dynamic).toDouble() as double;
+  } catch (e) {
+    return d;
+  }
 }
 
-Markup doForceEscape(Object value) {
-  return Markup.escape(value.toString());
+Markup doForceEscape(Object? value) {
+  return Markup(value.toString());
 }
 
-int doInt(Object? value, [int d = 0, int base = 10]) {
-  if (value is int) {
-    return value;
-  }
-
-  if (value is double) {
-    return value.toInt();
-  }
-
+int doInteger(Object? value, {int d = 0, int base = 10}) {
   if (value is String) {
-    return int.tryParse(value.toString(), radix: base) ?? d;
+    if (base == 16 && value.startsWith('0x')) {
+      value = value.substring(2);
+    }
+
+    try {
+      return int.parse(value, radix: base);
+    } on FormatException {
+      if (base == 10) {
+        try {
+          return double.parse(value).toInt();
+        } on FormatException {
+          // pass
+        }
+      }
+    }
   }
 
-  // TODO: add message
-  throw Exception();
+  try {
+    return (value as dynamic).toInt() as int;
+  } catch (e) {
+    return d;
+  }
 }
 
-String doJoin(Environment environment, Iterable<Object?> values,
-    [String d = '', String? attribute]) {
+Object? doJoin(Context context, Iterable<Object?> values,
+    [String delimiter = '', String? attribute]) {
   if (attribute != null) {
-    return values.map(makeAttribute(environment, attribute)).join(d);
+    values = values
+        .map<Object?>(makeAttributeGetter(context.environment, attribute));
   }
 
-  return values.join(d);
+  if (!boolean(context.get('autoescape'))) {
+    return values.join(delimiter);
+  }
+
+  return context.escaped(
+      values.map<Object?>((value) => context.escape(value)).join(delimiter));
 }
 
 Object? doLast(Iterable<Object?> values) {
   return values.last;
 }
 
-List<Object?> doList(Object? value) {
-  if (value is Iterable) {
-    return value.toList();
-  }
-
-  if (value is String) {
-    return value.split('');
-  }
-
-  return [value];
+String doLower(String string) {
+  return string.toLowerCase();
 }
 
-String doLower(String value) {
-  return value.toLowerCase();
+String doPPrint(Object? object) {
+  return format(object);
 }
 
-Object? doRandom(Environment environment, List<Object?> values) {
-  final length = values.length;
-  return values[environment.random.nextInt(length)];
+Object? doRandom(Environment environment, Object? values) {
+  final length = (values as dynamic).length as int;
+  final index = environment.random.nextInt(length);
+  return values[index];
+}
+
+Object? doReplace(Object? object, String from, String to, [int? count]) {
+  late String string;
+  late bool isNotMarkup;
+
+  if (object is String) {
+    string = object;
+    isNotMarkup = true;
+  } else if (object is Markup) {
+    string = object.toString();
+    isNotMarkup = false;
+  } else {
+    string = object.toString();
+    isNotMarkup = true;
+  }
+
+  if (count == null) {
+    string = string.replaceAll(from, to);
+  } else {
+    while (count > 0) {
+      string = string.replaceAll(from, to);
+    }
+  }
+
+  return isNotMarkup ? string : Markup(string);
+}
+
+Object? doReverse(Object? value) {
+  try {
+    final values = list(value);
+    return values.reversed;
+  } catch (e) {
+    throw FilterArgumentError('argument must be iterable');
+  }
+}
+
+Markup doMarkSafe(String value) {
+  return Markup.escaped(value);
 }
 
 String doString(Object? value) {
-  if (value is String) {
-    return value;
-  }
-
-  return repr(value);
+  return value.toString();
 }
 
 num doSum(Environment environment, Iterable<Object?> values,
     {String? attribute, num start = 0}) {
   if (attribute != null) {
-    values = values.map(makeAttribute(environment, attribute));
+    values = values.map<Object?>(makeAttributeGetter(environment, attribute));
   }
 
   return values.cast<num>().fold(start, (s, n) => s + n);
@@ -292,17 +307,35 @@ String doUpper(String value) {
   return value.toUpperCase();
 }
 
-final Map<String, Function> filters = <String, Function>{
-  'attr': asEnvironmentFilter(doAttr),
-  'join': asEnvironmentFilter(doJoin),
-  'sum': asEnvironmentFilter(doSum),
-  'random': asEnvironmentFilter(doRandom),
+int doWordCount(String string) {
+  final matches = RegExp(r'\w+').allMatches(string);
+  return matches.length;
+}
 
+String doWordWrap(Environment environment, String string, int width,
+    {bool breakLongWords = true,
+    String? wrapString,
+    bool breakOnHyphens = true}) {
+  final wrapper = TextWrapper(
+      width: width,
+      expandTabs: false,
+      replaceWhitespace: false,
+      breakLongWords: breakLongWords,
+      breakOnHyphens: breakOnHyphens);
+  wrapString ??= environment.newLine;
+  return const LineSplitter()
+      .convert(string)
+      .map<String>((line) => wrapper.wrap(line).join(wrapString!))
+      .join(wrapString);
+}
+
+const Map<String, Function> filters = {
   'abs': doAbs,
+  'attr': doAttribute,
   'batch': doBatch,
   'capitalize': doCapitalize,
   'center': doCenter,
-  'count': doCount,
+  'count': doLength,
   'd': doDefault,
   'default': doDefault,
   'e': doEscape,
@@ -311,14 +344,23 @@ final Map<String, Function> filters = <String, Function>{
   'first': doFirst,
   'float': doFloat,
   'forceescape': doForceEscape,
-  'int': doInt,
+  'int': doInteger,
+  'join': doJoin,
   'last': doLast,
-  'length': doCount,
-  'list': doList,
+  'length': doLength,
+  'list': list,
   'lower': doLower,
+  'pprint': doPPrint,
+  'random': doRandom,
+  'replace': doReplace,
+  'reverse': doReverse,
+  'safe': doMarkSafe,
   'string': doString,
+  'sum': doSum,
   'trim': doTrim,
   'upper': doUpper,
+  'wordcount': doWordCount,
+  'wordwrap': doWordWrap,
 
   // 'dictsort': doDictSort,
   // 'format': doFormat,
@@ -327,13 +369,9 @@ final Map<String, Function> filters = <String, Function>{
   // 'map': doMap,
   // 'max': doMax,
   // 'min': doMin,
-  // 'pprint': doPPrint,
   // 'reject': doReject,
   // 'rejectattr': doRejectAttr,
-  // 'replace': doReplace,
-  // 'reverse': doReverse,
   // 'round': doRound,
-  // 'safe': doMarkSafe,
   // 'select': doSelect,
   // 'selectattr': doSelectAttr,
   // 'slice': doSlice,
@@ -345,7 +383,9 @@ final Map<String, Function> filters = <String, Function>{
   // 'unique': doUnique,
   // 'urlencode': doURLEncode,
   // 'urlize': doURLize,
-  // 'wordcount': doWordCount,
-  // 'wordwrap': doWordwrap,
   // 'xmlattr': doXMLAttr,
 };
+
+const Set<String> contextFilters = {'join'};
+
+const Set<String> environmentFilters = {'attr', 'random', 'sum', 'wordwrap'};

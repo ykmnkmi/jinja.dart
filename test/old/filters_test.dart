@@ -1,5 +1,5 @@
 import 'package:jinja/jinja.dart';
-import 'package:jinja/get_field.dart';
+import 'package:jinja/reflection.dart';
 import 'package:jinja/src/markup.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:test/test.dart';
@@ -15,7 +15,7 @@ void main() {
     final env = Environment();
 
     test('attr', () {
-      final env = Environment(getField: getField);
+      final env = Environment(fieldGetter: fieldGetter);
       final template = env.fromString('{{ user | attr("name") }}');
       final user = User('jane');
       expect(template.render(user: user), equals('jane'));
@@ -27,7 +27,7 @@ void main() {
       expect(
           template.render(foo: range(10).toList()),
           equals('[[0, 1, 2], [3, 4, 5], [6, 7, 8], [9]]|'
-              "[[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 'X', 'X']]"));
+              "[[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, X, X]]"));
     });
 
     test('capitalize', () {

@@ -35,19 +35,19 @@ void main() {
 
     test('capitalize', () {
       final tmpl = env.fromString('{{ "foo bar"|capitalize }}');
-      expect(tmpl.render(), equals('Foo bar'));
+      expect(tmpl.renderMap(), equals('Foo bar'));
     });
 
     test('center', () {
       final tmpl = env.fromString('{{ "foo"|center(9) }}');
-      expect(tmpl.render(), equals('   foo   '));
+      expect(tmpl.renderMap(), equals('   foo   '));
     });
 
     test('default', () {
       final tmpl = env
           .fromString('{{ missing|default("no") }}|{{ false|default("no") }}|'
               '{{ false|default("no", true) }}|{{ given|default("no") }}');
-      expect(tmpl.render({'given': 'yes'}), equals('no|false|no|yes'));
+      expect(tmpl.renderMap({'given': 'yes'}), equals('no|false|no|yes'));
     });
 
     // TODO: add test: dictsort
@@ -56,12 +56,11 @@ void main() {
     test('batch', () {
       final data = {'foo': range(10)};
       var tmpl = env.fromString('{{ foo|batch(3)|list }}');
-      var result = tmpl.render(data);
+      var result = tmpl.renderMap(data);
       expect(result, equals('[[0, 1, 2], [3, 4, 5], [6, 7, 8], [9]]'));
       tmpl = env.fromString('{{ foo|batch(3, "X")|list }}');
-      result = tmpl.render(data);
-      expect(
-          result, equals('[[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, X, X]]'));
+      result = tmpl.renderMap(data);
+      expect(result, equals('[[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, X, X]]'));
     });
 
     // TODO: add test: slice
@@ -69,7 +68,7 @@ void main() {
 
     test('escape', () {
       final tmpl = env.fromString('''{{ '<">&'|escape }}''');
-      expect(tmpl.render(), equals('&lt;&#34;&gt;&amp;'));
+      expect(tmpl.renderMap(), equals('&lt;&#34;&gt;&amp;'));
     });
 
     // TODO: add test: trim
@@ -80,42 +79,42 @@ void main() {
 
     test('filesizeformat', () {
       var tmpl = env.fromString('{{ 100|filesizeformat }}');
-      expect(tmpl.render(), equals('100 Bytes'));
+      expect(tmpl.renderMap(), equals('100 Bytes'));
       tmpl = env.fromString('{{ 1000|filesizeformat }}');
-      expect(tmpl.render(), equals('1.0 kB'));
+      expect(tmpl.renderMap(), equals('1.0 kB'));
       tmpl = env.fromString('{{ 1000000|filesizeformat }}');
-      expect(tmpl.render(), equals('1.0 MB'));
+      expect(tmpl.renderMap(), equals('1.0 MB'));
       tmpl = env.fromString('{{ 1000000000|filesizeformat }}');
-      expect(tmpl.render(), equals('1.0 GB'));
+      expect(tmpl.renderMap(), equals('1.0 GB'));
       tmpl = env.fromString('{{ 1000000000000|filesizeformat }}');
-      expect(tmpl.render(), equals('1.0 TB'));
+      expect(tmpl.renderMap(), equals('1.0 TB'));
       tmpl = env.fromString('{{ 100|filesizeformat(true) }}');
-      expect(tmpl.render(), equals('100 Bytes'));
+      expect(tmpl.renderMap(), equals('100 Bytes'));
       tmpl = env.fromString('{{ 1000|filesizeformat(true) }}');
-      expect(tmpl.render(), equals('1000 Bytes'));
+      expect(tmpl.renderMap(), equals('1000 Bytes'));
       tmpl = env.fromString('{{ 1000000|filesizeformat(true) }}');
-      expect(tmpl.render(), equals('976.6 KiB'));
+      expect(tmpl.renderMap(), equals('976.6 KiB'));
       tmpl = env.fromString('{{ 1000000000|filesizeformat(true) }}');
-      expect(tmpl.render(), equals('953.7 MiB'));
+      expect(tmpl.renderMap(), equals('953.7 MiB'));
       tmpl = env.fromString('{{ 1000000000000|filesizeformat(true) }}');
-      expect(tmpl.render(), equals('931.3 GiB'));
+      expect(tmpl.renderMap(), equals('931.3 GiB'));
     });
 
     test('first', () {
       final tmpl = env.fromString('{{ foo|first }}');
-      expect(tmpl.render({'foo': range(10)}), equals('0'));
+      expect(tmpl.renderMap({'foo': range(10)}), equals('0'));
     });
 
     test('float', () {
       final tmpl = env.fromString('{{ value|float }}');
-      expect(tmpl.render({'value': '42'}), equals('42.0'));
-      expect(tmpl.render({'value': 'abc'}), equals('0.0'));
-      expect(tmpl.render({'value': '32.32'}), equals('32.32'));
+      expect(tmpl.renderMap({'value': '42'}), equals('42.0'));
+      expect(tmpl.renderMap({'value': 'abc'}), equals('0.0'));
+      expect(tmpl.renderMap({'value': '32.32'}), equals('32.32'));
     });
 
     test('float default', () {
       final tmpl = env.fromString('{{ value|float(default=1.0) }}');
-      expect(tmpl.render({'value': 'abc'}), equals('1.0'));
+      expect(tmpl.renderMap({'value': 'abc'}), equals('1.0'));
     });
 
     // TODO: add test: format
@@ -133,63 +132,63 @@ void main() {
     test('int', () {
       // no bigint '12345678901234567890': '12345678901234567890'
       final tmpl = env.fromString('{{ value|int }}');
-      expect(tmpl.render({'value': '42'}), equals('42'));
-      expect(tmpl.render({'value': 'abc'}), equals('0'));
-      expect(tmpl.render({'value': '32.32'}), equals('32'));
+      expect(tmpl.renderMap({'value': '42'}), equals('42'));
+      expect(tmpl.renderMap({'value': 'abc'}), equals('0'));
+      expect(tmpl.renderMap({'value': '32.32'}), equals('32'));
     });
 
     test('int base', () {
       var tmpl = env.fromString('{{ value|int(base=16) }}');
-      expect(tmpl.render({'value': '0x4d32'}), equals('19762'));
+      expect(tmpl.renderMap({'value': '0x4d32'}), equals('19762'));
       tmpl = env.fromString('{{ value|int(base=8) }}');
-      expect(tmpl.render({'value': '011'}), equals('9'));
+      expect(tmpl.renderMap({'value': '011'}), equals('9'));
       tmpl = env.fromString('{{ value|int(base=16) }}');
-      expect(tmpl.render({'value': '0x33Z'}), equals('0'));
+      expect(tmpl.renderMap({'value': '0x33Z'}), equals('0'));
     });
 
     test('int default', () {
       final tmpl = env.fromString('{{ value|int(default=1) }}');
-      expect(tmpl.render({'value': 'abc'}), equals('1'));
+      expect(tmpl.renderMap({'value': 'abc'}), equals('1'));
     });
 
     test('int special method', () {
       final tmpl = env.fromString('{{ value|int }}');
-      expect(tmpl.render({'value': IntIsh()}), equals('42'));
+      expect(tmpl.renderMap({'value': IntIsh()}), equals('42'));
     });
 
     test('join', () {
       var tmpl = env.fromString('{{ [1, 2, 3]|join("|") }}');
-      expect(tmpl.render(), equals('1|2|3'));
+      expect(tmpl.renderMap(), equals('1|2|3'));
       var env2 = Environment(autoEscape: true);
       tmpl = env2.fromString('{{ ["<foo>", "<span>foo</span>"|safe]|join }}');
-      expect(tmpl.render(), equals('&lt;foo&gt;<span>foo</span>'));
+      expect(tmpl.renderMap(), equals('&lt;foo&gt;<span>foo</span>'));
     });
 
     test('join attribute', () {
       final tmpl = env.fromString('{{ users|join(", ", "username") }}');
       final users = [User('foo'), User('bar')];
-      expect(tmpl.render({'users': users}), equals('foo, bar'));
+      expect(tmpl.renderMap({'users': users}), equals('foo, bar'));
     });
 
     test('last', () {
       final tmpl = env.fromString('''{{ foo|last }}''');
-      expect(tmpl.render({'foo': range(10)}), equals('9'));
+      expect(tmpl.renderMap({'foo': range(10)}), equals('9'));
     });
 
     test('length', () {
       final tmpl = env.fromString('{{ "hello world"|length }}');
-      expect(tmpl.render(), equals('11'));
+      expect(tmpl.renderMap(), equals('11'));
     });
 
     test('lower', () {
       final tmpl = env.fromString('''{{ "FOO"|lower }}''');
-      expect(tmpl.render(), equals('foo'));
+      expect(tmpl.renderMap(), equals('foo'));
     });
 
     test('pprint', () {
       final tmpl = env.fromString('{{ value|pprint }}');
       final list = <int>[for (var i = 0; i < 10; i += 1) i];
-      expect(tmpl.render({'value': list}), equals(format(list)));
+      expect(tmpl.renderMap({'value': list}), equals(format(list)));
     });
 
     test('random', () {
@@ -199,20 +198,20 @@ void main() {
       final tmpl = env.fromString('{{ "$expected"|random }}');
 
       for (var i = 0; i < 10; i += 1) {
-        expect(tmpl.render(), equals(expected[random.nextInt(10)]));
+        expect(tmpl.renderMap(), equals(expected[random.nextInt(10)]));
       }
     });
 
     test('reverse', () {
       var tmpl = env.fromString(
           '{{ "foobar"|reverse|join }}|{{ [1, 2, 3]|reverse|list }}');
-      expect(tmpl.render(), equals('raboof|[3, 2, 1]'));
+      expect(tmpl.renderMap(), equals('raboof|[3, 2, 1]'));
     });
 
     test('string', () {
       final values = [1, 2, 3, 4, 5];
       final tmpl = env.fromString('{{ values|string }}');
-      expect(tmpl.render({'values': values}), equals('$values'));
+      expect(tmpl.renderMap({'values': values}), equals('$values'));
     });
 
     // TODO: add test: truncate
@@ -232,7 +231,7 @@ void main() {
 
     test('upper', () {
       final tmpl = env.fromString('{{ "foo"|upper }}');
-      expect(tmpl.render(), equals('FOO'));
+      expect(tmpl.renderMap(), equals('FOO'));
     });
 
     // TODO: add test: urlize
@@ -249,7 +248,7 @@ void main() {
 
     test('wordcount', () {
       final tmpl = env.fromString('{{ "foo bar baz"|wordcount }}');
-      expect(tmpl.render(), equals('3'));
+      expect(tmpl.renderMap(), equals('3'));
     });
 
     // TODO: add test: block
@@ -258,7 +257,7 @@ void main() {
     test('chaining', () {
       final tmpl =
           env.fromString('{{ ["<foo>", "<bar>"]|first|upper|escape }}');
-      expect(tmpl.render(), equals('&lt;FOO&gt;'));
+      expect(tmpl.renderMap(), equals('&lt;FOO&gt;'));
     });
 
     // TODO: add test: sum
@@ -323,16 +322,16 @@ void main() {
 
     test('force escape', () {
       final tmpl = env.fromString('{{ x|forceescape }}');
-      expect(tmpl.render({'x': Markup.escaped('<div />')}),
+      expect(tmpl.renderMap({'x': Markup.escaped('<div />')}),
           equals('&lt;div /&gt;'));
     });
 
     test('safe', () {
       final env = Environment(autoEscape: true);
       var tmpl = env.fromString('{{ "<div>foo</div>"|safe }}');
-      expect(tmpl.render(), equals('<div>foo</div>'));
+      expect(tmpl.renderMap(), equals('<div>foo</div>'));
       tmpl = env.fromString('{{ "<div>foo</div>" }}');
-      expect(tmpl.render(), equals('&lt;div&gt;foo&lt;/div&gt;'));
+      expect(tmpl.renderMap(), equals('&lt;div&gt;foo&lt;/div&gt;'));
     });
 
     // TODO: add test: url encode
@@ -381,7 +380,7 @@ void main() {
       final env = Environment(newLine: '\n');
       final tmpl = env.fromString('{{ string|wordwrap(20) }}');
       final result =
-          tmpl.render({'string': 'Hello!\nThis is Jinja saying something.'});
+          tmpl.renderMap({'string': 'Hello!\nThis is Jinja saying something.'});
       expect(result, equals('Hello!\nThis is Jinja saying\nsomething.'));
     });
 

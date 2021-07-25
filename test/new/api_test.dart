@@ -6,10 +6,10 @@ import 'package:test/test.dart';
 void main() {
   group('ExtendedAPI', () {
     test('item and attribute', () {
-      final environment = Environment(getField: getField);
+      final environment = Environment(fieldGetter: fieldGetter);
 
       expect(
-          environment.fromString('{{ foo["items"] }}').render({
+          environment.fromString('{{ foo["items"] }}').renderMap({
             'foo': {'items': 42}
           }),
           equals('42'));
@@ -21,7 +21,7 @@ void main() {
       expect(
           environment
               .fromString('{% for item in seq %}|{{ item }}{% endfor %}')
-              .render({
+              .renderMap({
             'seq': [null, 1, 'foo']
           }),
           equals('||1|foo'));
@@ -29,42 +29,42 @@ void main() {
 
     test('finalize constant expression', () {
       final environment = Environment(
-        finalize: (dynamic obj) => obj ?? '',
+        finalize: (Object? obj) => obj ?? '',
       );
 
-      expect(environment.fromString('<{{ none }}>').render(), equals('<>'));
+      expect(environment.fromString('<{{ none }}>').renderMap(), equals('<>'));
     });
 
     test('no finalize template data', () {
       final environment =
           Environment(finalize: (dynamic obj) => obj.runtimeType);
       // if template data was finalized, it would print 'StringintString'.
-      expect(environment.fromString('<{{ value }}>').render({'value': 123}),
+      expect(environment.fromString('<{{ value }}>').renderMap({'value': 123}),
           equals('<int>'));
     });
 
     test('context finalize', () {
       final environment = Environment(
-        finalize: (Context context, dynamic value) {
-          return value * context['scale'];
+        finalize: (Context context, Object? value) {
+          return (value as dynamic) * context['scale'];
         },
       );
 
       expect(
           environment
               .fromString('{{ value }}')
-              .render({'value': 5, 'scale': 3}),
+              .renderMap({'value': 5, 'scale': 3}),
           equals('15'));
     });
 
     test('env autoescape', () {
       final environment = Environment(
-        finalize: (Environment environment, dynamic value) {
-          return '${environment.variableBegin} ${repr(value)} ${environment.variableEnd}';
+        finalize: (Environment environment, Object? value) {
+          return '${environment.variableStart} ${repr(value)} ${environment.variableEnd}';
         },
       );
 
-      expect(environment.fromString('{{ value }}').render({'value': 'hello'}),
+      expect(environment.fromString('{{ value }}').renderMap({'value': 'hello'}),
           equals("{{ 'hello' }}"));
     });
 

@@ -1,8 +1,224 @@
-import 'utils.dart' show getSymbolName;
+import 'package:meta/meta.dart';
+
+import 'environment.dart';
+import 'exceptions.dart';
+import 'utils.dart';
+
+export 'context.dart';
+
+class LoopContext extends Iterable<Object?> {
+  LoopContext(this.values, this.undefined, {this.depth0 = 0, this.recurse})
+      : length = values.length,
+        index0 = -1;
+
+  final List<Object?> values;
+
+  @override
+  final int length;
+
+  final UndefinedFactory undefined;
+
+  final String Function(Object? data, [int depth])? recurse;
+
+  int index0;
+
+  int depth0;
+
+  @override
+  LoopIterator get iterator {
+    return LoopIterator(this);
+  }
+
+  int get index {
+    return index0 + 1;
+  }
+
+  int get depth {
+    return depth0 + 1;
+  }
+
+  int get revindex0 {
+    return length - index;
+  }
+
+  int get revindex {
+    return length - index0;
+  }
+
+  @override
+  bool get first {
+    return index0 == 0;
+  }
+
+  @override
+  bool get last {
+    return index == length;
+  }
+
+  Object? get nextitem {
+    if (!last) {
+      return values[index0 + 1];
+    }
+
+    return undefined(hint: 'there is no next item');
+  }
+
+  Object? get previtem {
+    if (first) {
+      return undefined(hint: 'there is no previous item');
+    }
+
+    return values[index0 - 1];
+  }
+
+  String call(Object? data) {
+    if (recurse == null) {
+      throw TypeError(
+          /* the loop must have the 'recursive' marker to be called recursively. */);
+    }
+
+    return recurse!(data, depth);
+  }
+
+  Object cycle(
+      [Object? arg01 = missing,
+      Object? arg02 = missing,
+      Object? arg03 = missing]) {
+    final values = <Object>[];
+
+    if (arg01 != missing) {
+      values.add(arg01!);
+
+      if (arg02 != missing) {
+        values.add(arg02!);
+
+        if (arg03 != missing) {
+          values.add(arg03!);
+        }
+      }
+    }
+
+    if (values.isEmpty) {
+      throw TypeError(/* no items for cycling given */);
+    }
+
+    return values[index0 % values.length];
+  }
+
+  bool changed(Object? item) {
+    if (index0 == 0) {
+      return true;
+    }
+
+    if (item == previtem) {
+      return false;
+    }
+
+    return true;
+  }
+
+  Object? operator [](String key) {
+    switch (key) {
+      case 'length':
+        return length;
+      case 'index0':
+        return index0;
+      case 'depth0':
+        return depth0;
+      case 'index':
+        return index;
+      case 'depth':
+        return depth;
+      case 'revindex0':
+        return revindex0;
+      case 'revindex':
+        return revindex;
+      case 'first':
+        return first;
+      case 'last':
+        return last;
+      case 'previtem':
+        return previtem;
+      case 'nextitem':
+        return nextitem;
+      case 'call':
+        return call;
+      case 'cycle':
+        return cycle;
+      case 'changed':
+        return changed;
+      default:
+        throw NoSuchMethodError.withInvocation(
+            this, Invocation.getter(Symbol(key)));
+    }
+  }
+}
+
+class LoopIterator extends Iterator<Object?> {
+  LoopIterator(this.context);
+
+  final LoopContext context;
+
+  @override
+  Object? get current {
+    return context.values[context.index0];
+  }
+
+  @override
+  bool moveNext() {
+    if (context.index < context.length) {
+      context.index0 += 1;
+      return true;
+    }
+
+    return false;
+  }
+}
 
 /// The default undefined type.
+///
+/// This undefined type can be printed and iterated over, but every other access will raise an [UndefinedErro].
 class Undefined {
-  const Undefined();
+  Undefined({this.hint, this.object, this.name});
+
+  final String? hint;
+
+  final Object? object;
+
+  final String? name;
+
+  @override
+  int get hashCode {
+    return null.hashCode;
+  }
+
+  /// Build a message about the undefined value based on how it was accessed.
+  @protected
+  String get undefinedMessage {
+    if (hint != null) {
+      return hint!;
+    }
+
+    if (object == null) {
+      return '$name is undefined';
+    }
+
+    return '${object!.runtimeType} has no attribute $name';
+  }
+
+  @override
+  bool operator ==(Object? other) {
+    return other is Undefined;
+  }
+
+  Never fail() {
+    throw UndefinedError(undefinedMessage);
+  }
+
+  @override
+  Object? noSuchMethod(Invocation invocation) {
+    fail();
+  }
 
   @override
   String toString() {
@@ -10,137 +226,60 @@ class Undefined {
   }
 }
 
-const namespace = _NameSpaceFactory();
-
 class NameSpace {
-  NameSpace([Map<String, Object?>? data])
-      : data =
-            data != null ? Map<String, Object?>.of(data) : <String, Object?>{};
+  NameSpace([Map<String, Object?>? context]) : context = <String, Object?>{} {
+    if (context != null) {
+      this.context.addAll(context);
+    }
+  }
 
-  final Map<String, Object?> data;
+  final Map<String, Object?> context;
 
   Iterable<MapEntry<String, Object?>> get entries {
-    return data.entries;
+    return context.entries;
   }
 
   Object? operator [](String key) {
-    return data[key];
+    return context[key];
   }
 
   void operator []=(String key, Object? value) {
-    data[key] = value;
-  }
-}
-
-// TODO: remove/improve workaround
-class _NameSpaceFactory {
-  const _NameSpaceFactory();
-
-  NameSpace call() {
-    return NameSpace();
+    context[key] = value;
   }
 
   @override
-  Object? noSuchMethod(Invocation invocation) {
-    if (invocation.memberName == #call) {
-      final data = <String, Object?>{};
+  String toString() {
+    return 'NameSpace($context)';
+  }
 
-      if (invocation.positionalArguments.length == 1) {
-        final arg = invocation.positionalArguments.first;
+  static NameSpace factory([List<Object?>? datas]) {
+    if (datas == null) {
+      return NameSpace();
+    }
 
-        if (arg is Map<String, Object?>) {
-          data.addAll(arg);
-        } else if (arg is List) {
-          for (final pair in arg) {
-            if (pair is Map) {
-              data.addAll(pair.map((a, b) => MapEntry(a.toString(), b)));
-              continue;
-            }
+    final context = <String, Object?>{};
 
-            List<Object?> list;
-
-            if (pair is Iterable) {
-              list = pair.toList();
-            } else if (pair is String) {
-              list = pair.split('');
-            } else {
-              throw ArgumentError('cannot convert map update sequence '
-                  'element #${arg.indexOf(pair)} to a sequence');
-            }
-
-            if (list.length != 2) {
-              throw ArgumentError(
-                  'map update sequence element #${arg.indexOf(pair)}, '
-                  'has length ${list.length}; 2 is required');
-            }
-
-            if (list[0] is String) {
-              data[list[0] as String] = list[1];
-            }
-          }
-        } else {
-          // TODO: correct: error message
-          throw TypeError();
-        }
-      } else if (invocation.positionalArguments.length > 1) {
-        throw ArgumentError('map expected at most 1 arguments, '
-            'got ${invocation.positionalArguments.length}');
+    for (final data in datas) {
+      if (data is Map) {
+        context.addAll(data.cast<String, Object?>());
+      } else {
+        throw TypeError();
       }
-
-      invocation.namedArguments.forEach((key, value) {
-        if (value is Map<Symbol, Object?>) {
-          data.addAll(
-              value.map((key, value) => MapEntry(getSymbolName(key), value)));
-        } else {
-          data.addEntries([MapEntry(getSymbolName(key), value)]);
-        }
-      });
-
-      return NameSpace(data);
     }
 
-    return super.noSuchMethod(invocation);
+    return NameSpace(context);
   }
 }
 
-class LoopContext {
-  LoopContext(int index0, int length, Object? previtem, Object? nextitem,
-      Function changed)
-      : data = <String, Object?>{
-          'index0': index0,
-          'length': length,
-          'previtem': previtem,
-          'nextitem': nextitem,
-          'changed': changed,
-          'index': index0 + 1,
-          'first': index0 == 0,
-          'last': index0 + 1 == length,
-          'revindex': length - index0,
-          'revindex0': length - index0 - 1,
-          'cycle': _CycleWrapper((args) => args[index0 % args.length]),
-        };
+class NameSpaceValue {
+  NameSpaceValue(this.name, this.item);
 
-  final Map<String, Object?> data;
+  String name;
 
-  Object? operator [](String key) {
-    return data[key]!;
-  }
-}
-
-// TODO: remove/improve workaround
-class _CycleWrapper {
-  _CycleWrapper(this.function);
-
-  final Object? Function(List<Object?> values) function;
-
-  Object? call();
+  String item;
 
   @override
-  Object? noSuchMethod(Invocation invocation) {
-    if (invocation.memberName == #call) {
-      return function(invocation.positionalArguments[0] as List);
-    }
-
-    return super.noSuchMethod(invocation);
+  String toString() {
+    return 'NameSpaceValue($name, $item)';
   }
 }

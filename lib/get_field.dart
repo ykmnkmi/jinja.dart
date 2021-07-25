@@ -1,12 +1,11 @@
-import 'dart:mirrors';
+@Deprecated('Import reflection instead. Will be removed in 0.5.0.')
+library get_field;
 
-import 'package:jinja/src/exceptions.dart';
+import 'reflection.dart';
 
-Object? getField(Object? object, String field) {
-  try {
-    return reflect(object).getField(Symbol(field)).reflectee;
-  } catch (error) {
-    // TODO: improve error message
-    throw TemplateRuntimeError(error);
-  }
+export 'reflection.dart';
+
+@Deprecated('Use `fieldGetter` instead. Will be removed in 0.5.0.')
+Object? Function(Object? object, String field) get getField {
+  return fieldGetter;
 }

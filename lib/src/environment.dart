@@ -1,51 +1,34 @@
+import 'dart:collection' show HashMap, HashSet;
 import 'dart:math' show Random;
 
-import 'package:path/path.dart' as p;
+import 'package:quiver/core.dart';
+import 'package:jinja/jinja.dart';
 
-import 'defaults.dart';
-import 'filters.dart';
+import 'defaults.dart' as defaults;
+import 'exceptions.dart';
+import 'lexer.dart';
 import 'loaders.dart';
 import 'nodes.dart';
+import 'optimizer.dart';
 import 'parser.dart';
+import 'renderer.dart';
 import 'runtime.dart';
+import 'utils.dart';
+import 'visitor.dart';
+
+typedef Finalizer = Object? Function(Object? value);
+
+typedef ContextFinalizer = Object? Function(Context context, Object? value);
+
+typedef EnvironmentFinalizer = Object? Function(
+    Environment environment, Object? value);
 
 typedef FieldGetter = Object? Function(Object? object, String field);
-typedef ItemGetter = Object? Function(Object? object, Object? key);
 
-Object? defaultFieldGetter(Object? object, String field) {
-  return null;
-}
+typedef UndefinedFactory = Undefined Function(
+    {String? hint, Object? object, String? name});
 
-Object? defaultItemGetter(Object? object, Object? key) {
-  if (object is Map) {
-    return object[key];
-  }
-
-  if (object is List) {
-    if (key is int) {
-      return object[key];
-    }
-
-    // TODO: error message
-    throw TypeError();
-  }
-
-  return null;
-}
-
-typedef Finalizer = Object Function(Object? value);
-
-Object defaultFinalizer(Object? value) {
-  if (value == null) {
-    return '';
-  }
-
-  if (value is String) {
-    return value;
-  }
-
-  return repr(value);
-}
+late final Expando<Lexer> lexerCache = Expando('lexerCache');
 
 /// The core component of Jinja 2 is the Environment. It contains
 /// important shared variables like configuration, filters, tests and others.
@@ -56,117 +39,375 @@ Object defaultFinalizer(Object? value) {
 /// will lead to surprising effects and undefined behavior.
 class Environment {
   /// If `loader` is not `null`, templates will be loaded
-  Environment(
-      {this.blockStart = '{%',
-      this.blockEnd = '%}',
-      this.variableStart = '{{',
-      this.variableEnd = '}}',
-      this.commentStart = '{#',
-      this.commentEnd = '#}',
-      this.trimBlocks = false,
-      this.leftStripBlocks = false,
-      this.keepTrailingNewLine = false,
-      this.optimize = true,
-      this.undefined = const Undefined(),
-      this.finalize = defaultFinalizer,
-      Random? random,
-      this.autoEscape = false,
-      Loader? loader,
-      Map<String, Function> filters = const <String, Function>{},
-      Map<String, Function> tests = const <String, Function>{},
-      Map<String, Object?> globals = const <String, Object?>{},
-      this.getField = defaultFieldGetter,
-      this.getItem = defaultItemGetter})
-      : random = random ?? Random(),
-        filters = Map<String, Function>.of(defaultFilters)..addAll(filters),
-        tests = Map<String, Function>.of(defaultTests)..addAll(tests),
-        globals = Map<String, Object?>.of(defaultContext)..addAll(globals),
-        templates = <String, Template>{} {
-    if (loader != null) {
-      loader.load(this);
+  Environment({
+    this.commentStart = defaults.commentStart,
+    this.commentEnd = defaults.commentEnd,
+    this.variableStart = defaults.variableStart,
+    this.variableEnd = defaults.variableEnd,
+    this.blockStart = defaults.blockStart,
+    this.blockEnd = defaults.blockEnd,
+    this.lineCommentPrefix = defaults.lineCommentPrefix,
+    this.lineStatementPrefix = defaults.lineStatementPrefix,
+    this.leftStripBlocks = defaults.lStripBlocks,
+    this.trimBlocks = defaults.trimBlocks,
+    this.newLine = defaults.newLine,
+    this.keepTrailingNewLine = defaults.keepTrailingNewLine,
+    this.optimized = true,
+    this.undefined = defaults.undefined,
+    Function finalize = defaults.finalize,
+    this.autoEscape = false,
+    this.loader,
+    this.autoReload = true,
+    Map<String, Object?>? globals,
+    Map<String, Function>? filters,
+    Set<String>? environmentFilters,
+    Set<String>? contextFilters,
+    Map<String, Function>? tests,
+    Map<String, Template>? templates,
+    List<NodeVisitor>? modifiers,
+    Random? random,
+    @Deprecated('Use `fieldGetter` instead. Will be removed in 0.5.0.')
+        FieldGetter? getField,
+    FieldGetter fieldGetter = defaults.fieldGetter,
+  })  : assert(finalize is Finalizer ||
+            finalize is ContextFinalizer ||
+            finalize is EnvironmentFinalizer),
+        finalize = finalize is EnvironmentFinalizer
+            ? ((context, value) => finalize(context.environment, value))
+            : finalize is ContextFinalizer
+                ? finalize
+                : ((context, value) => finalize(value)),
+        globals = HashMap<String, Object?>.of(defaults.globals),
+        filters = HashMap<String, Function>.of(defaults.filters),
+        environmentFilters = HashSet<String>.of(defaults.environmentFilters),
+        contextFilters = HashSet<String>.of(defaults.contextFilters),
+        tests = HashMap<String, Function>.of(defaults.tests),
+        templates = HashMap<String, Template>(),
+        modifiers = List<NodeVisitor>.of(defaults.modifiers),
+        random = random ?? Random(),
+        fieldGetter = getField ?? fieldGetter {
+    if (globals != null) {
+      this.globals.addAll(globals);
+    }
+
+    if (filters != null) {
+      this.filters.addAll(filters);
+    }
+
+    if (environmentFilters != null) {
+      this.environmentFilters.addAll(environmentFilters);
+    }
+
+    if (contextFilters != null) {
+      this.contextFilters.addAll(contextFilters);
+    }
+
+    if (tests != null) {
+      this.tests.addAll(tests);
+    }
+
+    if (templates != null) {
+      this.templates.addAll(templates);
+    }
+
+    if (modifiers != null) {
+      this.modifiers.addAll(modifiers);
     }
   }
 
-  final String blockStart;
-  final String blockEnd;
-  final String variableStart;
-  final String variableEnd;
   final String commentStart;
-  final String commentEnd;
-  final bool trimBlocks;
-  final bool leftStripBlocks;
-  final bool keepTrailingNewLine;
-  final bool optimize;
-  final Undefined undefined;
-  final Finalizer finalize;
-  final Random random;
-  final bool autoEscape;
-  final Map<String, Function> filters;
-  final Map<String, Function> tests;
-  final Map<String, dynamic> globals;
 
-  final FieldGetter getField;
-  final ItemGetter getItem;
+  final String commentEnd;
+
+  final String variableStart;
+
+  final String variableEnd;
+
+  final String blockStart;
+
+  final String blockEnd;
+
+  final String? lineCommentPrefix;
+
+  final String? lineStatementPrefix;
+
+  final bool leftStripBlocks;
+
+  final bool trimBlocks;
+
+  final String newLine;
+
+  final bool keepTrailingNewLine;
+
+  final bool optimized;
+
+  final UndefinedFactory undefined;
+
+  final ContextFinalizer finalize;
+
+  final bool autoEscape;
+
+  final Loader? loader;
+
+  final bool autoReload;
+
+  final Map<String, Object?> globals;
+
+  final Map<String, Function> filters;
+
+  final Set<String> environmentFilters;
+
+  final Set<String> contextFilters;
+
+  final Map<String, Function> tests;
 
   final Map<String, Template> templates;
 
+  final List<NodeVisitor> modifiers;
+
+  final Random random;
+
+  final FieldGetter fieldGetter;
+
+  @override
+  int get hashCode {
+    return hashObjects(<Object?>[
+      blockStart,
+      blockEnd,
+      variableStart,
+      variableEnd,
+      commentStart,
+      commentEnd,
+      lineStatementPrefix,
+      lineCommentPrefix,
+      trimBlocks,
+      leftStripBlocks
+    ]);
+  }
+
+  Lexer get lexer {
+    return lexerCache[this] ??= Lexer(this);
+  }
+
+  @override
+  bool operator ==(Object? other) {
+    return other is Environment &&
+        blockStart == other.blockStart &&
+        blockEnd == other.blockEnd &&
+        variableStart == other.variableStart &&
+        variableEnd == other.variableEnd &&
+        commentStart == other.commentStart &&
+        commentEnd == other.commentEnd &&
+        lineStatementPrefix == other.lineStatementPrefix &&
+        lineCommentPrefix == other.lineCommentPrefix &&
+        trimBlocks == other.trimBlocks &&
+        leftStripBlocks == other.leftStripBlocks;
+  }
+
+  /// If [name] not found throws [TemplateRuntimeError].
+  Object? callFilter(String name, Object? value,
+      {List<Object?>? positional,
+      Map<Symbol, Object?>? named,
+      Context? context}) {
+    Function filter;
+
+    if (filters.containsKey(name)) {
+      filter = filters[name]!;
+    } else {
+      throw TemplateRuntimeError('no filter named $name');
+    }
+
+    if (contextFilters.contains(name)) {
+      if (context == null) {
+        throw TemplateRuntimeError(
+            'attempted to invoke context filter without context');
+      }
+
+      positional ??= <Object?>[];
+      positional.insert(0, context);
+      positional.insert(1, value);
+    } else if (environmentFilters.contains(name)) {
+      positional ??= <Object?>[];
+      positional.insert(0, this);
+      positional.insert(1, value);
+    } else {
+      positional ??= <Object?>[];
+      positional.insert(0, value);
+    }
+
+    return Function.apply(filter, positional, named);
+  }
+
+  /// If [name] not found throws [TemplateRuntimeError].
+  bool callTest(String name, Object? value,
+      {List<Object?>? positional, Map<Symbol, Object?>? named}) {
+    Function test;
+
+    if (tests.containsKey(name)) {
+      test = tests[name]!;
+    } else {
+      throw TemplateRuntimeError('no test named $name');
+    }
+
+    positional ??= <Object?>[];
+    positional.insert(0, value);
+    return Function.apply(test, positional, named) as bool;
+  }
+
+  Environment copy({
+    String? commentStart,
+    String? commentEnd,
+    String? variableStart,
+    String? variableEnd,
+    String? blockStart,
+    String? blockEnd,
+    String? lineCommentPrefix,
+    String? lineStatementPrefix,
+    bool? leftStripBlocks,
+    bool? trimBlocks,
+    String? newLine,
+    bool? keepTrailingNewLine,
+    bool? optimized,
+    UndefinedFactory? undefined,
+    Function? finalize,
+    bool? autoEscape,
+    Loader? loader,
+    bool? autoReload,
+    Map<String, dynamic>? globals,
+    Map<String, Function>? filters,
+    Set<String>? environmentFilters,
+    Set<String>? contextFilters,
+    Map<String, Function>? tests,
+    List<NodeVisitor>? modifiers,
+    Random? random,
+    FieldGetter? fieldGetter,
+  }) {
+    return Environment(
+      commentStart: commentStart ?? this.commentStart,
+      commentEnd: commentEnd ?? this.commentEnd,
+      variableStart: variableStart ?? this.variableStart,
+      variableEnd: variableEnd ?? this.variableEnd,
+      blockStart: blockStart ?? this.blockStart,
+      blockEnd: blockEnd ?? this.blockEnd,
+      lineCommentPrefix: lineCommentPrefix ?? this.lineCommentPrefix,
+      lineStatementPrefix: lineStatementPrefix ?? this.lineStatementPrefix,
+      leftStripBlocks: leftStripBlocks ?? this.leftStripBlocks,
+      trimBlocks: trimBlocks ?? this.trimBlocks,
+      newLine: newLine ?? this.newLine,
+      keepTrailingNewLine: keepTrailingNewLine ?? this.keepTrailingNewLine,
+      optimized: optimized ?? this.optimized,
+      undefined: undefined ?? this.undefined,
+      finalize: finalize ?? this.finalize,
+      autoEscape: autoEscape ?? this.autoEscape,
+      loader: loader ?? this.loader,
+      autoReload: autoReload ?? this.autoReload,
+      globals: globals ?? this.globals,
+      filters: filters ?? this.filters,
+      environmentFilters: environmentFilters ?? this.environmentFilters,
+      contextFilters: contextFilters ?? this.contextFilters,
+      tests: tests ?? this.tests,
+      modifiers: modifiers ?? this.modifiers,
+      random: random ?? this.random,
+      fieldGetter: fieldGetter ?? this.fieldGetter,
+    );
+  }
+
   /// If `path` is not `null` template stored in environment cache.
   Template fromString(String source, {String? path}) {
-    final template = Parser(this, source, path: path).parse();
+    final template = Parser(this, path: path).parse(source);
 
-    if (path != null) {
-      templates[path] = template;
+    for (final modifier in modifiers) {
+      for (final node in template.nodes) {
+        modifier(node);
+      }
+    }
+
+    if (optimized) {
+      template.accept(const Optimizer(), Context(this));
     }
 
     return template;
   }
 
-  /// If [path] not found throws `Exception`.
-  ///
-  /// `path/to/template`
-  Template getTemplate(String path) {
-    final normalizedPath = p.normalize(path);
-
-    if (templates.containsKey(normalizedPath)) {
-      return templates[normalizedPath]!;
+  Object? getAttribute(Object? object, String field) {
+    try {
+      return fieldGetter(object, field);
+    } on NoSuchMethodError {
+      try {
+        return (object as dynamic)[field];
+      } on NoSuchMethodError {
+        return undefined(object: object, name: field);
+      }
     }
-
-    throw ArgumentError('template not found: $path');
   }
 
-  /// If [name] not found throws [Exception].
-  Object? callFilter(Context context, String name,
-      {List<Object?> positional = const [],
-      Map<Symbol, Object?> named = const {}}) {
-    if (filters.containsKey(name) && filters[name] != null) {
-      final filter = filters[name]!;
+  Object? getItem(Object object, Object? key) {
+    // TODO: update slices
+    if (key is Indices) {
+      if (object is List<Object?>) {
+        return slice(object, key);
+      }
 
-      switch (getFilterType(filter)) {
-        case FilterType.context:
-          final args = <Object?>[context];
-          args.addAll(positional);
-          return Function.apply(filter, args, named);
-        case FilterType.environment:
-          final args = <Object?>[context.environment];
-          args.addAll(positional);
-          return Function.apply(filter, args, named);
-        default:
-          return Function.apply(filter, positional, named);
+      if (object is String) {
+        return sliceString(object, key);
+      }
+
+      if (object is Iterable<Object?>) {
+        return slice(object.toList(), key);
       }
     }
 
-    throw ArgumentError('filter not found: $name');
-  }
-
-  /// If [name] not found throws [Exception].
-  bool callTest(String name,
-      {List<Object?> positional = const [],
-      Map<Symbol, Object?> named = const {}}) {
-    if (tests.containsKey(name)) {
-      return Function.apply(tests[name]!, positional, named) as bool;
+    if (key is int && key < 0) {
+      key = key + ((object as dynamic).length as int);
     }
 
-    throw ArgumentError('test not found: $name');
+    try {
+      return (object as dynamic)[key];
+    } on NoSuchMethodError {
+      if (key is String) {
+        try {
+          return fieldGetter(object, key);
+        } on NoSuchMethodError {
+          // do nothing
+        }
+      }
+
+      return undefined(object: object, name: '$key');
+    }
+  }
+
+  /// If [template] not found throws `Exception`.
+  ///
+  /// Throws [TypeError] if [template] is not a [String] or [Undefined].
+  Template getTemplate(Object? template) {
+    if (template is Undefined) {
+      template.fail();
+    }
+
+    if (template is String) {
+      if (autoReload && templates.containsKey(template)) {
+        return templates[template] = loadTemplate(template);
+      }
+
+      return templates[template] ??= loadTemplate(template);
+    }
+
+    throw TypeError();
+  }
+
+  List<String> listTemplates() {
+    assert(loader != null, 'no loader configured');
+    return loader!.listTemplates();
+  }
+
+  List<Token> lex(String source) {
+    // TODO: catch error
+    return lexer.tokenize(source);
+  }
+
+  Template loadTemplate(String template) {
+    assert(loader != null, 'no loader for this environment specified');
+    return templates[template] = loader!.load(this, template);
   }
 }
 
@@ -180,121 +421,145 @@ class Environment {
 class Template extends Node {
   factory Template(
     String source, {
-    String blockStart = '{%',
-    String blockEnd = '%}',
-    String variableStart = '{{',
-    String variableEnd = '}}',
-    String commentStart = '{#',
-    String commentEnd = '#}',
-    bool trimBlocks = false,
-    bool leftStripBlocks = false,
-    bool keepTrailingNewLine = false,
-    bool optimize = true,
-    Undefined undefined = const Undefined(),
-    Finalizer finalize = defaultFinalizer,
-    Random? random,
+    String? path,
+    Environment? parent,
+    String blockStart = defaults.blockStart,
+    String blockEnd = defaults.blockEnd,
+    String variableStatr = defaults.variableStart,
+    String variableEnd = defaults.variableEnd,
+    String commentStart = defaults.commentStart,
+    String commentEnd = defaults.commentEnd,
+    String? lineCommentPrefix = defaults.lineCommentPrefix,
+    String? lineStatementPrefix = defaults.lineStatementPrefix,
+    bool trimBlocks = defaults.trimBlocks,
+    bool leftStripBlocks = defaults.lStripBlocks,
+    String newLine = defaults.newLine,
+    bool keepTrailingNewLine = defaults.keepTrailingNewLine,
+    bool optimized = true,
+    UndefinedFactory undefined = defaults.undefined,
+    Function finalize = defaults.finalize,
     bool autoEscape = false,
-    Map<String, Function> filters = const <String, Function>{},
-    Map<String, Function> tests = const <String, Function>{},
-    Map<String, Object?> globals = const <String, Object?>{},
-    FieldGetter getField = defaultFieldGetter,
-    ItemGetter getItem = defaultItemGetter,
+    Map<String, Object>? globals,
+    Map<String, Function>? filters,
+    Set<String>? environmentFilters,
+    Set<String>? contextFilters,
+    Map<String, Function>? tests,
+    List<NodeVisitor>? modifiers,
+    Random? random,
+    @Deprecated('Use `fieldGetter` instead. Will be removed in 0.5.0.')
+        FieldGetter? getField,
+    FieldGetter fieldGetter = defaults.fieldGetter,
   }) {
-    final env = Environment(
-      blockStart: blockStart,
-      blockEnd: blockEnd,
-      variableStart: variableStart,
-      variableEnd: variableEnd,
-      commentStart: commentStart,
-      commentEnd: commentEnd,
-      trimBlocks: trimBlocks,
-      leftStripBlocks: leftStripBlocks,
-      keepTrailingNewLine: keepTrailingNewLine,
-      optimize: optimize,
-      undefined: undefined,
-      finalize: finalize,
-      random: random,
-      autoEscape: autoEscape,
-      filters: Map<String, Function>.of(defaultFilters)..addAll(filters),
-      tests: Map<String, Function>.of(defaultTests)..addAll(tests),
-      globals: Map<String, Object?>.of(defaultContext)..addAll(globals),
-      getField: getField,
-      getItem: getItem,
-    );
+    Environment environment;
 
-    return Parser(env, source).parse();
+    if (parent != null) {
+      // TODO: update copying
+      environment = parent.copy(
+        commentStart: commentStart,
+        commentEnd: commentEnd,
+        variableStart: variableStatr,
+        variableEnd: variableEnd,
+        blockStart: blockStart,
+        blockEnd: blockEnd,
+        lineCommentPrefix: lineCommentPrefix,
+        lineStatementPrefix: lineStatementPrefix,
+        leftStripBlocks: leftStripBlocks,
+        trimBlocks: trimBlocks,
+        newLine: newLine,
+        keepTrailingNewLine: keepTrailingNewLine,
+        optimized: optimized,
+        undefined: undefined,
+        finalize: finalize,
+        autoEscape: autoEscape,
+        autoReload: false,
+        globals: globals,
+        filters: filters,
+        environmentFilters: environmentFilters,
+        contextFilters: contextFilters,
+        tests: tests,
+        modifiers: modifiers,
+        random: random,
+        fieldGetter: fieldGetter,
+      );
+    } else {
+      environment = Environment(
+        commentStart: commentStart,
+        commentEnd: commentEnd,
+        variableStart: variableStatr,
+        variableEnd: variableEnd,
+        blockStart: blockStart,
+        blockEnd: blockEnd,
+        lineCommentPrefix: lineCommentPrefix,
+        lineStatementPrefix: lineStatementPrefix,
+        leftStripBlocks: leftStripBlocks,
+        trimBlocks: trimBlocks,
+        newLine: newLine,
+        keepTrailingNewLine: keepTrailingNewLine,
+        optimized: optimized,
+        undefined: undefined,
+        finalize: finalize,
+        autoEscape: autoEscape,
+        autoReload: false,
+        globals: globals,
+        filters: filters,
+        environmentFilters: environmentFilters,
+        contextFilters: contextFilters,
+        tests: tests,
+        modifiers: modifiers,
+        random: random,
+        fieldGetter: getField ?? fieldGetter,
+      );
+    }
+
+    return environment.fromString(source, path: path);
   }
 
-  Template.parsed(this.environment, this.body, [this.path])
-      : blocks = <String, BlockStatement>{} {
-    _render = _RenderWrapper(([Map<String, Object?>? data]) => renderMap(data));
+  Template.parsed(this.environment, this.nodes,
+      {this.blocks = const <Block>[], this.hasSelf = false, this.path}) {
+    renderWrapper =
+        RenderWrapper(([Map<String, Object?>? data]) => renderMap(data));
   }
 
   final Environment environment;
-  final Node body;
+
+  final List<Node> nodes;
+
+  final List<Block> blocks;
+
+  final bool hasSelf;
+
   final String? path;
 
-  final Map<String, BlockStatement> blocks;
-
-  late dynamic _render;
+  late RenderWrapper renderWrapper;
 
   dynamic get render {
-    return _render;
-  }
-
-  void _addBlocks(Context context, StringSink outSink) {
-    final self = NameSpace();
-
-    for (final blockEntry in blocks.entries) {
-      self[blockEntry.key] = () {
-        blockEntry.value.accept(outSink, context);
-      };
-    }
-
-    context.contexts.first['self'] = self;
+    return renderWrapper;
   }
 
   @override
-  void accept(StringSink outSink, Context context) {
-    _addBlocks(context, outSink);
-    body.accept(outSink, context);
+  R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
+    return visitor.visitTemplate(this, context);
   }
 
   String renderMap([Map<String, Object?>? data]) {
     final buffer = StringBuffer();
-    final context = Context(environment, data ?? <String, Object?>{});
-    _addBlocks(context, buffer);
-    body.accept(buffer, context);
+    final context = RenderContext(environment, buffer, data: data);
+    accept(const StringSinkRenderer(), context);
     return buffer.toString();
   }
 
   @override
   String toString() {
     if (path == null) {
-      return 'Template($body)';
+      return 'Template()';
     }
 
-    return 'Template($path, $body)';
-  }
-
-  @override
-  String toDebugString([int level = 0]) {
-    final buffer = StringBuffer();
-
-    if (path != null) {
-      buffer
-        ..write(' ' * level)
-        ..write('# template: ')
-        ..writeln(repr(path));
-    }
-
-    buffer.write(body.toDebugString(level));
-    return buffer.toString();
+    return 'Template($path)';
   }
 }
 
-class _RenderWrapper {
-  _RenderWrapper(this.renderMap);
+class RenderWrapper {
+  RenderWrapper(this.renderMap);
 
   final String Function([Map<String, Object?>? data]) renderMap;
 

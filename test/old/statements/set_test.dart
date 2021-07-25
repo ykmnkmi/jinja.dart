@@ -1,11 +1,11 @@
 import 'package:jinja/jinja.dart';
-import 'package:jinja/get_field.dart';
+import 'package:jinja/reflection.dart';
 import 'package:jinja/src/exceptions.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('set', () {
-    final envTrim = Environment(getField: getField, trimBlocks: true);
+    final envTrim = Environment(fieldGetter: fieldGetter, trimBlocks: true);
 
     test('simple', () {
       final template = envTrim.fromString('{% set foo = 1 %}{{ foo }}');
@@ -104,10 +104,10 @@ void main() {
     });
 
     test('block filtered set', () {
-      final myfilter = (value, arg) {
+      Object? myfilter(Object? value, Object? arg) {
         assert(arg == ' xxx ');
         return value;
-      };
+      }
 
       envTrim.filters['myfilter'] = myfilter;
       final template = envTrim.fromString('{% set a = " xxx " %}'

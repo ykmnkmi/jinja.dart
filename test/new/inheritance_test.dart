@@ -57,7 +57,7 @@ void main() {
         Environment(loader: MapLoader(mapping), trimBlocks: true);
 
     String renderByName(String name, [Map<String, Object?>? data]) {
-      return environment.getTemplate(name).render(data);
+      return environment.getTemplate(name).renderMap(data);
     }
 
     test('layout', () {
@@ -112,7 +112,7 @@ void main() {
         }),
       );
 
-      expect(environment.getTemplate('c').render(),
+      expect(environment.getTemplate('c').renderMap(),
           equals('--INTRO--|BEFORE|[(INNER)]|AFTER'));
     });
 
@@ -123,7 +123,7 @@ void main() {
     test('reusing blocks', () {
       final template = environment.fromString(
           '{{ self.foo() }}|{% block foo %}42{% endblock %}|{{ self.foo() }}');
-      expect(template.render(), equals('42|42|42'));
+      expect(template.renderMap(), equals('42|42|42'));
     });
 
     test('preserve blocks', () {
@@ -135,7 +135,7 @@ void main() {
         }),
       );
 
-      expect(environment.getTemplate('b').render(), equals('BA'));
+      expect(environment.getTemplate('b').renderMap(), equals('BA'));
     });
 
     test('scoped block', () {
@@ -148,7 +148,7 @@ void main() {
 
       final source =
           '{% extends "default.html" %}{% block item %}{{ item }}{% endblock %}';
-      expect(environment.fromString(source).render({'seq': range(5)}),
+      expect(environment.fromString(source).renderMap({'seq': range(5)}),
           equals('[0][1][2][3][4]'));
     });
 
@@ -162,7 +162,7 @@ void main() {
 
       final template = environment.fromString(
           '{% extends "default.html" %}{% block item %}{{ super() }}|{{ item * 2 }}{% endblock %}');
-      expect(template.render({'seq': range(5)}),
+      expect(template.renderMap({'seq': range(5)}),
           equals('[0|0][1|2][2|4][3|6][4|8]'));
     });
 
@@ -187,7 +187,7 @@ void main() {
 
     //   final iterable = environment
     //       .getTemplate('index.html')
-    //       .render({'the_foo': 42})
+    //       .renderMap({'the_foo': 42})
     //       .split(RegExp('\\s+'))
     //       .where((part) => part.isNotEmpty);
     //   expect(iterable, orderedEquals(<String>['43', '44', '45']));
@@ -202,7 +202,7 @@ void main() {
       }),
     );
 
-    expect(environment.getTemplate('level1').render(), equals('[1]'));
+    expect(environment.getTemplate('level1').renderMap(), equals('[1]'));
   });
 
   test('level2 required', () {
@@ -214,8 +214,8 @@ void main() {
       }),
     );
 
-    expect(environment.getTemplate('level1').render(), equals('[1]'));
-    expect(environment.getTemplate('level2').render(), equals('[2]'));
+    expect(environment.getTemplate('level1').renderMap(), equals('[1]'));
+    expect(environment.getTemplate('level2').renderMap(), equals('[2]'));
   });
 
   test('level3 required', () {
@@ -232,10 +232,10 @@ void main() {
       return error.message == 'required block \'x\' not found';
     }
 
-    expect(() => environment.getTemplate('level1').render(),
+    expect(() => environment.getTemplate('level1').renderMap(),
         throwsA(predicate<TemplateSyntaxError>(matcher)));
-    expect(environment.getTemplate('level2').render(), equals('[2]'));
-    expect(environment.getTemplate('level3').render(), equals('[2]'));
+    expect(environment.getTemplate('level2').renderMap(), equals('[2]'));
+    expect(environment.getTemplate('level3').renderMap(), equals('[2]'));
   });
 
   test('invalid required', () {
@@ -260,11 +260,11 @@ void main() {
           'required blocks can only contain comments or whitespace';
     }
 
-    expect(() => environment.getTemplate('level1default').render(),
+    expect(() => environment.getTemplate('level1default').renderMap(),
         throwsA(predicate<TemplateSyntaxError>(matcher)));
-    expect(() => environment.getTemplate('level1default2').render(),
+    expect(() => environment.getTemplate('level1default2').renderMap(),
         throwsA(predicate<TemplateSyntaxError>(matcher)));
-    expect(() => environment.getTemplate('level1default3').render(),
+    expect(() => environment.getTemplate('level1default3').renderMap(),
         throwsA(predicate<TemplateSyntaxError>(matcher)));
   });
 }
