@@ -15,7 +15,7 @@ void main() {
         ''');
 
       final lines = const LineSplitter()
-          .convert(tmpl.renderMap({'a': 1, 'b': 2}))
+          .convert(tmpl.render({'a': 1, 'b': 2}))
           .map<String>((line) => line.trim())
           .where((line) => line.isNotEmpty);
       expect(lines, orderedEquals(<String>['42 = 23', '1 = 2']));
@@ -27,7 +27,7 @@ void main() {
             {{ a }}|{{ b }}|{{ c }}|{{ d }}|{{ e }}
         {%- endwith -%}
         ''');
-      expect(tmpl.renderMap({'b': 3, 'e': 4}), equals('1|2|3|4|5'));
+      expect(tmpl.render({'b': 3, 'e': 4}), equals('1|2|3|4|5'));
     });
   });
 }

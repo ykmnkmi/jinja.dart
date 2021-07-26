@@ -66,9 +66,7 @@ class Environment {
     Map<String, Template>? templates,
     List<NodeVisitor>? modifiers,
     Random? random,
-    @Deprecated('Use `fieldGetter` instead. Will be removed in 0.5.0.')
-        FieldGetter? getField,
-    FieldGetter fieldGetter = defaults.fieldGetter,
+    this.fieldGetter = defaults.fieldGetter,
   })  : assert(finalize is Finalizer ||
             finalize is ContextFinalizer ||
             finalize is EnvironmentFinalizer),
@@ -84,8 +82,7 @@ class Environment {
         tests = HashMap<String, Function>.of(defaults.tests),
         templates = HashMap<String, Template>(),
         modifiers = List<NodeVisitor>.of(defaults.modifiers),
-        random = random ?? Random(),
-        fieldGetter = getField ?? fieldGetter {
+        random = random ?? Random() {
     if (globals != null) {
       this.globals.addAll(globals);
     }
@@ -446,8 +443,6 @@ class Template extends Node {
     Map<String, Function>? tests,
     List<NodeVisitor>? modifiers,
     Random? random,
-    @Deprecated('Use `fieldGetter` instead. Will be removed in 0.5.0.')
-        FieldGetter? getField,
     FieldGetter fieldGetter = defaults.fieldGetter,
   }) {
     Environment environment;
@@ -507,7 +502,7 @@ class Template extends Node {
         tests: tests,
         modifiers: modifiers,
         random: random,
-        fieldGetter: getField ?? fieldGetter,
+        fieldGetter: fieldGetter,
       );
     }
 
@@ -530,11 +525,6 @@ class Template extends Node {
   @override
   R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
     return visitor.visitTemplate(this, context);
-  }
-
-  @Deprecated('Use `render` instead. Will be removed in 0.5.0.')
-  String renderMap([Map<String, Object?>? data]) {
-    return render(data);
   }
 
   String render([Map<String, Object?>? data]) {

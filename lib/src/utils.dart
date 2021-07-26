@@ -112,11 +112,6 @@ String format(Object? object) {
   // return DartFormatter().formatStatement(source);
 }
 
-String getSymbolName(Symbol symbol) {
-  final fullName = symbol.toString();
-  return fullName.substring(8, fullName.length - 2);
-}
-
 bool isUndefined(Object? value) {
   return value is Undefined;
 }

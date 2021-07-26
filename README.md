@@ -4,26 +4,17 @@
 
 [Jinja](https://www.palletsprojects.com/p/jinja/) server-side template engine port for Dart 2. Variables, expressions, control structures and template inheritance.
 
-Breaking changes 0.4
---------------------
-_work in progress_
+## Breaking changes 0.4
+- No dynamic template imports. Only single constant template path/name.
+- _work in progress_
 
 ## Example
-Add package to your `pubspec.yaml` as a dependency
-
-```yaml
-dependencies:
-  jinja: ^0.4.0
-```
-
-Import library and use it:
-
 ```dart
 import 'package:jinja/jinja.dart';
 
 // ...
 
-final environment = Environment(blockStart: '...');
+final environment = Environment(blockStart: '...', blockEnd: '...');
 final template = env.fromString('...source...');
 
 sink.write(template.render({'key': value}));

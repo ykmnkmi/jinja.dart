@@ -15,7 +15,7 @@ void main() {
     );
 
     final template = environment.getTemplate('c');
-    print(template.renderMap());
+    print(template.render());
   } catch (error, trace) {
     print(error);
     print(Trace.format(trace));

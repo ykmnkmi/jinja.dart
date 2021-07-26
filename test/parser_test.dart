@@ -18,7 +18,7 @@ void main() {
 
       final tmpl = env.fromString('<!-- I\'m a comment -->'
           '<? for item in seq -?>\n    <?= item ?>\n<?- endfor ?>');
-      expect(tmpl.renderMap({'seq': range(5)}), equals('01234'));
+      expect(tmpl.render({'seq': range(5)}), equals('01234'));
     });
 
     test('erb syntax', () {
@@ -33,7 +33,7 @@ void main() {
 
       final tmpl = env.fromString('<%# I\'m a comment %>'
           '<% for item in seq -%>\n    <%= item %><%- endfor %>');
-      expect(tmpl.renderMap({'seq': range(5)}), equals('01234'));
+      expect(tmpl.render({'seq': range(5)}), equals('01234'));
     });
 
     test('comment syntax', () {
@@ -48,19 +48,19 @@ void main() {
 
       final tmpl = env.fromString('<!--# I\'m a comment -->'
           '<!-- for item in seq --->    \${item}<!--- endfor -->');
-      expect(tmpl.renderMap({'seq': range(5)}), equals('01234'));
+      expect(tmpl.render({'seq': range(5)}), equals('01234'));
     });
 
     test('balancing', () {
       final tmpl = env.fromString('''{{{'foo':'bar'}.foo}}''');
-      expect(tmpl.renderMap(), equals('bar'));
+      expect(tmpl.render(), equals('bar'));
     });
 
     // TODO: after macro: enable test
     // test('start comment', () {
     //   final tmpl = env.fromString('{# foo comment\nand bar comment #}'
     //       '{% macro blub() %}foo{% endmacro %}\n{{ blub() }}');
-    //   expect(tmpl.renderMap().trim(), equals('foor'));
+    //   expect(tmpl.render().trim(), equals('foor'));
     // });
 
     test('line syntax', () {
@@ -79,7 +79,7 @@ void main() {
       final tmpl = env.fromString('<%# regular comment %>\n% for item in seq:\n'
           '    \${item} ## the rest of the stuff\n% endfor');
       final result = tmpl
-          .renderMap({'seq': sequence})
+          .render({'seq': sequence})
           .split(RegExp('\\s+'))
           .map<String>((string) => string.trim())
           .where((string) => string.isNotEmpty)
@@ -104,7 +104,7 @@ void main() {
           env.fromString('/* ignore me.\n   I\'m a multiline comment */\n'
               '## for item in seq:\n* \${item}          '
               '# this is just extra stuff\n## endfor\n');
-      expect(tmpl.renderMap({'seq': seq}).trim(), equals('* 1\n* 2'));
+      expect(tmpl.render({'seq': seq}).trim(), equals('* 1\n* 2'));
 
       env = Environment(
         variableStart: '\${',
@@ -119,7 +119,7 @@ void main() {
           '# for item in seq:\n* \${item}          '
           '## this is just extra stuff\n    '
           '## extra stuff i just want to ignore\n# endfor');
-      expect(tmpl.renderMap({'seq': seq}).trim(), equals('* 1\n\n* 2'));
+      expect(tmpl.render({'seq': seq}).trim(), equals('* 1\n\n* 2'));
     });
 
     test('error messages', () {

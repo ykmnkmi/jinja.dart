@@ -34,25 +34,25 @@ void main() {
     test('simple', () {
       final tmpl =
           env.fromString('{% for item in seq %}{{ item }}{% endfor %}');
-      expect(tmpl.renderMap({'seq': range(10)}), equals('0123456789'));
+      expect(tmpl.render({'seq': range(10)}), equals('0123456789'));
     });
 
     test('else', () {
       final tmpl =
           env.fromString('{% for item in seq %}XXX{% else %}...{% endfor %}');
-      expect(tmpl.renderMap(), equals('...'));
+      expect(tmpl.render(), equals('...'));
     });
 
     test('else scoping item', () {
       final tmpl = env
           .fromString('{% for item in [] %}{% else %}{{ item }}{% endfor %}');
-      expect(tmpl.renderMap({'item': 42}), equals('42'));
+      expect(tmpl.render({'item': 42}), equals('42'));
     });
 
     test('empty blocks', () {
       final tmpl =
           env.fromString('<{% for item in seq %}{% else %}{% endfor %}>');
-      expect(tmpl.renderMap(), equals('<>'));
+      expect(tmpl.render(), equals('<>'));
     });
 
     test('context vars', () {
@@ -64,7 +64,7 @@ void main() {
                 loop.revindex0 }}|{{ loop.first }}|{{ loop.last }}|{{
                loop.length }}###{% endfor %}''');
 
-        final parts = tmpl.renderMap({'seq': seq}).split('###');
+        final parts = tmpl.render({'seq': seq}).split('###');
         final one = parts[0].split('|');
         final two = parts[1].split('|');
 
@@ -90,7 +90,7 @@ void main() {
       final tmpl = env.fromString('''{% for item in seq %}{{ 
             loop.cycle('<1>', '<2>') }}{% endfor %}{%
             for item in seq %}{{ loop.cycle(*through) }}{% endfor %}''');
-      final output = tmpl.renderMap({
+      final output = tmpl.render({
         'seq': range(4),
         'through': ['<1>', '<2>']
       });
@@ -102,7 +102,7 @@ void main() {
             {{ loop.previtem | default('x') }}-{{ item }}-{{
             loop.nextitem | default('x') }}|
         {%- endfor %}''');
-      final output = tmpl.renderMap({'seq': range(4)});
+      final output = tmpl.render({'seq': range(4)});
       expect(output, equals('x-0-1|0-1-2|1-2-3|2-3-x|'));
     });
 
@@ -110,7 +110,7 @@ void main() {
       final tmpl = env.fromString('''{% for item in seq -%}
             {{ loop.changed(item) }},
         {%- endfor %}''');
-      final output = tmpl.renderMap({
+      final output = tmpl.render({
         'seq': [null, null, 1, 2, 2, 3, 4, 4, 4]
       });
       expect(
@@ -120,20 +120,20 @@ void main() {
     test('scope', () {
       final tmpl =
           env.fromString('{% for item in seq %}{% endfor %}{{ item }}');
-      final output = tmpl.renderMap({'seq': range(10)});
+      final output = tmpl.render({'seq': range(10)});
       expect(output, equals(''));
     });
 
     test('varlen', () {
       final tmpl =
           env.fromString('{% for item in iter %}{{ item }}{% endfor %}');
-      final output = tmpl.renderMap({'iter': range(5)});
+      final output = tmpl.render({'iter': range(5)});
       expect(output, equals('01234'));
     });
 
     test('noniter', () {
       final tmpl = env.fromString('{% for item in none %}...{% endfor %}');
-      expect(() => tmpl.renderMap(), throwsA(isA<TypeError>()));
+      expect(() => tmpl.render(), throwsA(isA<TypeError>()));
     });
 
     test('recursive', () {
@@ -141,7 +141,7 @@ void main() {
             [{{ item.a }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
         {%- endfor %}''');
       expect(
-          tmpl.renderMap(recursiveData), equals('[1<[1][2]>][2<[1][2]>][3<[a]>]'));
+          tmpl.render(recursiveData), equals('[1<[1][2]>][2<[1][2]>][3<[a]>]'));
     });
 
     test('recursive lookaround', () {
@@ -151,7 +151,7 @@ void main() {
             }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
         {%- endfor %}''');
       expect(
-          template.renderMap(recursiveData),
+          template.render(recursiveData),
           equals(
               '[x.1.2<[x.1.2][1.2.x]>][1.2.3<[x.1.2][1.2.x]>][2.3.x<[x.a.x]>]'));
     });
@@ -160,7 +160,7 @@ void main() {
       final tmpl = env.fromString('''{% for item in seq recursive -%}
         [{{ loop.depth0 }}:{{ item.a }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
         {%- endfor %}''');
-      expect(tmpl.renderMap(recursiveData),
+      expect(tmpl.render(recursiveData),
           equals('[0:1<[1:1][1:2]>][0:2<[1:1][1:2]>][0:3<[1:a]>]'));
     });
 
@@ -168,7 +168,7 @@ void main() {
       final tmpl = env.fromString('''{% for item in seq recursive -%}
         [{{ loop.depth }}:{{ item.a }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
         {%- endfor %}''');
-      expect(tmpl.renderMap(recursiveData),
+      expect(tmpl.render(recursiveData),
           equals('[1:1<[2:1][2:2]>][1:2<[2:1][2:2]>][1:3<[2:a]>]'));
     });
 
@@ -180,7 +180,7 @@ void main() {
             {%- endfor %}
         {%- endfor %}''');
       expect(
-          tmpl.renderMap({
+          tmpl.render({
             'table': ['ab', 'cd']
           }),
           equals('[1|1][1|2][2|1][2|2]'));
@@ -192,20 +192,20 @@ void main() {
     test('loop errors', () {
       var tmpl = env.fromString('''{% for item in [1] if loop.index
                                       == 0 %}...{% endfor %}''');
-      expect(() => tmpl.renderMap(), throwsA(isA<UndefinedError>()));
+      expect(() => tmpl.render(), throwsA(isA<UndefinedError>()));
       tmpl = env.fromString('''{% for item in [] %}...{% else
             %}{{ loop }}{% endfor %}''');
-      expect(tmpl.renderMap(), equals(''));
+      expect(tmpl.render(), equals(''));
     });
 
     test('loop filter', () {
       var tmpl = env.fromString(
           '{% for item in range(10) if item is even %}[{{ item }}]{% endfor %}');
-      expect(tmpl.renderMap(), equals('[0][2][4][6][8]'));
+      expect(tmpl.render(), equals('[0][2][4][6][8]'));
       tmpl = env.fromString('''
             {%- for item in range(10) if item is even %}[{{
                 loop.index }}:{{ item }}]{% endfor %}''');
-      expect(tmpl.renderMap(), equals('[1:0][2:2][3:4][4:6][5:8]'));
+      expect(tmpl.render(), equals('[1:0][2:2][3:4][4:6][5:8]'));
     });
 
     test('loop unassignable', () {
@@ -218,7 +218,7 @@ void main() {
           env.fromString('{% for s in seq %}[{{ loop.first }}{% for c in s %}'
               '|{{ loop.first }}{% endfor %}]{% endfor %}');
       expect(
-          tmpl.renderMap({
+          tmpl.render({
             'seq': ['ab', 'cd']
           }),
           equals('[true|true|false][false|true|false]'));
@@ -227,17 +227,17 @@ void main() {
     test('scoped loop var', () {
       var tmpl = env.fromString('{% for x in seq %}{{ loop.first }}'
           '{% for y in seq %}{% endfor %}{% endfor %}');
-      expect(tmpl.renderMap({'seq': 'ab'}), 'truefalse');
+      expect(tmpl.render({'seq': 'ab'}), 'truefalse');
       tmpl = env.fromString('{% for x in seq %}{% for y in seq %}'
           '{{ loop.first }}{% endfor %}{% endfor %}');
-      expect(tmpl.renderMap({'seq': 'ab'}), equals('truefalsetruefalse'));
+      expect(tmpl.render({'seq': 'ab'}), equals('truefalsetruefalse'));
     });
 
     test('recursive empty loop iter', () {
       final template = env.fromString('''
         {%- for item in foo recursive -%}{%- endfor -%}
         ''');
-      expect(template.renderMap(), equals(''));
+      expect(template.render(), equals(''));
     });
 
     // TODO: after macro: add tests: call in loop
@@ -246,7 +246,7 @@ void main() {
     test('unpacking', () {
       final tmpl = env.fromString(
           '{% for a, b, c in [[1, 2, 3]] %}{{ a }}|{{ b }}|{{ c }}{% endfor %}');
-      expect(tmpl.renderMap(), equals('1|2|3'));
+      expect(tmpl.render(), equals('1|2|3'));
     });
 
     test('intended scoping with set', () {
@@ -256,10 +256,10 @@ void main() {
       };
       var tmpl = env.fromString('{% for item in seq %}{{ x }}'
           '{% set x = item %}{{ x }}{% endfor %}');
-      expect(tmpl.renderMap(data), equals('010203'));
+      expect(tmpl.render(data), equals('010203'));
       tmpl = env.fromString('{% set x = 9 %}{% for item in seq %}{{ x }}'
           '{% set x = item %}{{ x }}{% endfor %}');
-      expect(tmpl.renderMap(data), equals('919293'));
+      expect(tmpl.render(data), equals('919293'));
     });
   });
 }

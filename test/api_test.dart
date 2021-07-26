@@ -6,66 +6,47 @@ import 'package:test/test.dart';
 void main() {
   group('ExtendedAPI', () {
     test('item and attribute', () {
-      final environment = Environment(fieldGetter: fieldGetter);
-
-      expect(
-          environment.fromString('{{ foo["items"] }}').renderMap({
-            'foo': {'items': 42}
-          }),
-          equals('42'));
+      final env = Environment(fieldGetter: fieldGetter);
+      final tmpl = env.fromString('{{ foo["items"] }}');
+      final foo = {'items': 42};
+      expect(tmpl.render({'foo': foo}), equals('42'));
     });
 
     test('finalize', () {
-      final environment = Environment(finalize: (dynamic obj) => obj ?? '');
-
-      expect(
-          environment
-              .fromString('{% for item in seq %}|{{ item }}{% endfor %}')
-              .renderMap({
-            'seq': [null, 1, 'foo']
-          }),
-          equals('||1|foo'));
+      final env = Environment(finalize: (dynamic obj) => obj ?? '');
+      final tmpl =
+          env.fromString('{% for item in seq %}|{{ item }}{% endfor %}');
+      final seq = [null, 1, 'foo'];
+      expect(tmpl.render({'seq': seq}), equals('||1|foo'));
     });
 
     test('finalize constant expression', () {
-      final environment = Environment(
-        finalize: (Object? obj) => obj ?? '',
-      );
-
-      expect(environment.fromString('<{{ none }}>').renderMap(), equals('<>'));
+      final env = Environment(finalize: (Object? obj) => obj ?? '');
+      final tmpl = env.fromString('<{{ none }}>');
+      expect(tmpl.render(), equals('<>'));
     });
 
     test('no finalize template data', () {
-      final environment =
-          Environment(finalize: (dynamic obj) => obj.runtimeType);
+      final env = Environment(finalize: (dynamic obj) => obj.runtimeType);
+      final tmpl = env.fromString('<{{ value }}>');
       // if template data was finalized, it would print 'StringintString'.
-      expect(environment.fromString('<{{ value }}>').renderMap({'value': 123}),
-          equals('<int>'));
+      expect(tmpl.render({'value': 123}), equals('<int>'));
     });
 
     test('context finalize', () {
-      final environment = Environment(
-        finalize: (Context context, Object? value) {
-          return (value as dynamic) * context['scale'];
-        },
-      );
-
-      expect(
-          environment
-              .fromString('{{ value }}')
-              .renderMap({'value': 5, 'scale': 3}),
-          equals('15'));
+      final env = Environment(
+          finalize: (Context context, Object? value) =>
+              (value as dynamic) * context['scale']);
+      final tmpl = env.fromString('{{ value }}');
+      expect(tmpl.render({'value': 5, 'scale': 3}), equals('15'));
     });
 
     test('env autoescape', () {
-      final environment = Environment(
-        finalize: (Environment environment, Object? value) {
-          return '${environment.variableStart} ${repr(value)} ${environment.variableEnd}';
-        },
-      );
-
-      expect(environment.fromString('{{ value }}').renderMap({'value': 'hello'}),
-          equals("{{ 'hello' }}"));
+      final env = Environment(
+          finalize: (Environment environment, Object? value) =>
+              '${environment.variableStart} ${repr(value)} ${environment.variableEnd}');
+      final tmpl = env.fromString('{{ value }}');
+      expect(tmpl.render({'value': 'hello'}), equals("{{ 'hello' }}"));
     });
 
     test('cycler', () {

@@ -1,5 +1,6 @@
 ## 0.4.0-dev
-- ...
+- No dynamic template imports. Only single constant template path/name.
+- _work in progress_
 
 ## 0.3.4
 - variables can be written with the `_` character
