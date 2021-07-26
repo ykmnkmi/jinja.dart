@@ -14,17 +14,16 @@ void main() {
         return '$hour:$minute';
       },
     },
-    loader: FileSystemLoader(autoReload: true, path: path),
+    autoReload: true,
+    loader: FileSystemLoader(path: path),
     leftStripBlocks: true,
     trimBlocks: true,
   );
 
-  stdin.listen((event) {
-    stdout.write(env.getTemplate('users.html').render(
-      users: [
-        {'fullname': 'Jhon Doe', 'email': 'jhondoe@dev.py'},
-        {'fullname': 'Jane Doe', 'email': 'janedoe@dev.py'},
-      ],
-    ));
-  });
+  print(env.getTemplate('users.html').render(
+    users: [
+      {'fullname': 'Jhon Doe', 'email': 'jhondoe@dev.py'},
+      {'fullname': 'Jane Doe', 'email': 'janedoe@dev.py'},
+    ],
+  ));
 }

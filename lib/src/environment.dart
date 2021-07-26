@@ -515,10 +515,7 @@ class Template extends Node {
   }
 
   Template.parsed(this.environment, this.nodes,
-      {this.blocks = const <Block>[], this.hasSelf = false, this.path}) {
-    renderWrapper =
-        RenderWrapper(([Map<String, Object?>? data]) => renderMap(data));
-  }
+      {this.blocks = const <Block>[], this.hasSelf = false, this.path});
 
   final Environment environment;
 
@@ -530,18 +527,17 @@ class Template extends Node {
 
   final String? path;
 
-  late RenderWrapper renderWrapper;
-
-  dynamic get render {
-    return renderWrapper;
-  }
-
   @override
   R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
     return visitor.visitTemplate(this, context);
   }
 
+  @Deprecated('Use `render` instead. Will be removed in 0.5.0.')
   String renderMap([Map<String, Object?>? data]) {
+    return render(data);
+  }
+
+  String render([Map<String, Object?>? data]) {
     final buffer = StringBuffer();
     final context = RenderContext(environment, buffer, data: data);
     accept(const StringSinkRenderer(), context);
@@ -555,30 +551,5 @@ class Template extends Node {
     }
 
     return 'Template($path)';
-  }
-}
-
-class RenderWrapper {
-  RenderWrapper(this.renderMap);
-
-  final String Function([Map<String, Object?>? data]) renderMap;
-
-  String call() {
-    return renderMap();
-  }
-
-  @override
-  Object? noSuchMethod(Invocation invocation) {
-    if (invocation.memberName == #call) {
-      final map = <String, Object?>{};
-
-      for (final symbol in invocation.namedArguments.keys) {
-        map[getSymbolName(symbol)] = invocation.namedArguments[symbol];
-      }
-
-      return renderMap(map);
-    }
-
-    return super.noSuchMethod(invocation);
   }
 }
