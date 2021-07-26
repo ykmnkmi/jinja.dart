@@ -84,7 +84,7 @@ void main() {
 
     test('force escape', () {
       final template = env.fromString('{{ x | forceescape }}');
-      expect(template.renderMap(<String, Object>{'x': Markup('<div />')}),
+      expect(template.renderMap(<String, Object>{'x': Markup.escaped('<div />')}),
           equals('&lt;div /&gt;'));
     });
 

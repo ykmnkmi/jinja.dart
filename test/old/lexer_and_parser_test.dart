@@ -44,7 +44,7 @@ void main() {
       final template = env.fromString(r'''{% for item in seq
             %}${{'foo': item} | string | upper}{% endfor %}''');
       expect(template.render(seq: <int>[0, 1, 2]),
-          equals("{'FOO': 0}{'FOO': 1}{'FOO': 2}"));
+          equals("{FOO: 0}{FOO: 1}{FOO: 2}"));
     });
 
     test('comments', () {
@@ -63,16 +63,6 @@ void main() {
 </ul>''');
       expect(template.render(seq: <int>[0, 1, 2]),
           equals('<ul>\n  <li>0</li>\n  <li>1</li>\n  <li>2</li>\n</ul>'));
-    });
-
-    test('string escapes', () {
-      for (var char in <String>['\0', '\2668', '\xe4', '\t', '\r', '\n']) {
-        final template = env.fromString('{{ ${repr(char)} }}');
-        expect(template.renderMap(), equals(char));
-      }
-
-      // TODO: waiting for a realization in the dart sdk
-      // expect(env.fromString('{{ "\N{HOT SPRINGS}" }}').render(), equals('\u2668'));
     });
 
     // TODO: check: after implementing Environment.newlineSequence
@@ -257,7 +247,7 @@ hello
     test('php syntax', () {
       final env = Environment(
         blockStart: '<?',
-        blockEnd: 'jbg',
+        blockEnd: '?>',
         variableStart: '<?=',
         variableEnd: '?>',
         commentStart: '<!--',

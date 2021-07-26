@@ -110,7 +110,7 @@ void main() {
 
     test('noniter', () {
       final template = env.fromString('{% for item in none %}...{% endfor %}');
-      expect(() => template.renderMap(), throwsArgumentError);
+      expect(() => template.renderMap(), throwsA(isA<TypeError>()));
     });
 
     // TODO: add test: recursive
