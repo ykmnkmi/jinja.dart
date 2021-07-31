@@ -6,6 +6,8 @@
 
 ## Breaking changes 0.4
 - No dynamic template imports. Only single constant template path/name.
+- `Template.render` now accepts `Map<String, Object?>`.
+- `Template.renderMap` removed.
 - _work in progress_
 
 ## Example
@@ -24,17 +26,27 @@ sink.write(template.render({'key': value}));
 ### ToDo:
 - Environment
   - constructor
-    - ~~extensions~~
-    - ~~selectAutoescape~~
-  - ~~addExtension~~
-  - ~~compileExpression~~
-  - ~~shared~~
+    - extensions
+    - selectAutoescape
+  - addExtension
+  - compileExpression
+  - shared
 - Template
-  - ~~generate~~
-  - ~~stream~~
+  - generate
+  - stream
+- List of Control Structures
+  - Macros
+  - Call
+  - Filters
+  - Import
 - Loaders
-  - ~~PackageLoader~~
+  - PackageLoader
   - ...
+- Extensions
+  - i18n
+  - Expression Statement
+  - Loop Controls
+  - Debug Statement
 - ... working
 
 ### Done:
@@ -60,18 +72,14 @@ sink.write(template.render({'key': value}));
 - List of Control Structures
   - For
   - If
-  - ~~Macros~~
-  - ~~Call~~
-  - ~~Filters~~
   - Assignments
   - Block Assignments
   - Extends
   - Blocks
   - Include
-  - ~~Import~~
 - Import Context Behavior
 - Expressions
-  - Literals: null (none), true (True), false (False), 1_000, 1.1e3, 'sq', "dq", (1,), \[2\], {'k': 'v'}
+  - Literals: null\none, true\True, false\False, 1_000, 1.1e3, 'sq', "dq", (1,), \[2\], {'k': 'v'}
   - Math
   - Comparisons
   - Logic
@@ -144,10 +152,6 @@ sink.write(template.render({'key': value}));
   - MapLoader (DictLoader)
 - Extensions
   - With Statement
-  - ~~i18n~~
-  - ~~Expression Statement~~
-  - ~~Loop Controls~~
-  - ~~Debug Statement~~
 - Autoescape Overrides
 
 ## Contributing
@@ -155,6 +159,5 @@ If you found a bug, just create a [new issue][new_issue] or even better fork and
 
 [jinja_reflectable_example]: https://github.com/ykmnkmi/jinja_reflectable_example/blob/master/bin/main.dart
 [filters]: https://github.com/ykmnkmi/dart-jinja/blob/master/lib/src/filters.dart
-[hack]: https://github.com/ykmnkmi/jinja.dart/blob/master/lib/src/environment.dart#L299
 [renderable]: https://github.com/ykmnkmi/renderable.dart
 [new_issue]: https://github.com/ykmnkmi/dart-jinja/issues/new

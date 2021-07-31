@@ -28,16 +28,13 @@ typedef FieldGetter = Object? Function(Object? object, String field);
 typedef UndefinedFactory = Undefined Function(
     {String? hint, Object? object, String? name});
 
-late final Expando<Lexer> lexerCache = Expando('lexerCache');
-
 /// The core component of Jinja 2 is the Environment. It contains
 /// important shared variables like configuration, filters, tests and others.
 /// Instances of this class may be modified if they are not shared and if no
 /// template was loaded so far.
-///
-/// Modifications on environments after the first template was loaded
-/// will lead to surprising effects and undefined behavior.
 class Environment {
+  static late final Expando<Lexer> lexerCache = Expando('lexerCache');
+
   /// If `loader` is not `null`, templates will be loaded
   Environment({
     this.commentStart = defaults.commentStart,
@@ -112,40 +109,78 @@ class Environment {
     }
   }
 
+  /// The string marking the beginning of a comment.
   final String commentStart;
 
+  /// The string marking the end of a comment.
   final String commentEnd;
 
+  /// The string marking the beginning of a print statement.
   final String variableStart;
 
+  /// The string marking the end of a print statement.
   final String variableEnd;
 
+  /// The string marking the beginning of a block.
   final String blockStart;
 
+  /// The string marking the end of a block
   final String blockEnd;
 
+  /// If given and a string, this will be used as prefix for line based
+  /// comments.
   final String? lineCommentPrefix;
 
+  /// If given and a string, this will be used as prefix for line based
+  /// statements.
   final String? lineStatementPrefix;
 
+  /// If this is set to `true` leading spaces and tabs are stripped
+  /// from the start of a line to a block.
   final bool leftStripBlocks;
 
+  /// If this is set to `true` the first newline after a block is
+  /// removed (block, not variable tag!).
   final bool trimBlocks;
 
+  /// The sequence that starts a newline.
+  ///
+  /// Must be one of `'\r'`, `'\n'` or `'\r\n'`.
   final String newLine;
 
+  /// Preserve the trailing newline when rendering templates.
+  /// The default is `false`, which causes a single newline,
+  /// if present, to be stripped from the end of the template.
   final bool keepTrailingNewLine;
 
+  /// Should the optimizer be enabled?
   final bool optimized;
 
+  /// [Undefined] or a subclass of it that is used to represent
+  /// undefined values in the template.
   final UndefinedFactory undefined;
 
+  /// A callable that can be used to process the result of a variable
+  /// expression before it is output.
+  ///
+  /// For example one can convert `null` (`none`) implicitly into an empty
+  /// string here.
   final ContextFinalizer finalize;
 
+  /// If set to `true` the XML/HTML autoescaping feature is enabled by
+  /// default.
   final bool autoEscape;
 
+  /// The template loader for this environment.
   final Loader? loader;
 
+  /// Some loaders load templates from locations where the template
+  /// sources may change (ie: file system or database).
+  ///
+  /// If `autoReload` is set to `true` (default) every time a template is
+  /// requested the loader checks if the source changed and if yes, it
+  /// will reload the template. For higher performance it's possible to
+  /// disable that.
   final bool autoReload;
 
   final Map<String, Object?> globals;
@@ -182,6 +217,7 @@ class Environment {
     ]);
   }
 
+  /// The lexer for this environment.
   Lexer get lexer {
     return lexerCache[this] ??= Lexer(this);
   }
@@ -251,7 +287,7 @@ class Environment {
     return Function.apply(test, positional, named) as bool;
   }
 
-  Environment copy({
+  Environment copyWith({
     String? commentStart,
     String? commentEnd,
     String? variableStart,
@@ -309,7 +345,8 @@ class Environment {
     );
   }
 
-  /// If `path` is not `null` template stored in environment cache.
+  /// Load a template from a source string without using [loader].
+  // TODO: doc. shared environment
   Template fromString(String source, {String? path}) {
     final template = Parser(this, path: path).parse(source);
 
@@ -373,9 +410,9 @@ class Environment {
     }
   }
 
-  /// If [template] not found throws `Exception`.
-  ///
-  /// Throws [TypeError] if [template] is not a [String] or [Undefined].
+  /// Load a template by name with [loader] and return a
+  /// [Template]. If the template does not exist a [TemplateNotFound]
+  /// exception is raised.
   Template getTemplate(Object? template) {
     if (template is Undefined) {
       template.fail();
@@ -392,11 +429,18 @@ class Environment {
     throw TypeError();
   }
 
+  /// Returns a list of templates for this environment.
+  ///
+  /// This requires that the loader supports the loader's
+  /// [Loader.listTemplates] method.
   List<String> listTemplates() {
     assert(loader != null, 'no loader configured');
     return loader!.listTemplates();
   }
 
+  /// Lex the given sourcecode and return a list of [Token]'s.
+  ///
+  /// This can be useful for extension development and debugging templates.
   List<Token> lex(String source) {
     // TODO: catch error
     return lexer.tokenize(source);
@@ -449,7 +493,7 @@ class Template extends Node {
 
     if (parent != null) {
       // TODO: update copying
-      environment = parent.copy(
+      environment = parent.copyWith(
         commentStart: commentStart,
         commentEnd: commentEnd,
         variableStart: variableStatr,
