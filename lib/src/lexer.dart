@@ -120,7 +120,7 @@ class Lexer {
             '(?<!\\.)(\\d+_)*\\d+((\\.(\\d+_)*\\d+)?e[+\\-]?(\\d+_)*\\d+|\\.(\\d+_)*\\d+)'),
         operatorRe = RegExp(
             '\\+|-|\\/\\/|\\/|\\*\\*|\\*|%|~|\\[|\\]|\\(|\\)|{|}|==|!=|<=|>=|=|<|>|\\.|:|\\||,|;'),
-        lStripUnlessRe =
+        leftStripUnlessRe =
             environment.leftStripBlocks ? compile('[^ \\t]') : null,
         newLine = environment.newLine,
         keepTrailingNewLine = environment.keepTrailingNewLine {
@@ -266,7 +266,7 @@ class Lexer {
 
   final RegExp operatorRe;
 
-  final RegExp? lStripUnlessRe;
+  final RegExp? leftStripUnlessRe;
 
   final String newLine;
 
@@ -334,13 +334,14 @@ class Lexer {
                       0, (count, char) => char == '\n' ? count + 1 : count);
               groups[0] = stripped;
             } else if (stripSign != '+' &&
-                lStripUnlessRe != null &&
+                leftStripUnlessRe != null &&
                 (!match.groupNames.contains('variable_start') ||
                     match.namedGroup('variable_start') == null)) {
               final lastPosition = text.lastIndexOf('\n') + 1;
 
               if (lastPosition > 0 || lineStarting) {
-                if (lStripUnlessRe!.firstMatch(text.substring(lastPosition)) ==
+                if (leftStripUnlessRe!
+                        .firstMatch(text.substring(lastPosition)) ==
                     null) {
                   groups[0] = groups[0]!.substring(0, lastPosition);
                 }
@@ -352,7 +353,7 @@ class Lexer {
             final token = rule.tokens[i];
 
             if (token.startsWith('@')) {
-              // TODO: update error
+              // TODO: update error message
               throw token.substring(1);
             } else if (token == '#group') {
               var notFound = true;
@@ -369,7 +370,7 @@ class Lexer {
               }
 
               if (notFound) {
-                // TODO: update error
+                // TODO: update error message
                 throw Exception(
                     '${rule.regExp} wanted to resolve the token dynamically but no group matched');
               }

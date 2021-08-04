@@ -346,7 +346,7 @@ class Environment {
   }
 
   /// Load a template from a source string without using [loader].
-  // TODO: doc. shared environment
+  // TODO: shared environment
   Template fromString(String source, {String? path}) {
     final template = Parser(this, path: path).parse(source);
 
@@ -442,7 +442,7 @@ class Environment {
   ///
   /// This can be useful for extension development and debugging templates.
   List<Token> lex(String source) {
-    // TODO: catch error
+    // TODO: handle error
     return lexer.tokenize(source);
   }
 
@@ -492,7 +492,6 @@ class Template extends Node {
     Environment environment;
 
     if (parent != null) {
-      // TODO: update copying
       environment = parent.copyWith(
         commentStart: commentStart,
         commentEnd: commentEnd,
@@ -576,6 +575,13 @@ class Template extends Node {
     final context = RenderContext(environment, buffer, data: data);
     accept(const StringSinkRenderer(), context);
     return buffer.toString();
+  }
+
+  @Deprecated('Use `render` instead. Will be removed in Dart 0.5.0')
+  @pragma('dart2js:tryInline')
+  @pragma('vm:prefer-inline')
+  String renderMap([Map<String, Object?>? data]) {
+    return render(data);
   }
 
   @override

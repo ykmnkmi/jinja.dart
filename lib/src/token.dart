@@ -92,7 +92,8 @@ abstract class BaseToken implements Token {
 
     if (type != null && Token.common.containsKey(type)) {
       if (Token.common[type] != value) {
-        throw this;
+        // TODO: update error message
+        throw TemplateSyntaxError('$this');
       }
 
       value = null;
@@ -105,8 +106,6 @@ abstract class BaseToken implements Token {
 
   @override
   bool test(String type, [String? value]) {
-    assert(!type.contains(':'));
-
     if (value == null) {
       return type == this.type;
     }

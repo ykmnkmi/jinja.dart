@@ -6,11 +6,12 @@
 
 ## Breaking changes 0.4
 - No dynamic template imports. Only single constant template path/name.
-- `Template.render` now accepts `Map<String, Object?>`.
-- `Template.renderMap` removed.
+- `Template.renderMap` deprecated.
+- `Template.render` accepts `Map<String, Object?>`.
 - _work in progress_
 
 ## Example
+
 ```dart
 import 'package:jinja/jinja.dart';
 
@@ -21,6 +22,8 @@ final template = env.fromString('...source...');
 
 sink.write(template.render({'key': value}));
 ```
+
+See also examples with [conduit][jinja_conduit_example] and [reflectable][jinja_reflectable_example].
 
 ## Status:
 ### ToDo:
@@ -157,7 +160,6 @@ sink.write(template.render({'key': value}));
 ## Contributing
 If you found a bug, just create a [new issue][new_issue] or even better fork and issue a pull request with your fix.
 
-[jinja_reflectable_example]: https://github.com/ykmnkmi/jinja_reflectable_example/blob/master/bin/main.dart
-[filters]: https://github.com/ykmnkmi/dart-jinja/blob/master/lib/src/filters.dart
-[renderable]: https://github.com/ykmnkmi/renderable.dart
+[jinja_conduit_example]: https://github.com/ykmnkmi/jinja_conduit_example
+[jinja_reflectable_example]: https://github.com/ykmnkmi/jinja_reflectable_example
 [new_issue]: https://github.com/ykmnkmi/dart-jinja/issues/new

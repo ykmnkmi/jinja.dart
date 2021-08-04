@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
-import 'package:meta/meta.dart';
 
 import 'environment.dart';
 import 'exceptions.dart';

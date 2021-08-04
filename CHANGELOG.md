@@ -1,7 +1,7 @@
 ## 0.4.0-dev
 - No dynamic template imports. Only single constant template path/name.
-- `Template.render` now accepts `Map<String, Object?>`.
-- `Template.renderMap` removed.
+- `Template.renderMap` deprecated.
+- `Template.render` accepts `Map<String, Object?>`.
 - _work in progress_
 
 ## 0.3.4
