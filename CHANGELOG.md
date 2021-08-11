@@ -2,6 +2,9 @@
 - No dynamic template imports. Only single constant template path/name.
 - `Template.renderMap` deprecated.
 - `Template.render` accepts `Map<String, Object?>`.
+- new statements:
+  - with
+- internal improvments
 - _work in progress_
 
 ## 0.3.4

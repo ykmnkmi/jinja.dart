@@ -26,20 +26,24 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
     }
 
     final named = <Symbol, Object?>{};
+    final keywordArguments = callable.keywordArguments;
 
-    if (callable.keywordArguments != null) {
-      for (final keywordArgument in callable.keywordArguments!) {
-        named[symbol(keywordArgument.key)] =
-            keywordArgument.value.accept(this, context);
+    if (keywordArguments != null) {
+      for (final argument in keywordArguments) {
+        named[symbol(argument.key)] = argument.value.accept(this, context);
       }
     }
-    if (callable.dynamicArguments != null) {
-      positional.addAll(callable.dynamicArguments!.accept(this, context)
-          as Iterable<Object?>);
+
+    final dArguments = callable.dArguments;
+
+    if (dArguments != null) {
+      positional.addAll(dArguments.accept(this, context) as Iterable<Object?>);
     }
 
-    if (callable.dynamicKeywordArguments != null) {
-      named.addAll((callable.dynamicKeywordArguments!.accept(this, context)
+    final dKeywordArguments = callable.dKeywordArguments;
+
+    if (dKeywordArguments != null) {
+      named.addAll((dKeywordArguments.accept(this, context)
               as Map<Object?, Object?>)
           .cast<String, Object?>()
           .map<Symbol, Object?>(
@@ -265,6 +269,11 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
     }
 
     return callFilter(node, value, context);
+  }
+
+  @override
+  void visitFilterBlock(FilterBlock node, [C? context]) {
+    throw UnimplementedError();
   }
 
   @override

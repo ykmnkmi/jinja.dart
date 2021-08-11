@@ -125,13 +125,12 @@ class Optimizer extends Visitor<Context, Node> {
       visitAllSafe(node.keywordArguments!, context);
     }
 
-    if (node.dynamicArguments != null) {
-      node.dynamicArguments = optimize(node.dynamicArguments!, context);
+    if (node.dArguments != null) {
+      node.dArguments = optimize(node.dArguments!, context);
     }
 
-    if (node.dynamicKeywordArguments != null) {
-      node.dynamicKeywordArguments =
-          optimize(node.dynamicKeywordArguments!, context);
+    if (node.dKeywordArguments != null) {
+      node.dKeywordArguments = optimize(node.dKeywordArguments!, context);
     }
 
     return constant(node, context);
@@ -225,16 +224,46 @@ class Optimizer extends Visitor<Context, Node> {
       visitAllSafe(node.keywordArguments!, context);
     }
 
-    if (node.dynamicArguments != null) {
-      node.dynamicArguments = optimize(node.dynamicArguments!, context);
+    if (node.dArguments != null) {
+      node.dArguments = optimize(node.dArguments!, context);
     }
 
-    if (node.dynamicKeywordArguments != null) {
-      node.dynamicKeywordArguments =
-          optimize(node.dynamicKeywordArguments!, context);
+    if (node.dKeywordArguments != null) {
+      node.dKeywordArguments = optimize(node.dKeywordArguments!, context);
     }
 
     return constant(node, context);
+  }
+
+  @override
+  FilterBlock visitFilterBlock(FilterBlock node, [Context? context]) {
+    final filter = node.filter;
+    final arguments = filter.arguments;
+
+    if (arguments != null) {
+      visitAllSafe(arguments, context);
+    }
+
+    final keywordArguments = filter.keywordArguments;
+
+    if (keywordArguments != null) {
+      visitAllSafe(keywordArguments, context);
+    }
+
+    final dArguments = filter.dArguments;
+
+    if (dArguments != null) {
+      filter.dArguments = optimize(dArguments, context);
+    }
+
+    final dKeywordArguments = filter.dKeywordArguments;
+
+    if (dKeywordArguments != null) {
+      filter.dKeywordArguments = optimize(dKeywordArguments, context);
+    }
+
+    visitAllSafe(node.body, context);
+    return node;
   }
 
   @override
@@ -374,13 +403,12 @@ class Optimizer extends Visitor<Context, Node> {
       visitAllSafe(node.keywordArguments!, context);
     }
 
-    if (node.dynamicArguments != null) {
-      node.dynamicArguments = optimize(node.dynamicArguments!, context);
+    if (node.dArguments != null) {
+      node.dArguments = optimize(node.dArguments!, context);
     }
 
-    if (node.dynamicKeywordArguments != null) {
-      node.dynamicKeywordArguments =
-          optimize(node.dynamicKeywordArguments!, context);
+    if (node.dKeywordArguments != null) {
+      node.dKeywordArguments = optimize(node.dKeywordArguments!, context);
     }
 
     return constant(node, context);

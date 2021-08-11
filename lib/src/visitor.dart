@@ -54,6 +54,8 @@ abstract class Visitor<C, R> {
 
   R visitFilter(Filter node, [C? context]);
 
+  R visitFilterBlock(FilterBlock node, [C? context]);
+
   R visitFloorDiv(FloorDiv node, [C? context]) {
     return visitBinary(node, context);
   }

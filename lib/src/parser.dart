@@ -115,6 +115,8 @@ class Parser {
           return parseExtends(reader);
         case 'include':
           return parseInclude(reader);
+        case 'filter':
+          return parseFilterBlock(reader);
         default:
           tagStack.removeLast();
           popTag = false;
@@ -335,15 +337,18 @@ class Parser {
     final node = parsePrimary(reader);
 
     if (node is! Constant<String>) {
-      // TODO: add error message
-      fail('message');
+      // TODO: update error message
+      fail('template name or path expected');
     }
 
     return Extends(node.value!);
   }
 
-  T parseImportContext<T extends ImportContext>(TokenReader reader, T node,
-      [bool defaultValue = true]) {
+  T parseImportContext<T extends ImportContext>(
+    TokenReader reader,
+    T node, [
+    bool defaultValue = true,
+  ]) {
     if (reader.current.testAny(<String>['name:with', 'name:without']) &&
         reader.look().test('name', 'context')) {
       node.withContext = reader.current.value == 'with';
@@ -360,6 +365,19 @@ class Parser {
     final name = reader.expect('string');
     final node = Include(name.value);
     return parseImportContext<Include>(reader, node, true);
+  }
+
+  FilterBlock parseFilterBlock(TokenReader reader) {
+    reader.expect('name', 'filter');
+    final filter = parseFilter(reader, startInline: true);
+
+    if (filter is! Filter) {
+      // TODO: update error message
+      fail('filter name expected');
+    }
+
+    final body = parseStatements(reader, <String>['name:endfilter'], true);
+    return FilterBlock(filter, body);
   }
 
   Expression parseAssignTarget(
@@ -405,20 +423,20 @@ class Parser {
   }
 
   Expression parseCondition(TokenReader reader, [bool withCondExpr = true]) {
-    var expression1 = parseOr(reader);
+    var whenTrue = parseOr(reader);
 
     while (reader.skipIf('name', 'if')) {
-      final expression2 = parseOr(reader);
+      final condition = parseOr(reader);
 
       if (reader.skipIf('name', 'else')) {
-        expression1 =
-            Condition(expression2, expression1, parseCondition(reader));
+        final whenFalse = parseCondition(reader);
+        whenTrue = Condition(condition, whenTrue, whenFalse);
       } else {
-        expression1 = Condition(expression2, expression1);
+        whenTrue = Condition(condition, whenTrue);
       }
     }
 
-    return expression1;
+    return whenTrue;
   }
 
   Expression parseOr(TokenReader reader) {
@@ -762,7 +780,7 @@ class Parser {
   Expression parseFilterExpression(TokenReader reader, Expression expression) {
     while (true) {
       if (reader.current.test('pipe')) {
-        expression = parseFilter(reader, expression)!;
+        expression = parseFilter(reader, expression: expression)!;
       } else if (reader.current.test('name', 'is')) {
         expression = parseTest(reader, expression);
       } else if (reader.current.test('lparen')) {
@@ -910,13 +928,13 @@ class Parser {
       expression: expression,
       arguments: arguments,
       keywordArguments: keywordArguments,
-      dynamicArguments: dArguments,
-      dynamicKeywordArguments: dKeywordArguments,
+      dArguments: dArguments,
+      dKeywordArguments: dKeywordArguments,
     );
   }
 
   Expression? parseFilter(TokenReader reader,
-      [Expression? expression, bool startInline = false]) {
+      {Expression? expression, bool startInline = false}) {
     while (reader.current.test('pipe') || startInline) {
       if (!startInline) {
         reader.next();
@@ -943,8 +961,8 @@ class Parser {
           expression: expression,
           arguments: call.arguments,
           keywordArguments: call.keywordArguments,
-          dynamicArguments: call.dynamicArguments,
-          dynamicKeywordArguments: call.dynamicKeywordArguments,
+          dArguments: call.dArguments,
+          dKeywordArguments: call.dKeywordArguments,
         );
       } else {
         expression = Filter(name, expression: expression);
@@ -1002,8 +1020,8 @@ class Parser {
         expression: expression,
         arguments: call.arguments,
         keywordArguments: call.keywordArguments,
-        dynamicArguments: call.dynamicArguments,
-        dynamicKeywordArguments: call.dynamicKeywordArguments,
+        dArguments: call.dArguments,
+        dKeywordArguments: call.dKeywordArguments,
       );
     } else {
       expression = Test(name, expression: expression);

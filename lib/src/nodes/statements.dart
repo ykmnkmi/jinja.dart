@@ -1,26 +1,5 @@
 part of '../nodes.dart';
 
-class Do extends Statement {
-  Do(this.expressions);
-
-  List<Expression> expressions;
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
-    return visitor.visitDo(this, context);
-  }
-
-  @override
-  void visitChildNodes(NodeVisitor visitor) {
-    expressions.forEach(visitor);
-  }
-
-  @override
-  String toString() {
-    return 'Do(${expressions.join(', ')})';
-  }
-}
-
 class Output extends Statement {
   Output(this.nodes);
 
@@ -159,6 +138,33 @@ class If extends Statement {
   }
 }
 
+class FilterBlock extends Statement {
+  FilterBlock(this.filter, this.body);
+
+  Filter filter;
+
+  List<Node> body;
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
+    throw UnimplementedError();
+  }
+
+  @override
+  void visitChildNodes(NodeVisitor visitor) {
+    visitor(filter);
+
+    for (final node in body) {
+      visitor(node);
+    }
+  }
+
+  @override
+  String toString() {
+    return 'FilterBlock($filter, $body)';
+  }
+}
+
 class With extends Statement {
   With(this.targets, this.values, this.body);
 
@@ -243,6 +249,27 @@ class Include extends Statement implements ImportContext {
     }
 
     return '$prefix($template)';
+  }
+}
+
+class Do extends Statement {
+  Do(this.expressions);
+
+  List<Expression> expressions;
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
+    return visitor.visitDo(this, context);
+  }
+
+  @override
+  void visitChildNodes(NodeVisitor visitor) {
+    expressions.forEach(visitor);
+  }
+
+  @override
+  String toString() {
+    return 'Do(${expressions.join(', ')})';
   }
 }
 

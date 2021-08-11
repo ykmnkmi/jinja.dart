@@ -279,7 +279,7 @@ class Lexer {
   }
 
   List<Token> scan(StringScanner scanner, [String? state]) {
-    const endTokens = <String>[
+    const List<String> endTokens = <String>[
       'variable_end',
       'block_end',
       'linestatement_end'
@@ -340,9 +340,10 @@ class Lexer {
               final lastPosition = text.lastIndexOf('\n') + 1;
 
               if (lastPosition > 0 || lineStarting) {
-                if (leftStripUnlessRe!
-                        .firstMatch(text.substring(lastPosition)) ==
-                    null) {
+                final index =
+                    text.substring(lastPosition).indexOf(leftStripUnlessRe!);
+
+                if (index == -1) {
                   groups[0] = groups[0]!.substring(0, lastPosition);
                 }
               }
@@ -354,7 +355,7 @@ class Lexer {
 
             if (token.startsWith('@')) {
               // TODO: update error message
-              throw token.substring(1);
+              throw Exception(token.substring(1));
             } else if (token == '#group') {
               var notFound = true;
 
@@ -371,8 +372,8 @@ class Lexer {
 
               if (notFound) {
                 // TODO: update error message
-                throw Exception(
-                    '${rule.regExp} wanted to resolve the token dynamically but no group matched');
+                throw Exception('${rule.regExp} wanted to resolve the token '
+                    'dynamically but no group matched');
               }
             } else {
               final data = groups[i];
@@ -384,8 +385,12 @@ class Lexer {
                   tokens.add(Token(line, token, data));
                 }
 
-                line += data.split('').fold<int>(
-                    0, (count, char) => char == '\n' ? count + 1 : count);
+                for (final char in data.split('')) {
+                  if (char == '\n') {
+                    line += 1;
+                  }
+                }
+
                 line += newLinesStripped;
                 newLinesStripped = 0;
               }

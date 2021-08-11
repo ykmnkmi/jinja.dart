@@ -41,6 +41,10 @@ class Keyword extends Helper {
     visitor(value);
   }
 
+  Pair toPair() {
+    return Pair(Constant<String>(key), value);
+  }
+
   @override
   String toString() {
     return 'Keyword($key, $value)';
