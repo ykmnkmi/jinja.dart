@@ -147,7 +147,7 @@ class FilterBlock extends Statement {
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
-    throw UnimplementedError();
+    return visitor.visitFilterBlock(this, context);
   }
 
   @override

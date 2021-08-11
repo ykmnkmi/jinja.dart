@@ -262,10 +262,11 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
 
   @override
   Object? visitFilter(Filter node, [C? context]) {
+    final expression = node.expression;
     Object? value;
 
-    if (node.expression != null) {
-      value = node.expression!.accept(this, context);
+    if (expression != null) {
+      value = expression.accept(this, context);
     }
 
     return callFilter(node, value, context);
@@ -323,6 +324,7 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
       case AssignContext.parameter:
         return node.name;
       default:
+        // TODO: add error message
         throw UnimplementedError();
     }
   }

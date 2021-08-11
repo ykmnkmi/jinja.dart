@@ -72,7 +72,7 @@ class StringSinkRenderer extends ExpressionResolver<RenderContext> {
     final target = node.target.accept(this, context);
     final buffer = StringBuffer();
     visitAll(node.nodes, RenderContext.from(context, buffer));
-    Object? value = buffer.toString();
+    Object? value = '$buffer';
 
     if (node.filters == null || node.filters!.isEmpty) {
       assignTargetsToContext(context, target, context.escaped(value));
@@ -138,6 +138,16 @@ class StringSinkRenderer extends ExpressionResolver<RenderContext> {
   void visitExtends(Extends node, [RenderContext? context]) {
     final template = context!.environment.getTemplate(node.path);
     template.accept(this, context);
+  }
+
+  @override
+  void visitFilterBlock(FilterBlock node, [RenderContext? context]) {
+    context!;
+
+    final buffer = StringBuffer();
+    visitAll(node.body, RenderContext.from(context, buffer));
+    final value = callFilter(node.filter, '$buffer', context);
+    context.write(value);
   }
 
   @override
