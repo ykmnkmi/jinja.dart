@@ -6,7 +6,9 @@ import 'package:stack_trace/stack_trace.dart';
 void main() {
   try {
     final environment = Environment();
-    final template = environment.fromString('{% filter upper %}hello world!{% endfilter %}');
+    final template = environment
+        .fromString('{% filter lower|escape %}<HEHE>{% endfilter %}');
+    print(template.nodes);
     print(template.render());
   } catch (error, trace) {
     print(error);

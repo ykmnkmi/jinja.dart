@@ -2,7 +2,8 @@
 
 [![Pub](https://img.shields.io/pub/v/jinja.svg)](https://pub.dev/packages/jinja)
 
-[Jinja](https://www.palletsprojects.com/p/jinja/) server-side template engine port for Dart 2. Variables, expressions, control structures and template inheritance.
+[Jinja](https://www.palletsprojects.com/p/jinja/) server-side template engine port for Dart 2.
+Variables, expressions, control structures and template inheritance.
 
 ## Breaking changes 0.4
 - No dynamic template imports. Only single constant template path/name.
@@ -23,10 +24,10 @@ final template = env.fromString('...source...');
 sink.write(template.render({'key': value}));
 ```
 
-See also examples with [conduit][jinja_conduit_example] and [reflectable][jinja_reflectable_example].
+See also examples with [conduit][conduit_example] and [reflectable][reflectable_example].
 
 ## Status:
-### ToDo:
+### TODO:
 - Environment
   - constructor
     - extensions
@@ -160,6 +161,6 @@ See also examples with [conduit][jinja_conduit_example] and [reflectable][jinja_
 ## Contributing
 If you found a bug, just create a [new issue][new_issue] or even better fork and issue a pull request with your fix.
 
-[jinja_conduit_example]: https://github.com/ykmnkmi/jinja_conduit_example
-[jinja_reflectable_example]: https://github.com/ykmnkmi/jinja_reflectable_example
+[conduit_example]: https://github.com/ykmnkmi/jinja_conduit_example
+[reflectable_example]: https://github.com/ykmnkmi/jinja_reflectable_example
 [new_issue]: https://github.com/ykmnkmi/dart-jinja/issues/new

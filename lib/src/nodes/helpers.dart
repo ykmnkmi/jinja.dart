@@ -8,7 +8,7 @@ class Pair extends Helper {
   Expression value;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitPair(this, context);
   }
 
@@ -32,7 +32,7 @@ class Keyword extends Helper {
   Expression value;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitKeyword(this, context);
   }
 
@@ -59,7 +59,7 @@ class Operand extends Helper {
   Expression expression;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitOperand(this, context);
   }
 
@@ -97,7 +97,7 @@ class NameSpaceReference extends Helper implements CanAssign {
   }
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitNameSpaceReference(this, context);
   }
 

@@ -566,7 +566,7 @@ class Template extends Node {
   final String? path;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitTemplate(this, context);
   }
 

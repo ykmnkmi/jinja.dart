@@ -50,25 +50,21 @@ class StringSinkRenderer extends ExpressionResolver<RenderContext> {
   const StringSinkRenderer();
 
   @override
-  void visitAll(List<Node> nodes, [RenderContext? context]) {
+  void visitAll(List<Node> nodes, RenderContext context) {
     for (final node in nodes) {
       node.accept(this, context);
     }
   }
 
   @override
-  void visitAssign(Assign node, [RenderContext? context]) {
-    context!;
-
+  void visitAssign(Assign node, RenderContext context) {
     final target = node.target.accept(this, context);
     final values = node.expression.accept(this, context);
     assignTargetsToContext(context, target, values);
   }
 
   @override
-  void visitAssignBlock(AssignBlock node, [RenderContext? context]) {
-    context!;
-
+  void visitAssignBlock(AssignBlock node, RenderContext context) {
     final target = node.target.accept(this, context);
     final buffer = StringBuffer();
     visitAll(node.nodes, RenderContext.from(context, buffer));
@@ -80,23 +76,23 @@ class StringSinkRenderer extends ExpressionResolver<RenderContext> {
     }
 
     for (final filter in node.filters!) {
-      value = callFilter(filter, value, context);
+      value = callFilter(context, filter, value);
     }
 
     assignTargetsToContext(context, target, context.escaped(value));
   }
 
   @override
-  void visitBlock(Block node, [RenderContext? context]) {
-    final blocks = context!.blocks[node.name];
+  void visitBlock(Block node, RenderContext context) {
+    final blocks = context.blocks[node.name];
 
     if (blocks == null || blocks.isEmpty) {
       visitAll(node.nodes, context);
     } else {
       if (node.required) {
         if (blocks.length == 1) {
-          throw TemplateSyntaxError(
-              'required block \'${node.name}\' not found');
+          final name = node.name;
+          throw TemplateSyntaxError('required block \'$name\' not found');
         }
       }
 
@@ -126,8 +122,8 @@ class StringSinkRenderer extends ExpressionResolver<RenderContext> {
   }
 
   @override
-  void visitDo(Do node, [RenderContext? context]) {
-    final doContext = Context.from(context!);
+  void visitDo(Do node, RenderContext context) {
+    final doContext = Context.from(context);
 
     for (final expression in node.expressions) {
       expression.accept(this, doContext);
@@ -135,25 +131,26 @@ class StringSinkRenderer extends ExpressionResolver<RenderContext> {
   }
 
   @override
-  void visitExtends(Extends node, [RenderContext? context]) {
-    final template = context!.environment.getTemplate(node.path);
+  void visitExtends(Extends node, RenderContext context) {
+    final template = context.environment.getTemplate(node.path);
     template.accept(this, context);
   }
 
   @override
-  void visitFilterBlock(FilterBlock node, [RenderContext? context]) {
-    context!;
-
+  void visitFilterBlock(FilterBlock node, RenderContext context) {
     final buffer = StringBuffer();
     visitAll(node.body, RenderContext.from(context, buffer));
-    final value = callFilter(node.filter, '$buffer', context);
+    Object? value = '$buffer';
+
+    for (final filter in node.filters) {
+      value = callFilter(context, filter, value);
+    }
+
     context.write(value);
   }
 
   @override
-  void visitFor(For node, [RenderContext? context]) {
-    context!;
-
+  void visitFor(For node, RenderContext context) {
     final targets = node.target.accept(this, context);
     final iterable = node.iterable.accept(this, context);
     final orElse = node.orElse;
@@ -220,9 +217,7 @@ class StringSinkRenderer extends ExpressionResolver<RenderContext> {
   }
 
   @override
-  void visitIf(If node, [RenderContext? context]) {
-    context!;
-
+  void visitIf(If node, RenderContext context) {
     if (boolean(node.test.accept(this, context))) {
       visitAll(node.body, context);
       return;
@@ -245,8 +240,8 @@ class StringSinkRenderer extends ExpressionResolver<RenderContext> {
   }
 
   @override
-  void visitInclude(Include node, [RenderContext? context]) {
-    final template = context!.environment.getTemplate(node.template);
+  void visitInclude(Include node, RenderContext context) {
+    final template = context.environment.getTemplate(node.template);
 
     if (node.withContext) {
       template.accept(this, context);
@@ -256,9 +251,7 @@ class StringSinkRenderer extends ExpressionResolver<RenderContext> {
   }
 
   @override
-  void visitOutput(Output node, [RenderContext? context]) {
-    context!;
-
+  void visitOutput(Output node, RenderContext context) {
     for (final item in node.nodes) {
       if (item is Data) {
         context.write(item.accept(this, context));
@@ -272,15 +265,13 @@ class StringSinkRenderer extends ExpressionResolver<RenderContext> {
   }
 
   @override
-  void visitScope(Scope node, [RenderContext? context]) {
+  void visitScope(Scope node, RenderContext context) {
     node.modifier.accept(this, context);
   }
 
   @override
-  void visitScopedContextModifier(ScopedContextModifier node,
-      [RenderContext? context]) {
-    context!;
-
+  void visitScopedContextModifier(
+      ScopedContextModifier node, RenderContext context) {
     final data = <String, Object?>{
       for (final key in node.options.keys)
         key: node.options[key]!.accept(this, context)
@@ -291,9 +282,7 @@ class StringSinkRenderer extends ExpressionResolver<RenderContext> {
   }
 
   @override
-  void visitTemplate(Template node, [RenderContext? context]) {
-    context!;
-
+  void visitTemplate(Template node, RenderContext context) {
     for (final block in node.blocks) {
       if (!context.blocks.containsKey(block.name)) {
         context.blocks[block.name] = <Block>[];
@@ -320,9 +309,7 @@ class StringSinkRenderer extends ExpressionResolver<RenderContext> {
   }
 
   @override
-  void visitWith(With node, [RenderContext? context]) {
-    context!;
-
+  void visitWith(With node, RenderContext context) {
     final targets = <Object?>[
       for (final target in node.targets) target.accept(this, context)
     ];

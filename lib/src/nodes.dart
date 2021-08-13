@@ -17,7 +17,7 @@ abstract class ImportContext {
 abstract class Node {
   const Node();
 
-  R accept<C, R>(Visitor<C, R> visitor, [C? context]);
+  R accept<C, R>(Visitor<C, R> visitor, C context);
 
   void visitChildNodes(NodeVisitor visitor) {}
 }

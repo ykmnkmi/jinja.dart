@@ -376,8 +376,22 @@ class Parser {
       fail('filter name expected');
     }
 
+    final filters = <Filter>[];
+    Expression? expression = filter;
+
+    while (expression != null) {
+      if (expression is! Filter) {
+        // TODO: update error message
+        fail('filter name expected');
+      }
+
+      filters.add(expression);
+      expression = expression.expression;
+      filters.last.expression = null;
+    }
+
     final body = parseStatements(reader, <String>['name:endfilter'], true);
-    return FilterBlock(filter, body);
+    return FilterBlock(filters.reversed.toList(growable: false), body);
   }
 
   Expression parseAssignTarget(

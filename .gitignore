@@ -7,4 +7,9 @@ bin/
 pubspec.lock
 build/
 doc/api/
+packages/
+**/**.aot
+**/**.exe
+**/**.jit
 **/**.py
+**/**.pyc

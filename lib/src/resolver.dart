@@ -14,7 +14,7 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
   const ExpressionResolver();
 
   // TODO: update calling
-  @protected
+  @internal
   T Function(T Function(List<Object?>, Map<Symbol, Object?>)) callable<T>(
       Callable callable, C context) {
     final positional = <Object?>[];
@@ -55,10 +55,8 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
         callback(positional, named);
   }
 
-  @protected
-  Object? callFilter(Filter filter, [Object? value, C? context]) {
-    context!;
-
+  @internal
+  Object? callFilter(C context, Filter filter, [Object? value]) {
     Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
       return context.environment.callFilter(filter.name, value,
           positional: positional, named: named, context: context);
@@ -67,10 +65,8 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
     return callable<Object?>(filter, context)(callback);
   }
 
-  @protected
-  bool callTest(Test test, [Object? value, C? context]) {
-    context!;
-
+  @internal
+  bool callTest(C context, Test test, [Object? value]) {
     bool callback(List<Object?> positional, Map<Symbol, Object?> named) {
       return context.environment
           .callTest(test.name, value, positional: positional, named: named);
@@ -80,28 +76,28 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
   }
 
   @override
-  void visitAll(List<Node> nodes, [C? context]) {
+  void visitAll(List<Node> nodes, C context) {
     throw UnimplementedError();
   }
 
   @override
-  void visitAssign(Assign node, [C? context]) {
+  void visitAssign(Assign node, C context) {
     throw UnimplementedError();
   }
 
   @override
-  void visitAssignBlock(AssignBlock node, [C? context]) {
+  void visitAssignBlock(AssignBlock node, C context) {
     throw UnimplementedError();
   }
 
   @override
-  Object? visitAttribute(Attribute node, [C? context]) {
-    return context!.environment
+  Object? visitAttribute(Attribute node, C context) {
+    return context.environment
         .getAttribute(node.expression.accept(this, context)!, node.attribute);
   }
 
   @override
-  Object? visitBinary(Binary node, [C? context]) {
+  Object? visitBinary(Binary node, C context) {
     final dynamic left = node.left.accept(this, context);
     final dynamic right = node.right.accept(this, context);
 
@@ -136,14 +132,12 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
   }
 
   @override
-  void visitBlock(Block node, [C? context]) {
+  void visitBlock(Block node, C context) {
     throw UnimplementedError();
   }
 
   @override
-  Object? visitCall(Call node, [C? context]) {
-    context!;
-
+  Object? visitCall(Call node, C context) {
     final dynamic function = node.expression!.accept(this, context)!;
 
     Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
@@ -154,7 +148,7 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
   }
 
   @override
-  Object? visitCompare(Compare node, [C? context]) {
+  Object? visitCompare(Compare node, C context) {
     var left = node.expression.accept(this, context);
     var result = true; // is needed?
 
@@ -199,7 +193,7 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
   }
 
   @override
-  String visitConcat(Concat node, [C? context]) {
+  String visitConcat(Concat node, C context) {
     final buffer = StringBuffer();
 
     for (final expression in node.expressions) {
@@ -210,7 +204,7 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
   }
 
   @override
-  Object? visitCondition(Condition node, [C? context]) {
+  Object? visitCondition(Condition node, C context) {
     if (boolean(node.test.accept(this, context))) {
       return node.expression1.accept(this, context);
     }
@@ -221,26 +215,26 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
       return expression.accept(this, context);
     }
 
-    return context!.environment.undefined();
+    return context.environment.undefined();
   }
 
   @override
-  Object? visitConstant(Constant<Object?> node, [C? context]) {
+  Object? visitConstant(Constant<Object?> node, C context) {
     return node.value;
   }
 
   @override
-  void visitContextModifier(ScopedContextModifier node, [C? context]) {
+  void visitContextModifier(ScopedContextModifier node, C context) {
     throw UnimplementedError();
   }
 
   @override
-  String visitData(Data node, [C? context]) {
+  String visitData(Data node, C context) {
     return node.data;
   }
 
   @override
-  Map<Object?, Object?> visitDictLiteral(DictLiteral node, [C? context]) {
+  Map<Object?, Object?> visitDictLiteral(DictLiteral node, C context) {
     final result = <Object?, Object?>{};
 
     for (final pair in node.pairs) {
@@ -251,17 +245,17 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
   }
 
   @override
-  void visitDo(Do node, [C? context]) {
+  void visitDo(Do node, C context) {
     throw UnimplementedError();
   }
 
   @override
-  Object? visitExtends(Extends node, [C? context]) {
+  Object? visitExtends(Extends node, C context) {
     throw UnimplementedError();
   }
 
   @override
-  Object? visitFilter(Filter node, [C? context]) {
+  Object? visitFilter(Filter node, C context) {
     final expression = node.expression;
     Object? value;
 
@@ -269,43 +263,43 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
       value = expression.accept(this, context);
     }
 
-    return callFilter(node, value, context);
+    return callFilter(context, node, value);
   }
 
   @override
-  void visitFilterBlock(FilterBlock node, [C? context]) {
+  void visitFilterBlock(FilterBlock node, C context) {
     throw UnimplementedError();
   }
 
   @override
-  void visitFor(For node, [C? context]) {
+  void visitFor(For node, C context) {
     throw UnimplementedError();
   }
 
   @override
-  void visitIf(If node, [C? context]) {
+  void visitIf(If node, C context) {
     throw UnimplementedError();
   }
 
   @override
-  void visitInclude(Include node, [C? context]) {
+  void visitInclude(Include node, C context) {
     throw UnimplementedError();
   }
 
   @override
-  Object? visitItem(Item node, [C? context]) {
-    return context!.environment.getItem(
+  Object? visitItem(Item node, C context) {
+    return context.environment.getItem(
         node.expression.accept(this, context)!, node.key.accept(this, context));
   }
 
   @override
-  MapEntry<Symbol, Object?> visitKeyword(Keyword node, [C? context]) {
+  MapEntry<Symbol, Object?> visitKeyword(Keyword node, C context) {
     return MapEntry<Symbol, Object?>(
         Symbol(node.key), node.value.accept(this, context));
   }
 
   @override
-  List<Object?> visitListLiteral(ListLiteral node, [C? context]) {
+  List<Object?> visitListLiteral(ListLiteral node, C context) {
     final result = <Object?>[];
 
     for (final item in node.expressions) {
@@ -316,10 +310,10 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
   }
 
   @override
-  Object? visitName(Name node, [C? context]) {
+  Object? visitName(Name node, C context) {
     switch (node.context) {
       case AssignContext.load:
-        return context!.resolve(node.name);
+        return context.resolve(node.name);
       case AssignContext.store:
       case AssignContext.parameter:
         return node.name;
@@ -330,38 +324,38 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
   }
 
   @override
-  Object? visitNameSpaceReference(NameSpaceReference node, [C? context]) {
+  Object? visitNameSpaceReference(NameSpaceReference node, C context) {
     return NameSpaceValue(node.name, node.attribute);
   }
 
   @override
-  Object? visitOperand(Operand node, [C? context]) {
+  Object? visitOperand(Operand node, C context) {
     return <Object?>[node.operator, node.expression.accept(this, context)];
   }
 
   @override
-  void visitOutput(Output node, [C? context]) {
+  void visitOutput(Output node, C context) {
     throw UnimplementedError();
   }
 
   @override
-  MapEntry<Object?, Object?> visitPair(Pair node, [C? context]) {
+  MapEntry<Object?, Object?> visitPair(Pair node, C context) {
     return MapEntry<Object?, Object?>(
         node.key.accept(this, context), node.value.accept(this, context));
   }
 
   @override
-  void visitScope(Scope node, [C? context]) {
+  void visitScope(Scope node, C context) {
     throw UnimplementedError();
   }
 
   @override
-  void visitScopedContextModifier(ScopedContextModifier node, [C? context]) {
+  void visitScopedContextModifier(ScopedContextModifier node, C context) {
     throw UnimplementedError();
   }
 
   @override
-  Indices visitSlice(Slice node, [C? context]) {
+  Indices visitSlice(Slice node, C context) {
     final sliceStart = node.start?.accept(this, context) as int?;
     final sliceStop = node.stop?.accept(this, context) as int?;
     final sliceStep = node.step?.accept(this, context) as int?;
@@ -393,23 +387,23 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
   }
 
   @override
-  void visitTemplate(Template node, [C? context]) {
+  void visitTemplate(Template node, C context) {
     throw UnimplementedError();
   }
 
   @override
-  bool visitTest(Test node, [C? context]) {
+  bool visitTest(Test node, C context) {
     Object? value;
 
     if (node.expression != null) {
       value = node.expression!.accept(this, context);
     }
 
-    return callTest(node, value, context);
+    return callTest(context, node, value);
   }
 
   @override
-  List<Object?> visitTupleLiteral(TupleLiteral node, [C? context]) {
+  List<Object?> visitTupleLiteral(TupleLiteral node, C context) {
     switch (node.context) {
       case AssignContext.load:
         final result = <Object?>[];
@@ -433,7 +427,7 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
   }
 
   @override
-  Object? visitUnary(Unary node, [C? context]) {
+  Object? visitUnary(Unary node, C context) {
     final dynamic value = node.expression.accept(this, context);
 
     switch (node.operator) {
@@ -448,11 +442,11 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
   }
 
   @override
-  void visitWith(With node, [C? context]) {
+  void visitWith(With node, C context) {
     throw UnimplementedError();
   }
 
-  @protected
+  @internal
   static Symbol symbol(String keyword) {
     switch (keyword) {
       case 'default':

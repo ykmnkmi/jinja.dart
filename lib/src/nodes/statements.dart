@@ -6,7 +6,7 @@ class Output extends Statement {
   List<Node> nodes;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitOutput(this, context);
   }
 
@@ -27,7 +27,7 @@ class Extends extends Statement {
   String path;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitExtends(this, context);
   }
 
@@ -56,7 +56,7 @@ class For extends Statement {
   bool recursive;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitFor(this, context);
   }
 
@@ -106,7 +106,7 @@ class If extends Statement {
   List<Node>? orElse;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitIf(this, context);
   }
 
@@ -139,20 +139,22 @@ class If extends Statement {
 }
 
 class FilterBlock extends Statement {
-  FilterBlock(this.filter, this.body);
+  FilterBlock(this.filters, this.body);
 
-  Filter filter;
+  List<Filter> filters;
 
   List<Node> body;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitFilterBlock(this, context);
   }
 
   @override
   void visitChildNodes(NodeVisitor visitor) {
-    visitor(filter);
+    for (final filter in filters) {
+      visitor(filter);
+    }
 
     for (final node in body) {
       visitor(node);
@@ -161,7 +163,7 @@ class FilterBlock extends Statement {
 
   @override
   String toString() {
-    return 'FilterBlock($filter, $body)';
+    return 'FilterBlock($filters, $body)';
   }
 }
 
@@ -175,7 +177,7 @@ class With extends Statement {
   List<Node> body;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitWith(this, context);
   }
 
@@ -206,7 +208,7 @@ class Block extends Statement {
   List<Node> nodes;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitBlock(this, context);
   }
 
@@ -236,7 +238,7 @@ class Include extends Statement implements ImportContext {
   bool withContext;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitInclude(this, context);
   }
 
@@ -258,7 +260,7 @@ class Do extends Statement {
   List<Expression> expressions;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitDo(this, context);
   }
 
@@ -281,7 +283,7 @@ class Assign extends Statement {
   Expression expression;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitAssign(this, context);
   }
 
@@ -307,7 +309,7 @@ class AssignBlock extends Statement {
   List<Filter>? filters;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitAssignBlock(this, context);
   }
 
@@ -335,7 +337,7 @@ class Scope extends Statement {
   ContextModifier modifier;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitScope(this, context);
   }
 
@@ -358,7 +360,7 @@ class ScopedContextModifier extends ContextModifier {
   Map<String, Expression> options;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, [C? context]) {
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitScopedContextModifier(this, context);
   }
 
