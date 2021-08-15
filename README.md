@@ -5,10 +5,11 @@
 [Jinja](https://www.palletsprojects.com/p/jinja/) server-side template engine port for Dart 2.
 Variables, expressions, control structures and template inheritance.
 
-## Breaking changes 0.4
+## Breaking changes 0.4,0
 - No dynamic template imports. Only single constant template path/name.
-- `Template.renderMap` deprecated.
-- `Template.render` accepts `Map<String, Object?>`.
+- `Template.renderMap` now deprecated.
+- `Template.render` now accepts `Map<String, Object?>`.
+- `FileSystemLoader` moved from `package:jinja/jinja.dart` to `package:jinja/loaders.dart`.
 - _work in progress_
 
 ## Example

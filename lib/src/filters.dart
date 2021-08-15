@@ -248,25 +248,25 @@ Object? doRandom(Environment environment, Object? values) {
 }
 
 Object? doReplace(Object? object, String from, String to, [int? count]) {
-  late String string;
-  late bool isNotMarkup;
+  String string;
+  bool isNotMarkup;
 
   if (object is String) {
     string = object;
     isNotMarkup = true;
   } else if (object is Markup) {
-    string = object.toString();
+    string = '$object';
     isNotMarkup = false;
   } else {
-    string = object.toString();
+    string = '$object';
     isNotMarkup = true;
   }
 
   if (count == null) {
     string = string.replaceAll(from, to);
   } else {
-    while (count > 0) {
-      string = string.replaceAll(from, to);
+    for (var i = 0, s = string.indexOf(from); s != -1 && i < count; i++) {
+      string = string.replaceFirst(from, to, s);
     }
   }
 

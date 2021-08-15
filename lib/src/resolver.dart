@@ -18,9 +18,10 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
   T Function(T Function(List<Object?>, Map<Symbol, Object?>)) callable<T>(
       Callable callable, C context) {
     final positional = <Object?>[];
+    final arguments = callable.arguments;
 
-    if (callable.arguments != null) {
-      for (final argument in callable.arguments!) {
+    if (arguments != null) {
+      for (final argument in arguments) {
         positional.add(argument.accept(this, context));
       }
     }
@@ -55,6 +56,7 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
         callback(positional, named);
   }
 
+  // TODO: update filter calling
   @internal
   Object? callFilter(C context, Filter filter, [Object? value]) {
     Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
@@ -65,6 +67,7 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
     return callable<Object?>(filter, context)(callback);
   }
 
+  // TODO: update test calling
   @internal
   bool callTest(C context, Test test, [Object? value]) {
     bool callback(List<Object?> positional, Map<Symbol, Object?> named) {
@@ -150,7 +153,7 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
   @override
   Object? visitCompare(Compare node, C context) {
     var left = node.expression.accept(this, context);
-    var result = true; // is needed?
+    var result = true;
 
     for (final operand in node.operands) {
       final right = operand.expression.accept(this, context);

@@ -4,10 +4,11 @@
 .notes
 .packages
 bin/
-pubspec.lock
 build/
 doc/api/
 packages/
+web/
+pubspec.lock
 **/**.aot
 **/**.exe
 **/**.jit

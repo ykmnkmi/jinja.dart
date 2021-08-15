@@ -3,11 +3,12 @@
 .vscode/
 .notes
 .packages
-pubspec.lock
+bin/
 build/
 doc/api/
 packages/
-bin/main.dart
+web/
+pubspec.lock
 test/check.dart
 **/**.aot
 **/**.exe

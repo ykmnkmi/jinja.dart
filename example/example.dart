@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:jinja/jinja.dart';
+import 'package:jinja/loaders.dart';
 
 void main() {
   final path = Platform.script.resolve('templates').toFilePath();
@@ -20,10 +21,10 @@ void main() {
     trimBlocks: true,
   );
 
-  print(env.getTemplate('users.html').render(
-    users: [
+  print(env.getTemplate('users.html').render({
+    'users': [
       {'fullname': 'Jhon Doe', 'email': 'jhondoe@dev.py'},
       {'fullname': 'Jane Doe', 'email': 'janedoe@dev.py'},
     ],
-  ));
+  }));
 }

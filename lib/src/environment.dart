@@ -574,12 +574,10 @@ class Template extends Node {
     final buffer = StringBuffer();
     final context = RenderContext(environment, buffer, data: data);
     accept(const StringSinkRenderer(), context);
-    return buffer.toString();
+    return '$buffer';
   }
 
   @Deprecated('Use `render` instead. Will be removed in Dart 0.5.0')
-  @pragma('dart2js:tryInline')
-  @pragma('vm:prefer-inline')
   String renderMap([Map<String, Object?>? data]) {
     return render(data);
   }

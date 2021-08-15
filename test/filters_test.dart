@@ -44,8 +44,9 @@ void main() {
     });
 
     test('default', () {
-      final tmpl = env.fromString('{{ missing|default("no") }}|{{ false|default("no") }}|'
-          '{{ false|default("no", true) }}|{{ given|default("no") }}');
+      final tmpl = env
+          .fromString('{{ missing|default("no") }}|{{ false|default("no") }}|'
+              '{{ false|default("no", true) }}|{{ given|default("no") }}');
       expect(tmpl.render({'given': 'yes'}), equals('no|false|no|yes'));
     });
 
@@ -202,7 +203,8 @@ void main() {
     });
 
     test('reverse', () {
-      var tmpl = env.fromString('{{ "foobar"|reverse|join }}|{{ [1, 2, 3]|reverse|list }}');
+      var tmpl = env.fromString(
+          '{{ "foobar"|reverse|join }}|{{ [1, 2, 3]|reverse|list }}');
       expect(tmpl.render(), equals('raboof|[3, 2, 1]'));
     });
 
@@ -250,12 +252,14 @@ void main() {
     });
 
     test('block', () {
-      final tmpl = env.fromString('{% filter lower|escape %}<HEHE>{% endfilter %}');
+      final tmpl =
+          env.fromString('{% filter lower|escape %}<HEHE>{% endfilter %}');
       expect(tmpl.render(), equals('&lt;hehe&gt;'));
     });
 
     test('chaining', () {
-      final tmpl = env.fromString('{{ ["<foo>", "<bar>"]|first|upper|escape }}');
+      final tmpl =
+          env.fromString('{{ ["<foo>", "<bar>"]|first|upper|escape }}');
       expect(tmpl.render(), equals('&lt;FOO&gt;'));
     });
 
@@ -313,15 +317,29 @@ void main() {
     // TODO: add test: groupby default
     // test('groupby default', () {});
 
-    // TODO: add test: filtertag
-    // test('filtertag', () {});
+    test('filtertag', () {
+      final tmpl = env.fromString(
+          '{% filter upper|replace(\'FOO\', \'foo\') %}foobar{% endfilter %}');
+      expect(tmpl.render(), equals('fooBAR'));
+    });
 
-    // TODO: add test: replace
-    // test('replace', () {});
+    test('replace', () {
+      var env = Environment();
+      var tmpl = env.fromString('{{ string|replace("o", "42") }}');
+      expect(tmpl.render({'string': '<foo>'}), equals('<f4242>'));
+      env = Environment(autoEscape: true);
+      tmpl = env.fromString('{{ string|replace("o", "42") }}');
+      expect(tmpl.render({'string': '<foo>'}), equals('&lt;f4242&gt;'));
+      tmpl = env.fromString('{{ string|replace("<", "42") }}');
+      expect(tmpl.render({'string': '<foo>'}), equals('42foo&gt;'));
+      tmpl = env.fromString('{{ string|replace("o", ">x<") }}');
+      expect(tmpl.render({'string': 'foo'}), equals('f&gt;x&lt;&gt;x&lt;'));
+    });
 
     test('force escape', () {
       final tmpl = env.fromString('{{ x|forceescape }}');
-      expect(tmpl.render({'x': Markup.escaped('<div />')}), equals('&lt;div /&gt;'));
+      final x = Markup.escaped('<div />');
+      expect(tmpl.render({'x': x}), equals('&lt;div /&gt;'));
     });
 
     test('safe', () {
@@ -377,7 +395,8 @@ void main() {
     test('wordwrap', () {
       final env = Environment(newLine: '\n');
       final tmpl = env.fromString('{{ string|wordwrap(20) }}');
-      final result = tmpl.render({'string': 'Hello!\nThis is Jinja saying something.'});
+      final result =
+          tmpl.render({'string': 'Hello!\nThis is Jinja saying something.'});
       expect(result, equals('Hello!\nThis is Jinja saying\nsomething.'));
     });
 

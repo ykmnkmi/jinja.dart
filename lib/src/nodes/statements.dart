@@ -113,11 +113,7 @@ class If extends Statement {
   @override
   void visitChildNodes(NodeVisitor visitor) {
     visitor(test);
-
-    for (final node in body) {
-      visitor(node);
-    }
-
+    body.forEach(visitor);
     nextIf?.visitChildNodes(visitor);
     orElse?.forEach(visitor);
   }
@@ -152,13 +148,8 @@ class FilterBlock extends Statement {
 
   @override
   void visitChildNodes(NodeVisitor visitor) {
-    for (final filter in filters) {
-      visitor(filter);
-    }
-
-    for (final node in body) {
-      visitor(node);
-    }
+    filters.forEach(visitor);
+    body.forEach(visitor);
   }
 
   @override

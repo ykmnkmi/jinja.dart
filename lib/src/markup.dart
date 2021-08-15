@@ -1,10 +1,43 @@
 String escape(String text) {
-  return text
-      .replaceAll('&', '&amp;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('\'', '&#39;')
-      .replaceAll('"', '&#34;');
+  var start = 0;
+  StringBuffer? result;
+
+  for (var i = 0; i < text.length; i++) {
+    String? replacement;
+
+    switch (text[i]) {
+      case '&':
+        replacement = '&amp;';
+        break;
+      case '"':
+        replacement = '&#34;';
+        break;
+      case "'":
+        replacement = '&#39;';
+        break;
+      case '<':
+        replacement = '&lt;';
+        break;
+      case '>':
+        replacement = '&gt;';
+        break;
+    }
+
+    if (replacement != null) {
+      result ??= StringBuffer();
+      result.write(text.substring(start, i));
+      result.write(replacement);
+      start = i + 1;
+    }
+  }
+
+  if (result == null) {
+    return text;
+  } else {
+    result.write(text.substring(start));
+  }
+
+  return '$result';
 }
 
 class Markup {

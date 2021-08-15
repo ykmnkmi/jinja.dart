@@ -237,7 +237,6 @@ class Optimizer extends Visitor<Context, Node> {
 
   @override
   FilterBlock visitFilterBlock(FilterBlock node, Context context) {
-    visitAllSafe(node.filters, context);
     visitAllSafe(node.body, context);
     return node;
   }

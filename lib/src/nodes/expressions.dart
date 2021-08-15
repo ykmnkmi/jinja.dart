@@ -48,11 +48,7 @@ class Name extends Expression with CanAssign {
 
   @override
   String toString() {
-    if (type == null) {
-      return 'Name($name)';
-    }
-
-    return 'Name($name, $type)';
+    return type == null ? 'Name($name)' : 'Name($name, $type)';
   }
 }
 
@@ -158,16 +154,22 @@ class Slice extends Expression {
 
   @override
   void visitChildNodes(NodeVisitor visitor) {
+    final start = this.start;
+
     if (start != null) {
-      visitor(start!);
+      visitor(start);
     }
+
+    final stop = this.stop;
 
     if (stop != null) {
-      visitor(stop!);
+      visitor(stop);
     }
 
+    final step = this.step;
+
     if (step != null) {
-      visitor(step!);
+      visitor(step);
     }
   }
 
@@ -229,24 +231,34 @@ class Call extends Expression implements Callable {
 
   @override
   void visitChildNodes(NodeVisitor visitor) {
+    final expression = this.expression;
+
     if (expression != null) {
-      visitor(expression!);
+      visitor(expression);
     }
+
+    final arguments = this.arguments;
 
     if (arguments != null) {
-      arguments!.forEach(visitor);
+      arguments.forEach(visitor);
     }
+
+    final keywordArguments = this.keywordArguments;
 
     if (keywordArguments != null) {
-      keywordArguments!.forEach(visitor);
+      keywordArguments.forEach(visitor);
     }
+
+    final dArguments = this.dArguments;
 
     if (dArguments != null) {
-      visitor(dArguments!);
+      visitor(dArguments);
     }
 
+    final dKeywordArguments = this.dKeywordArguments;
+
     if (dKeywordArguments != null) {
-      visitor(dKeywordArguments!);
+      visitor(dKeywordArguments);
     }
   }
 
@@ -260,25 +272,31 @@ class Call extends Expression implements Callable {
       comma = true;
     }
 
-    if (arguments != null && arguments!.isNotEmpty) {
+    final arguments = this.arguments;
+
+    if (arguments != null && arguments.isNotEmpty) {
       if (comma) {
         result += ', ';
       } else {
         comma = true;
       }
 
-      result += arguments!.join(', ');
+      result += arguments.join(', ');
     }
 
-    if (keywordArguments != null && keywordArguments!.isNotEmpty) {
+    final keywordArguments = this.keywordArguments;
+
+    if (keywordArguments != null && keywordArguments.isNotEmpty) {
       if (comma) {
         result += ', ';
       } else {
         comma = true;
       }
 
-      result += keywordArguments!.join(', ');
+      result += keywordArguments.join(', ');
     }
+
+    final dArguments = this.dArguments;
 
     if (dArguments != null) {
       if (comma) {
@@ -289,6 +307,8 @@ class Call extends Expression implements Callable {
 
       result += '*$dArguments';
     }
+
+    final dKeywordArguments = this.dKeywordArguments;
 
     if (dKeywordArguments != null) {
       if (comma) {
@@ -334,24 +354,34 @@ class Filter extends Expression implements Callable {
 
   @override
   void visitChildNodes(NodeVisitor visitor) {
+    final expression = this.expression;
+
     if (expression != null) {
-      visitor(expression!);
+      visitor(expression);
     }
+
+    final arguments = this.arguments;
 
     if (arguments != null) {
-      arguments!.forEach(visitor);
+      arguments.forEach(visitor);
     }
+
+    final keywordArguments = this.keywordArguments;
 
     if (keywordArguments != null) {
-      keywordArguments!.forEach(visitor);
+      keywordArguments.forEach(visitor);
     }
+
+    final dArguments = this.dArguments;
 
     if (dArguments != null) {
-      visitor(dArguments!);
+      visitor(dArguments);
     }
 
+    final dKeywordArguments = this.dKeywordArguments;
+
     if (dKeywordArguments != null) {
-      visitor(dKeywordArguments!);
+      visitor(dKeywordArguments);
     }
   }
 
@@ -363,35 +393,29 @@ class Filter extends Expression implements Callable {
       result += ', $expression';
     }
 
-    if (arguments != null && arguments!.isNotEmpty) {
-      if (result.contains(',')) {
-        result += ', ';
-      }
+    final arguments = this.arguments;
 
-      result += arguments!.join(', ');
+    if (arguments != null && arguments.isNotEmpty) {
+      result += ', ';
+
+      result += arguments.join(', ');
     }
 
-    if (keywordArguments != null && keywordArguments!.isNotEmpty) {
-      if (result.contains(',')) {
-        result += ', ';
-      }
+    final keywordArguments = this.keywordArguments;
 
-      result += keywordArguments!.join(', ');
+    if (keywordArguments != null && keywordArguments.isNotEmpty) {
+      result += keywordArguments.join(', ');
     }
+
+    final dArguments = this.dArguments;
 
     if (dArguments != null) {
-      if (result.contains(',')) {
-        result += ', ';
-      }
-
       result += '*$dArguments';
     }
 
-    if (dKeywordArguments != null) {
-      if (result.contains(',')) {
-        result += ', ';
-      }
+    final dKeywordArguments = this.dKeywordArguments;
 
+    if (dKeywordArguments != null) {
       result += '**$dKeywordArguments';
     }
 
@@ -431,24 +455,34 @@ class Test extends Expression implements Callable {
 
   @override
   void visitChildNodes(NodeVisitor visitor) {
+    final expression = this.expression;
+
     if (expression != null) {
-      visitor(expression!);
+      visitor(expression);
     }
+
+    final arguments = this.arguments;
 
     if (arguments != null) {
-      arguments!.forEach(visitor);
+      arguments.forEach(visitor);
     }
+
+    final keywordArguments = this.keywordArguments;
 
     if (keywordArguments != null) {
-      keywordArguments!.forEach(visitor);
+      keywordArguments.forEach(visitor);
     }
+
+    final dArguments = this.dArguments;
 
     if (dArguments != null) {
-      visitor(dArguments!);
+      visitor(dArguments);
     }
 
+    final dKeywordArguments = this.dKeywordArguments;
+
     if (dKeywordArguments != null) {
-      visitor(dKeywordArguments!);
+      visitor(dKeywordArguments);
     }
   }
 
@@ -460,35 +494,27 @@ class Test extends Expression implements Callable {
       result += ', $expression';
     }
 
-    if (arguments != null && arguments!.isNotEmpty) {
-      if (result.contains(',')) {
-        result += ', ';
-      }
+    final arguments = this.arguments;
 
-      result += arguments!.join(', ');
+    if (arguments != null && arguments.isNotEmpty) {
+      result += arguments.join(', ');
     }
 
-    if (keywordArguments != null && keywordArguments!.isNotEmpty) {
-      if (result.contains(',')) {
-        result += ', ';
-      }
+    final keywordArguments = this.keywordArguments;
 
-      result += keywordArguments!.join(', ');
+    if (keywordArguments != null && keywordArguments.isNotEmpty) {
+      result += keywordArguments.join(', ');
     }
+
+    final dArguments = this.dArguments;
 
     if (dArguments != null) {
-      if (result.contains(',')) {
-        result += ', ';
-      }
-
       result += '*$dArguments';
     }
 
-    if (dKeywordArguments != null) {
-      if (result.contains(',')) {
-        result += ', ';
-      }
+    final dKeywordArguments = this.dKeywordArguments;
 
+    if (dKeywordArguments != null) {
       result += '**$dKeywordArguments';
     }
 
@@ -539,14 +565,18 @@ class Condition extends Expression {
     visitor(test);
     visitor(expression1);
 
+    final expression2 = this.expression2;
+
     if (expression2 != null) {
-      visitor(expression2!);
+      visitor(expression2);
     }
   }
 
   @override
   String toString() {
-    return 'Condition($test, $expression1, $expression2)';
+    return expression2 == null
+        ? 'Condition($test, $expression1)'
+        : 'Condition($test, $expression1, $expression2)';
   }
 }
 
@@ -628,6 +658,7 @@ class TupleLiteral extends Literal implements CanAssign {
       if (expression is CanAssign) {
         expression.context = context;
       } else {
+        // TODO: add error message
         throw TypeError();
       }
     }
