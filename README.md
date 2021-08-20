@@ -12,6 +12,14 @@ Variables, expressions, control structures and template inheritance.
 - `FileSystemLoader` moved from `package:jinja/jinja.dart` to `package:jinja/loaders.dart`.
 - _work in progress_
 
+## Documentation
+
+Mostly same as [Jinja](https://jinja.palletsprojects.com/en/3.0.x/templates/) template documentation.
+
+## Differences
+
+_work in progress_
+
 ## Example
 
 ```dart
@@ -84,7 +92,7 @@ See also examples with [conduit][conduit_example] and [reflectable][reflectable_
   - Include
 - Import Context Behavior
 - Expressions
-  - Literals: null\none, true\True, false\False, 1_000, 1.1e3, 'sq', "dq", (1,), \[2\], {'k': 'v'}
+  - Literals
   - Math
   - Comparisons
   - Logic
