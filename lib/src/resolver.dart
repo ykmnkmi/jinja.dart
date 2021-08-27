@@ -96,7 +96,7 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
   @override
   Object? visitAttribute(Attribute node, C context) {
     return context.environment
-        .getAttribute(node.expression.accept(this, context)!, node.attribute);
+        .getAttribute(node.expression.accept(this, context), node.attribute);
   }
 
   @override
@@ -218,7 +218,7 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
       return expression.accept(this, context);
     }
 
-    return context.environment.undefined();
+    return null;
   }
 
   @override

@@ -30,14 +30,10 @@ const List<NodeVisitor> modifiers = <NodeVisitor>[
 ];
 
 Object? finalize(Object? value) {
-  return value;
+  return value ?? '';
 }
 
 Object? fieldGetter(Object? object, String field) {
   throw NoSuchMethodError.withInvocation(
       object, Invocation.getter(Symbol(field)));
-}
-
-Undefined undefined({String? hint, Object? object, String? name}) {
-  return Undefined(hint: hint, object: object, name: name);
 }

@@ -1,6 +1,4 @@
 import 'markup.dart';
-import 'runtime.dart';
-import 'utils.dart';
 
 bool isBoolean(Object? object) {
   return object is bool;
@@ -11,7 +9,7 @@ bool isCallable(Object? object) {
 }
 
 bool isDefined(Object? value) {
-  return value is! Undefined;
+  return value != null;
 }
 
 bool isDivisibleBy(num value, num divider) {
@@ -144,6 +142,10 @@ bool isString(Object? object) {
 
 bool isTrue(Object? value) {
   return value == true;
+}
+
+bool isUndefined(Object? value) {
+  return value == null;
 }
 
 bool isUpper(String value) {

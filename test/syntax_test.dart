@@ -265,10 +265,16 @@ void main() {
     });
 
     test('const', () {
-      final tmpl = env
-          .fromString('{{ true }}|{{ false }}|{{ none }}|{{ none is defined }}|'
-              '{{ missing is defined }}');
-      expect(tmpl.render(), equals('true|false|null|true|false'));
+      var tmpl = env.fromString('{{ true }}');
+      expect(tmpl.render(), equals('true'));
+      tmpl = env.fromString('{{ false }}');
+      expect(tmpl.render(), equals('false'));
+      tmpl = env.fromString('{{ none }}');
+      expect(tmpl.render(), equals(''));
+      tmpl = env.fromString('{{ none is defined }}');
+      expect(tmpl.render(), equals('false'));
+      tmpl = env.fromString('{{ missing is defined }}');
+      expect(tmpl.render(), equals('false'));
     });
 
     test('neg filter priority', () {

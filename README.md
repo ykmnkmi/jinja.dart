@@ -10,6 +10,7 @@ Variables, expressions, control structures and template inheritance.
 - `Template.renderMap` now deprecated.
 - `Template.render` now accepts `Map<String, Object?>`.
 - `FileSystemLoader` moved from `package:jinja/jinja.dart` to `package:jinja/loaders.dart`.
+- No `Undefined` and `missing`.
 - _work in progress_
 
 ## Documentation
@@ -128,9 +129,9 @@ See also examples with [conduit][conduit_example] and [reflectable][reflectable_
   - upper
   - wordwrap
 - List of Builtin Tests
-  - boolean
+  - boolean `null ~ false ~ 0 ~ '' ~ [] ~ {}`
   - callable
-  - defined
+  - defined `_ != null`
   - divisibleby
   - eq, equalto, ==
   - escaped
@@ -154,7 +155,7 @@ See also examples with [conduit][conduit_example] and [reflectable][reflectable_
   - sequence
   - string
   - true
-  - undefined
+  - undefined `_ == null`
   - upper
 - List of Global Functions
   - list

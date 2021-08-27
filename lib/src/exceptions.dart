@@ -65,11 +65,6 @@ class TemplateRuntimeError extends TemplateError {
   TemplateRuntimeError([Object? message]) : super(message);
 }
 
-/// Raised if a template tries to operate on [Undefined].
-class UndefinedError extends TemplateRuntimeError {
-  UndefinedError([Object? message]) : super(message);
-}
-
 /// This error is raised if a filter was called with inappropriate arguments.
 class FilterArgumentError extends TemplateRuntimeError {
   FilterArgumentError([Object? message]) : super(message);

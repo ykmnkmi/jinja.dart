@@ -29,14 +29,13 @@ void main() {
     test('no finalize template data', () {
       final env = Environment(finalize: (dynamic obj) => obj.runtimeType);
       final tmpl = env.fromString('<{{ value }}>');
-      // if template data was finalized, it would print 'StringintString'.
       expect(tmpl.render({'value': 123}), equals('<int>'));
     });
 
     test('context finalize', () {
       final env = Environment(
           finalize: (Context context, Object? value) =>
-              (value as dynamic) * context['scale']);
+              (value as dynamic) * context.resolve('scale'));
       final tmpl = env.fromString('{{ value }}');
       expect(tmpl.render({'value': 5, 'scale': 3}), equals('15'));
     });

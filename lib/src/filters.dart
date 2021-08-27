@@ -98,7 +98,7 @@ int doLength(Object? items) {
 
 Object? doDefault(Object? value,
     [Object? defaultValue = '', bool asBoolean = false]) {
-  if (value is Undefined || (asBoolean && !boolean(value))) {
+  if (value == null || (asBoolean && !boolean(value))) {
     return defaultValue;
   }
 
@@ -221,12 +221,12 @@ Object? doJoin(Context context, Iterable<Object?> values,
         .map<Object?>(makeAttributeGetter(context.environment, attribute));
   }
 
-  if (!boolean(context.get('autoescape'))) {
-    return values.join(delimiter);
+  if (context.autoEscape) {
+    return Escaped(
+        values.map<Object?>((value) => Markup.from(value)).join(delimiter));
   }
 
-  return context.escaped(
-      values.map<Object?>((value) => context.escape(value)).join(delimiter));
+  return values.join(delimiter);
 }
 
 Object? doLast(Iterable<Object?> values) {
@@ -323,9 +323,8 @@ num doSum(Environment environment, Iterable<Object?> values,
   return values.cast<num>().fold(start, (s, n) => s + n);
 }
 
-
 String doTrim(String value, [Object? characters]) {
-  if (characters == null || characters is Undefined) {
+  if (characters == null) {
     return value.trim();
   }
 

@@ -25,9 +25,6 @@ typedef EnvironmentFinalizer = Object? Function(
 
 typedef FieldGetter = Object? Function(Object? object, String field);
 
-typedef UndefinedFactory = Undefined Function(
-    {String? hint, Object? object, String? name});
-
 /// The core component of Jinja 2 is the Environment. It contains
 /// important shared variables like configuration, filters, tests and others.
 /// Instances of this class may be modified if they are not shared and if no
@@ -50,7 +47,6 @@ class Environment {
     this.newLine = defaults.newLine,
     this.keepTrailingNewLine = defaults.keepTrailingNewLine,
     this.optimized = true,
-    this.undefined = defaults.undefined,
     Function finalize = defaults.finalize,
     this.autoEscape = false,
     this.loader,
@@ -155,10 +151,6 @@ class Environment {
 
   /// Should the optimizer be enabled?
   final bool optimized;
-
-  /// [Undefined] or a subclass of it that is used to represent
-  /// undefined values in the template.
-  final UndefinedFactory undefined;
 
   /// A callable that can be used to process the result of a variable
   /// expression before it is output.
@@ -301,7 +293,6 @@ class Environment {
     String? newLine,
     bool? keepTrailingNewLine,
     bool? optimized,
-    UndefinedFactory? undefined,
     Function? finalize,
     bool? autoEscape,
     Loader? loader,
@@ -329,7 +320,6 @@ class Environment {
       newLine: newLine ?? this.newLine,
       keepTrailingNewLine: keepTrailingNewLine ?? this.keepTrailingNewLine,
       optimized: optimized ?? this.optimized,
-      undefined: undefined ?? this.undefined,
       finalize: finalize ?? this.finalize,
       autoEscape: autoEscape ?? this.autoEscape,
       loader: loader ?? this.loader,
@@ -370,12 +360,14 @@ class Environment {
       try {
         return (object as dynamic)[field];
       } on NoSuchMethodError {
-        return undefined(object: object, name: field);
+        // pass
       }
+
+      rethrow;
     }
   }
 
-  Object? getItem(Object object, Object? key) {
+  Object? getItem(Object? object, Object? key) {
     // TODO: update slices
     if (key is Indices) {
       if (object is List<Object?>) {
@@ -402,31 +394,21 @@ class Environment {
         try {
           return fieldGetter(object, key);
         } on NoSuchMethodError {
-          // do nothing
+          return null;
         }
       }
-
-      return undefined(object: object, name: '$key');
     }
   }
 
   /// Load a template by name with [loader] and return a
   /// [Template]. If the template does not exist a [TemplateNotFound]
   /// exception is raised.
-  Template getTemplate(Object? template) {
-    if (template is Undefined) {
-      template.fail();
+  Template getTemplate(String template) {
+    if (autoReload && templates.containsKey(template)) {
+      return templates[template] = loadTemplate(template);
     }
 
-    if (template is String) {
-      if (autoReload && templates.containsKey(template)) {
-        return templates[template] = loadTemplate(template);
-      }
-
-      return templates[template] ??= loadTemplate(template);
-    }
-
-    throw TypeError();
+    return templates[template] ??= loadTemplate(template);
   }
 
   /// Returns a list of templates for this environment.
@@ -477,7 +459,6 @@ class Template extends Node {
     String newLine = defaults.newLine,
     bool keepTrailingNewLine = defaults.keepTrailingNewLine,
     bool optimized = true,
-    UndefinedFactory undefined = defaults.undefined,
     Function finalize = defaults.finalize,
     bool autoEscape = false,
     Map<String, Object>? globals,
@@ -506,7 +487,6 @@ class Template extends Node {
         newLine: newLine,
         keepTrailingNewLine: keepTrailingNewLine,
         optimized: optimized,
-        undefined: undefined,
         finalize: finalize,
         autoEscape: autoEscape,
         autoReload: false,
@@ -534,7 +514,6 @@ class Template extends Node {
         newLine: newLine,
         keepTrailingNewLine: keepTrailingNewLine,
         optimized: optimized,
-        undefined: undefined,
         finalize: finalize,
         autoEscape: autoEscape,
         autoReload: false,

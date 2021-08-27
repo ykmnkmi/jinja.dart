@@ -1,13 +1,7 @@
-import 'package:meta/meta.dart';
-
-import 'environment.dart';
-import 'exceptions.dart';
-import 'utils.dart';
-
 export 'context.dart';
 
 class LoopContext extends Iterable<Object?> {
-  LoopContext(this.values, this.undefined, {this.depth0 = 0, this.recurse})
+  LoopContext(this.values, {this.depth0 = 0, this.recurse})
       : length = values.length,
         index0 = -1;
 
@@ -15,8 +9,6 @@ class LoopContext extends Iterable<Object?> {
 
   @override
   final int length;
-
-  final UndefinedFactory undefined;
 
   final String Function(Object? data, [int depth])? recurse;
 
@@ -60,12 +52,12 @@ class LoopContext extends Iterable<Object?> {
       return values[index0 + 1];
     }
 
-    return undefined(hint: 'there is no next item');
+    return null;
   }
 
   Object? get previtem {
     if (first) {
-      return undefined(hint: 'there is no previous item');
+      return null;
     }
 
     return values[index0 - 1];
@@ -80,20 +72,17 @@ class LoopContext extends Iterable<Object?> {
     return recurse!(data, depth);
   }
 
-  Object cycle(
-      [Object? arg01 = missing,
-      Object? arg02 = missing,
-      Object? arg03 = missing]) {
+  Object cycle([Object? arg01, Object? arg02, Object? arg03]) {
     final values = <Object>[];
 
-    if (arg01 != missing) {
-      values.add(arg01!);
+    if (arg01 != null) {
+      values.add(arg01);
 
-      if (arg02 != missing) {
-        values.add(arg02!);
+      if (arg02 != null) {
+        values.add(arg02);
 
-        if (arg03 != missing) {
-          values.add(arg03!);
+        if (arg03 != null) {
+          values.add(arg03);
         }
       }
     }
@@ -172,57 +161,6 @@ class LoopIterator extends Iterator<Object?> {
     }
 
     return false;
-  }
-}
-
-/// The default undefined type.
-///
-/// This undefined type can be printed and iterated over, but every other access will raise an [UndefinedErro].
-class Undefined {
-  Undefined({this.hint, this.object, this.name});
-
-  final String? hint;
-
-  final Object? object;
-
-  final String? name;
-
-  @override
-  int get hashCode {
-    return null.hashCode;
-  }
-
-  /// Build a message about the undefined value based on how it was accessed.
-  @protected
-  String get undefinedMessage {
-    if (hint != null) {
-      return hint!;
-    }
-
-    if (object == null) {
-      return '$name is undefined';
-    }
-
-    return '${object!.runtimeType} has no attribute $name';
-  }
-
-  @override
-  bool operator ==(Object? other) {
-    return other is Undefined;
-  }
-
-  Never fail() {
-    throw UndefinedError(undefinedMessage);
-  }
-
-  @override
-  Object? noSuchMethod(Invocation invocation) {
-    fail();
-  }
-
-  @override
-  String toString() {
-    return '';
   }
 }
 

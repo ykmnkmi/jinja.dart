@@ -6,16 +6,16 @@ typedef ContextCallback<C extends Context> = void Function(C context);
 
 class Context {
   Context(this.environment, [Map<String, Object?>? data])
-      : contexts = <Map<String, Object?>>[environment.globals],
+      : contexts = <Map<String, Object?>>[
+          environment.globals,
+          <String, Object?>{...?data}
+        ],
         minimal = 2 {
-    data = data == null ? <String, Object?>{} : Map<String, Object?>.of(data);
-    contexts.add(data);
-
-    data
+    contexts[1]
       ..['context'] = this
       ..['ctx'] = this
-      ..['environment'] = this
-      ..['env'] = this
+      ..['environment'] = environment
+      ..['env'] = environment
       ..['autoescape'] = environment.autoEscape;
   }
 
@@ -30,15 +30,8 @@ class Context {
 
   final int minimal;
 
-  Object? operator [](String key) {
-    return resolve(key);
-  }
-
-  void apply<C extends Context>(
-      Map<String, Object?> data, ContextCallback<C> closure) {
-    push(data);
-    closure(this as C);
-    pop();
+  bool get autoEscape {
+    return resolve('autoescape') as bool;
   }
 
   Object? call(Object? object,
@@ -55,25 +48,27 @@ class Context {
   }
 
   Object? escape(Object? value) {
-    return value != null && value is! Markup && boolean(get('autoescape'))
-        ? Markup(value as String)
-        : value;
+    if (value == null) {
+      return null;
+    }
+
+    if (value is Markup) {
+      return value;
+    }
+
+    return autoEscape ? Markup(value) : value;
   }
 
   Object? escaped(Object? value) {
-    return value != null && value is! Markup && boolean(get('autoescape'))
-        ? Markup.escaped(value)
-        : value;
-  }
-
-  Object? get(String key) {
-    for (final context in contexts.reversed) {
-      if (context.containsKey(key)) {
-        return context[key];
-      }
+    if (value == null) {
+      return null;
     }
 
-    return missing;
+    if (value is Markup) {
+      return value;
+    }
+
+    return autoEscape ? Escaped(value) : value;
   }
 
   bool has(String name) {
@@ -91,12 +86,12 @@ class Context {
   }
 
   Object? resolve(String key) {
-    final result = get(key);
-
-    if (result == missing) {
-      return environment.undefined(name: key);
+    for (final context in contexts.reversed) {
+      if (context.containsKey(key)) {
+        return context[key];
+      }
     }
 
-    return result;
+    return null;
   }
 }

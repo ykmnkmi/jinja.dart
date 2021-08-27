@@ -44,14 +44,22 @@ class Markup {
   const Markup(this.value);
 
   factory Markup.from(Object? value) {
-    return value is Markup ? value : Markup(value as String);
+    if (value is Markup) {
+      return value;
+    }
+
+    return Markup(value);
   }
 
   factory Markup.escaped(Object? value) {
-    return value is Markup ? value : Escaped(value as String);
+    if (value is Markup) {
+      return value;
+    }
+
+    return Escaped(value);
   }
 
-  final String value;
+  final Object? value;
 
   @override
   int get hashCode {
@@ -65,7 +73,7 @@ class Markup {
 
   @override
   String toString() {
-    return escape(value);
+    return escape('$value');
   }
 }
 
@@ -73,7 +81,7 @@ class Escaped implements Markup {
   Escaped(this.value);
 
   @override
-  final String value;
+  final Object? value;
 
   @override
   int get hashCode {
@@ -87,6 +95,6 @@ class Escaped implements Markup {
 
   @override
   String toString() {
-    return value.toString();
+    return '$value';
   }
 }

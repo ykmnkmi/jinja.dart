@@ -40,7 +40,7 @@ void main() {
     test('else', () {
       final tmpl =
           env.fromString('{% for item in seq %}XXX{% else %}...{% endfor %}');
-      expect(tmpl.render(), equals('...'));
+      expect(tmpl.render({'seq': range(0)}), equals('...'));
     });
 
     test('else scoping item', () {
@@ -52,7 +52,7 @@ void main() {
     test('empty blocks', () {
       final tmpl =
           env.fromString('<{% for item in seq %}{% else %}{% endfor %}>');
-      expect(tmpl.render(), equals('<>'));
+      expect(tmpl.render({'seq': range(0)}), equals('<>'));
     });
 
     test('context vars', () {
@@ -190,11 +190,11 @@ void main() {
     // test('recursive bug', () {});
 
     test('loop errors', () {
-      var tmpl = env.fromString('''{% for item in [1] if loop.index
-                                      == 0 %}...{% endfor %}''');
-      expect(() => tmpl.render(), throwsA(isA<UndefinedError>()));
-      tmpl = env.fromString('''{% for item in [] %}...{% else
-            %}{{ loop }}{% endfor %}''');
+      var tmpl = env.fromString(
+          '{% for item in [1] if loop.index == 0 %}...{% endfor %}');
+      expect(() => tmpl.render(), throwsA(isA<NoSuchMethodError>()));
+      tmpl = env.fromString(
+          '{% for item in [] %}...{% else %}{{ loop }}{% endfor %}');
       expect(tmpl.render(), equals(''));
     });
 
@@ -234,10 +234,9 @@ void main() {
     });
 
     test('recursive empty loop iter', () {
-      final template = env.fromString('''
-        {%- for item in foo recursive -%}{%- endfor -%}
-        ''');
-      expect(template.render(), equals(''));
+      final template =
+          env.fromString('{% for item in foo recursive %}{% endfor %}');
+      expect(template.render({'foo': range(0)}), equals(''));
     });
 
     // TODO: after macro: add tests: call in loop

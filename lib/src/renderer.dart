@@ -37,7 +37,7 @@ class RenderContext extends Context {
   }
 
   void set(String key, Object? value) {
-    contexts.last[key] = value is Undefined ? null : value;
+    contexts.last[key] = value;
   }
 
   void write(Object? object) {
@@ -70,12 +70,14 @@ class StringSinkRenderer extends ExpressionResolver<RenderContext> {
     visitAll(node.nodes, RenderContext.from(context, buffer));
     Object? value = '$buffer';
 
-    if (node.filters == null || node.filters!.isEmpty) {
+    final filters = node.filters;
+
+    if (filters == null || filters.isEmpty) {
       assignTargetsToContext(context, target, context.escaped(value));
       return;
     }
 
-    for (final filter in node.filters!) {
+    for (final filter in filters) {
       value = callFilter(context, filter, value);
     }
 
@@ -189,8 +191,7 @@ class StringSinkRenderer extends ExpressionResolver<RenderContext> {
         values = filtered;
       }
 
-      final loop = LoopContext(values, context.environment.undefined,
-          depth0: depth, recurse: recurse);
+      final loop = LoopContext(values, depth0: depth, recurse: recurse);
       Map<String, Object?> Function(Object?, Object?) unpack;
 
       if (node.hasLoop) {
@@ -360,7 +361,7 @@ class StringSinkRenderer extends ExpressionResolver<RenderContext> {
     }
 
     if (target is NameSpaceValue) {
-      final namespace = context[target.name];
+      final namespace = context.resolve(target.name);
 
       if (namespace is! NameSpace) {
         throw TemplateRuntimeError('non-namespace object');

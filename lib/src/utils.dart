@@ -9,8 +9,6 @@ import 'runtime.dart';
 typedef Indices = Iterable<int> Function(int stopOrStart,
     [int? stop, int? step]);
 
-const Missing missing = Missing();
-
 class Cycler extends Iterable<Object?> {
   Cycler(List<Object?> values)
       : values = List<dynamic>.of(values),
@@ -79,7 +77,7 @@ class Missing {
 }
 
 bool boolean(Object? value) {
-  if (value == null || value == missing || value is Undefined) {
+  if (value == null) {
     return false;
   }
 
@@ -112,16 +110,8 @@ String format(Object? object) {
   // return DartFormatter().formatStatement(source);
 }
 
-bool isUndefined(Object? value) {
-  return value is Undefined;
-}
-
 List<Object?> list(Object? iterable) {
-  if (iterable is Undefined) {
-    return <Object?>[];
-  }
-
-  if (iterable is Iterable<Object?>) {
+  if (iterable is Iterable) {
     return List<Object?>.of(iterable);
   }
 
@@ -129,12 +119,12 @@ List<Object?> list(Object? iterable) {
     return List<Object?>.of(iterable.split(''));
   }
 
-  if (iterable is Map<Object?, Object?>) {
+  if (iterable is Map) {
     return List<Object?>.of(iterable.keys);
   }
 
-  // or throw TypeError?
-  return List<Object?>.of((iterable as dynamic).toList() as List<Object?>);
+  // return List<Object?>.of((iterable as dynamic).toList() as List<Object?>);
+  throw TypeError();
 }
 
 Iterable<int> range(int stopOrStart, [int? stop, int step = 1]) sync* {
