@@ -118,26 +118,23 @@ bool isUndefined(Object? value) {
 
 List<Object?> list(Object? iterable) {
   if (iterable is Undefined) {
-    return const <Object?>[];
-  }
-
-  if (iterable is List) {
-    return iterable;
+    return <Object?>[];
   }
 
   if (iterable is Iterable<Object?>) {
-    return iterable.toList();
+    return List<Object?>.of(iterable);
   }
 
   if (iterable is String) {
-    return iterable.split('');
+    return List<Object?>.of(iterable.split(''));
   }
 
   if (iterable is Map<Object?, Object?>) {
-    return iterable.keys.toList();
+    return List<Object?>.of(iterable.keys);
   }
 
-  return (iterable as dynamic).toList() as List<Object?>;
+  // or throw TypeError?
+  return List<Object?>.of((iterable as dynamic).toList() as List<Object?>);
 }
 
 Iterable<int> range(int stopOrStart, [int? stop, int step = 1]) sync* {
@@ -167,35 +164,16 @@ Iterable<int> range(int stopOrStart, [int? stop, int step = 1]) sync* {
 }
 
 String repr(Object? object) {
-  if (object == null) {
-    return 'null';
-  }
-
-  if (object is num) {
-    return '$object';
-  }
-
-  if (object is String) {
-    object = object.replaceAll("'", "\\'");
-    return "'$object'";
-  }
-
   final buffer = StringBuffer();
   reprTo(object, buffer);
   return '$buffer';
 }
 
 void reprTo(Object? object, StringBuffer buffer) {
-  if (object == null) {
-    buffer.write('null');
-  }
-
-  if (object is num) {
-    buffer.write(object);
-  }
-
   if (object is String) {
-    buffer.write(object.replaceAll("'", "\\'"));
+    object = object.replaceAll("'", "\\'");
+    buffer.write('\'$object\'');
+    return;
   }
 
   if (object is List<Object?>) {
@@ -251,7 +229,7 @@ String sliceString(String string, Indices indices) {
     buffer.write(string[i]);
   }
 
-  return buffer.toString();
+  return '$buffer';
 }
 
 // @pragma('vm:prefer-inline')

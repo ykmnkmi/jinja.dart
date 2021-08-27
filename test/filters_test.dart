@@ -44,10 +44,14 @@ void main() {
     });
 
     test('default', () {
-      final tmpl = env
-          .fromString('{{ missing|default("no") }}|{{ false|default("no") }}|'
-              '{{ false|default("no", true) }}|{{ given|default("no") }}');
-      expect(tmpl.render({'given': 'yes'}), equals('no|false|no|yes'));
+      var tmpl = env.fromString('{{ missing|default("no") }}');
+      expect(tmpl.render(), equals('no'));
+      tmpl = env.fromString('{{ false|default("no") }}');
+      expect(tmpl.render(), equals('false'));
+      tmpl = env.fromString('{{ false|default("no", true) }}');
+      expect(tmpl.render(), equals('no'));
+      tmpl = env.fromString('{{ given|default("no") }}');
+      expect(tmpl.render({'given': 'yes'}), equals('yes'));
     });
 
     // TODO: add test: dictsort
@@ -63,16 +67,25 @@ void main() {
       expect(result, equals('[[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, X, X]]'));
     });
 
-    // TODO: add test: slice
-    // test('slice', () {});
+    test('slice', () {
+      final data = {'foo': range(10)};
+      var tmpl = env.fromString('{{ foo|slice(3)|list }}');
+      var result = tmpl.render(data);
+      expect(result, equals('[[0, 1, 2, 3], [4, 5, 6], [7, 8, 9]]'));
+      tmpl = env.fromString('{{ foo|slice(3, "X")|list }}');
+      result = tmpl.render(data);
+      expect(result, equals('[[0, 1, 2, 3], [4, 5, 6, X], [7, 8, 9, X]]'));
+    });
 
     test('escape', () {
       final tmpl = env.fromString('''{{ '<">&'|escape }}''');
       expect(tmpl.render(), equals('&lt;&#34;&gt;&amp;'));
     });
 
-    // TODO: add test: trim
-    // test('trim', () {});
+    test('trim', () {
+      final tmpl = env.fromString('{{ foo|trim(chars) }}');
+      expect(tmpl.render({'foo': '  ..stays..'}), equals('..stays..'));
+    });
 
     // add test: striptags
     // test('striptags', () {});

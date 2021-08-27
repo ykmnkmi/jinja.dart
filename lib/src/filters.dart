@@ -286,8 +286,32 @@ Markup doMarkSafe(String value) {
   return Markup.escaped(value);
 }
 
+Iterable<Object?> doSlice(Object? value, int slices, [Object? fillWith]) sync* {
+  final values = list(value);
+  final length = values.length;
+  final perSlice = length ~/ slices;
+  final withExtra = length % slices;
+
+  for (var i = 0, offset = 0; i < slices; i += 1) {
+    final start = offset + i * perSlice;
+
+    if (i < withExtra) {
+      offset += 1;
+    }
+
+    final end = offset + (i + 1) * perSlice;
+    final tmp = values.sublist(start, end);
+
+    if (fillWith != null && i >= withExtra) {
+      tmp.add(fillWith);
+    }
+
+    yield tmp;
+  }
+}
+
 String doString(Object? value) {
-  return value.toString();
+  return '$value';
 }
 
 num doSum(Environment environment, Iterable<Object?> values,
@@ -299,8 +323,19 @@ num doSum(Environment environment, Iterable<Object?> values,
   return values.cast<num>().fold(start, (s, n) => s + n);
 }
 
-String doTrim(String value) {
-  return value.trim();
+
+String doTrim(String value, [Object? characters]) {
+  if (characters == null || characters is Undefined) {
+    return value.trim();
+  }
+
+  final match = RegExp('[$characters]+(.*)[$characters]+').matchAsPrefix(value);
+
+  if (match == null) {
+    return value;
+  }
+
+  return match.group(1)!;
 }
 
 String doUpper(String value) {
@@ -355,6 +390,7 @@ const Map<String, Function> filters = {
   'replace': doReplace,
   'reverse': doReverse,
   'safe': doMarkSafe,
+  'slice': doSlice,
   'string': doString,
   'sum': doSum,
   'trim': doTrim,
@@ -374,7 +410,6 @@ const Map<String, Function> filters = {
   // 'round': doRound,
   // 'select': doSelect,
   // 'selectattr': doSelectAttr,
-  // 'slice': doSlice,
   // 'sort': doSort,
   // 'striptags': doStripTags,
   // 'title': doTitle,

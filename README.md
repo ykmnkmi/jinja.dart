@@ -50,7 +50,6 @@ See also examples with [conduit][conduit_example] and [reflectable][reflectable_
 - List of Control Structures
   - Macros
   - Call
-  - Filters
   - Import
 - Loaders
   - PackageLoader
@@ -85,6 +84,7 @@ See also examples with [conduit][conduit_example] and [reflectable][reflectable_
 - List of Control Structures
   - For
   - If
+  - Filters
   - Assignments
   - Block Assignments
   - Extends
