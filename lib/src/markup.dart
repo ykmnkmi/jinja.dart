@@ -43,7 +43,7 @@ String escape(String text) {
 class Markup {
   const Markup(this.value);
 
-  factory Markup.from(Object? value) {
+  factory Markup.escape(Object? value) {
     if (value is Markup) {
       return value;
     }

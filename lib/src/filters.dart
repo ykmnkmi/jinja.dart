@@ -6,19 +6,14 @@ import 'dart:math' as math;
 import 'package:textwrap/textwrap.dart';
 
 import 'environment.dart';
-import 'exceptions.dart';
 import 'markup.dart';
 import 'runtime.dart';
 import 'utils.dart';
 
-List<String> prepareAttributeParts(String attribute) {
-  return attribute.split('.');
-}
-
 Object? Function(Object?) makeAttributeGetter(
     Environment environment, String attributeOrAttributes,
     {Object? Function(Object?)? postProcess, Object? defaultValue}) {
-  final attributes = prepareAttributeParts(attributeOrAttributes);
+  final attributes = attributeOrAttributes.split('.');
 
   Object? attributeGetter(Object? item) {
     for (final part in attributes) {
@@ -105,6 +100,10 @@ Object? doDefault(Object? value,
   return value;
 }
 
+List<Object?> doDictSort(Map<Comparable<Object?>, Object?> dict) {
+  throw UnimplementedError();
+}
+
 Markup doEscape(Object? value) {
   if (value is Markup) {
     return value;
@@ -150,9 +149,9 @@ String doFileSizeFormat(Object? value, [bool binary = false]) {
     return size + suffix;
   } else {
     final k = binary ? 0 : 1;
-    late num unit;
+    num unit = 0;
 
-    for (var i = 0; i < suffixes.length; i++) {
+    for (var i = 0; i < 8; i += 1) {
       unit = math.pow(base, i + 2);
 
       if (bytes < unit) {
@@ -168,49 +167,35 @@ Object? doFirst(Iterable<Object?> values) {
   return values.first;
 }
 
-double doFloat(Object? value, {double d = 0.0}) {
-  if (value is String) {
-    try {
-      return double.parse(value);
-    } on FormatException {
-      return d;
-    }
-  }
-
+double doFloat(String value, {double defaultValue = 0.0}) {
   try {
-    return (value as dynamic).toDouble() as double;
-  } catch (e) {
-    return d;
+    return double.tryParse(value) ?? defaultValue;
+  } on FormatException {
+    return defaultValue;
   }
 }
 
 Markup doForceEscape(Object? value) {
-  return Markup(value.toString());
+  return Markup('$value');
 }
 
-int doInteger(Object? value, {int d = 0, int base = 10}) {
-  if (value is String) {
-    if (base == 16 && value.startsWith('0x')) {
-      value = value.substring(2);
-    }
-
-    try {
-      return int.parse(value, radix: base);
-    } on FormatException {
-      if (base == 10) {
-        try {
-          return double.parse(value).toInt();
-        } on FormatException {
-          // pass
-        }
-      }
-    }
+int doInteger(String value, {int defaultValue = 0, int base = 10}) {
+  if (base == 16 && value.startsWith('0x')) {
+    value = value.substring(2);
   }
 
   try {
-    return (value as dynamic).toInt() as int;
-  } catch (e) {
-    return d;
+    return int.parse(value, radix: base);
+  } on FormatException {
+    if (base == 10) {
+      try {
+        return double.parse(value).toInt();
+      } on FormatException {
+        return defaultValue;
+      }
+    }
+
+    return defaultValue;
   }
 }
 
@@ -223,7 +208,7 @@ Object? doJoin(Context context, Iterable<Object?> values,
 
   if (context.autoEscape) {
     return Escaped(
-        values.map<Object?>((value) => Markup.from(value)).join(delimiter));
+        values.map<Object?>((value) => Markup.escape(value)).join(delimiter));
   }
 
   return values.join(delimiter);
@@ -241,10 +226,15 @@ String doPPrint(Object? object) {
   return format(object);
 }
 
-Object? doRandom(Environment environment, Object? values) {
-  final length = (values as dynamic).length as int;
-  final index = environment.random.nextInt(length);
-  return values[index];
+Object? doRandom(Environment environment, Object? value) {
+  if (value == null) {
+    return null;
+  }
+
+  final values = list(value);
+  final index = environment.random.nextInt(values.length);
+  final result = values[index];
+  return value is Map ? value[result] : result;
 }
 
 Object? doReplace(Object? object, String from, String to, [int? count]) {
@@ -274,12 +264,8 @@ Object? doReplace(Object? object, String from, String to, [int? count]) {
 }
 
 Object? doReverse(Object? value) {
-  try {
-    final values = list(value);
-    return values.reversed;
-  } catch (e) {
-    throw FilterArgumentError('argument must be iterable');
-  }
+  final values = list(value);
+  return values.reversed;
 }
 
 Markup doMarkSafe(String value) {
@@ -372,6 +358,7 @@ const Map<String, Function> filters = {
   'count': doLength,
   'd': doDefault,
   'default': doDefault,
+  'dictsort': doDictSort,
   'e': doEscape,
   'escape': doEscape,
   'filesizeformat': doFileSizeFormat,
@@ -397,7 +384,6 @@ const Map<String, Function> filters = {
   'wordcount': doWordCount,
   'wordwrap': doWordWrap,
 
-  // 'dictsort': doDictSort,
   // 'format': doFormat,
   // 'groupby': doGroupBy,
   // 'indent': doIndent,

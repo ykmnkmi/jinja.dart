@@ -1,11 +1,3 @@
-library utils;
-
-import 'package:meta/meta.dart';
-
-import 'runtime.dart';
-
-// import 'package:dart_style/dart_style.dart';
-
 typedef Indices = Iterable<int> Function(int stopOrStart,
     [int? stop, int? step]);
 
@@ -47,32 +39,13 @@ class CyclerIterator extends Iterator<Object?> {
 
   final Cycler cycler;
 
-  Object? last;
-
   @override
-  Object? get current {
-    return last;
-  }
+  Object? current;
 
   @override
   bool moveNext() {
-    last = cycler.next();
+    current = cycler.next();
     return true;
-  }
-}
-
-class Missing {
-  @literal
-  const Missing();
-
-  @override
-  int get hashCode {
-    return 2010;
-  }
-
-  @override
-  bool operator ==(Object? other) {
-    return other is Missing;
   }
 }
 
@@ -105,9 +78,7 @@ bool boolean(Object? value) {
 }
 
 String format(Object? object) {
-  final source = repr(object);
-  return source;
-  // return DartFormatter().formatStatement(source);
+  return repr(object);
 }
 
 List<Object?> list(Object? iterable) {
@@ -123,7 +94,6 @@ List<Object?> list(Object? iterable) {
     return List<Object?>.of(iterable.keys);
   }
 
-  // return List<Object?>.of((iterable as dynamic).toList() as List<Object?>);
   throw TypeError();
 }
 

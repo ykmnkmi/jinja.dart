@@ -31,7 +31,7 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
 
     if (keywordArguments != null) {
       for (final argument in keywordArguments) {
-        named[symbol(argument.key)] = argument.value.accept(this, context);
+        named[Symbol(argument.key)] = argument.value.accept(this, context);
       }
     }
 
@@ -48,7 +48,7 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
               as Map<Object?, Object?>)
           .cast<String, Object?>()
           .map<Symbol, Object?>(
-              (key, value) => MapEntry<Symbol, Object?>(symbol(key), value)));
+              (key, value) => MapEntry<Symbol, Object?>(Symbol(key), value)));
     }
 
     return (T Function(List<Object?> positional, Map<Symbol, Object?> named)
@@ -447,15 +447,5 @@ class ExpressionResolver<C extends Context> extends Visitor<C, Object?> {
   @override
   void visitWith(With node, C context) {
     throw UnimplementedError();
-  }
-
-  @internal
-  static Symbol symbol(String keyword) {
-    switch (keyword) {
-      case 'default':
-        return #d;
-      default:
-        return Symbol(keyword);
-    }
   }
 }

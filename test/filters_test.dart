@@ -20,12 +20,6 @@ class User {
   }
 }
 
-class IntIsh {
-  int toInt() {
-    return 42;
-  }
-}
-
 void main() {
   group('Filter', () {
     test('filter calling', () {
@@ -126,7 +120,7 @@ void main() {
     });
 
     test('float default', () {
-      final tmpl = env.fromString('{{ value|float(default=1.0) }}');
+      final tmpl = env.fromString('{{ value|float(defaultValue=1.0) }}');
       expect(tmpl.render({'value': 'abc'}), equals('1.0'));
     });
 
@@ -160,13 +154,8 @@ void main() {
     });
 
     test('int default', () {
-      final tmpl = env.fromString('{{ value|int(default=1) }}');
+      final tmpl = env.fromString('{{ value|int(defaultValue=1) }}');
       expect(tmpl.render({'value': 'abc'}), equals('1'));
-    });
-
-    test('int special method', () {
-      final tmpl = env.fromString('{{ value|int }}');
-      expect(tmpl.render({'value': IntIsh()}), equals('42'));
     });
 
     test('join', () {
