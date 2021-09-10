@@ -1,6 +1,5 @@
 .dart_tool/
 .idea/
-.vscode/
 .notes
 .packages
 bin/

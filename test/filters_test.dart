@@ -77,8 +77,13 @@ void main() {
     });
 
     test('trim', () {
-      final tmpl = env.fromString('{{ foo|trim(chars) }}');
-      expect(tmpl.render({'foo': '  ..stays..'}), equals('..stays..'));
+      final data = {'foo': '  ..stays..'};
+      var tmpl = env.fromString('{{ foo|trim() }}');
+      expect(tmpl.render(data), equals('..stays..'));
+      tmpl = env.fromString('{{ foo|trim(".") }}');
+      expect(tmpl.render(data), equals(' ..stays'));
+      tmpl = env.fromString('{{ foo|trim(" .") }}');
+      expect(tmpl.render(data), equals('stays'));
     });
 
     // add test: striptags

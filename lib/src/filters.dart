@@ -306,15 +306,15 @@ num doSum(Environment environment, Iterable<Object?> values,
     values = values.map<Object?>(makeAttributeGetter(environment, attribute));
   }
 
-  return values.cast<num>().fold(start, (s, n) => s + n);
+  return values.cast<num>().fold<num>(start, (s, n) => s + n);
 }
 
-String doTrim(String value, [Object? characters]) {
+String doTrim(String value, [String? characters]) {
   if (characters == null) {
     return value.trim();
   }
 
-  final match = RegExp('[$characters]+(.*)[$characters]+').matchAsPrefix(value);
+  final match = RegExp('[$characters]+(.*)[$characters]*').matchAsPrefix(value);
 
   if (match == null) {
     return value;
