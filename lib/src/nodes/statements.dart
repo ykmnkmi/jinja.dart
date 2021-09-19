@@ -1,5 +1,9 @@
 part of '../nodes.dart';
 
+abstract class Statement extends Node {}
+
+abstract class ContextModifier extends Statement {}
+
 class Output extends Statement {
   Output(this.nodes);
 
@@ -8,11 +12,6 @@ class Output extends Statement {
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitOutput(this, context);
-  }
-
-  @override
-  void visitChildNodes(NodeVisitor visitor) {
-    nodes.forEach(visitor);
   }
 
   @override
@@ -61,14 +60,6 @@ class For extends Statement {
   }
 
   @override
-  void visitChildNodes(NodeVisitor visitor) {
-    visitor(target);
-    visitor(iterable);
-    body.forEach(visitor);
-    orElse?.forEach(visitor);
-  }
-
-  @override
   String toString() {
     var result = 'For';
 
@@ -111,14 +102,6 @@ class If extends Statement {
   }
 
   @override
-  void visitChildNodes(NodeVisitor visitor) {
-    visitor(test);
-    body.forEach(visitor);
-    nextIf?.visitChildNodes(visitor);
-    orElse?.forEach(visitor);
-  }
-
-  @override
   String toString() {
     var result = 'If($test, $body';
 
@@ -147,12 +130,6 @@ class FilterBlock extends Statement {
   }
 
   @override
-  void visitChildNodes(NodeVisitor visitor) {
-    filters.forEach(visitor);
-    body.forEach(visitor);
-  }
-
-  @override
   String toString() {
     return 'FilterBlock($filters, $body)';
   }
@@ -170,13 +147,6 @@ class With extends Statement {
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitWith(this, context);
-  }
-
-  @override
-  void visitChildNodes(NodeVisitor visitor) {
-    targets.forEach(visitor);
-    values.forEach(visitor);
-    body.forEach(visitor);
   }
 
   @override
@@ -201,11 +171,6 @@ class Block extends Statement {
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitBlock(this, context);
-  }
-
-  @override
-  void visitChildNodes(NodeVisitor visitor) {
-    nodes.forEach(visitor);
   }
 
   @override
@@ -256,11 +221,6 @@ class Do extends Statement {
   }
 
   @override
-  void visitChildNodes(NodeVisitor visitor) {
-    expressions.forEach(visitor);
-  }
-
-  @override
   String toString() {
     return 'Do(${expressions.join(', ')})';
   }
@@ -276,12 +236,6 @@ class Assign extends Statement {
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitAssign(this, context);
-  }
-
-  @override
-  void visitChildNodes(NodeVisitor visitor) {
-    visitor(target);
-    visitor(expression);
   }
 
   @override
@@ -302,12 +256,6 @@ class AssignBlock extends Statement {
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitAssignBlock(this, context);
-  }
-
-  @override
-  void visitChildNodes(NodeVisitor visitor) {
-    visitor(target);
-    nodes.forEach(visitor);
   }
 
   @override
@@ -333,11 +281,6 @@ class Scope extends Statement {
   }
 
   @override
-  void visitChildNodes(NodeVisitor visitor) {
-    modifier.visitChildNodes(visitor);
-  }
-
-  @override
   String toString() {
     return 'Scope($modifier)';
   }
@@ -353,11 +296,6 @@ class ScopedContextModifier extends ContextModifier {
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitScopedContextModifier(this, context);
-  }
-
-  @override
-  void visitChildNodes(NodeVisitor visitor) {
-    nodes.forEach(visitor);
   }
 
   @override

@@ -1,3 +1,5 @@
+import 'package:jinja/runtime.dart';
+
 import 'environment.dart';
 import 'exceptions.dart';
 import 'lexer.dart';
@@ -160,7 +162,7 @@ class Parser {
 
     if (filter is Filter) {
       var filters = <Filter>[];
-      dynamic expression = filter;
+      Object? expression = filter;
 
       while (expression is Filter) {
         var next = expression.expression;
@@ -177,43 +179,36 @@ class Parser {
 
   For parseFor(TokenReader reader) {
     reader.expect('name', 'for');
-    var target = parseAssignTarget(reader, extraEndRules: <String>['name:in']);
+    final target =
+        parseAssignTarget(reader, extraEndRules: <String>['name:in']);
 
     if (target is Name && target.name == 'loop') {
       fail('can\'t assign to special loop variable in for-loop target');
     }
 
     reader.expect('name', 'in');
-    var iterable = parseTuple(reader, withCondition: false);
-    var hasLoop = false;
-
-    void visit(Node node) {
-      if (node is Name) {
-        if (node.name == 'loop') {
-          hasLoop = true;
-        }
-      } else if (node is For) {
-        return;
-      } else {
-        node.visitChildNodes(visit);
-      }
-    }
-
+    final iterable = parseTuple(reader, withCondition: false);
     Test? test;
 
     if (reader.skipIf('name', 'if')) {
-      var expression = parseExpression(reader);
-      expression.visitChildNodes(visit);
+      final expression = parseExpression(reader);
       test = expression is Test
           ? expression
           : Test('defined', expression: expression);
     }
 
-    var recursive = reader.skipIf('name', 'recursive');
-    var body = parseStatements(reader, <String>['name:endfor', 'name:else']);
+    final recursive = reader.skipIf('name', 'recursive');
+    final body = parseStatements(reader, <String>['name:endfor', 'name:else']);
+    var hasLoop = false;
 
-    if (!hasLoop) {
-      body.forEach(visit);
+    body:
+    for (final node in body) {
+      for (final name in node.listExpressions<Name>()) {
+        if (name.name == 'loop') {
+          hasLoop = true;
+          break body;
+        }
+      }
     }
 
     List<Node>? orElse;
@@ -267,7 +262,7 @@ class Parser {
       }
 
       final target = parseAssignTarget(reader);
-      (target as CanAssign).context = AssignContext.parameter;
+      (target as AssignableExpression).context = AssignContext.parameter;
       targets.add(target);
       reader.expect('assign');
       values.add(parseExpression(reader));
@@ -300,23 +295,26 @@ class Parser {
     }
 
     final required = reader.skipIf('name', 'required');
+    final body = parseStatements(reader, <String>['name:endblock'], true);
     var hasSuper = false;
 
-    void visit(Node node) {
-      if (required) {
-        checkRequired(node);
+    for (final node in body) {
+      for (final child in node.listChildrens(deep: true)) {
+        if (child is Data && child.trimmed.isEmpty) {
+          continue;
+        }
+
+        throw TemplateSyntaxError(
+            'required blocks can only contain comments or whitespace');
       }
 
-      if (node is Name && node.name == 'super') {
-        hasSuper = true;
-        return;
+      for (final name in node.listExpressions<Name>()) {
+        if (name.name == 'super') {
+          hasSuper = true;
+          break;
+        }
       }
-
-      node.visitChildNodes(visit);
     }
-
-    final body = parseStatements(reader, <String>['name:endblock'], true);
-    body.forEach(visit);
 
     final maybeName = reader.current;
 
@@ -336,12 +334,12 @@ class Parser {
     reader.expect('name', 'extends');
     final node = parsePrimary(reader);
 
-    if (node is! Constant<String>) {
+    if (node is! Constant) {
       // TODO: update error message
       fail('template name or path expected');
     }
 
-    return Extends(node.value!);
+    return Extends(unsafeCast<String>(node.value));
   }
 
   T parseImportContext<T extends ImportContext>(
@@ -409,7 +407,7 @@ class Parser {
       reader.next(); // skip dot
       final attribute = reader.expect('name');
 
-      target = NameSpaceReference(namespace.value, attribute.value);
+      target = NamespaceRef(namespace.value, attribute.value);
     } else if (nameOnly) {
       final name = reader.expect('name');
 
@@ -422,7 +420,7 @@ class Parser {
         target = parsePrimary(reader);
       }
 
-      if (target is CanAssign) {
+      if (target is AssignableExpression) {
         target.context = AssignContext.store;
       } else {
         fail('can\'t assign to ${target.runtimeType}', line);
@@ -457,7 +455,7 @@ class Parser {
     var expression = parseAnd(reader);
 
     while (reader.skipIf('name', 'or')) {
-      expression = Or(expression, parseAnd(reader));
+      expression = Binary('or', expression, parseAnd(reader));
     }
 
     return expression;
@@ -467,7 +465,7 @@ class Parser {
     var expression = parseNot(reader);
 
     while (reader.skipIf('name', 'and')) {
-      expression = And(expression, parseNot(reader));
+      expression = Binary('and', expression, parseNot(reader));
     }
 
     return expression;
@@ -476,7 +474,7 @@ class Parser {
   Expression parseNot(TokenReader reader) {
     if (reader.current.test('name', 'not')) {
       reader.next();
-      return Not(parseNot(reader));
+      return Unary('not', parseNot(reader));
     }
 
     return parseCompare(reader);
@@ -518,11 +516,11 @@ class Parser {
       switch (reader.current.type) {
         case 'add':
           reader.next();
-          expression = Add(expression, parseConcat(reader));
+          expression = Binary('+', expression, parseConcat(reader));
           break;
         case 'sub':
           reader.next();
-          expression = Sub(expression, parseConcat(reader));
+          expression = Binary('-', expression, parseConcat(reader));
           break;
         default:
           break outer;
@@ -555,19 +553,19 @@ class Parser {
       switch (reader.current.type) {
         case 'mul':
           reader.next();
-          expression = Mul(expression, parsePow(reader));
+          expression = Binary('*', expression, parsePow(reader));
           break;
         case 'div':
           reader.next();
-          expression = Div(expression, parsePow(reader));
+          expression = Binary('/', expression, parsePow(reader));
           break;
         case 'floordiv':
           reader.next();
-          expression = FloorDiv(expression, parsePow(reader));
+          expression = Binary('//', expression, parsePow(reader));
           break;
         case 'mod':
           reader.next();
-          expression = Mod(expression, parsePow(reader));
+          expression = Binary('%', expression, parsePow(reader));
           break;
         default:
           break outer;
@@ -582,7 +580,7 @@ class Parser {
 
     while (reader.current.test('pow')) {
       reader.next();
-      expression = Pow(expression, parseUnary(reader));
+      expression = Binary('**', expression, parseUnary(reader));
     }
 
     return expression;
@@ -595,12 +593,12 @@ class Parser {
       case 'add':
         reader.next();
         expression = parseUnary(reader, withFilter: false);
-        expression = Pos(expression);
+        expression = Unary('+', expression);
         break;
       case 'sub':
         reader.next();
         expression = parseUnary(reader, withFilter: false);
-        expression = Neg(expression);
+        expression = Unary('-', expression);
         break;
       default:
         expression = parsePrimary(reader);
@@ -623,16 +621,16 @@ class Parser {
         switch (reader.current.value) {
           case 'False':
           case 'false':
-            expression = Constant<bool>(false);
+            expression = Constant(false);
             break;
           case 'True':
           case 'true':
-            expression = Constant<bool>(true);
+            expression = Constant(true);
             break;
           case 'None':
           case 'none':
           case 'null':
-            expression = Constant<Object?>(null);
+            expression = Constant(null);
             break;
           default:
             expression = Name(reader.current.value);
@@ -649,17 +647,14 @@ class Parser {
           reader.next();
         }
 
-        expression = Constant<String>(buffer
+        expression = Constant(buffer
             .toString()
             .replaceAll(r'\\r', '\r')
             .replaceAll(r'\\n', '\n'));
         break;
       case 'integer':
-        expression = Constant<int>(int.parse(reader.current.value));
-        reader.next();
-        break;
       case 'float':
-        expression = Constant<double>(double.parse(reader.current.value));
+        expression = Constant(num.parse(reader.current.value));
         reader.next();
         break;
       case 'lparen':
@@ -794,7 +789,7 @@ class Parser {
   Expression parseFilterExpression(TokenReader reader, Expression expression) {
     while (true) {
       if (reader.current.test('pipe')) {
-        expression = parseFilter(reader, expression: expression)!;
+        expression = parseFilter(reader, expression);
       } else if (reader.current.test('name', 'is')) {
         expression = parseTest(reader, expression);
       } else if (reader.current.test('lparen')) {
@@ -819,7 +814,7 @@ class Parser {
         fail('expected name or number', attributeToken.line);
       }
 
-      return Item(Constant<int>(int.parse(attributeToken.value)), expression);
+      return Item(Constant(int.parse(attributeToken.value)), expression);
     } else if (token.test('lbracket')) {
       final arguments = <Expression>[];
 
@@ -884,7 +879,7 @@ class Parser {
     return Slice.fromList(arguments);
   }
 
-  Call parseCall(TokenReader reader, [Expression? expression]) {
+  Call parseCall(TokenReader reader, Expression expression) {
     final token = reader.expect('lparen');
     final arguments = <Expression>[];
     final keywordArguments = <Keyword>[];
@@ -938,17 +933,15 @@ class Parser {
 
     reader.expect('rparen');
 
-    return Call(
-      expression: expression,
-      arguments: arguments,
-      keywordArguments: keywordArguments,
-      dArguments: dArguments,
-      dKeywordArguments: dKeywordArguments,
-    );
+    return Call(expression,
+        arguments: arguments,
+        keywords: keywordArguments,
+        dArguments: dArguments,
+        dKeywords: dKeywordArguments);
   }
 
-  Expression? parseFilter(TokenReader reader,
-      {Expression? expression, bool startInline = false}) {
+  Expression parseFilter(TokenReader reader, Expression expression,
+      {bool startInline = false}) {
     while (reader.current.test('pipe') || startInline) {
       if (!startInline) {
         reader.next();
@@ -966,20 +959,17 @@ class Parser {
       Call? call;
 
       if (reader.current.test('lparen')) {
-        call = parseCall(reader);
+        call = parseCall(reader, expression);
       }
 
       if (call != null) {
-        expression = Filter(
-          name,
-          expression: expression,
-          arguments: call.arguments,
-          keywordArguments: call.keywordArguments,
-          dArguments: call.dArguments,
-          dKeywordArguments: call.dKeywordArguments,
-        );
+        expression = Filter(name, expression,
+            arguments: call.arguments,
+            keywords: call.keywords,
+            dArguments: call.dArguments,
+            dKeywords: call.dKeywords);
       } else {
-        expression = Filter(name, expression: expression);
+        expression = Filter(name, expression);
       }
 
       startInline = false;
@@ -1009,7 +999,7 @@ class Parser {
     Call? call;
 
     if (reader.current.test('lparen')) {
-      call = parseCall(reader);
+      call = parseCall(reader, expression);
     } else if (reader.current.testAny([
           'name',
           'string',
@@ -1025,24 +1015,21 @@ class Parser {
       }
 
       final argument = parsePostfix(reader, parsePrimary(reader));
-      call = Call(arguments: <Expression>[argument]);
+      call = Call(expression, arguments: <Expression>[argument]);
     }
 
     if (call != null) {
-      expression = Test(
-        name,
-        expression: expression,
-        arguments: call.arguments,
-        keywordArguments: call.keywordArguments,
-        dArguments: call.dArguments,
-        dKeywordArguments: call.dKeywordArguments,
-      );
+      expression = Test(name, expression,
+          arguments: call.arguments,
+          keywords: call.keywords,
+          dArguments: call.dArguments,
+          dKeywords: call.dKeywords);
     } else {
-      expression = Test(name, expression: expression);
+      expression = Test(name, expression);
     }
 
     if (negated) {
-      expression = Not(expression);
+      expression = Unary.not(expression);
     }
 
     return expression;
@@ -1055,31 +1042,29 @@ class Parser {
   List<Node> subParse(TokenReader reader, {List<String>? endTokens}) {
     final buffer = <Node>[];
     final nodes = <Node>[];
-    // 0 - not extends, 1 - extends
-    int? firstNodeType;
+    bool? firstNodeType;
 
     if (endTokens != null) {
       endTokensStack.add(endTokens);
     }
 
+    // TODO: test conditional imports
     void check(Node node) {
       if (firstNodeType == null) {
-        firstNodeType = node is Extends ? 1 : 0;
+        firstNodeType = node is Extends;
       } else if (node is Extends) {
-        if (firstNodeType == 0) {
+        if (firstNodeType == false) {
           // TODO: add error message
-          fail('message 0');
+          fail('message false');
         }
 
-        if (firstNodeType == 1) {
+        if (firstNodeType == true) {
           // TODO: add error message
-          fail('message 1');
+          fail('message true');
         }
-      } else {
-        if (firstNodeType == 1 && node is! Block && node is! Output) {
-          // TODO: add error message
-          fail('message 2');
-        }
+      } else if (firstNodeType == true && node is! Block && node is! Output) {
+        // TODO: add error message
+        fail('message else');
       }
     }
 
@@ -1141,20 +1126,27 @@ class Parser {
     final blocks = <Block>[];
     var hasSelf = false;
 
-    void visit(Node node) {
-      if (node is Name && node.name == 'self') {
-        hasSelf = true;
-      } else if (node is Block) {
-        blocks.add(node);
+    if (nodes.isNotEmpty) {
+      if (nodes[0] is Extends) {
+        nodes.length = 1;
+      } else {
+        for (final node in nodes) {
+          for (final child in node.listChildrens(deep: true)) {
+            if (!hasSelf) {
+              for (final name in child.listExpressions<Name>()) {
+                if (name.name == 'self') {
+                  hasSelf = true;
+                  break;
+                }
+              }
+            }
+
+            if (child is Block) {
+              blocks.add(child);
+            }
+          }
+        }
       }
-
-      node.visitChildNodes(visit);
-    }
-
-    nodes.forEach(visit);
-
-    if (nodes.isNotEmpty && nodes[0] is Extends) {
-      nodes.length = 1;
     }
 
     return Template.parsed(environment, nodes,
@@ -1165,21 +1157,4 @@ class Parser {
   String toString() {
     return 'Parser()';
   }
-}
-
-void checkRequired(Node node) {
-  if (node is Data && node.trimmed.isEmpty) {
-    return;
-  }
-
-  if (node is Output) {
-    for (final node in node.nodes) {
-      checkRequired(node);
-    }
-
-    return;
-  }
-
-  throw TemplateSyntaxError(
-      'required blocks can only contain comments or whitespace');
 }

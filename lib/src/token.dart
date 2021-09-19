@@ -175,7 +175,6 @@ class ValueToken extends BaseToken {
 String describeExpression(String expression) {
   if (expression.contains(':')) {
     final parts = expression.split(':');
-
     assert(parts.length == 2);
 
     if (parts.first == 'name') {

@@ -1,7 +1,6 @@
 import 'dart:collection' show HashMap, HashSet;
 import 'dart:math' show Random;
 
-import 'package:quiver/core.dart';
 import 'package:jinja/jinja.dart';
 
 import 'defaults.dart' as defaults;
@@ -9,7 +8,6 @@ import 'exceptions.dart';
 import 'lexer.dart';
 import 'loaders.dart';
 import 'nodes.dart';
-import 'optimizer.dart';
 import 'parser.dart';
 import 'renderer.dart';
 import 'runtime.dart';
@@ -74,7 +72,6 @@ class Environment {
         contextFilters = HashSet<String>.of(defaults.contextFilters),
         tests = HashMap<String, Function>.of(defaults.tests),
         templates = HashMap<String, Template>(),
-        modifiers = List<NodeVisitor>.of(defaults.modifiers),
         random = random ?? Random() {
     if (globals != null) {
       this.globals.addAll(globals);
@@ -98,10 +95,6 @@ class Environment {
 
     if (templates != null) {
       this.templates.addAll(templates);
-    }
-
-    if (modifiers != null) {
-      this.modifiers.addAll(modifiers);
     }
   }
 
@@ -187,26 +180,23 @@ class Environment {
 
   final Map<String, Template> templates;
 
-  final List<NodeVisitor> modifiers;
-
   final Random random;
 
   final FieldGetter fieldGetter;
 
   @override
   int get hashCode {
-    return hashObjects(<Object?>[
-      blockStart,
-      blockEnd,
-      variableStart,
-      variableEnd,
-      commentStart,
-      commentEnd,
-      lineStatementPrefix,
-      lineCommentPrefix,
-      trimBlocks,
-      leftStripBlocks
-    ]);
+    return Object.hash(
+        blockStart,
+        blockEnd,
+        variableStart,
+        variableEnd,
+        commentStart,
+        commentEnd,
+        lineStatementPrefix,
+        lineCommentPrefix,
+        trimBlocks,
+        leftStripBlocks);
   }
 
   /// The lexer for this environment.
@@ -230,15 +220,15 @@ class Environment {
   }
 
   /// If [name] not found throws [TemplateRuntimeError].
-  Object? callFilter(String name, Object? value,
-      {List<Object?>? positional,
-      Map<Symbol, Object?>? named,
-      Context? context}) {
-    Function filter;
+  Object? callFilter(
+    String name,
+    List<Object?> positional,
+    Map<Symbol, Object?> named, {
+    Context? context,
+  }) {
+    final filter = filters[name];
 
-    if (filters.containsKey(name)) {
-      filter = filters[name]!;
-    } else {
+    if (filter == null) {
       throw TemplateRuntimeError('no filter named $name');
     }
 
@@ -248,35 +238,27 @@ class Environment {
             'attempted to invoke context filter without context');
       }
 
-      positional ??= <Object?>[];
       positional.insert(0, context);
-      positional.insert(1, value);
     } else if (environmentFilters.contains(name)) {
-      positional ??= <Object?>[];
       positional.insert(0, this);
-      positional.insert(1, value);
-    } else {
-      positional ??= <Object?>[];
-      positional.insert(0, value);
     }
 
     return Function.apply(filter, positional, named);
   }
 
   /// If [name] not found throws [TemplateRuntimeError].
-  bool callTest(String name, Object? value,
-      {List<Object?>? positional, Map<Symbol, Object?>? named}) {
-    Function test;
+  bool callTest(
+    String name,
+    List<Object?> positional,
+    Map<Symbol, Object?> named,
+  ) {
+    final test = tests[name];
 
-    if (tests.containsKey(name)) {
-      test = tests[name]!;
-    } else {
+    if (test == null) {
       throw TemplateRuntimeError('no test named $name');
     }
 
-    positional ??= <Object?>[];
-    positional.insert(0, value);
-    return Function.apply(test, positional, named) as bool;
+    return unsafeCast<bool>(Function.apply(test, positional, named));
   }
 
   Environment copyWith({
@@ -302,7 +284,6 @@ class Environment {
     Set<String>? environmentFilters,
     Set<String>? contextFilters,
     Map<String, Function>? tests,
-    List<NodeVisitor>? modifiers,
     Random? random,
     FieldGetter? fieldGetter,
   }) {
@@ -329,7 +310,6 @@ class Environment {
       environmentFilters: environmentFilters ?? this.environmentFilters,
       contextFilters: contextFilters ?? this.contextFilters,
       tests: tests ?? this.tests,
-      modifiers: modifiers ?? this.modifiers,
       random: random ?? this.random,
       fieldGetter: fieldGetter ?? this.fieldGetter,
     );
@@ -340,16 +320,79 @@ class Environment {
   Template fromString(String source, {String? path}) {
     final template = Parser(this, path: path).parse(source);
 
-    for (final modifier in modifiers) {
-      for (final node in template.nodes) {
-        modifier(node);
+    for (final node in template.nodes) {
+      for (final child in node.listChildrens()) {
+        for (final call in child.listExpressions<Call>()) {
+          final expression = call.expression;
+
+          if (expression is Name) {
+            if (expression.name == 'namespace') {
+              final arguments = <Expression>[...?call.arguments];
+              call.arguments = null;
+              final keywords = call.keywords;
+
+              if (keywords != null && keywords.isNotEmpty) {
+                final pairs = <Pair>[
+                  for (final keyword in keywords) keyword.toPair()
+                ];
+                final dict = DictLiteral(pairs);
+                call.keywords = null;
+                arguments.add(dict);
+              }
+
+              final dArguments = call.dArguments;
+
+              if (dArguments != null) {
+                arguments.add(dArguments);
+                call.dArguments = null;
+              }
+
+              final dKeywordArguments = call.dKeywords;
+
+              if (dKeywordArguments != null) {
+                arguments.add(dKeywordArguments);
+                call.dKeywords = null;
+              }
+
+              if (arguments.isNotEmpty) {
+                call.arguments = <Expression>[ListLiteral(arguments)];
+              }
+            } else if (expression.name == 'super') {
+              final arguments = <Expression>[...?call.arguments];
+              call.arguments = null;
+
+              final keywords = call.keywords;
+
+              if (keywords != null && keywords.isNotEmpty) {
+                final pairs = List<Pair>.generate(
+                    keywords.length, (index) => keywords[index].toPair(),
+                    growable: false);
+                final dict = DictLiteral(pairs);
+                call.keywords = null;
+                arguments.add(dict);
+              }
+
+              if (call.dArguments != null) {
+                arguments.add(call.dArguments!);
+                call.dArguments = null;
+              }
+
+              if (call.dKeywords != null) {
+                arguments.add(call.dKeywords!);
+                call.dKeywords = null;
+              }
+
+              if (arguments.isNotEmpty) {
+                call.arguments =
+                    List<Expression>.filled(1, ListLiteral(arguments));
+              }
+            }
+          }
+        }
       }
     }
 
-    if (optimized) {
-      template.accept(const Optimizer(), Context(this));
-    }
-
+    // TODO: optimize
     return template;
   }
 
@@ -495,7 +538,6 @@ class Template extends Node {
         environmentFilters: environmentFilters,
         contextFilters: contextFilters,
         tests: tests,
-        modifiers: modifiers,
         random: random,
         fieldGetter: fieldGetter,
       );

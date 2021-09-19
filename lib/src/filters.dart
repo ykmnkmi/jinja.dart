@@ -88,13 +88,25 @@ String doCenter(String string, int width) {
 }
 
 int doLength(Object? items) {
-  return (items as dynamic).length as int;
+  if (items is String) {
+    return items.length;
+  }
+
+  if (items is List) {
+    return items.length;
+  }
+
+  if (items is Iterable) {
+    final list = items.toList(growable: false);
+    return list.length;
+  }
+
+  throw TypeError();
 }
 
-Object? doDefault(Object? value,
-    [Object? defaultValue = '', bool asBoolean = false]) {
-  if (value == null || (asBoolean && !boolean(value))) {
-    return defaultValue;
+Object? doDefault(Object? value, [Object? d = '', bool asBoolean = false]) {
+  if (value == null || asBoolean && !boolean(value)) {
+    return d;
   }
 
   return value;
@@ -314,13 +326,9 @@ String doTrim(String value, [String? characters]) {
     return value.trim();
   }
 
-  final match = RegExp('[$characters]+(.*)[$characters]*').matchAsPrefix(value);
-
-  if (match == null) {
-    return value;
-  }
-
-  return match.group(1)!;
+  final left = RegExp('^[$characters]+', multiLine: true);
+  final right = RegExp('[$characters]+\$', multiLine: true);
+  return value.replaceAll(left, '').replaceAll(right, '');
 }
 
 String doUpper(String value) {

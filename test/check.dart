@@ -7,7 +7,7 @@ import 'package:jinja/src/filters.dart';
 
 void main() {
   try {
-    final environment = Environment(optimized: false);
+    final environment = Environment();
     final template = environment.fromString('{{ " ..abc.."|trim(".") }}');
     print(template.nodes);
     print(template.render());

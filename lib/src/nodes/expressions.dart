@@ -1,32 +1,39 @@
 part of '../nodes.dart';
 
+class Impossible implements Exception {
+  Impossible();
+}
+
+abstract class Expression extends Node {
+  const Expression();
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitExpession(this, context);
+  }
+
+  Object? asConst(Context context) {
+    throw Impossible();
+  }
+
+  Object? resolve(Context context) {
+    return null;
+  }
+}
+
 enum AssignContext {
   load,
   store,
   parameter,
 }
 
-mixin CanAssign on Expression {
+abstract class AssignableExpression extends Expression {
   bool get canAssign;
 
-  AssignContext get context;
-
-  set context(AssignContext context);
+  abstract AssignContext context;
 }
 
-abstract class Callable {
-  Expression? get expression;
-
-  List<Expression>? get arguments;
-
-  List<Keyword>? get keywordArguments;
-
-  Expression? get dArguments;
-
-  Expression? get dKeywordArguments;
-}
-
-class Name extends Expression with CanAssign {
+class Name extends AssignableExpression {
   Name(this.name, {this.context = AssignContext.load, this.type});
 
   String name;
@@ -42,13 +49,42 @@ class Name extends Expression with CanAssign {
   }
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitName(this, context);
+  Expression asConst(Context context) {
+    throw Impossible();
+  }
+
+  @override
+  Object? resolve(Context context) {
+    switch (this.context) {
+      case AssignContext.load:
+        return context.resolve(name);
+      case AssignContext.store:
+      case AssignContext.parameter:
+        return name;
+    }
   }
 
   @override
   String toString() {
     return type == null ? 'Name($name)' : 'Name($name, $type)';
+  }
+}
+
+class NamespaceRef extends Expression {
+  NamespaceRef(this.name, this.attribute);
+
+  String name;
+
+  String attribute;
+
+  @override
+  NamespaceValue resolve(Context context) {
+    return NamespaceValue(name, attribute);
+  }
+
+  @override
+  String toString() {
+    return 'NamespaceRef($name, $attribute)';
   }
 }
 
@@ -58,13 +94,14 @@ class Concat extends Expression {
   List<Expression> expressions;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitConcat(this, context);
-  }
+  String resolve(Context context) {
+    final buffer = StringBuffer();
 
-  @override
-  void visitChildNodes(NodeVisitor visitor) {
-    expressions.forEach(visitor);
+    for (final expression in expressions) {
+      buffer.write(expression.resolve(context));
+    }
+
+    return '$buffer';
   }
 
   @override
@@ -81,13 +118,9 @@ class Attribute extends Expression {
   Expression expression;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitAttribute(this, context);
-  }
-
-  @override
-  void visitChildNodes(NodeVisitor visitor) {
-    visitor(expression);
+  Object? resolve(Context context) {
+    return context.environment
+        .getAttribute(expression.resolve(context), attribute);
   }
 
   @override
@@ -104,14 +137,9 @@ class Item extends Expression {
   Expression expression;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitItem(this, context);
-  }
-
-  @override
-  void visitChildNodes(NodeVisitor visitor) {
-    visitor(key);
-    visitor(expression);
+  Object? resolve(Context context) {
+    return context.environment
+        .getItem(key.resolve(context), expression.resolve(context));
   }
 
   @override
@@ -148,29 +176,35 @@ class Slice extends Expression {
   Expression? step;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitSlice(this, context);
-  }
+  Iterable<int> Function(int, [int?, int?]) resolve(Context context) {
+    final sliceStart = unsafeCast<int?>(start?.resolve(context));
+    final sliceStop = unsafeCast<int?>(stop?.resolve(context));
+    final sliceStep = unsafeCast<int?>(step?.resolve(context));
+    return (int stopOrStart, [int? stop, int? step]) {
+      if (sliceStep == null) {
+        step = 1;
+      } else if (sliceStep == 0) {
+        throw StateError('slice step cannot be zero');
+      } else {
+        step = sliceStep;
+      }
 
-  @override
-  void visitChildNodes(NodeVisitor visitor) {
-    final start = this.start;
+      int start;
 
-    if (start != null) {
-      visitor(start);
-    }
+      if (sliceStart == null) {
+        start = step > 0 ? 0 : stopOrStart - 1;
+      } else {
+        start = sliceStart < 0 ? sliceStart + stopOrStart : sliceStart;
+      }
 
-    final stop = this.stop;
+      if (sliceStop == null) {
+        stop = step > 0 ? stopOrStart : -1;
+      } else {
+        stop = sliceStop < 0 ? sliceStop + stopOrStart : sliceStop;
+      }
 
-    if (stop != null) {
-      visitor(stop);
-    }
-
-    final step = this.step;
-
-    if (step != null) {
-      visitor(step);
-    }
+      return range(start, stop, step);
+    };
   }
 
   @override
@@ -201,82 +235,94 @@ class Slice extends Expression {
   }
 }
 
-class Call extends Expression implements Callable {
-  Call(
-      {this.expression,
-      this.arguments,
-      this.keywordArguments,
-      this.dArguments,
-      this.dKeywordArguments});
+typedef Callback = Object? Function(List<Object?>, Map<Symbol, Object?>);
+
+class Keyword extends Expression {
+  Keyword(this.key, this.value);
+
+  String key;
+
+  Expression value;
 
   @override
-  Expression? expression;
+  MapEntry<Symbol, Object?> resolve(Context context) {
+    return MapEntry<Symbol, Object?>(Symbol(key), value.resolve(context));
+  }
 
-  @override
-  List<Expression>? arguments;
-
-  @override
-  List<Keyword>? keywordArguments;
-
-  @override
-  Expression? dArguments;
-
-  @override
-  Expression? dKeywordArguments;
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitCall(this, context);
+  Pair toPair() {
+    return Pair(Constant(key), value);
   }
 
   @override
-  void visitChildNodes(NodeVisitor visitor) {
-    final expression = this.expression;
+  String toString() {
+    return 'Keyword($key, $value)';
+  }
+}
 
-    if (expression != null) {
-      visitor(expression);
-    }
+abstract class CallableExpression extends Expression {
+  abstract Expression expression;
 
+  abstract List<Expression>? arguments;
+
+  abstract List<Keyword>? keywords;
+
+  abstract Expression? dArguments;
+
+  abstract Expression? dKeywords;
+
+  Object? call(Context context, Callback callback) {
     final arguments = this.arguments;
+    List<Object?> positional;
 
     if (arguments != null) {
-      arguments.forEach(visitor);
+      positional = List<Object?>.generate(
+          arguments.length, (index) => arguments[index].resolve(context));
+    } else {
+      positional = <Object?>[];
     }
 
-    final keywordArguments = this.keywordArguments;
+    final named = <Symbol, Object?>{};
+    final keywords = this.keywords;
 
-    if (keywordArguments != null) {
-      keywordArguments.forEach(visitor);
+    if (keywords != null) {
+      for (final argument in keywords) {
+        named[Symbol(argument.key)] = argument.value.resolve(context);
+      }
     }
 
     final dArguments = this.dArguments;
 
     if (dArguments != null) {
-      visitor(dArguments);
+      positional
+          .addAll(unsafeCast<Iterable<Object?>>(dArguments.resolve(context)));
     }
 
-    final dKeywordArguments = this.dKeywordArguments;
+    final dKeywords = this.dKeywords;
 
-    if (dKeywordArguments != null) {
-      visitor(dKeywordArguments);
+    if (dKeywords != null) {
+      final resolvedKeywords = dKeywords.resolve(context);
+
+      if (resolvedKeywords is! Map<String, Object?>) {
+        // TODO: update error
+        throw TypeError();
+      }
+
+      named.addAll(resolvedKeywords.map<Symbol, Object?>(
+          (key, value) => MapEntry<Symbol, Object?>(Symbol(key), value)));
     }
+
+    return callback(positional, named);
   }
 
-  @override
-  String toString() {
-    var result = 'Call(';
+  String printArguments() {
+    var result = '';
     var comma = false;
 
-    if (expression != null) {
-      result += '$expression';
-      comma = true;
-    }
-
     final arguments = this.arguments;
 
     if (arguments != null && arguments.isNotEmpty) {
       if (comma) {
-        result += ', ';
+        result = '$result, ';
       } else {
         comma = true;
       }
@@ -284,241 +330,174 @@ class Call extends Expression implements Callable {
       result += arguments.join(', ');
     }
 
-    final keywordArguments = this.keywordArguments;
+    final keywords = this.keywords;
 
-    if (keywordArguments != null && keywordArguments.isNotEmpty) {
+    if (keywords != null && keywords.isNotEmpty) {
       if (comma) {
-        result += ', ';
+        result = '$result, ';
       } else {
         comma = true;
       }
 
-      result += keywordArguments.join(', ');
+      result += keywords.join(', ');
     }
-
-    final dArguments = this.dArguments;
 
     if (dArguments != null) {
       if (comma) {
-        result += ', ';
+        result = '$result, ';
       } else {
         comma = true;
       }
 
-      result += '*$dArguments';
+      result = '$result*$dArguments';
     }
 
-    final dKeywordArguments = this.dKeywordArguments;
-
-    if (dKeywordArguments != null) {
+    if (dKeywords != null) {
       if (comma) {
-        result += ', ';
+        result = '$result, ';
       }
 
-      result += '**$dKeywordArguments';
+      result = '$result**$dKeywords';
     }
 
-    return result + ')';
+    return result;
   }
 }
 
-class Filter extends Expression implements Callable {
-  Filter(this.name,
-      {this.expression,
-      this.arguments,
-      this.keywordArguments,
-      this.dArguments,
-      this.dKeywordArguments});
-
-  String name;
+class Call extends CallableExpression {
+  Call(
+    this.expression, {
+    this.arguments,
+    this.keywords,
+    this.dArguments,
+    this.dKeywords,
+  });
 
   @override
-  Expression? expression;
+  Expression expression;
 
   @override
   List<Expression>? arguments;
 
   @override
-  List<Keyword>? keywordArguments;
+  List<Keyword>? keywords;
 
   @override
   Expression? dArguments;
 
   @override
-  Expression? dKeywordArguments;
+  Expression? dKeywords;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitFilter(this, context);
-  }
-
-  @override
-  void visitChildNodes(NodeVisitor visitor) {
-    final expression = this.expression;
-
-    if (expression != null) {
-      visitor(expression);
-    }
-
-    final arguments = this.arguments;
-
-    if (arguments != null) {
-      arguments.forEach(visitor);
-    }
-
-    final keywordArguments = this.keywordArguments;
-
-    if (keywordArguments != null) {
-      keywordArguments.forEach(visitor);
-    }
-
-    final dArguments = this.dArguments;
-
-    if (dArguments != null) {
-      visitor(dArguments);
-    }
-
-    final dKeywordArguments = this.dKeywordArguments;
-
-    if (dKeywordArguments != null) {
-      visitor(dKeywordArguments);
-    }
+  Object? resolve(Context context) {
+    final function = expression.resolve(context);
+    return call(context, (positional, named) {
+      return context(function, positional, named);
+    });
   }
 
   @override
   String toString() {
-    var result = 'Filter(\'$name\'';
-
-    if (expression != null) {
-      result += ', $expression';
-    }
-
-    final arguments = this.arguments;
-
-    if (arguments != null && arguments.isNotEmpty) {
-      result += ', ';
-
-      result += arguments.join(', ');
-    }
-
-    final keywordArguments = this.keywordArguments;
-
-    if (keywordArguments != null && keywordArguments.isNotEmpty) {
-      result += keywordArguments.join(', ');
-    }
-
-    final dArguments = this.dArguments;
-
-    if (dArguments != null) {
-      result += '*$dArguments';
-    }
-
-    final dKeywordArguments = this.dKeywordArguments;
-
-    if (dKeywordArguments != null) {
-      result += '**$dKeywordArguments';
-    }
-
-    return result + ')';
+    return 'Call(${printArguments()})';
   }
 }
 
-class Test extends Expression implements Callable {
-  Test(this.name,
-      {this.expression,
-      this.arguments,
-      this.keywordArguments,
-      this.dArguments,
-      this.dKeywordArguments});
+class Filter extends CallableExpression {
+  Filter(
+    this.name,
+    this.expression, {
+    this.arguments,
+    this.keywords,
+    this.dArguments,
+    this.dKeywords,
+  });
 
   String name;
 
   @override
-  Expression? expression;
+  Expression expression;
 
   @override
   List<Expression>? arguments;
 
   @override
-  List<Keyword>? keywordArguments;
+  List<Keyword>? keywords;
 
   @override
   Expression? dArguments;
 
   @override
-  Expression? dKeywordArguments;
+  Expression? dKeywords;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitTest(this, context);
-  }
-
-  @override
-  void visitChildNodes(NodeVisitor visitor) {
-    final expression = this.expression;
-
-    if (expression != null) {
-      visitor(expression);
-    }
-
-    final arguments = this.arguments;
-
-    if (arguments != null) {
-      arguments.forEach(visitor);
-    }
-
-    final keywordArguments = this.keywordArguments;
-
-    if (keywordArguments != null) {
-      keywordArguments.forEach(visitor);
-    }
-
-    final dArguments = this.dArguments;
-
-    if (dArguments != null) {
-      visitor(dArguments);
-    }
-
-    final dKeywordArguments = this.dKeywordArguments;
-
-    if (dKeywordArguments != null) {
-      visitor(dKeywordArguments);
-    }
+  Object? resolve(Context context) {
+    return call(context, (positional, named) {
+      return context.environment.callFilter(name, positional, named);
+    });
   }
 
   @override
   String toString() {
-    var result = 'Test(\'$name\'';
+    return 'Filter.$name(${printArguments()})';
+  }
+}
 
-    if (expression != null) {
-      result += ', $expression';
-    }
+class Test extends CallableExpression {
+  Test(
+    this.name,
+    this.expression, {
+    this.arguments,
+    this.keywords,
+    this.dArguments,
+    this.dKeywords,
+  });
 
-    final arguments = this.arguments;
+  String name;
 
-    if (arguments != null && arguments.isNotEmpty) {
-      result += arguments.join(', ');
-    }
+  @override
+  Expression expression;
 
-    final keywordArguments = this.keywordArguments;
+  @override
+  List<Expression>? arguments;
 
-    if (keywordArguments != null && keywordArguments.isNotEmpty) {
-      result += keywordArguments.join(', ');
-    }
+  @override
+  List<Keyword>? keywords;
 
-    final dArguments = this.dArguments;
+  @override
+  Expression? dArguments;
 
-    if (dArguments != null) {
-      result += '*$dArguments';
-    }
+  @override
+  Expression? dKeywords;
 
-    final dKeywordArguments = this.dKeywordArguments;
+  @override
+  bool resolve(Context context) {
+    return unsafeCast<bool>(call(context, (positional, named) {
+      positional.insert(0, expression.resolve(context));
+      return context.environment.callTest(name, positional, named);
+    }));
+  }
 
-    if (dKeywordArguments != null) {
-      result += '**$dKeywordArguments';
-    }
+  @override
+  String toString() {
+    return 'Filter.$name(${printArguments()})';
+  }
+}
 
-    return result + ')';
+class Operand extends Expression {
+  Operand(this.operator, this.expression);
+
+  String operator;
+
+  Expression expression;
+
+  @override
+  Object? resolve(Context context) {
+    return expression.resolve(context);
+  }
+
+  @override
+  String toString() {
+    return 'Operand(\'$operator\', $expression)';
   }
 }
 
@@ -530,14 +509,48 @@ class Compare extends Expression {
   List<Operand> operands;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitCompare(this, context);
-  }
+  Object? resolve(Context context) {
+    var left = expression.resolve(context);
+    var result = true;
 
-  @override
-  void visitChildNodes(NodeVisitor visitor) {
-    visitor(expression);
-    operands.forEach(visitor);
+    for (final operand in operands) {
+      final right = operand.resolve(context);
+
+      switch (operand.operator) {
+        case 'eq':
+          result = result && tests.isEqual(left, right);
+          break;
+        case 'ne':
+          result = result && tests.isNotEqual(left, right);
+          break;
+        case 'lt':
+          result = result && tests.isLessThan(left, right);
+          break;
+        case 'le':
+          result = result && tests.isLessThanOrEqual(left, right);
+          break;
+        case 'gt':
+          result = result && tests.isGreaterThan(left, right);
+          break;
+        case 'ge':
+          result = result && tests.isGreaterThanOrEqual(left, right);
+          break;
+        case 'in':
+          result = result && tests.isIn(left, right);
+          break;
+        case 'notin':
+          result = result && !tests.isIn(left, right);
+          break;
+      }
+
+      if (!result) {
+        return false;
+      }
+
+      left = right;
+    }
+
+    return result;
   }
 
   @override
@@ -556,20 +569,12 @@ class Condition extends Expression {
   Expression? expression2;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitCondition(this, context);
-  }
-
-  @override
-  void visitChildNodes(NodeVisitor visitor) {
-    visitor(test);
-    visitor(expression1);
-
-    final expression2 = this.expression2;
-
-    if (expression2 != null) {
-      visitor(expression2);
+  Object? resolve(Context context) {
+    if (boolean(test.resolve(context))) {
+      return expression1.resolve(context);
     }
+
+    return expression2?.resolve(context);
   }
 
   @override
@@ -587,91 +592,57 @@ abstract class Literal extends Expression {
   }
 }
 
-class Data extends Literal {
-  Data([this.data = '']);
-
-  String data;
-
-  String get trimmed {
-    return data.trim();
-  }
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitData(this, context);
-  }
-
-  @override
-  String toString() {
-    return 'Data(\'${data.replaceAll('\'', '\\\'').replaceAll('\r\n', r'\n').replaceAll('\n', r'\n')}\')';
-  }
-}
-
-class Constant<T> extends Literal {
+class Constant extends Literal {
   Constant(this.value);
 
-  T? value;
+  Object? value;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitConstant(this, context);
+  Object? asConst(Context context) {
+    return value;
+  }
+
+  @override
+  Object? resolve(Context context) {
+    return value;
   }
 
   @override
   String toString() {
-    return 'Constant<$T>(${repr(value).replaceAll('\n', r'\n')})';
+    return 'Constant(${repr(value).replaceAll('\n', r'\n')})';
   }
 }
 
-class TupleLiteral extends Literal implements CanAssign {
-  TupleLiteral(this.expressions, [AssignContext? context]);
+class TupleLiteral extends Literal implements AssignableExpression {
+  TupleLiteral(this.expressions, [AssignContext? context])
+      : context = context ?? AssignContext.load;
+
+  @override
+  AssignContext context;
 
   List<Expression> expressions;
 
   @override
   bool get canAssign {
-    return expressions
-        .every((expression) => expression is CanAssign && expression.canAssign);
-  }
-
-  @override
-  AssignContext get context {
-    AssignContext? context;
-
     for (final expression in expressions) {
-      if (expression is CanAssign) {
-        if (context == null) {
-          context = expression.context;
-        } else if (expression.context != context) {
-          throw StateError(
-              '${expression.runtimeType} context must be $context');
-        }
+      if (expression is AssignableExpression && !expression.canAssign) {
+        return false;
       }
     }
 
-    return context ?? AssignContext.load;
+    return true;
   }
 
   @override
-  set context(AssignContext context) {
-    for (final expression in expressions) {
-      if (expression is CanAssign) {
-        expression.context = context;
-      } else {
-        // TODO: add error message
-        throw TypeError();
-      }
-    }
+  List<Object?> asConst(Context context) {
+    return List<Object?>.generate(
+        expressions.length, (index) => expressions[index].asConst(context));
   }
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitTupleLiteral(this, context);
-  }
-
-  @override
-  void visitChildNodes(NodeVisitor visitor) {
-    expressions.forEach(visitor);
+  List<Object?> resolve(Context context) {
+    return List<Object?>.generate(
+        expressions.length, (index) => expressions[index].resolve(context));
   }
 
   @override
@@ -686,13 +657,15 @@ class ListLiteral extends Literal {
   List<Expression> expressions;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitListLiteral(this, context);
+  List<Object?> asConst(Context context) {
+    return List<Object?>.generate(
+        expressions.length, (index) => expressions[index].asConst(context));
   }
 
   @override
-  void visitChildNodes(NodeVisitor visitor) {
-    expressions.forEach(visitor);
+  List<Object?> resolve(Context context) {
+    return List<Object?>.generate(
+        expressions.length, (index) => expressions[index].resolve(context));
   }
 
   @override
@@ -707,13 +680,19 @@ class DictLiteral extends Literal {
   List<Pair> pairs;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitDictLiteral(this, context);
+  Map<Object?, Object?> asConst(Context context) {
+    return <Object?, Object?>{
+      for (final pair in pairs)
+        pair.key.asConst(context): pair.value.asConst(context)
+    };
   }
 
   @override
-  void visitChildNodes(NodeVisitor visitor) {
-    pairs.forEach(visitor);
+  Map<Object?, Object?> resolve(Context context) {
+    return <Object?, Object?>{
+      for (final pair in pairs)
+        pair.key.resolve(context): pair.value.resolve(context)
+    };
   }
 
   @override
@@ -722,7 +701,13 @@ class DictLiteral extends Literal {
   }
 }
 
-abstract class Unary extends Expression {
+class Unary extends Expression {
+  Unary.plus(Expression expression) : this('+', expression);
+
+  Unary.minus(Expression expression) : this('-', expression);
+
+  Unary.not(Expression expression) : this('not', expression);
+
   Unary(this.operator, this.expression);
 
   String operator;
@@ -730,13 +715,18 @@ abstract class Unary extends Expression {
   Expression expression;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitUnary(this, context);
-  }
+  Object? resolve(Context context) {
+    final value = expression.resolve(context);
 
-  @override
-  void visitChildNodes(NodeVisitor visitor) {
-    visitor(expression);
+    switch (operator) {
+      case '+':
+        // how i should implement this?
+        return value;
+      case '-':
+        return -unsafeCast<dynamic>(value);
+      case 'not':
+        return !boolean(value);
+    }
   }
 
   @override
@@ -745,49 +735,7 @@ abstract class Unary extends Expression {
   }
 }
 
-class Pos extends Unary {
-  Pos(Expression expression) : super('+', expression);
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitPos(this, context);
-  }
-
-  @override
-  String toString() {
-    return 'Pos($expression)';
-  }
-}
-
-class Neg extends Unary {
-  Neg(Expression expression) : super('-', expression);
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitNeg(this, context);
-  }
-
-  @override
-  String toString() {
-    return 'Neg($expression)';
-  }
-}
-
-class Not extends Unary {
-  Not(Expression expression) : super('not', expression);
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitNot(this, context);
-  }
-
-  @override
-  String toString() {
-    return 'Not($expression)';
-  }
-}
-
-abstract class Binary extends Expression {
+class Binary extends Expression {
   Binary(this.operator, this.left, this.right);
 
   String operator;
@@ -797,144 +745,34 @@ abstract class Binary extends Expression {
   Expression right;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitBinary(this, context);
-  }
+  Object? resolve(Context context) {
+    final left = this.left.resolve(context);
+    final right = this.right.resolve(context);
 
-  @override
-  void visitChildNodes(NodeVisitor visitor) {
-    visitor(left);
-    visitor(right);
+    switch (operator) {
+      case '**':
+        return math.pow(unsafeCast<num>(left), unsafeCast<num>(right));
+      case '%':
+        return unsafeCast<num>(left) % unsafeCast<num>(right);
+      case '//':
+        return unsafeCast<num>(left) ~/ unsafeCast<num>(right);
+      case '/':
+        return unsafeCast<num>(left) / unsafeCast<num>(right);
+      case '*':
+        return unsafeCast<num>(left) * unsafeCast<num>(right);
+      case '-':
+        return unsafeCast<num>(left) - unsafeCast<num>(right);
+      case '+':
+        return unsafeCast<num>(left) + unsafeCast<num>(right);
+      case 'or':
+        return boolean(left) ? left : right;
+      case 'and':
+        return boolean(left) ? right : left;
+    }
   }
 
   @override
   String toString() {
     return '$runtimeType(\'$operator\', $left, $right)';
-  }
-}
-
-class Pow extends Binary {
-  Pow(Expression left, Expression right) : super('**', left, right);
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitPow(this, context);
-  }
-
-  @override
-  String toString() {
-    return 'Pow($left, $right)';
-  }
-}
-
-class Mul extends Binary {
-  Mul(Expression left, Expression right) : super('*', left, right);
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitMul(this, context);
-  }
-
-  @override
-  String toString() {
-    return 'Mul($left, $right)';
-  }
-}
-
-class Div extends Binary {
-  Div(Expression left, Expression right) : super('/', left, right);
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitDiv(this, context);
-  }
-
-  @override
-  String toString() {
-    return 'Div($left, $right)';
-  }
-}
-
-class FloorDiv extends Binary {
-  FloorDiv(Expression left, Expression right) : super('//', left, right);
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitFloorDiv(this, context);
-  }
-
-  @override
-  String toString() {
-    return 'FloorDiv($left, $right)';
-  }
-}
-
-class Mod extends Binary {
-  Mod(Expression left, Expression right) : super('%', left, right);
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitMod(this, context);
-  }
-
-  @override
-  String toString() {
-    return 'Mod($left, $right)';
-  }
-}
-
-class Add extends Binary {
-  Add(Expression left, Expression right) : super('+', left, right);
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitAdd(this, context);
-  }
-
-  @override
-  String toString() {
-    return 'Add($left, $right)';
-  }
-}
-
-class Sub extends Binary {
-  Sub(Expression left, Expression right) : super('-', left, right);
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitSub(this, context);
-  }
-
-  @override
-  String toString() {
-    return 'Sub($left, $right)';
-  }
-}
-
-class And extends Binary {
-  And(Expression left, Expression right) : super('and', left, right);
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitAnd(this, context);
-  }
-
-  @override
-  String toString() {
-    return 'And($left, $right)';
-  }
-}
-
-class Or extends Binary {
-  Or(Expression left, Expression right) : super('or', left, right);
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitOr(this, context);
-  }
-
-  @override
-  String toString() {
-    return 'Or($left, $right)';
   }
 }

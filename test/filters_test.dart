@@ -81,7 +81,7 @@ void main() {
       var tmpl = env.fromString('{{ foo|trim() }}');
       expect(tmpl.render(data), equals('..stays..'));
       tmpl = env.fromString('{{ foo|trim(".") }}');
-      expect(tmpl.render(data), equals(' ..stays'));
+      expect(tmpl.render(data), equals('  ..stays'));
       tmpl = env.fromString('{{ foo|trim(" .") }}');
       expect(tmpl.render(data), equals('stays'));
     });

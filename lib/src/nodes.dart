@@ -1,4 +1,8 @@
+import 'dart:math' as math;
+
 import 'exceptions.dart';
+import 'runtime.dart';
+import 'tests.dart' as tests;
 import 'utils.dart';
 import 'visitor.dart';
 
@@ -19,13 +23,31 @@ abstract class Node {
 
   R accept<C, R>(Visitor<C, R> visitor, C context);
 
-  void visitChildNodes(NodeVisitor visitor) {}
+  Iterable<T> listExpressions<T extends Expression>() sync* {}
+
+  Iterable<Node> listChildrens({bool deep = false}) sync* {}
 }
 
-abstract class Expression extends Node {}
+class Data extends Node {
+  Data([this.data = '']);
 
-abstract class Statement extends Node {}
+  String data;
 
-abstract class ContextModifier extends Statement {}
+  String get literal {
+    return "'${data.replaceAll("'", r"\'").replaceAll('\r\n', r'\n').replaceAll('\n', r'\n')}'";
+  }
 
-abstract class Helper extends Node {}
+  String get trimmed {
+    return data.trim();
+  }
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitData(this, context);
+  }
+
+  @override
+  String toString() {
+    return 'Data()';
+  }
+}

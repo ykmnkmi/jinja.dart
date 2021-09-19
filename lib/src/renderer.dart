@@ -1,9 +1,9 @@
+import 'package:jinja/src/visitor.dart';
 import 'package:meta/meta.dart';
 
 import 'environment.dart';
 import 'exceptions.dart';
 import 'nodes.dart';
-import 'resolver.dart';
 import 'runtime.dart';
 import 'utils.dart';
 
@@ -45,7 +45,7 @@ class RenderContext extends Context {
   }
 }
 
-class StringSinkRenderer extends ExpressionResolver<RenderContext> {
+class StringSinkRenderer extends Visitor<RenderContext, Object?> {
   @literal
   const StringSinkRenderer();
 
@@ -58,14 +58,14 @@ class StringSinkRenderer extends ExpressionResolver<RenderContext> {
 
   @override
   void visitAssign(Assign node, RenderContext context) {
-    final target = node.target.accept(this, context);
-    final values = node.expression.accept(this, context);
+    final target = node.target.accept(resolver, context);
+    final values = node.expression.accept(resolver, context);
     assignTargetsToContext(context, target, values);
   }
 
   @override
   void visitAssignBlock(AssignBlock node, RenderContext context) {
-    final target = node.target.accept(this, context);
+    final target = node.target.accept(resolver, context);
     final buffer = StringBuffer();
     visitAll(node.nodes, RenderContext.from(context, buffer));
     Object? value = '$buffer';
@@ -78,7 +78,9 @@ class StringSinkRenderer extends ExpressionResolver<RenderContext> {
     }
 
     for (final filter in filters) {
-      value = callFilter(context, filter, value);
+      value = resolver.callable(filter, context)((positional, named) =>
+          context.environment.callFilter(filter.name, value,
+              positional: positional, named: named, context: context));
     }
 
     assignTargetsToContext(context, target, context.escaped(value));
@@ -360,7 +362,7 @@ class StringSinkRenderer extends ExpressionResolver<RenderContext> {
       return;
     }
 
-    if (target is NameSpaceValue) {
+    if (target is NamespaceValue) {
       final namespace = context.resolve(target.name);
 
       if (namespace is! NameSpace) {

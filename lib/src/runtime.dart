@@ -209,8 +209,8 @@ class NameSpace {
   }
 }
 
-class NameSpaceValue {
-  NameSpaceValue(this.name, this.item);
+class NamespaceValue {
+  NamespaceValue(this.name, this.item);
 
   String name;
 

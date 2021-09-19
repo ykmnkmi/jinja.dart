@@ -1,6 +1,5 @@
 import 'environment.dart';
 import 'markup.dart';
-import 'utils.dart';
 
 typedef ContextCallback<C extends Context> = void Function(C context);
 
