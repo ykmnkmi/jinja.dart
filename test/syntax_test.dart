@@ -279,9 +279,11 @@ void main() {
 
     test('neg filter priority', () {
       final tmpl = env.fromString('{{ -1 | foo }}');
-      final output = tmpl.nodes[0] as Output;
-      expect(output.nodes[0],
-          predicate<Filter>((filter) => filter.expression is Neg));
+      final node = tmpl.nodes[0];
+      expect(node, predicate<Filter>((filter) {
+        final expression = filter.arguments![0];
+        return expression is Binary && expression.operator == 'neg';
+      }));
     });
 
     test('const assign', () {

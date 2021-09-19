@@ -16,8 +16,6 @@ abstract class Visitor<C, R> {
 
   R visitBlock(Block node, C context);
 
-  R visitContextModifier(ScopedContextModifier node, C context);
-
   R visitData(Data node, C context);
 
   R visitDo(Do node, C context);
@@ -34,13 +32,7 @@ abstract class Visitor<C, R> {
 
   R visitInclude(Include node, C context);
 
-  R visitOutput(Output node, C context);
-
   R visitScope(Scope node, C context);
-
-  R visitScopedContextModifier(ScopedContextModifier node, C context) {
-    return visitContextModifier(node, context);
-  }
 
   R visitTemplate(Template node, C context);
 

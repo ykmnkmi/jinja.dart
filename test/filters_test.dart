@@ -23,7 +23,7 @@ class User {
 void main() {
   group('Filter', () {
     test('filter calling', () {
-      final result = env.callFilter('sum', [1, 2, 3]);
+      final result = env.callFilter('sum', [1, 2, 3], {});
       expect(result, equals(6));
     });
 

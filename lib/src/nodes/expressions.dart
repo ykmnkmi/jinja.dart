@@ -27,13 +27,13 @@ enum AssignContext {
   parameter,
 }
 
-abstract class AssignableExpression extends Expression {
+abstract class Assignable extends Expression {
   bool get canAssign;
 
   abstract AssignContext context;
 }
 
-class Name extends AssignableExpression {
+class Name extends Assignable {
   Name(this.name, {this.context = AssignContext.load, this.type});
 
   String name;
@@ -177,9 +177,9 @@ class Slice extends Expression {
 
   @override
   Iterable<int> Function(int, [int?, int?]) resolve(Context context) {
-    final sliceStart = unsafeCast<int?>(start?.resolve(context));
-    final sliceStop = unsafeCast<int?>(stop?.resolve(context));
-    final sliceStep = unsafeCast<int?>(step?.resolve(context));
+    final sliceStart = start?.resolve(context) as int?;
+    final sliceStop = stop?.resolve(context) as int?;
+    final sliceStep = step?.resolve(context) as int?;
     return (int stopOrStart, [int? stop, int? step]) {
       if (sliceStep == null) {
         step = 1;
@@ -259,16 +259,16 @@ class Keyword extends Expression {
   }
 }
 
-abstract class CallableExpression extends Expression {
-  abstract Expression expression;
+class Callable extends Expression {
+  Callable({this.arguments, this.keywords, this.dArguments, this.dKeywords});
 
-  abstract List<Expression>? arguments;
+  List<Expression>? arguments;
 
-  abstract List<Keyword>? keywords;
+  List<Keyword>? keywords;
 
-  abstract Expression? dArguments;
+  Expression? dArguments;
 
-  abstract Expression? dKeywords;
+  Expression? dKeywords;
 
   Object? call(Context context, Callback callback) {
     final arguments = this.arguments;
@@ -293,8 +293,7 @@ abstract class CallableExpression extends Expression {
     final dArguments = this.dArguments;
 
     if (dArguments != null) {
-      positional
-          .addAll(unsafeCast<Iterable<Object?>>(dArguments.resolve(context)));
+      positional.addAll(dArguments.resolve(context) as Iterable<Object?>);
     }
 
     final dKeywords = this.dKeywords;
@@ -364,29 +363,21 @@ abstract class CallableExpression extends Expression {
   }
 }
 
-class Call extends CallableExpression {
+class Call extends Callable {
   Call(
     this.expression, {
-    this.arguments,
-    this.keywords,
-    this.dArguments,
-    this.dKeywords,
-  });
+    List<Expression>? arguments,
+    List<Keyword>? keywords,
+    Expression? dArguments,
+    Expression? dKeywords,
+  }) : super(
+          arguments: arguments,
+          keywords: keywords,
+          dArguments: dArguments,
+          dKeywords: dKeywords,
+        );
 
-  @override
   Expression expression;
-
-  @override
-  List<Expression>? arguments;
-
-  @override
-  List<Keyword>? keywords;
-
-  @override
-  Expression? dArguments;
-
-  @override
-  Expression? dKeywords;
 
   @override
   Object? resolve(Context context) {
@@ -402,32 +393,19 @@ class Call extends CallableExpression {
   }
 }
 
-class Filter extends CallableExpression {
-  Filter(
-    this.name,
-    this.expression, {
-    this.arguments,
-    this.keywords,
-    this.dArguments,
-    this.dKeywords,
-  });
+class Filter extends Callable {
+  Filter(this.name,
+      {List<Expression>? arguments,
+      List<Keyword>? keywords,
+      Expression? dArguments,
+      Expression? dKeywords})
+      : super(
+            arguments: arguments,
+            keywords: keywords,
+            dArguments: dArguments,
+            dKeywords: dKeywords);
 
   String name;
-
-  @override
-  Expression expression;
-
-  @override
-  List<Expression>? arguments;
-
-  @override
-  List<Keyword>? keywords;
-
-  @override
-  Expression? dArguments;
-
-  @override
-  Expression? dKeywords;
 
   @override
   Object? resolve(Context context) {
@@ -442,39 +420,25 @@ class Filter extends CallableExpression {
   }
 }
 
-class Test extends CallableExpression {
-  Test(
-    this.name,
-    this.expression, {
-    this.arguments,
-    this.keywords,
-    this.dArguments,
-    this.dKeywords,
-  });
+class Test extends Callable {
+  Test(this.name,
+      {List<Expression>? arguments,
+      List<Keyword>? keywords,
+      Expression? dArguments,
+      Expression? dKeywords})
+      : super(
+            arguments: arguments,
+            keywords: keywords,
+            dArguments: dArguments,
+            dKeywords: dKeywords);
 
   String name;
 
   @override
-  Expression expression;
-
-  @override
-  List<Expression>? arguments;
-
-  @override
-  List<Keyword>? keywords;
-
-  @override
-  Expression? dArguments;
-
-  @override
-  Expression? dKeywords;
-
-  @override
   bool resolve(Context context) {
-    return unsafeCast<bool>(call(context, (positional, named) {
-      positional.insert(0, expression.resolve(context));
+    return call(context, (positional, named) {
       return context.environment.callTest(name, positional, named);
-    }));
+    }) as bool;
   }
 
   @override
@@ -613,7 +577,7 @@ class Constant extends Literal {
   }
 }
 
-class TupleLiteral extends Literal implements AssignableExpression {
+class TupleLiteral extends Literal implements Assignable {
   TupleLiteral(this.expressions, [AssignContext? context])
       : context = context ?? AssignContext.load;
 
@@ -625,7 +589,7 @@ class TupleLiteral extends Literal implements AssignableExpression {
   @override
   bool get canAssign {
     for (final expression in expressions) {
-      if (expression is AssignableExpression && !expression.canAssign) {
+      if (expression is Assignable && !expression.canAssign) {
         return false;
       }
     }
@@ -702,12 +666,6 @@ class DictLiteral extends Literal {
 }
 
 class Unary extends Expression {
-  Unary.plus(Expression expression) : this('+', expression);
-
-  Unary.minus(Expression expression) : this('-', expression);
-
-  Unary.not(Expression expression) : this('not', expression);
-
   Unary(this.operator, this.expression);
 
   String operator;
@@ -723,7 +681,7 @@ class Unary extends Expression {
         // how i should implement this?
         return value;
       case '-':
-        return -unsafeCast<dynamic>(value);
+        return -(value as dynamic);
       case 'not':
         return !boolean(value);
     }
@@ -746,24 +704,24 @@ class Binary extends Expression {
 
   @override
   Object? resolve(Context context) {
-    final left = this.left.resolve(context);
-    final right = this.right.resolve(context);
+    final dynamic left = this.left.resolve(context);
+    final dynamic right = this.right.resolve(context);
 
     switch (operator) {
       case '**':
-        return math.pow(unsafeCast<num>(left), unsafeCast<num>(right));
+        return math.pow(left as num, right as num);
       case '%':
-        return unsafeCast<num>(left) % unsafeCast<num>(right);
+        return left % right;
       case '//':
-        return unsafeCast<num>(left) ~/ unsafeCast<num>(right);
+        return left ~/ right;
       case '/':
-        return unsafeCast<num>(left) / unsafeCast<num>(right);
+        return left / right;
       case '*':
-        return unsafeCast<num>(left) * unsafeCast<num>(right);
+        return left * right;
       case '-':
-        return unsafeCast<num>(left) - unsafeCast<num>(right);
+        return left - right;
       case '+':
-        return unsafeCast<num>(left) + unsafeCast<num>(right);
+        return left + right;
       case 'or':
         return boolean(left) ? left : right;
       case 'and':

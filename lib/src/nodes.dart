@@ -23,9 +23,9 @@ abstract class Node {
 
   R accept<C, R>(Visitor<C, R> visitor, C context);
 
-  Iterable<T> listExpressions<T extends Expression>() sync* {}
+  Iterable<T> listExpressions<T extends Expression>();
 
-  Iterable<Node> listChildrens({bool deep = false}) sync* {}
+  Iterable<Node> listChildrens({bool deep = false});
 }
 
 class Data extends Node {
@@ -44,6 +44,16 @@ class Data extends Node {
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitData(this, context);
+  }
+
+  @override
+  Iterable<Node> listChildrens({bool deep = false}) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Iterable<T> listExpressions<T extends Expression>() {
+    throw UnimplementedError();
   }
 
   @override

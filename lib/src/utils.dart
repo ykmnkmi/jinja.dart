@@ -191,10 +191,3 @@ String sliceString(String string, Indices indices) {
 
   return '$buffer';
 }
-
-@pragma('dart2js:tryInline')
-@pragma('vm:prefer-inline')
-T unsafeCast<T>(Object? object) {
-  // ignore: return_of_invalid_type
-  return object /* as T */;
-}

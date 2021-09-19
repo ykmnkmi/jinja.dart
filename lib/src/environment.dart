@@ -9,6 +9,7 @@ import 'lexer.dart';
 import 'loaders.dart';
 import 'nodes.dart';
 import 'parser.dart';
+import 'reader.dart';
 import 'renderer.dart';
 import 'runtime.dart';
 import 'utils.dart';
@@ -29,6 +30,8 @@ typedef FieldGetter = Object? Function(Object? object, String field);
 /// template was loaded so far.
 class Environment {
   static late final Expando<Lexer> lexerCache = Expando('lexerCache');
+
+  static late final Expando<Parser> parserCache = Expando('parserCache');
 
   /// If `loader` is not `null`, templates will be loaded
   Environment({
@@ -204,6 +207,11 @@ class Environment {
     return lexerCache[this] ??= Lexer(this);
   }
 
+  /// The parser for this environment.
+  Parser get parser {
+    return parserCache[this] ??= Parser(this);
+  }
+
   @override
   bool operator ==(Object? other) {
     return other is Environment &&
@@ -258,7 +266,7 @@ class Environment {
       throw TemplateRuntimeError('no test named $name');
     }
 
-    return unsafeCast<bool>(Function.apply(test, positional, named));
+    return Function.apply(test, positional, named) as bool;
   }
 
   Environment copyWith({
@@ -469,6 +477,15 @@ class Environment {
   List<Token> lex(String source) {
     // TODO: handle error
     return lexer.tokenize(source);
+  }
+
+  /// Lex the given sourcecode and return a list of [Token]'s.
+  ///
+  /// This can be useful for extension development and debugging templates.
+  List<Node> parse(List<Token> tokens) {
+    // TODO: handle error
+    final reader = TokenReader(tokens);
+    return parser.scan(reader);
   }
 
   Template loadTemplate(String template) {

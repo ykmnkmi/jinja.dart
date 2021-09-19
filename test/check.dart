@@ -3,15 +3,17 @@
 import 'package:jinja/jinja.dart';
 import 'package:stack_trace/stack_trace.dart';
 
-import 'package:jinja/src/filters.dart';
-
 void main() {
   try {
-    final environment = Environment();
-    final template = environment.fromString('{{ " ..abc.."|trim(".") }}');
-    print(template.nodes);
-    print(template.render());
-    print(doTrim(' ..abc..', '.'));
+    final env = Environment(globals: {
+      'foo': (dynamic a, dynamic b, {dynamic c, dynamic e, dynamic g}) {
+        return a + b + c + e + g;
+      }
+    });
+
+    final tmpl = env.fromString('{{ foo("a", c="d", e="f", *["b"], **{"g": "h"}) }}');
+    print(tmpl.nodes);
+    print(tmpl.render());
   } catch (error, trace) {
     print(error);
     print(Trace.format(trace));

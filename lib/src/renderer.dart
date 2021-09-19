@@ -58,14 +58,14 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
 
   @override
   void visitAssign(Assign node, RenderContext context) {
-    final target = node.target.accept(resolver, context);
-    final values = node.expression.accept(resolver, context);
+    final target = node.target.resolve(context);
+    final values = node.expression.resolve(context);
     assignTargetsToContext(context, target, values);
   }
 
   @override
   void visitAssignBlock(AssignBlock node, RenderContext context) {
-    final target = node.target.accept(resolver, context);
+    final target = node.target.resolve(context);
     final buffer = StringBuffer();
     visitAll(node.nodes, RenderContext.from(context, buffer));
     Object? value = '$buffer';
@@ -78,9 +78,11 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
     }
 
     for (final filter in filters) {
-      value = resolver.callable(filter, context)((positional, named) =>
-          context.environment.callFilter(filter.name, value,
-              positional: positional, named: named, context: context));
+      value = filter.call(context, (positional, named) {
+        positional.insert(0, value);
+        return context.environment
+            .callFilter(filter.name, positional, named, context: context);
+      });
     }
 
     assignTargetsToContext(context, target, context.escaped(value));
@@ -126,12 +128,25 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
   }
 
   @override
+  void visitData(Data node, RenderContext context) {
+    context.write(node.data);
+  }
+
+  @override
   void visitDo(Do node, RenderContext context) {
     final doContext = Context.from(context);
 
     for (final expression in node.expressions) {
       expression.accept(this, doContext);
     }
+  }
+
+  @override
+  void visitExpession(Expression expression, RenderContext context) {
+    var value = expression.resolve(context);
+    value = context.escape(value);
+    value = context.finalize(value);
+    context.write(value);
   }
 
   @override
@@ -147,7 +162,11 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
     Object? value = '$buffer';
 
     for (final filter in node.filters) {
-      value = callFilter(context, filter, value);
+      value = filter.call(context, (positional, named) {
+        positional.insert(0, value);
+        return context.environment
+            .callFilter(filter.name, positional, named, context: context);
+      });
     }
 
     context.write(value);
@@ -254,34 +273,8 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
   }
 
   @override
-  void visitOutput(Output node, RenderContext context) {
-    for (final item in node.nodes) {
-      if (item is Data) {
-        context.write(item.accept(this, context));
-      } else {
-        var value = item.accept(this, context);
-        value = context.escape(value);
-        value = context.finalize(value);
-        context.write(value);
-      }
-    }
-  }
-
-  @override
   void visitScope(Scope node, RenderContext context) {
-    node.modifier.accept(this, context);
-  }
-
-  @override
-  void visitScopedContextModifier(
-      ScopedContextModifier node, RenderContext context) {
-    final data = <String, Object?>{
-      for (final key in node.options.keys)
-        key: node.options[key]!.accept(this, context)
-    };
-    context.push(data);
-    visitAll(node.nodes, context);
-    context.pop();
+    node.modifier(this, context);
   }
 
   @override

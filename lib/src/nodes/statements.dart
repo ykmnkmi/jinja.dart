@@ -2,24 +2,6 @@ part of '../nodes.dart';
 
 abstract class Statement extends Node {}
 
-abstract class ContextModifier extends Statement {}
-
-class Output extends Statement {
-  Output(this.nodes);
-
-  List<Node> nodes;
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitOutput(this, context);
-  }
-
-  @override
-  String toString() {
-    return 'Output(${nodes.join(', ')})';
-  }
-}
-
 class Extends extends Statement {
   Extends(this.path);
 
@@ -270,6 +252,10 @@ class AssignBlock extends Statement {
   }
 }
 
+abstract class ContextModifier {
+  void call<C extends Context, R>(Visitor<C, R> visitor, C context);
+}
+
 class Scope extends Statement {
   Scope(this.modifier);
 
@@ -286,7 +272,7 @@ class Scope extends Statement {
   }
 }
 
-class ScopedContextModifier extends ContextModifier {
+class ScopedContextModifier implements ContextModifier {
   ScopedContextModifier(this.options, this.nodes);
 
   List<Node> nodes;
@@ -294,12 +280,19 @@ class ScopedContextModifier extends ContextModifier {
   Map<String, Expression> options;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitScopedContextModifier(this, context);
+  String toString() {
+    return 'ScopedContextModifier($options, $nodes)';
   }
 
   @override
-  String toString() {
-    return 'ScopedContextModifier($options, $nodes)';
+  void call<C extends Context, R>(Visitor<C, R> visitor, C context) {
+    final data = <String, Object?>{
+      for (final entry in options.entries)
+        entry.key: entry.value.accept(visitor, context)
+    };
+
+    context.push(data);
+    visitor.visitAll(nodes, context);
+    context.pop();
   }
 }
