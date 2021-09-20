@@ -123,15 +123,23 @@ Iterable<int> range(int stopOrStart, [int? stop, int step = 1]) sync* {
   }
 }
 
-String repr(Object? object) {
+String repr(Object? object, [bool escapeNewlines = false]) {
   final buffer = StringBuffer();
-  reprTo(object, buffer);
+  reprTo(object, buffer, escapeNewlines);
   return '$buffer';
 }
 
-void reprTo(Object? object, StringBuffer buffer) {
+void reprTo(Object? object, StringBuffer buffer,
+    [bool escapeNewlines = false]) {
   if (object is String) {
     object = object.replaceAll("'", "\\'");
+
+    if (escapeNewlines) {
+      object = object.replaceAllMapped(RegExp('(\r\n|\r|\n)'), (match) {
+        return match.group(1) ?? '';
+      });
+    }
+
     buffer.write('\'$object\'');
     return;
   }
@@ -172,7 +180,19 @@ void reprTo(Object? object, StringBuffer buffer) {
   buffer.write(object);
 }
 
-List<T> slice<T>(List<T> list, Indices indices) {
+Object slice(Object value, Indices indices) {
+  if (value is String) {
+    return sliceString(value, indices);
+  }
+
+  if (value is List<Object?>) {
+    return sliceList<Object?>(value, indices);
+  }
+
+  throw TypeError();
+}
+
+List<T> sliceList<T>(List<T> list, Indices indices) {
   final result = <T>[];
 
   for (final i in indices(list.length)) {

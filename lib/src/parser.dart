@@ -711,10 +711,10 @@ class Parser {
 
   Expression parseDict(TokenReader reader) {
     reader.expect('lbrace');
-    final pairs = <Pair>[];
+    final entries = <MapEntry<Expression, Expression>>[];
 
     while (!reader.current.test('rbrace')) {
-      if (pairs.isNotEmpty) {
+      if (entries.isNotEmpty) {
         reader.expect('comma');
       }
 
@@ -725,12 +725,12 @@ class Parser {
       final key = parseExpression(reader);
       reader.expect('colon');
       final value = parseExpression(reader);
-      pairs.add(Pair(key, value));
+      entries.add(MapEntry<Expression, Expression>(key, value));
     }
 
     reader.expect('rbrace');
 
-    return DictLiteral(pairs);
+    return DictLiteral(entries);
   }
 
   Expression parsePostfix(TokenReader reader, Expression expression) {
@@ -842,8 +842,8 @@ class Parser {
 
   void parseCallableArguments(TokenReader reader, Callable callable) {
     final token = reader.expect('lparen');
-    final arguments = <Expression>[];
-    final keywords = <Keyword>[];
+    final arguments = callable.arguments ?? <Expression>[];
+    final keywords = callable.keywords ?? <Keyword>[];
     Expression? dArguments, dKeywords;
     var requireComma = false;
 
@@ -864,18 +864,15 @@ class Parser {
 
       if (reader.current.test('pow')) {
         ensure(dKeywords == null);
-
         reader.next();
         dKeywords = parseExpression(reader);
       } else if (reader.current.test('mul')) {
         ensure(dArguments == null && dKeywords == null);
-
         reader.next();
         dArguments = parseExpression(reader);
       } else {
         if (reader.current.test('name') && reader.look().test('assign')) {
           ensure(dKeywords == null);
-
           final key = reader.current.value;
           reader.skip(2);
           final value = parseExpression(reader);
@@ -889,6 +886,8 @@ class Parser {
       requireComma = true;
     }
 
+    callable.dArguments = dArguments;
+    callable.dKeywords = dKeywords;
     reader.expect('rparen');
   }
 
@@ -947,52 +946,30 @@ class Parser {
       negated = true;
     }
 
-    var token = reader.expect('name');
-    var name = token.value;
-
-    while (reader.current.test('dot')) {
-      reader.next();
-      token = reader.expect('name');
-      name = '$name.${token.value}';
-    }
-
-    final test = Test(name, arguments: <Expression>[expression]);
-
-    current:
-    switch (reader.current.type) {
-      case 'lparen':
-        parseCallableArguments(reader, test);
-        break;
-      case 'name':
-        switch (reader.current.value) {
-          case 'is':
-            fail('You cannot chain multiple tests with is');
-          case 'else':
-          case 'or':
-          case 'and':
-            break current;
-          default:
-            continue parse;
-        }
-
-      parse:
-      default:
-        final argument = parsePostfix(reader, parsePrimary(reader));
-        test.arguments = <Expression>[argument];
-    }
-
-    // if (current.test('lparen')) {
-    //   parseCallableArguments(reader, test, current.line);
-    // } else if (current.testAny(['name', 'string', 'integer', 'float', 'lparen', 'lbracket', 'lbrace']) && !current.testAny(['name:else', 'name:or', 'name:and'])) {
-    //   if (current.test('name', 'is')) {
-    //     fail('You cannot chain multiple tests with is');
-    //   }
-
-    //   final argument = parsePostfix(reader, parsePrimary(reader));
-    //   test.arguments = <Expression>[argument];
-    // }
-
+    final token = reader.expect('name');
+    final test = Test(token.value, arguments: <Expression>[expression]);
     expression = test;
+    final current = reader.current;
+
+    const allow = ['name', 'string', 'integer', 'float', 'lbracket', 'lbrace'];
+    const deny = ['name:else', 'name:or', 'name:and'];
+
+    if (current.test('lparen')) {
+      parseCallableArguments(reader, test);
+    } else if (current.testAny(allow) && !current.testAny(deny)) {
+      if (current.test('name', 'is')) {
+        fail('You cannot chain multiple tests with is');
+      }
+
+      final argument = parsePostfix(reader, parsePrimary(reader));
+      final arguments = test.arguments;
+
+      if (arguments == null) {
+        test.arguments = <Expression>[argument];
+      } else {
+        arguments.add(argument);
+      }
+    }
 
     if (negated) {
       expression = Unary('not', expression);

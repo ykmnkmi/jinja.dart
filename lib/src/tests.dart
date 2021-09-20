@@ -5,6 +5,7 @@ bool isBoolean(Object? object) {
 }
 
 bool isCallable(Object? object) {
+  // TODO: update
   return object is Function;
 }
 
@@ -21,11 +22,7 @@ bool isEqual(Object? value, Object? other) {
 }
 
 bool isEscaped(Object? value) {
-  if (value is Markup) {
-    return true;
-  }
-
-  return false;
+  return value is Markup;
 }
 
 bool isEven(int value) {
@@ -40,12 +37,12 @@ bool isFloat(Object? value) {
   return value is double;
 }
 
-bool isGreaterThanOrEqual(Object? value, Object? other) {
-  return (value as dynamic >= other) as bool;
+bool isGreaterThanOrEqual(dynamic value, Object? other) {
+  return (value >= other) as bool;
 }
 
-bool isGreaterThan(Object? value, Object? other) {
-  return (value as dynamic > other) as bool;
+bool isGreaterThan(dynamic value, Object? other) {
+  return (value > other) as bool;
 }
 
 bool isIn(Object? value, Object? values) {
@@ -65,7 +62,7 @@ bool isIn(Object? value, Object? values) {
     return values.containsKey(value);
   }
 
-  return (values as dynamic).contains(value) as bool;
+  throw TypeError();
 }
 
 bool isInteger(Object? value) {
@@ -73,19 +70,15 @@ bool isInteger(Object? value) {
 }
 
 bool isIterable(Object? value) {
-  if (value is Iterable) {
-    return true;
-  }
-
-  return false;
+  return value is Iterable;
 }
 
-bool isLessThanOrEqual(Object? value, Object? other) {
-  return (value as dynamic <= other) as bool;
+bool isLessThanOrEqual(dynamic value, Object? other) {
+  return (value <= other) as bool;
 }
 
-bool isLessThan(Object? value, Object? other) {
-  return (value as dynamic < other) as bool;
+bool isLessThan(dynamic value, Object? other) {
+  return (value < other) as bool;
 }
 
 bool isLower(String value) {
@@ -93,19 +86,11 @@ bool isLower(String value) {
 }
 
 bool isMapping(Object? value) {
-  if (value is Map) {
-    return true;
-  }
-
-  return false;
+  return value is Map;
 }
 
 bool isNone(Object? value) {
-  if (value == null) {
-    return true;
-  }
-
-  return false;
+  return value == null;
 }
 
 bool isNotEqual(Object? value, Object? other) {
@@ -125,15 +110,7 @@ bool isSameAs(Object? value, Object? other) {
 }
 
 bool isSequence(Object? value) {
-  try {
-    (value as dynamic).length;
-    (value as dynamic)[0];
-    return true;
-  } on RangeError {
-    return true;
-  } catch (e) {
-    return false;
-  }
+  return value is String || value is List || value is Map;
 }
 
 bool isString(Object? object) {

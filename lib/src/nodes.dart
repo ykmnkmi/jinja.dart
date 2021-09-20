@@ -7,7 +7,6 @@ import 'utils.dart';
 import 'visitor.dart';
 
 part 'nodes/expressions.dart';
-part 'nodes/helpers.dart';
 part 'nodes/statements.dart';
 
 typedef NodeVisitor = void Function(Node node);
@@ -47,14 +46,10 @@ class Data extends Node {
   }
 
   @override
-  Iterable<Node> listChildrens({bool deep = false}) {
-    throw UnimplementedError();
-  }
+  Iterable<Node> listChildrens({bool deep = false}) sync* {}
 
   @override
-  Iterable<T> listExpressions<T extends Expression>() {
-    throw UnimplementedError();
-  }
+  Iterable<T> listExpressions<T extends Expression>() sync* {}
 
   @override
   String toString() {

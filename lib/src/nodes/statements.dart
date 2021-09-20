@@ -1,6 +1,16 @@
 part of '../nodes.dart';
 
-abstract class Statement extends Node {}
+abstract class Statement extends Node {
+  @override
+  Iterable<Node> listChildrens({bool deep = false}) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Iterable<T> listExpressions<T extends Expression>() {
+    throw UnimplementedError();
+  }
+}
 
 class Extends extends Statement {
   Extends(this.path);

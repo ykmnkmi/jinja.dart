@@ -271,9 +271,10 @@ void main() {
     });
 
     test('same as', () {
-      final tmpl =
-          env.fromString('{{ foo is sameas false }}|{{ 0 is sameas false }}');
-      expect(tmpl.render({'foo': false}), equals('true|false'));
+      var tmpl = env.fromString('{{ foo is sameas false }}');
+      expect(tmpl.render({'foo': false}), equals('true'));
+      tmpl = env.fromString('{{ 0 is sameas false }}');
+      expect(tmpl.render(), equals('false'));
     });
 
     test('no paren for arg 1', () {
@@ -282,21 +283,24 @@ void main() {
     });
 
     test('escaped', () {
-      final tmpl = env.fromString('{{  x is escaped }}|{{ y is escaped  }}');
-      expect(
-          tmpl.render({'x': 'foo', 'y': Markup('foo')}), equals('false|true'));
+      var tmpl = env.fromString('{{  x is escaped }}');
+      expect(tmpl.render({'x': 'foo'}), equals('false'));
+      tmpl = env.fromString('{{ y is escaped  }}');
+      expect(tmpl.render({'y': Markup('foo')}), equals('true'));
     });
 
     test('greater than', () {
-      final tmpl =
-          env.fromString('{{ 1 is greaterthan 0 }}|{{ 0 is greaterthan 1 }}');
-      expect(tmpl.render(), equals('true|false'));
+      var tmpl = env.fromString('{{ 1 is greaterthan 0 }}');
+      expect(tmpl.render(), equals('true'));
+      tmpl = env.fromString('{{ 0 is greaterthan 1 }}');
+      expect(tmpl.render(), equals('false'));
     });
 
     test('less than', () {
-      final tmpl =
-          env.fromString('{{ 0 is lessthan 1 }}|{{ 1 is lessthan 0 }}');
-      expect(tmpl.render(), equals('true|false'));
+      var tmpl = env.fromString('{{ 0 is lessthan 1 }}');
+      expect(tmpl.render(), equals('true'));
+      tmpl = env.fromString('{{ 1 is lessthan 0 }}');
+      expect(tmpl.render(), equals('false'));
     });
 
     test('multiple test', () {
