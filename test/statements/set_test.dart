@@ -8,15 +8,13 @@ const emptyMap = <Object?, Object?>{};
 void main() {
   group('Set', () {
     test('normal', () {
-      final environment =
-          Environment(fieldGetter: fieldGetter, trimBlocks: true);
+      final environment = Environment(trimBlocks: true);
       final template = environment.fromString('{% set foo = 1 %}{{ foo }}');
       expect(template.render(), equals('1'));
     });
 
     test('block', () {
-      final environment =
-          Environment(fieldGetter: fieldGetter, trimBlocks: true);
+      final environment = Environment(trimBlocks: true);
       final template =
           environment.fromString('{% set foo %}42{% endset %}{{ foo }}');
       expect(template.render(), equals('42'));
@@ -31,8 +29,7 @@ void main() {
     });
 
     test('set invalid', () {
-      final environment =
-          Environment(fieldGetter: fieldGetter, trimBlocks: true);
+      final environment = Environment(trimBlocks: true);
       expect(() => environment.fromString('{% set foo["bar"] = 1 %}'),
           throwsA(isA<TemplateSyntaxError>()));
       final template = environment.fromString('{% set foo.bar = 1 %}');
@@ -43,8 +40,7 @@ void main() {
     });
 
     test('namespace redefined', () {
-      final environment =
-          Environment(fieldGetter: fieldGetter, trimBlocks: true);
+      final environment = Environment(trimBlocks: true);
       final template = environment
           .fromString('{% set ns = namespace() %}{% set ns.bar = "hi" %}');
       expect(
@@ -54,16 +50,14 @@ void main() {
     });
 
     test('namespace', () {
-      final environment =
-          Environment(fieldGetter: fieldGetter, trimBlocks: true);
+      final environment = Environment(trimBlocks: true);
       final template = environment.fromString(
           '{% set ns = namespace() %}{% set ns.bar = "42" %}{{ ns.bar }}');
       expect(template.render(), equals('42'));
     });
 
     test('namespace block', () {
-      final environment =
-          Environment(fieldGetter: fieldGetter, trimBlocks: true);
+      final environment = Environment(trimBlocks: true);
       final template = environment
           .fromString('{% set ns = namespace() %}{% set ns.bar %}42{% endset %}'
               '{{ ns.bar }}');
@@ -71,8 +65,7 @@ void main() {
     });
 
     test('init namespace', () {
-      final environment =
-          Environment(fieldGetter: fieldGetter, trimBlocks: true);
+      final environment = Environment(trimBlocks: true);
       final template = environment.fromString(
           '{% set ns = namespace(d, self=37) %}{% set ns.b = 42 %}{{ ns.a }}|'
           '{{ ns.self }}|{{ ns.b }}');
@@ -84,8 +77,7 @@ void main() {
     });
 
     test('namespace loop', () {
-      final environment =
-          Environment(fieldGetter: fieldGetter, trimBlocks: true);
+      final environment = Environment(trimBlocks: true);
       final template = environment.fromString(
           '{% set ns = namespace(found=false) %}{% for x in range(4) %}'
           '{% if x == v %}{% set ns.found = true %}{% endif %}{% endfor %}'
@@ -105,8 +97,7 @@ void main() {
     });
 
     test('block filtered', () {
-      final environment =
-          Environment(fieldGetter: fieldGetter, trimBlocks: true);
+      final environment = Environment(trimBlocks: true);
       final template = environment.fromString(
           '{% set foo | trim | length | string %} 42    {% endset %}{{ foo }}');
       expect(template.render(), equals('2'));

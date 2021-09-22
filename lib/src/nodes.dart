@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 
-import 'exceptions.dart';
 import 'runtime.dart';
 import 'tests.dart' as tests;
 import 'utils.dart';
@@ -22,15 +21,23 @@ abstract class Node {
 
   R accept<C, R>(Visitor<C, R> visitor, C context);
 
-  Iterable<T> listExpressions<T extends Expression>();
+  void visitChildrens(NodeVisitor visitor) {}
+}
 
-  Iterable<Node> listChildrens({bool deep = false});
+extension on Node {
+  void apply(NodeVisitor visitor) {
+    visitor(this);
+  }
 }
 
 class Data extends Node {
   Data([this.data = '']);
 
   String data;
+
+  bool get isLeaf {
+    return trimmed.isEmpty;
+  }
 
   String get literal {
     return "'${data.replaceAll("'", r"\'").replaceAll('\r\n', r'\n').replaceAll('\n', r'\n')}'";
@@ -46,13 +53,10 @@ class Data extends Node {
   }
 
   @override
-  Iterable<Node> listChildrens({bool deep = false}) sync* {}
-
-  @override
-  Iterable<T> listExpressions<T extends Expression>() sync* {}
+  void visitChildrens(NodeVisitor visitor) {}
 
   @override
   String toString() {
-    return 'Data()';
+    return 'Data($literal)';
   }
 }

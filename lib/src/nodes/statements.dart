@@ -1,16 +1,6 @@
 part of '../nodes.dart';
 
-abstract class Statement extends Node {
-  @override
-  Iterable<Node> listChildrens({bool deep = false}) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Iterable<T> listExpressions<T extends Expression>() {
-    throw UnimplementedError();
-  }
-}
+abstract class Statement extends Node {}
 
 class Extends extends Statement {
   Extends(this.path);
@@ -29,14 +19,26 @@ class Extends extends Statement {
 }
 
 class For extends Statement {
-  For(this.target, this.iterable, this.body,
-      {this.hasLoop = false, this.orElse, this.test, this.recursive = false});
+  For(this.target, this.iterable, this.nodes,
+      {this.orElse, this.test, this.recursive = false})
+      : hasLoop = false {
+    void visitor(Node node) {
+      if (node is Name && node.name == 'loop') {
+        hasLoop = true;
+        return;
+      }
+
+      node.visitChildrens(visitor);
+    }
+
+    visitChildrens(visitor);
+  }
 
   Expression target;
 
   Expression iterable;
 
-  List<Node> body;
+  List<Node> nodes;
 
   bool hasLoop;
 
@@ -49,6 +51,15 @@ class For extends Statement {
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitFor(this, context);
+  }
+
+  @override
+  void visitChildrens(NodeVisitor visitor) {
+    target.apply(visitor);
+    iterable.apply(visitor);
+    nodes.forEach(visitor);
+    orElse?.forEach(visitor);
+    test?.apply(visitor);
   }
 
   @override
@@ -65,8 +76,8 @@ class For extends Statement {
       result = '$result, $test';
     }
 
-    if (body.isNotEmpty) {
-      result = '$result, $body';
+    if (nodes.isNotEmpty) {
+      result = '$result, $nodes';
     }
 
     if (orElse != null) {
@@ -78,11 +89,11 @@ class For extends Statement {
 }
 
 class If extends Statement {
-  If(this.test, this.body, {this.nextIf, this.orElse});
+  If(this.test, this.nodes, {this.nextIf, this.orElse});
 
   Expression test;
 
-  List<Node> body;
+  List<Node> nodes;
 
   If? nextIf;
 
@@ -94,8 +105,16 @@ class If extends Statement {
   }
 
   @override
+  void visitChildrens(NodeVisitor visitor) {
+    test.apply(visitor);
+    nodes.forEach(visitor);
+    nextIf?.apply(visitor);
+    orElse?.forEach(visitor);
+  }
+
+  @override
   String toString() {
-    var result = 'If($test, $body';
+    var result = 'If($test, $nodes';
 
     if (nextIf != null) {
       result = '$result, next: $nextIf';
@@ -110,11 +129,11 @@ class If extends Statement {
 }
 
 class FilterBlock extends Statement {
-  FilterBlock(this.filters, this.body);
+  FilterBlock(this.filters, this.nodes);
 
   List<Filter> filters;
 
-  List<Node> body;
+  List<Node> nodes;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -122,19 +141,25 @@ class FilterBlock extends Statement {
   }
 
   @override
+  void visitChildrens(NodeVisitor visitor) {
+    filters.forEach(visitor);
+    nodes.forEach(visitor);
+  }
+
+  @override
   String toString() {
-    return 'FilterBlock($filters, $body)';
+    return 'FilterBlock($filters, $nodes)';
   }
 }
 
 class With extends Statement {
-  With(this.targets, this.values, this.body);
+  With(this.targets, this.values, this.nodes);
 
   List<Expression> targets;
 
   List<Expression> values;
 
-  List<Node> body;
+  List<Node> nodes;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -142,13 +167,31 @@ class With extends Statement {
   }
 
   @override
+  void visitChildrens(NodeVisitor visitor) {
+    targets.forEach(visitor);
+    values.forEach(visitor);
+    nodes.forEach(visitor);
+  }
+
+  @override
   String toString() {
-    return 'With($targets, $values, $body)';
+    return 'With($targets, $values, $nodes)';
   }
 }
 
 class Block extends Statement {
-  Block(this.name, this.scoped, this.required, this.hasSuper, this.nodes);
+  Block(this.name, this.scoped, this.required, this.nodes) : hasSuper = false {
+    void visitor(Node node) {
+      if (node is Name && node.name == 'super') {
+        hasSuper = true;
+        return;
+      }
+
+      node.visitChildrens(visitor);
+    }
+
+    visitChildrens(visitor);
+  }
 
   String name;
 
@@ -159,6 +202,11 @@ class Block extends Statement {
   bool hasSuper;
 
   List<Node> nodes;
+
+  @override
+  void visitChildrens(NodeVisitor visitor) {
+    nodes.forEach(visitor);
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -213,17 +261,22 @@ class Do extends Statement {
   }
 
   @override
+  void visitChildrens(NodeVisitor visitor) {
+    expressions.forEach(visitor);
+  }
+
+  @override
   String toString() {
     return 'Do(${expressions.join(', ')})';
   }
 }
 
 class Assign extends Statement {
-  Assign(this.target, this.expression);
+  Assign(this.target, this.value);
 
   Expression target;
 
-  Expression expression;
+  Expression value;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -231,8 +284,14 @@ class Assign extends Statement {
   }
 
   @override
+  void visitChildrens(NodeVisitor visitor) {
+    target.apply(visitor);
+    value.apply(visitor);
+  }
+
+  @override
   String toString() {
-    return 'Assign($target, $expression)';
+    return 'Assign($target, $value)';
   }
 }
 
@@ -251,6 +310,13 @@ class AssignBlock extends Statement {
   }
 
   @override
+  void visitChildrens(NodeVisitor visitor) {
+    target.apply(visitor);
+    nodes.forEach(visitor);
+    filters?.forEach(visitor);
+  }
+
+  @override
   String toString() {
     var result = 'AssignBlock($target, $nodes';
 
@@ -262,9 +328,7 @@ class AssignBlock extends Statement {
   }
 }
 
-abstract class ContextModifier {
-  void call<C extends Context, R>(Visitor<C, R> visitor, C context);
-}
+abstract class ContextModifier extends Statement {}
 
 class Scope extends Statement {
   Scope(this.modifier);
@@ -277,12 +341,17 @@ class Scope extends Statement {
   }
 
   @override
+  void visitChildrens(NodeVisitor visitor) {
+    modifier.apply(visitor);
+  }
+
+  @override
   String toString() {
     return 'Scope($modifier)';
   }
 }
 
-class ScopedContextModifier implements ContextModifier {
+class ScopedContextModifier extends ContextModifier {
   ScopedContextModifier(this.options, this.nodes);
 
   List<Node> nodes;
@@ -290,19 +359,18 @@ class ScopedContextModifier implements ContextModifier {
   Map<String, Expression> options;
 
   @override
-  String toString() {
-    return 'ScopedContextModifier($options, $nodes)';
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitScopedContextModifier(this, context);
   }
 
   @override
-  void call<C extends Context, R>(Visitor<C, R> visitor, C context) {
-    final data = <String, Object?>{
-      for (final entry in options.entries)
-        entry.key: entry.value.accept(visitor, context)
-    };
+  void visitChildrens(NodeVisitor visitor) {
+    nodes.forEach(visitor);
+    options.values.forEach(visitor);
+  }
 
-    context.push(data);
-    visitor.visitAll(nodes, context);
-    context.pop();
+  @override
+  String toString() {
+    return 'ScopedContextModifier($options, $nodes)';
   }
 }

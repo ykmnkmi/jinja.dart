@@ -44,6 +44,8 @@ class Context {
     if (object is Function) {
       return Function.apply(object, positional, named);
     }
+
+    throw TypeError();
   }
 
   Object? escape(Object? value) {
@@ -70,8 +72,14 @@ class Context {
     return autoEscape ? Escaped(value) : value;
   }
 
-  bool has(String name) {
-    return contexts.any((context) => context.containsKey(name));
+  bool has(String key) {
+    for (final context in contexts.reversed) {
+      if (context.containsKey(key)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   void pop() {

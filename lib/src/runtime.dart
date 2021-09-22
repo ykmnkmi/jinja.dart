@@ -1,3 +1,5 @@
+import 'dart:collection' show MapView;
+
 export 'context.dart';
 
 class LoopContext extends Iterable<Object?> {
@@ -164,48 +166,35 @@ class LoopIterator extends Iterator<Object?> {
   }
 }
 
-class NameSpace {
-  NameSpace([Map<String, Object?>? context]) : context = <String, Object?>{} {
+class Namespace extends MapView<String, Object?> {
+  Namespace([Map<String, Object?>? context]) : super(<String, Object?>{}) {
     if (context != null) {
-      this.context.addAll(context);
+      addAll(context);
     }
-  }
-
-  final Map<String, Object?> context;
-
-  Iterable<MapEntry<String, Object?>> get entries {
-    return context.entries;
-  }
-
-  Object? operator [](String key) {
-    return context[key];
-  }
-
-  void operator []=(String key, Object? value) {
-    context[key] = value;
   }
 
   @override
   String toString() {
-    return 'NameSpace($context)';
+    final values = entries.map((entry) => '${entry.key}: ${entry.value}');
+    return 'Namespace(${values.join(', ')})';
   }
 
-  static NameSpace factory([List<Object?>? datas]) {
-    if (datas == null) {
-      return NameSpace();
-    }
+  static Namespace factory([List<Object?>? datas]) {
+    final namespace = Namespace();
 
-    final context = <String, Object?>{};
+    if (datas == null) {
+      return namespace;
+    }
 
     for (final data in datas) {
-      if (data is Map) {
-        context.addAll(data.cast<String, Object?>());
-      } else {
+      if (data is! Map) {
         throw TypeError();
       }
+
+      namespace.addAll(data.cast<String, Object?>());
     }
 
-    return NameSpace(context);
+    return namespace;
   }
 }
 

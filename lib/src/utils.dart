@@ -1,6 +1,3 @@
-typedef Indices = Iterable<int> Function(int stopOrStart,
-    [int? stop, int? step]);
-
 class Cycler extends Iterable<Object?> {
   Cycler(List<Object?> values)
       : values = List<dynamic>.of(values),
@@ -81,17 +78,39 @@ String format(Object? object) {
   return repr(object);
 }
 
+int count(dynamic iterable) {
+  // if (iterable is Iterable) {
+  //   return iterable.length;
+  // }
+
+  // if (iterable is String) {
+  //   return iterable.length;
+  // }
+
+  // if (iterable is Map) {
+  //   return iterable.length;
+  // }
+
+  // throw TypeError();
+
+  return iterable.length as int;
+}
+
 List<Object?> list(Object? iterable) {
+  if (iterable is List) {
+    return iterable;
+  }
+
   if (iterable is Iterable) {
-    return List<Object?>.of(iterable);
+    return iterable.toList();
   }
 
   if (iterable is String) {
-    return List<Object?>.of(iterable.split(''));
+    return iterable.split('');
   }
 
   if (iterable is Map) {
-    return List<Object?>.of(iterable.keys);
+    return iterable.keys.toList();
   }
 
   throw TypeError();
@@ -112,12 +131,12 @@ Iterable<int> range(int stopOrStart, [int? stop, int step = 1]) sync* {
     stop = stop;
   }
 
-  if (step > 0) {
-    for (var i = start; i < stop; i += step) {
+  if (step < 0) {
+    for (var i = start; i >= stop; i += step) {
       yield i;
     }
   } else {
-    for (var i = start; i > stop; i += step) {
+    for (var i = start; i < stop; i += step) {
       yield i;
     }
   }
@@ -178,36 +197,4 @@ void reprTo(Object? object, StringBuffer buffer,
   }
 
   buffer.write(object);
-}
-
-Object slice(Object value, Indices indices) {
-  if (value is String) {
-    return sliceString(value, indices);
-  }
-
-  if (value is List<Object?>) {
-    return sliceList<Object?>(value, indices);
-  }
-
-  throw TypeError();
-}
-
-List<T> sliceList<T>(List<T> list, Indices indices) {
-  final result = <T>[];
-
-  for (final i in indices(list.length)) {
-    result.add(list[i]);
-  }
-
-  return result;
-}
-
-String sliceString(String string, Indices indices) {
-  final buffer = StringBuffer();
-
-  for (final i in indices(string.length)) {
-    buffer.write(string[i]);
-  }
-
-  return '$buffer';
 }

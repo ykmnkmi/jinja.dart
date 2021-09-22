@@ -3,6 +3,8 @@
 - `Template.renderMap` now deprecated.
 - `Template.render` now accepts `Map<String, Object?>`.
 - `FileSystemLoader` moved from `package:jinja/jinja.dart` to `package:jinja/loaders.dart`.
+- no `Undefined` and `missing`.
+- no `slice` expressions.
 - new statements:
   - with
 - no `Undefined` and `missing`

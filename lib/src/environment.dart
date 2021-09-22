@@ -316,130 +316,52 @@ class Environment {
   }
 
   /// Load a template from a source string without using [loader].
-  // TODO: shared environment
   Template fromString(String source, {String? path}) {
-    final template = Parser(this, path: path).parse(source);
-
-    for (final node in template.nodes) {
-      for (final child in node.listChildrens()) {
-        for (final call in child.listExpressions<Call>()) {
-          final expression = call.expression;
-
-          if (expression is Name) {
-            if (expression.name == 'namespace') {
-              final arguments = <Expression>[...?call.arguments];
-              call.arguments = null;
-              final keywords = call.keywords;
-
-              if (keywords != null && keywords.isNotEmpty) {
-                final entries = <MapEntry<Expression, Expression>>[
-                  for (final keyword in keywords) keyword.toMapEntry()
-                ];
-                final dict = DictLiteral(entries);
-                call.keywords = null;
-                arguments.add(dict);
-              }
-
-              final dArguments = call.dArguments;
-
-              if (dArguments != null) {
-                arguments.add(dArguments);
-                call.dArguments = null;
-              }
-
-              final dKeywordArguments = call.dKeywords;
-
-              if (dKeywordArguments != null) {
-                arguments.add(dKeywordArguments);
-                call.dKeywords = null;
-              }
-
-              if (arguments.isNotEmpty) {
-                call.arguments = <Expression>[ListLiteral(arguments)];
-              }
-            } else if (expression.name == 'super') {
-              final arguments = <Expression>[...?call.arguments];
-              call.arguments = null;
-
-              final keywords = call.keywords;
-
-              if (keywords != null && keywords.isNotEmpty) {
-                final entries = List<MapEntry<Expression, Expression>>.generate(
-                    keywords.length, (index) => keywords[index].toMapEntry());
-                final dict = DictLiteral(entries);
-                call.keywords = null;
-                arguments.add(dict);
-              }
-
-              if (call.dArguments != null) {
-                arguments.add(call.dArguments!);
-                call.dArguments = null;
-              }
-
-              if (call.dKeywords != null) {
-                arguments.add(call.dKeywords!);
-                call.dKeywords = null;
-              }
-
-              if (arguments.isNotEmpty) {
-                call.arguments =
-                    List<Expression>.filled(1, ListLiteral(arguments));
-              }
-            }
-          }
-        }
-      }
-    }
-
-    // TODO: optimize
-    return template;
+    final nodes = Parser(this, path: path).parse(source);
+    // TODO: restore optimization
+    return Template.parsed(this, nodes);
   }
 
   Object? getAttribute(Object? object, String field) {
+    if (object is Namespace) {
+      return object[field];
+    }
+
     try {
       return fieldGetter(object, field);
     } on NoSuchMethodError {
-      try {
-        return (object as dynamic)[field];
-      } on NoSuchMethodError {
-        // pass
+      if (object is Map) {
+        return object[field];
       }
 
-      rethrow;
+      return null;
     }
   }
 
   Object? getItem(Object? object, Object? key) {
-    // TODO: update slices
-    if (key is Indices) {
-      if (object is List<Object?>) {
-        return slice(object, key);
+    if (key is int) {
+      if (key < 0) {
+        key += count(object);
+      }
+
+      if (object is List) {
+        return object[key];
       }
 
       if (object is String) {
-        return sliceString(object, key);
-      }
-
-      if (object is Iterable<Object?>) {
-        return slice(object.toList(), key);
+        return object[key];
       }
     }
 
-    if (key is int && key < 0) {
-      key = key + ((object as dynamic).length as int);
+    if (object is Map) {
+      return object[key];
     }
 
-    try {
-      return (object as dynamic)[key];
-    } on NoSuchMethodError {
-      if (key is String) {
-        try {
-          return fieldGetter(object, key);
-        } on NoSuchMethodError {
-          return null;
-        }
-      }
+    if (key is String) {
+      return getAttribute(object, key);
     }
+
+    return null;
   }
 
   /// Load a template by name with [loader] and return a
@@ -480,6 +402,7 @@ class Environment {
   }
 
   Template loadTemplate(String template) {
+    // TODO: handle error
     assert(loader != null, 'no loader for this environment specified');
     return templates[template] = loader!.load(this, template);
   }
@@ -577,32 +500,83 @@ class Template extends Node {
     return environment.fromString(source, path: path);
   }
 
-  Template.parsed(this.environment, this.nodes,
-      {this.blocks = const <Block>[], this.hasSelf = false, this.path});
+  Template.parsed(this.environment, this.nodes, {this.path})
+      : hasSelf = false,
+        blocks = <Block>[] {
+    for (final node in nodes) {
+      if (node is Block) {
+        blocks.add(node);
+      }
+    }
 
-  final Environment environment;
+    void self(Node node) {
+      if (node is Name && node.name == 'self') {
+        hasSelf = true;
+        return;
+      }
 
-  final List<Node> nodes;
+      node.visitChildrens(self);
+    }
 
-  final List<Block> blocks;
+    visitChildrens(self);
 
-  final bool hasSelf;
+    void namespace(Node node) {
+      if (node is Call) {
+        final expression = node.expression;
 
-  final String? path;
+        if (expression is Name && expression.name == 'namespace') {
+          final arguments = <Expression>[...?node.arguments];
+          node.arguments = null;
+          final keywords = node.keywords;
+
+          if (keywords != null && keywords.isNotEmpty) {
+            final dict = DictLiteral(Map<Expression, Expression>.fromEntries(
+                keywords.map((keyword) => keyword.toMapEntry())));
+            node.keywords = null;
+            arguments.add(dict);
+          }
+
+          final dArguments = node.dArguments;
+
+          if (dArguments != null) {
+            arguments.add(dArguments);
+            node.dArguments = null;
+          }
+
+          final dKeywordArguments = node.dKeywords;
+
+          if (dKeywordArguments != null) {
+            arguments.add(dKeywordArguments);
+            node.dKeywords = null;
+          }
+
+          if (arguments.isNotEmpty) {
+            node.arguments = <Expression>[ListLiteral(arguments)];
+          }
+
+          return;
+        }
+      }
+
+      node.visitChildrens(namespace);
+    }
+
+    visitChildrens(namespace);
+  }
+
+  Environment environment;
+
+  List<Node> nodes;
+
+  List<Block> blocks;
+
+  bool hasSelf;
+
+  String? path;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitTemplate(this, context);
-  }
-
-  @override
-  Iterable<Node> listChildrens({bool deep = false}) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Iterable<T> listExpressions<T extends Expression>() {
-    throw UnimplementedError();
   }
 
   String render([Map<String, Object?>? data]) {
@@ -615,6 +589,11 @@ class Template extends Node {
   @Deprecated('Use `render` instead. Will be removed in Dart 0.5.0')
   String renderMap([Map<String, Object?>? data]) {
     return render(data);
+  }
+
+  @override
+  void visitChildrens(NodeVisitor visitor) {
+    nodes.forEach(visitor);
   }
 
   @override

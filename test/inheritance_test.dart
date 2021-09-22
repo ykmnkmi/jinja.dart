@@ -175,79 +175,77 @@ void main() {
     //       .where((part) => part.isNotEmpty);
     //   expect(iterable, orderedEquals(<String>['43', '44', '45']));
     // });
-  });
 
-  test('level1 required', () {
-    final env = Environment(
-      loader: MapLoader({
-        'default': '{% block x required %}{# comment #}\n {% endblock %}',
-        'level1': '{% extends "default" %}{% block x %}[1]{% endblock %}',
-      }),
-    );
+    test('level1 required', () {
+      final env = Environment(
+        loader: MapLoader({
+          'default': '{% block x required %}{# comment #}\n {% endblock %}',
+          'level1': '{% extends "default" %}{% block x %}[1]{% endblock %}',
+        }),
+      );
 
-    expect(env.getTemplate('level1').render(), equals('[1]'));
-  });
+      expect(env.getTemplate('level1').render(), equals('[1]'));
+    });
 
-  test('level2 required', () {
-    final env = Environment(
-      loader: MapLoader({
-        'default': "{% block x required %}{% endblock %}",
-        'level1': '{% extends "default" %}{% block x %}[1]{% endblock %}',
-        'level2': '{% extends "default" %}{% block x %}[2]{% endblock %}',
-      }),
-    );
+    test('level2 required', () {
+      final env = Environment(
+        loader: MapLoader({
+          'default': "{% block x required %}{% endblock %}",
+          'level1': '{% extends "default" %}{% block x %}[1]{% endblock %}',
+          'level2': '{% extends "default" %}{% block x %}[2]{% endblock %}',
+        }),
+      );
 
-    expect(env.getTemplate('level1').render(), equals('[1]'));
-    expect(env.getTemplate('level2').render(), equals('[2]'));
-  });
+      expect(env.getTemplate('level1').render(), equals('[1]'));
+      expect(env.getTemplate('level2').render(), equals('[2]'));
+    });
 
-  test('level3 required', () {
-    final env = Environment(
-      loader: MapLoader({
-        'default': '{% block x required %}{% endblock %}',
-        'level1': '{% extends "default" %}',
-        'level2': '{% extends "level1" %}{% block x %}[2]{% endblock %}',
-        'level3': '{% extends "level2" %}',
-      }),
-    );
+    test('level3 required', () {
+      final env = Environment(
+        loader: MapLoader({
+          'default': '{% block x required %}{% endblock %}',
+          'level1': '{% extends "default" %}',
+          'level2': '{% extends "level1" %}{% block x %}[2]{% endblock %}',
+          'level3': '{% extends "level2" %}',
+        }),
+      );
 
-    bool matcher(TemplateSyntaxError error) {
-      return error.message == 'required block \'x\' not found';
-    }
+      expect(
+          () => env.getTemplate('level1').render(),
+          throwsA(predicate<TemplateSyntaxError>(
+              (error) => error.message == 'required block \'x\' not found')));
+      expect(env.getTemplate('level2').render(), equals('[2]'));
+      expect(env.getTemplate('level3').render(), equals('[2]'));
+    });
 
-    expect(() => env.getTemplate('level1').render(),
-        throwsA(predicate<TemplateSyntaxError>(matcher)));
-    expect(env.getTemplate('level2').render(), equals('[2]'));
-    expect(env.getTemplate('level3').render(), equals('[2]'));
-  });
+    test('invalid required', () {
+      final env = Environment(
+        loader: MapLoader({
+          'default': '{% block x required %}data {# #}{% endblock %}',
+          'default2': '{% block x required %}{% block y %}'
+              '{% endblock %}  {% endblock %}',
+          'default3': '{% block x required %}{% if true %}{% endif %}  '
+              '{% endblock %}',
+          "level1default":
+              '{% extends "default" %}{%- block x %}CHILD{% endblock %}',
+          "level1default2":
+              '{% extends "default2" %}{%- block x %}CHILD{% endblock %}',
+          "level1default3":
+              '{% extends "default3" %}{%- block x %}CHILD{% endblock %}',
+        }),
+      );
 
-  test('invalid required', () {
-    final env = Environment(
-      loader: MapLoader({
-        'default': '{% block x required %}data {# #}{% endblock %}',
-        'default2': '{% block x required %}{% block y %}'
-            '{% endblock %}  {% endblock %}',
-        'default3': '{% block x required %}{% if true %}{% endif %}  '
-            '{% endblock %}',
-        "level1default":
-            '{% extends "default" %}{%- block x %}CHILD{% endblock %}',
-        "level1default2":
-            '{% extends "default2" %}{%- block x %}CHILD{% endblock %}',
-        "level1default3":
-            '{% extends "default3" %}{%- block x %}CHILD{% endblock %}',
-      }),
-    );
+      bool matcher(TemplateSyntaxError error) {
+        return error.message ==
+            'required blocks can only contain comments or whitespace';
+      }
 
-    bool matcher(TemplateSyntaxError error) {
-      return error.message ==
-          'required blocks can only contain comments or whitespace';
-    }
-
-    expect(() => env.getTemplate('level1default').render(),
-        throwsA(predicate<TemplateSyntaxError>(matcher)));
-    expect(() => env.getTemplate('level1default2').render(),
-        throwsA(predicate<TemplateSyntaxError>(matcher)));
-    expect(() => env.getTemplate('level1default3').render(),
-        throwsA(predicate<TemplateSyntaxError>(matcher)));
+      expect(() => env.getTemplate('level1default').render(),
+          throwsA(predicate<TemplateSyntaxError>(matcher)));
+      expect(() => env.getTemplate('level1default2').render(),
+          throwsA(predicate<TemplateSyntaxError>(matcher)));
+      expect(() => env.getTemplate('level1default3').render(),
+          throwsA(predicate<TemplateSyntaxError>(matcher)));
+    });
   });
 }

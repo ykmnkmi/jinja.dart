@@ -18,7 +18,7 @@ const String newLine = '\n';
 const bool keepTrailingNewLine = false;
 
 const Map<String, Object?> globals = <String, Object?>{
-  'namespace': NameSpace.factory,
+  'namespace': Namespace.factory,
   'list': list,
   'range': range,
 };

@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:jinja/jinja.dart';
 import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/utils.dart';
@@ -5,31 +7,38 @@ import 'package:test/test.dart';
 
 import 'environment.dart';
 
-class Foo {
+class Foo extends MapMixin<Object?, Object?> {
+  @override
+  Iterable<Object?> get keys {
+    throw UnimplementedError();
+  }
+
+  @override
   Object? operator [](Object? key) {
     return key;
+  }
+
+  @override
+  void operator []=(Object? key, Object? value) {}
+
+  @override
+  void clear() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Object? remove(Object? key) {
+    throw UnimplementedError();
   }
 }
 
 void main() {
   group('Syntax', () {
     test('call', () {
-      final env = Environment(
-        globals: {
-          'foo': (dynamic a, dynamic b, {dynamic c, dynamic e, dynamic g}) {
-            return a + b + c + e + g;
-          },
-        },
-      );
-
-      final tmpl =
-          env.fromString('{{ foo("a", c="d", e="f", *["b"], **{"g": "h"}) }}');
-      expect(tmpl.render(), equals('abdfh'));
-    });
-
-    test('slicing', () {
-      final tmpl = env.fromString('{{ [1, 2, 3][:] }}|{{ [1, 2, 3][::-1] }}');
-      expect(tmpl.render(), equals('[1, 2, 3]|[3, 2, 1]'));
+      Object? foo(dynamic a, {dynamic b}) => a + b;
+      final env = Environment(globals: {'foo': foo});
+      final tmpl = env.fromString('{{ foo(*["a"], **{"b": "c"}) }}');
+      expect(tmpl.render(), equals('ac'));
     });
 
     test('attr', () {
@@ -40,8 +49,10 @@ void main() {
 
     test('subscript', () {
       final foo = [0, 1, 2];
-      final tmpl = env.fromString('{{ foo[0] }}|{{ foo[-1] }}');
-      expect(tmpl.render({'foo': foo}), equals('0|2'));
+      var tmpl = env.fromString('{{ foo[0] }}');
+      expect(tmpl.render({'foo': foo}), equals('0'));
+      tmpl = env.fromString('{{ foo[-1] }}');
+      expect(tmpl.render({'foo': foo}), equals('2'));
     });
 
     test('tuple', () {
@@ -165,8 +176,10 @@ void main() {
     });
 
     test('django attr', () {
-      final tmpl = env.fromString('{{ [1, 2, 3].0 }}|{{ [[1]].0.0 }}');
-      expect(tmpl.render(), equals('1|1'));
+      var tmpl = env.fromString('{{ [1, 2, 3].0 }}');
+      expect(tmpl.render(), equals('1'));
+      tmpl = env.fromString('{{ [[1]].0.0 }}');
+      expect(tmpl.render(), equals('1'));
     });
 
     test('conditional expression', () {
@@ -251,14 +264,7 @@ void main() {
       expect(tmpl.render(), equals('5'));
     });
 
-    test('implicit subscribed tuple', () {
-      // tuple is list
-      final tmpl = env.fromString('{{ foo[1, 2] }}');
-      expect(tmpl.render({'foo': Foo()}), equals('[1, 2]'));
-    });
-
     test('raw2', () {
-      // tuple is list
       final tmpl =
           env.fromString('{% raw %}{{ FOO }} and {% BAR %}{% endraw %}');
       expect(tmpl.render(), equals('{{ FOO }} and {% BAR %}'));
@@ -278,11 +284,11 @@ void main() {
     });
 
     test('neg filter priority', () {
-      final tmpl = env.fromString('{{ -1 | foo }}');
+      final tmpl = env.fromString('{{ -1|foo }}');
       final node = tmpl.nodes[0];
       expect(node, predicate<Filter>((filter) {
         final expression = filter.arguments![0];
-        return expression is Binary && expression.operator == 'neg';
+        return expression is Unary && expression.operator == '-';
       }));
     });
 

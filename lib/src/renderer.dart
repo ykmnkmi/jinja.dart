@@ -5,7 +5,7 @@ import 'environment.dart';
 import 'exceptions.dart';
 import 'nodes.dart';
 import 'runtime.dart';
-import 'utils.dart';
+import 'utils.dart' as utils;
 
 class RenderContext extends Context {
   RenderContext(Environment environment, this.sink,
@@ -59,7 +59,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
   @override
   void visitAssign(Assign node, RenderContext context) {
     final target = node.target.resolve(context);
-    final values = node.expression.resolve(context);
+    final values = node.value.resolve(context);
     assignTargetsToContext(context, target, values);
   }
 
@@ -78,7 +78,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
     }
 
     for (final filter in filters) {
-      value = filter.call(context, (positional, named) {
+      value = filter(context, (positional, named) {
         positional.insert(0, value);
         return context.environment
             .callFilter(filter.name, positional, named, context: context);
@@ -106,7 +106,6 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
       var index = 0;
 
       if (first.hasSuper) {
-        // TODO: void call
         String parent() {
           if (index < blocks.length - 1) {
             final parentBlock = blocks[++index];
@@ -134,10 +133,8 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
 
   @override
   void visitDo(Do node, RenderContext context) {
-    final doContext = Context.from(context);
-
     for (final expression in node.expressions) {
-      expression.accept(this, doContext);
+      expression.resolve(context);
     }
   }
 
@@ -158,7 +155,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
   @override
   void visitFilterBlock(FilterBlock node, RenderContext context) {
     final buffer = StringBuffer();
-    visitAll(node.body, RenderContext.from(context, buffer));
+    visitAll(node.nodes, RenderContext.from(context, buffer));
     Object? value = '$buffer';
 
     for (final filter in node.filters) {
@@ -174,17 +171,16 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
 
   @override
   void visitFor(For node, RenderContext context) {
-    final targets = node.target.accept(this, context);
-    final iterable = node.iterable.accept(this, context);
+    final targets = node.target.resolve(context);
+    final iterable = node.iterable.resolve(context);
     final orElse = node.orElse;
 
     if (iterable == null) {
       throw TypeError();
     }
 
-    // TODO: void call
     String recurse(Object? iterable, [int depth = 0]) {
-      var values = list(iterable);
+      var values = utils.list(iterable);
 
       if (values.isEmpty) {
         if (orElse != null) {
@@ -202,7 +198,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
           final data = getDataForTargets(targets, value);
           context.push(data);
 
-          if (test.accept(this, context) as bool) {
+          if (test.resolve(context)) {
             filtered.add(value);
           }
 
@@ -228,7 +224,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
       for (final value in loop) {
         final data = unpack(targets, value);
         context.push(data);
-        visitAll(node.body, context);
+        visitAll(node.nodes, context);
         context.pop();
       }
 
@@ -240,16 +236,16 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
 
   @override
   void visitIf(If node, RenderContext context) {
-    if (boolean(node.test.accept(this, context))) {
-      visitAll(node.body, context);
+    if (utils.boolean(node.test.resolve(context))) {
+      visitAll(node.nodes, context);
       return;
     }
 
     var next = node.nextIf;
 
     while (next != null) {
-      if (boolean(next.test.accept(this, context))) {
-        visitAll(next.body, context);
+      if (utils.boolean(next.test.resolve(context))) {
+        visitAll(next.nodes, context);
         return;
       }
 
@@ -274,25 +270,34 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
 
   @override
   void visitScope(Scope node, RenderContext context) {
-    node.modifier(this, context);
+    node.modifier.accept(this, context);
+  }
+
+  @override
+  Object? visitScopedContextModifier(
+      ScopedContextModifier node, RenderContext context) {
+    final data = <String, Object?>{
+      for (final entry in node.options.entries)
+        entry.key: entry.value.resolve(context)
+    };
+
+    context.push(data);
+    visitAll(node.nodes, context);
+    context.pop();
   }
 
   @override
   void visitTemplate(Template node, RenderContext context) {
     for (final block in node.blocks) {
-      if (!context.blocks.containsKey(block.name)) {
-        context.blocks[block.name] = <Block>[];
-      }
-
-      context.blocks[block.name]!.add(block);
+      final blocks = context.blocks[block.name] ??= <Block>[];
+      blocks.add(block);
     }
 
     if (node.hasSelf) {
-      final self = NameSpace();
+      final self = Namespace();
 
       for (final block in node.blocks) {
-        self.context[block.name] = () {
-          // TODO: void call
+        self[block.name] = () {
           block.accept(this, context);
           return '';
         };
@@ -306,14 +311,12 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
 
   @override
   void visitWith(With node, RenderContext context) {
-    final targets = <Object?>[
-      for (final target in node.targets) target.accept(this, context)
-    ];
-    final values = <Object?>[
-      for (final value in node.values) value.accept(this, context)
-    ];
+    final targets = List<Object?>.generate(
+        node.targets.length, (index) => node.targets[index].resolve(context));
+    final values = List<Object?>.generate(
+        node.values.length, (index) => node.values[index].resolve(context));
     context.push(getDataForTargets(targets, values));
-    visitAll(node.body, context);
+    visitAll(node.nodes, context);
     context.pop();
   }
 
@@ -326,30 +329,20 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
     }
 
     if (target is List<String>) {
-      List<Object?> list;
+      final values = utils.list(current);
 
-      if (current is List) {
-        list = current;
-      } else if (current is Iterable<Object?>) {
-        list = current.toList();
-      } else if (current is String) {
-        list = current.split('');
-      } else {
-        throw TypeError();
-      }
-
-      if (list.length < target.length) {
+      if (values.length < target.length) {
         throw StateError(
-            'not enough values to unpack (expected ${target.length}, got ${list.length})');
+            'not enough values to unpack (expected ${target.length}, got ${values.length})');
       }
 
-      if (list.length > target.length) {
+      if (values.length > target.length) {
         throw StateError(
             'too many values to unpack (expected ${target.length})');
       }
 
       for (var i = 0; i < target.length; i++) {
-        context.set(target[i], list[i]);
+        context.set(target[i], values[i]);
       }
 
       return;
@@ -358,7 +351,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
     if (target is NamespaceValue) {
       final namespace = context.resolve(target.name);
 
-      if (namespace is! NameSpace) {
+      if (namespace is! Namespace) {
         throw TemplateRuntimeError('non-namespace object');
       }
 
@@ -366,18 +359,18 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
       return;
     }
 
-    throw ArgumentError.value(target, 'target');
+    throw TypeError();
   }
 
   @protected
   static Map<String, Object?> getDataForTargets(
-      Object? target, Object? current) {
-    if (target is String) {
-      return <String, Object?>{target: current};
+      Object? targets, Object? current) {
+    if (targets is String) {
+      return <String, Object?>{targets: current};
     }
 
-    if (target is List) {
-      final names = target.cast<String>();
+    if (targets is List) {
+      final names = targets.cast<String>();
       List<Object?> list;
 
       if (current is List) {
@@ -405,6 +398,6 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
       };
     }
 
-    throw ArgumentError.value(target, 'target');
+    throw TypeError();
   }
 }

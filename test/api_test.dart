@@ -1,12 +1,11 @@
 import 'package:jinja/jinja.dart';
-import 'package:jinja/reflection.dart';
 import 'package:jinja/runtime.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('ExtendedAPI', () {
     test('item and attribute', () {
-      final env = Environment(fieldGetter: fieldGetter);
+      final env = Environment();
       final tmpl = env.fromString('{{ foo["items"] }}');
       final foo = {'items': 42};
       expect(tmpl.render({'foo': foo}), equals('42'));

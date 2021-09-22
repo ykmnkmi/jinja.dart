@@ -1,16 +1,16 @@
 # Jinja for Dart
-
 [![Pub](https://img.shields.io/pub/v/jinja.svg)](https://pub.dev/packages/jinja)
 
 [Jinja](https://www.palletsprojects.com/p/jinja/) server-side template engine port for Dart 2.
 Variables, expressions, control structures and template inheritance.
 
-## Breaking changes 0.4.0
-- No dynamic template imports. Only single constant template path/name.
+## Breaking changes 0.4.0, less dynamic
+- no dynamic template imports. Only single constant template path/name.
 - `Template.renderMap` now deprecated.
 - `Template.render` now accepts `Map<String, Object?>`.
 - `FileSystemLoader` moved from `package:jinja/jinja.dart` to `package:jinja/loaders.dart`.
-- No `Undefined` and `missing`.
+- no `Undefined` and `missing`.
+- no `slice` expressions.
 - _work in progress_
 
 ## Documentation
@@ -18,11 +18,9 @@ Variables, expressions, control structures and template inheritance.
 Mostly same as [Jinja](https://jinja.palletsprojects.com/en/3.0.x/templates/) template documentation.
 
 ## Differences
-
 _work in progress_
 
 ## Example
-
 ```dart
 import 'package:jinja/jinja.dart';
 
@@ -129,9 +127,9 @@ See also examples with [conduit][conduit_example] and [reflectable][reflectable_
   - upper
   - wordwrap
 - List of Builtin Tests
-  - boolean `null ~ false ~ 0 ~ '' ~ [] ~ {}`
+  - boolean
   - callable
-  - defined `_ != null`
+  - defined
   - divisibleby
   - eq, equalto, ==
   - escaped
@@ -148,14 +146,13 @@ See also examples with [conduit][conduit_example] and [reflectable][reflectable_
   - lt, lessthan, <
   - mapping
   - ne, !=
-  - none
+  - none, undefined
   - number
   - odd
   - sameas
   - sequence
   - string
   - true
-  - undefined `_ == null`
   - upper
 - List of Global Functions
   - list

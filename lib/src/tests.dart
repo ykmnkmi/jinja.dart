@@ -89,12 +89,12 @@ bool isMapping(Object? value) {
   return value is Map;
 }
 
-bool isNone(Object? value) {
-  return value == null;
-}
-
 bool isNotEqual(Object? value, Object? other) {
   return value != other;
+}
+
+bool isNull(Object? value) {
+  return value == null;
 }
 
 bool isNumber(Object? object) {
@@ -158,13 +158,13 @@ const Map<String, Function> tests = {
   'lt': isLessThan,
   'mapping': isMapping,
   'ne': isNotEqual,
-  'none': isNone,
+  'none': isNull,
   'number': isNumber,
   'odd': isOdd,
   'sameas': isSameAs,
   'sequence': isSequence,
   'string': isString,
   'true': isTrue,
-  'undefined': isUndefined,
+  'undefined': isNull,
   'upper': isUpper,
 };

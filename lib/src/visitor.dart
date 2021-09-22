@@ -34,6 +34,8 @@ abstract class Visitor<C, R> {
 
   R visitScope(Scope node, C context);
 
+  R visitScopedContextModifier(ScopedContextModifier node, C context);
+
   R visitTemplate(Template node, C context);
 
   R visitWith(With node, C context);

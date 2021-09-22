@@ -16,7 +16,7 @@ void main() {
 
       final lines = const LineSplitter()
           .convert(tmpl.render({'a': 1, 'b': 2}))
-          .map<String>((line) => line.trim())
+          .map((line) => line.trim())
           .where((line) => line.isNotEmpty);
       expect(lines, orderedEquals(<String>['42 = 23', '1 = 2']));
     });

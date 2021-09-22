@@ -168,7 +168,7 @@ void main() {
   });
 
   group('LStripBlocks', () {
-    late final kvs = {
+    const kvs = {
       'kvs': [
         ['a', 1],
         ['b', 2]

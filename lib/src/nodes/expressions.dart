@@ -16,12 +16,6 @@ abstract class Expression extends Node {
     throw Impossible();
   }
 
-  @override
-  Iterable<Node> listChildrens({bool deep = false}) sync* {}
-
-  @override
-  Iterable<T> listExpressions<T extends Expression>() sync* {}
-
   Object? resolve(Context context) {
     return null;
   }
@@ -70,7 +64,9 @@ class Name extends Assignable {
 
   @override
   String toString() {
-    return 'Name($name)';
+    return context == AssignContext.load
+        ? 'Name($name)'
+        : 'Name($name, $context)';
   }
 }
 
@@ -98,15 +94,6 @@ class Concat extends Expression {
   List<Expression> expressions;
 
   @override
-  Iterable<T> listExpressions<T extends Expression>() sync* {
-    for (final expression in expressions) {
-      if (expression is T) {
-        yield expression;
-      }
-    }
-  }
-
-  @override
   String resolve(Context context) {
     final buffer = StringBuffer();
 
@@ -115,6 +102,11 @@ class Concat extends Expression {
     }
 
     return '$buffer';
+  }
+
+  @override
+  void visitChildrens(NodeVisitor visitor) {
+    expressions.forEach(visitor);
   }
 
   @override
@@ -131,18 +123,14 @@ class Attribute extends Expression {
   Expression value;
 
   @override
-  Iterable<T> listExpressions<T extends Expression>() sync* {
-    final value = this.value;
-
-    if (value is T) {
-      yield value;
-    }
-  }
-
-  @override
   Object? resolve(Context context) {
     final value = this.value.resolve(context);
     return context.environment.getAttribute(value, attribute);
+  }
+
+  @override
+  void visitChildrens(NodeVisitor visitor) {
+    value.apply(visitor);
   }
 
   @override
@@ -159,134 +147,21 @@ class Item extends Expression {
   Expression value;
 
   @override
-  Iterable<T> listExpressions<T extends Expression>() sync* {
-    final key = this.key;
-
-    if (key is T) {
-      yield key;
-    }
-
-    final value = this.value;
-
-    if (value is T) {
-      yield value;
-    }
-  }
-
-  @override
   Object? resolve(Context context) {
     final key = this.key.resolve(context);
     final value = this.value.resolve(context);
-    return context.environment.getItem(key, value);
+    return context.environment.getItem(value, key);
+  }
+
+  @override
+  void visitChildrens(NodeVisitor visitor) {
+    key.apply(visitor);
+    value.apply(visitor);
   }
 
   @override
   String toString() {
     return 'Item($key, $value)';
-  }
-}
-
-class Slice extends Expression {
-  factory Slice.fromList(List<Expression?> expressions) {
-    assert(expressions.length <= 3);
-
-    switch (expressions.length) {
-      case 0:
-        return Slice();
-      case 1:
-        return Slice(start: expressions[0]);
-      case 2:
-        return Slice(start: expressions[0], stop: expressions[1]);
-      case 3:
-        return Slice(
-            start: expressions[0], stop: expressions[1], step: expressions[2]);
-      default:
-        throw ArgumentError();
-    }
-  }
-
-  Slice({this.start, this.stop, this.step});
-
-  Expression? start;
-
-  Expression? stop;
-
-  Expression? step;
-
-  @override
-  Iterable<T> listExpressions<T extends Expression>() sync* {
-    final start = this.start;
-
-    if (start is T) {
-      yield start;
-    }
-
-    final stop = this.stop;
-
-    if (stop is T) {
-      yield stop;
-    }
-
-    final step = this.step;
-
-    if (step is T) {
-      yield step;
-    }
-  }
-
-  @override
-  Iterable<int> Function(int, [int?, int?]) resolve(Context context) {
-    final sliceStart = start?.resolve(context) as int?;
-    final sliceStop = stop?.resolve(context) as int?;
-    final sliceStep = step?.resolve(context) as int?;
-    return (int stopOrStart, [int? stop, int? step]) {
-      if (sliceStep == null) {
-        step = 1;
-      } else if (sliceStep == 0) {
-        throw StateError('slice step cannot be zero');
-      } else {
-        step = sliceStep;
-      }
-
-      int start;
-
-      if (sliceStart == null) {
-        start = step > 0 ? 0 : stopOrStart - 1;
-      } else {
-        start = sliceStart < 0 ? sliceStart + stopOrStart : sliceStart;
-      }
-
-      if (sliceStop == null) {
-        stop = step > 0 ? stopOrStart : -1;
-      } else {
-        stop = sliceStop < 0 ? sliceStop + stopOrStart : sliceStop;
-      }
-
-      return range(start, stop, step);
-    };
-  }
-
-  @override
-  String toString() {
-    var result = 'Slice(';
-
-    if (start != null) {
-      result = '$result$start';
-    }
-
-    result = '$result:';
-
-    if (stop != null) {
-      result = '$result$stop';
-    }
-
-    result = '$result:';
-
-    if (step != null) {
-      result = '$result$step';
-    }
-
-    return '$result]';
   }
 }
 
@@ -300,17 +175,13 @@ class Keyword extends Expression {
   Expression value;
 
   @override
-  Iterable<T> listExpressions<T extends Expression>() sync* {
-    final value = this.value;
-
-    if (value is T) {
-      yield value;
-    }
+  MapEntry<Symbol, Object?> resolve(Context context) {
+    return MapEntry<Symbol, Object?>(Symbol(key), value.resolve(context));
   }
 
   @override
-  MapEntry<Symbol, Object?> resolve(Context context) {
-    return MapEntry<Symbol, Object?>(Symbol(key), value.resolve(context));
+  void visitChildrens(NodeVisitor visitor) {
+    value.apply(visitor);
   }
 
   MapEntry<Expression, Expression> toMapEntry() {
@@ -334,7 +205,7 @@ class Callable extends Expression {
 
   Expression? dKeywords;
 
-  Object? call(Context context, Callback callback) {
+  T call<T extends Object?>(Context context, Callback callback) {
     final arguments = this.arguments;
     List<Object?> positional;
 
@@ -365,53 +236,25 @@ class Callable extends Expression {
     if (dKeywords != null) {
       final resolvedKeywords = dKeywords.resolve(context);
 
-      if (resolvedKeywords is! Map<String, Object?>) {
-        // TODO: update error
+      if (resolvedKeywords is! Map) {
         throw TypeError();
       }
 
-      named.addAll(resolvedKeywords.map<Symbol, Object?>(
-          (key, value) => MapEntry<Symbol, Object?>(Symbol(key), value)));
+      named.addAll(resolvedKeywords
+          .cast<String, Object?>()
+          .map<Symbol, Object?>(
+              (key, value) => MapEntry<Symbol, Object?>(Symbol(key), value)));
     }
 
-    return callback(positional, named);
+    return callback(positional, named) as T;
   }
 
   @override
-  Iterable<T> listExpressions<T extends Expression>() sync* {
-    final arguments = this.arguments;
-
-    if (arguments != null) {
-      for (final argument in arguments) {
-        if (argument is T) {
-          yield argument;
-        }
-      }
-    }
-
-    final keywords = this.keywords;
-
-    if (keywords != null) {
-      for (final keyword in keywords) {
-        yield* keyword.listExpressions<T>();
-      }
-    }
-
-    final dArguments = this.dArguments;
-
-    if (dArguments != null) {
-      if (dArguments is T) {
-        yield dArguments;
-      }
-    }
-
-    final dKeywords = this.dKeywords;
-
-    if (dKeywords != null) {
-      if (dKeywords is T) {
-        yield dKeywords;
-      }
-    }
+  void visitChildrens(NodeVisitor visitor) {
+    arguments?.forEach(visitor);
+    keywords?.forEach(visitor);
+    dArguments?.apply(visitor);
+    dKeywords?.apply(visitor);
   }
 
   String printArguments({bool comma = false}) {
@@ -425,7 +268,7 @@ class Callable extends Expression {
         comma = true;
       }
 
-      result += arguments.join(', ');
+      result = '$result${arguments.join(', ')}';
     }
 
     final keywords = this.keywords;
@@ -437,7 +280,7 @@ class Callable extends Expression {
         comma = true;
       }
 
-      result += keywords.join(', ');
+      result = '$result${keywords.join(', ')}';
     }
 
     if (dArguments != null) {
@@ -477,20 +320,6 @@ class Call extends Callable {
   Expression expression;
 
   @override
-  Iterable<Node> listChildrens({bool deep = false}) sync* {}
-
-  @override
-  Iterable<T> listExpressions<T extends Expression>() sync* {
-    final expression = this.expression;
-
-    if (expression is T) {
-      yield expression;
-    }
-
-    yield* super.listExpressions<T>();
-  }
-
-  @override
   Object? resolve(Context context) {
     final function = expression.resolve(context);
     return call(context, (positional, named) {
@@ -499,8 +328,14 @@ class Call extends Callable {
   }
 
   @override
+  void visitChildrens(NodeVisitor visitor) {
+    expression.apply(visitor);
+    super.visitChildrens(visitor);
+  }
+
+  @override
   String toString() {
-    return 'Call($expression, ${printArguments(comma: true)})';
+    return 'Call($expression${printArguments(comma: true)})';
   }
 }
 
@@ -521,7 +356,8 @@ class Filter extends Callable {
   @override
   Object? resolve(Context context) {
     return call(context, (positional, named) {
-      return context.environment.callFilter(name, positional, named);
+      return context.environment
+          .callFilter(name, positional, named, context: context);
     });
   }
 
@@ -547,9 +383,9 @@ class Test extends Callable {
 
   @override
   bool resolve(Context context) {
-    return call(context, (positional, named) {
+    return call<bool>(context, (positional, named) {
       return context.environment.callTest(name, positional, named);
-    }) as bool;
+    });
   }
 
   @override
@@ -566,17 +402,13 @@ class Operand extends Expression {
   Expression value;
 
   @override
-  Iterable<T> listExpressions<T extends Expression>() sync* {
-    final value = this.value;
-
-    if (value is T) {
-      yield value;
-    }
+  Object? resolve(Context context) {
+    return value.resolve(context);
   }
 
   @override
-  Object? resolve(Context context) {
-    return value.resolve(context);
+  void visitChildrens(NodeVisitor visitor) {
+    value.apply(visitor);
   }
 
   @override
@@ -591,23 +423,6 @@ class Compare extends Expression {
   Expression value;
 
   List<Operand> operands;
-
-  @override
-  Iterable<T> listExpressions<T extends Expression>() sync* {
-    final value = this.value;
-
-    if (value is T) {
-      yield value;
-    }
-
-    for (final operand in operands) {
-      final value = operand.value;
-
-      if (value is T) {
-        yield value;
-      }
-    }
-  }
 
   @override
   Object? resolve(Context context) {
@@ -655,6 +470,12 @@ class Compare extends Expression {
   }
 
   @override
+  void visitChildrens(NodeVisitor visitor) {
+    value.apply(visitor);
+    operands.forEach(visitor);
+  }
+
+  @override
   String toString() {
     return 'Compare($value, $operands)';
   }
@@ -670,33 +491,19 @@ class Condition extends Expression {
   Expression? orElse;
 
   @override
-  Iterable<T> listExpressions<T extends Expression>() sync* {
-    final test = this.test;
-
-    if (test is T) {
-      yield test;
-    }
-
-    final value = this.value;
-
-    if (value is T) {
-      yield value;
-    }
-
-    final orElse = this.orElse;
-
-    if (orElse is T) {
-      yield orElse;
-    }
-  }
-
-  @override
   Object? resolve(Context context) {
     if (boolean(test.resolve(context))) {
       return value.resolve(context);
     }
 
     return orElse?.resolve(context);
+  }
+
+  @override
+  void visitChildrens(NodeVisitor visitor) {
+    test.apply(visitor);
+    value.apply(visitor);
+    orElse?.apply(visitor);
   }
 
   @override
@@ -731,32 +538,40 @@ class Constant extends Literal {
 }
 
 class TupleLiteral extends Literal implements Assignable {
-  TupleLiteral(this.values, [AssignContext? context])
-      : context = context ?? AssignContext.load;
-
-  @override
-  AssignContext context;
+  TupleLiteral(this.values, [AssignContext? context]) {
+    context = context ?? AssignContext.load;
+  }
 
   List<Expression> values;
 
   @override
-  bool get canAssign {
-    for (final value in values) {
-      if (value is Assignable && !value.canAssign) {
-        return false;
-      }
+  AssignContext get context {
+    if (values.isEmpty) {
+      return AssignContext.load;
     }
 
-    return true;
+    final first = values.first;
+    return first is Assignable ? first.context : AssignContext.load;
   }
 
   @override
-  Iterable<T> listExpressions<T extends Expression>() sync* {
-    for (final value in values) {
-      if (value is T) {
-        yield value;
-      }
+  set context(AssignContext context) {
+    if (values.isEmpty) {
+      return;
     }
+
+    for (final value in values) {
+      if (value is! Assignable) {
+        throw TypeError();
+      }
+
+      value.context = context;
+    }
+  }
+
+  @override
+  bool get canAssign {
+    return values.every((value) => value is Assignable && !value.canAssign);
   }
 
   @override
@@ -769,6 +584,11 @@ class TupleLiteral extends Literal implements Assignable {
   List<Object?> resolve(Context context) {
     return List<Object?>.generate(
         values.length, (index) => values[index].resolve(context));
+  }
+
+  @override
+  void visitChildrens(NodeVisitor visitor) {
+    values.forEach(visitor);
   }
 
   @override
@@ -783,15 +603,6 @@ class ListLiteral extends Literal {
   List<Expression> values;
 
   @override
-  Iterable<T> listExpressions<T extends Expression>() sync* {
-    for (final value in values) {
-      if (value is T) {
-        yield value;
-      }
-    }
-  }
-
-  @override
   List<Object?> asConst(Context context) {
     return List<Object?>.generate(
         values.length, (index) => values[index].asConst(context));
@@ -804,52 +615,46 @@ class ListLiteral extends Literal {
   }
 
   @override
+  void visitChildrens(NodeVisitor visitor) {
+    values.forEach(visitor);
+  }
+
+  @override
   String toString() {
     return 'List(${values.join(', ')})';
   }
 }
 
 class DictLiteral extends Literal {
-  DictLiteral(this.entries);
+  DictLiteral(this.dict);
 
-  List<MapEntry<Expression, Expression>> entries;
-
-  @override
-  Iterable<T> listExpressions<T extends Expression>() sync* {
-    for (final entry in entries) {
-      final key = entry.key;
-
-      if (key is T) {
-        yield key;
-      }
-
-      final value = entry.value;
-
-      if (value is T) {
-        yield value;
-      }
-    }
-  }
+  Map<Expression, Expression> dict;
 
   @override
   Map<Object?, Object?> asConst(Context context) {
-    return <Object?, Object?>{
-      for (final entry in entries)
-        entry.key.asConst(context): entry.value.asConst(context)
-    };
+    return dict.map<Object?, Object?>((key, value) =>
+        MapEntry<Object?, Object?>(
+            key.asConst(context), value.asConst(context)));
   }
 
   @override
   Map<Object?, Object?> resolve(Context context) {
-    return <Object?, Object?>{
-      for (final pair in entries)
-        pair.key.resolve(context): pair.value.resolve(context)
-    };
+    return dict.map<Object?, Object?>((key, value) =>
+        MapEntry<Object?, Object?>(
+            key.resolve(context), value.resolve(context)));
+  }
+
+  @override
+  void visitChildrens(NodeVisitor visitor) {
+    dict.forEach((key, value) {
+      key.apply(visitor);
+      value.apply(visitor);
+    });
   }
 
   @override
   String toString() {
-    return 'Dict(${entries.join(', ')})';
+    return 'Dict $dict';
   }
 }
 
@@ -859,15 +664,6 @@ class Unary extends Expression {
   String operator;
 
   Expression value;
-
-  @override
-  Iterable<T> listExpressions<T extends Expression>() sync* {
-    final value = this.value;
-
-    if (value is T) {
-      yield value;
-    }
-  }
 
   @override
   Object? resolve(Context context) {
@@ -885,8 +681,13 @@ class Unary extends Expression {
   }
 
   @override
+  void visitChildrens(NodeVisitor visitor) {
+    value.apply(visitor);
+  }
+
+  @override
   String toString() {
-    return '$runtimeType(\'$operator\', $value)';
+    return 'Unary(\'$operator\', $value)';
   }
 }
 
@@ -898,21 +699,6 @@ class Binary extends Expression {
   Expression left;
 
   Expression right;
-
-  @override
-  Iterable<T> listExpressions<T extends Expression>() sync* {
-    final left = this.left;
-
-    if (left is T) {
-      yield left;
-    }
-
-    final right = this.right;
-
-    if (right is T) {
-      yield right;
-    }
-  }
 
   @override
   Object? resolve(Context context) {
@@ -939,6 +725,12 @@ class Binary extends Expression {
       case 'and':
         return boolean(left) ? right : left;
     }
+  }
+
+  @override
+  void visitChildrens(NodeVisitor visitor) {
+    left.apply(visitor);
+    right.apply(visitor);
   }
 
   @override

@@ -1,3 +1,4 @@
+import 'dart:collection' show MapBase;
 import 'dart:math' show Random;
 
 import 'package:jinja/jinja.dart';
@@ -6,24 +7,54 @@ import 'package:test/test.dart';
 
 import 'environment.dart';
 
-class User {
+class User extends MapBase<String, Object?> {
   User(this.username);
 
-  final String username;
+  String username;
 
-  String operator [](String key) {
-    if (key == 'username') {
-      return username;
+  @override
+  Iterable<String> get keys => const <String>['username'];
+
+  @override
+  String operator [](Object? key) {
+    switch (key) {
+      case 'username':
+        return username;
+      default:
+        throw NoSuchMethodError.withInvocation(
+            this, Invocation.getter(Symbol('$key')));
     }
+  }
 
-    throw NoSuchMethodError.withInvocation(this, Invocation.getter(#username));
+  @override
+  void operator []=(String key, Object? value) {
+    switch (key) {
+      case 'username':
+        username = value as String;
+        break;
+      default:
+        throw NoSuchMethodError.withInvocation(
+            this, Invocation.setter(Symbol(key), value));
+    }
+  }
+
+  @override
+  void clear() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Object? remove(Object? key) {
+    throw UnimplementedError();
   }
 }
 
 void main() {
   group('Filter', () {
     test('filter calling', () {
-      final result = env.callFilter('sum', [1, 2, 3], {});
+      final result = env.callFilter('sum', [
+        [1, 2, 3]
+      ], {});
       expect(result, equals(6));
     });
 
@@ -53,20 +84,20 @@ void main() {
 
     test('batch', () {
       final data = {'foo': range(10)};
-      var tmpl = env.fromString('{{ foo|batch(3)|list }}');
+      var tmpl = env.fromString('{{ foo|batch(3) }}');
       var result = tmpl.render(data);
       expect(result, equals('[[0, 1, 2], [3, 4, 5], [6, 7, 8], [9]]'));
-      tmpl = env.fromString('{{ foo|batch(3, "X")|list }}');
+      tmpl = env.fromString('{{ foo|batch(3, "X") }}');
       result = tmpl.render(data);
       expect(result, equals('[[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, X, X]]'));
     });
 
     test('slice', () {
       final data = {'foo': range(10)};
-      var tmpl = env.fromString('{{ foo|slice(3)|list }}');
+      var tmpl = env.fromString('{{ foo|slice(3) }}');
       var result = tmpl.render(data);
       expect(result, equals('[[0, 1, 2, 3], [4, 5, 6], [7, 8, 9]]'));
-      tmpl = env.fromString('{{ foo|slice(3, "X")|list }}');
+      tmpl = env.fromString('{{ foo|slice(3, "X") }}');
       result = tmpl.render(data);
       expect(result, equals('[[0, 1, 2, 3], [4, 5, 6, X], [7, 8, 9, X]]'));
     });
@@ -210,9 +241,10 @@ void main() {
     });
 
     test('reverse', () {
-      var tmpl = env.fromString(
-          '{{ "foobar"|reverse|join }}|{{ [1, 2, 3]|reverse|list }}');
-      expect(tmpl.render(), equals('raboof|[3, 2, 1]'));
+      var tmpl = env.fromString('{{ "foobar"|reverse|join }}');
+      expect(tmpl.render(), equals('raboof'));
+      tmpl = env.fromString('{{ [1, 2, 3]|reverse|list }}');
+      expect(tmpl.render(), equals('[3, 2, 1]'));
     });
 
     test('string', () {

@@ -46,13 +46,14 @@ Object? doAttribute(Environment environment, Object? object, String attribute) {
   return environment.getAttribute(object, attribute);
 }
 
-Iterable<List<Object?>> doBatch(Iterable<Object?> items, int lineCount,
-    [Object? fillWith]) sync* {
+List<List<Object?>> doBatch(Iterable<Object?> items, int lineCount,
+    [Object? fillWith]) {
+  final result = <List<Object?>>[];
   var temp = <Object?>[];
 
   for (final item in items) {
     if (temp.length == lineCount) {
-      yield temp;
+      result.add(temp);
       temp = <Object?>[];
     }
 
@@ -61,11 +62,15 @@ Iterable<List<Object?>> doBatch(Iterable<Object?> items, int lineCount,
 
   if (temp.isNotEmpty) {
     if (fillWith != null) {
-      temp.addAll(List<Object?>.filled(lineCount - temp.length, fillWith));
+      for (var i = 0; i <= lineCount - temp.length; i += 1) {
+        temp.add(fillWith);
+      }
     }
 
-    yield temp;
+    result.add(temp);
   }
+
+  return result;
 }
 
 String doCapitalize(String string) {
@@ -85,23 +90,6 @@ String doCenter(String string, int width) {
   final padLength = (width - string.length) ~/ 2;
   final pad = ' ' * padLength;
   return pad + string + pad;
-}
-
-int doLength(Object? items) {
-  if (items is String) {
-    return items.length;
-  }
-
-  if (items is List) {
-    return items.length;
-  }
-
-  if (items is Iterable) {
-    final list = items.toList(growable: false);
-    return list.length;
-  }
-
-  throw TypeError();
 }
 
 Object? doDefault(Object? value, [Object? d = '', bool asBoolean = false]) {
@@ -284,7 +272,8 @@ Markup doMarkSafe(String value) {
   return Markup.escaped(value);
 }
 
-Iterable<Object?> doSlice(Object? value, int slices, [Object? fillWith]) sync* {
+List<List<Object?>> doSlice(Object? value, int slices, [Object? fillWith]) {
+  final result = <List<Object?>>[];
   final values = list(value);
   final length = values.length;
   final perSlice = length ~/ slices;
@@ -298,14 +287,18 @@ Iterable<Object?> doSlice(Object? value, int slices, [Object? fillWith]) sync* {
     }
 
     final end = offset + (i + 1) * perSlice;
-    final tmp = values.sublist(start, end);
+    // sublist
+    final tmp =
+        List<Object?>.generate(end - start, (index) => values[start + index]);
 
     if (fillWith != null && i >= withExtra) {
       tmp.add(fillWith);
     }
 
-    yield tmp;
+    result.add(tmp);
   }
+
+  return result;
 }
 
 String doString(Object? value) {
@@ -363,7 +356,7 @@ const Map<String, Function> filters = {
   'batch': doBatch,
   'capitalize': doCapitalize,
   'center': doCenter,
-  'count': doLength,
+  'count': count,
   'd': doDefault,
   'default': doDefault,
   'dictsort': doDictSort,
@@ -376,7 +369,7 @@ const Map<String, Function> filters = {
   'int': doInteger,
   'join': doJoin,
   'last': doLast,
-  'length': doLength,
+  'length': count,
   'list': list,
   'lower': doLower,
   'pprint': doPPrint,
