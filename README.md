@@ -10,7 +10,7 @@ Variables, expressions, control structures and template inheritance.
 - `Template.render` now accepts `Map<String, Object?>`.
 - `FileSystemLoader` moved from `package:jinja/jinja.dart` to `package:jinja/loaders.dart`.
 - no `Undefined` and `missing`.
-- no `slice` expressions.
+- no slices and negative indexes.
 - _work in progress_
 
 ## Documentation

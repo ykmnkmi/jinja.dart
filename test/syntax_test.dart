@@ -49,10 +49,8 @@ void main() {
 
     test('subscript', () {
       final foo = [0, 1, 2];
-      var tmpl = env.fromString('{{ foo[0] }}');
+      final tmpl = env.fromString('{{ foo[0] }}');
       expect(tmpl.render({'foo': foo}), equals('0'));
-      tmpl = env.fromString('{{ foo[-1] }}');
-      expect(tmpl.render({'foo': foo}), equals('2'));
     });
 
     test('tuple', () {

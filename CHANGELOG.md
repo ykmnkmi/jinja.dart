@@ -5,6 +5,7 @@
 - `FileSystemLoader` moved from `package:jinja/jinja.dart` to `package:jinja/loaders.dart`.
 - no `Undefined` and `missing`.
 - no `slice` expressions.
+- no slices and negative indexes.
 - new statements:
   - with
 - no `Undefined` and `missing`

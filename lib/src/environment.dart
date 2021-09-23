@@ -322,46 +322,28 @@ class Environment {
     return Template.parsed(this, nodes);
   }
 
-  Object? getAttribute(Object? object, String field) {
-    if (object is Namespace) {
-      return object[field];
-    }
-
+  Object? getAttribute(dynamic object, String field) {
     try {
       return fieldGetter(object, field);
     } on NoSuchMethodError {
-      if (object is Map) {
+      try {
         return object[field];
+      } on NoSuchMethodError {
+        return null;
+      }
+    }
+  }
+
+  Object? getItem(dynamic object, Object? key) {
+    try {
+      return object[key];
+    } on NoSuchMethodError {
+      if (key is String) {
+        return getAttribute(object, key);
       }
 
       return null;
     }
-  }
-
-  Object? getItem(Object? object, Object? key) {
-    if (key is int) {
-      if (key < 0) {
-        key += count(object);
-      }
-
-      if (object is List) {
-        return object[key];
-      }
-
-      if (object is String) {
-        return object[key];
-      }
-    }
-
-    if (object is Map) {
-      return object[key];
-    }
-
-    if (key is String) {
-      return getAttribute(object, key);
-    }
-
-    return null;
   }
 
   /// Load a template by name with [loader] and return a
@@ -403,7 +385,6 @@ class Environment {
 
   Template loadTemplate(String template) {
     // TODO: handle error
-    assert(loader != null, 'no loader for this environment specified');
     return templates[template] = loader!.load(this, template);
   }
 }
@@ -562,6 +543,8 @@ class Template extends Node {
     }
 
     visitChildrens(namespace);
+
+    // TODO: loop, namespace: replace Attribute with Item
   }
 
   Environment environment;

@@ -87,7 +87,7 @@ void main() {
     });
 
     test('cycling', () {
-      final tmpl = env.fromString('''{% for item in seq %}{{ 
+      final tmpl = env.fromString('''{% for item in seq %}{{
             loop.cycle('<1>', '<2>') }}{% endfor %}{%
             for item in seq %}{{ loop.cycle(*through) }}{% endfor %}''');
       final output = tmpl.render({

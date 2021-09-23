@@ -90,7 +90,7 @@ class LoopContext extends Iterable<Object?> {
     }
 
     if (values.isEmpty) {
-      throw TypeError(/* no items for cycling given */);
+      throw TypeError();
     }
 
     return values[index0 % values.length];
@@ -139,8 +139,8 @@ class LoopContext extends Iterable<Object?> {
       case 'changed':
         return changed;
       default:
-        throw NoSuchMethodError.withInvocation(
-            this, Invocation.getter(Symbol(key)));
+        final invocation = Invocation.getter(Symbol(key));
+        throw NoSuchMethodError.withInvocation(this, invocation);
     }
   }
 }
