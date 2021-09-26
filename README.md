@@ -5,8 +5,8 @@
 Variables, expressions, control structures and template inheritance.
 
 ## Breaking changes 0.4.0, less dynamic
-- no dynamic template imports. Only single constant template path/name.
-- `Template.renderMap` now deprecated.
+- no template variable imports.
+- no `Template.renderMap`.
 - `Template.render` now accepts `Map<String, Object?>`.
 - `FileSystemLoader` moved from `package:jinja/jinja.dart` to `package:jinja/loaders.dart`.
 - no `Undefined` and `missing`.
@@ -91,13 +91,6 @@ See also examples with [conduit][conduit_example] and [reflectable][reflectable_
   - Include
 - Import Context Behavior
 - Expressions
-  - Literals
-  - Math
-  - Comparisons
-  - Logic
-  - Other Operators
-  - If Expression
-  - Dart Methods
 - List of Builtin Filters
   - abs
   - attr
@@ -116,7 +109,6 @@ See also examples with [conduit][conduit_example] and [reflectable][reflectable_
   - length, count
   - list
   - lower
-  - pprint: bool, num, String, List, Map, Set
   - random
   - replace
   - reverse

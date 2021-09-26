@@ -356,8 +356,7 @@ class Filter extends Callable {
   @override
   Object? resolve(Context context) {
     return call(context, (positional, named) {
-      return context.environment
-          .callFilter(name, positional, named, context: context);
+      return context.environment.callFilter(name, positional, named, context);
     });
   }
 

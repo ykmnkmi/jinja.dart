@@ -3,7 +3,7 @@ import 'dart:collection' show MapView;
 export 'context.dart';
 
 class LoopContext extends Iterable<Object?> {
-  LoopContext(this.values, {this.depth0 = 0, this.recurse})
+  LoopContext(this.values, this.depth0, this.recurse)
       : length = values.length,
         index0 = -1;
 
@@ -12,7 +12,7 @@ class LoopContext extends Iterable<Object?> {
   @override
   final int length;
 
-  final String Function(Object? data, [int depth])? recurse;
+  final String Function(Object? data, [int depth]) recurse;
 
   int index0;
 
@@ -66,34 +66,19 @@ class LoopContext extends Iterable<Object?> {
   }
 
   String call(Object? data) {
-    if (recurse == null) {
-      throw TypeError(
-          /* the loop must have the 'recursive' marker to be called recursively. */);
-    }
-
-    return recurse!(data, depth);
+    return recurse(data, depth);
   }
 
-  Object cycle([Object? arg01, Object? arg02, Object? arg03]) {
-    final values = <Object>[];
-
-    if (arg01 != null) {
-      values.add(arg01);
-
-      if (arg02 != null) {
-        values.add(arg02);
-
-        if (arg03 != null) {
-          values.add(arg03);
-        }
-      }
-    }
-
-    if (values.isEmpty) {
+  Object? cycle(Iterable<Object?> values, [Iterable<Object?>? iterable]) {
+    if (values.isEmpty && iterable != null && iterable.isEmpty) {
       throw TypeError();
     }
 
-    return values[index0 % values.length];
+    if (iterable != null) {
+      values = values.followedBy(iterable);
+    }
+
+    return values.elementAt(index0 % values.length);
   }
 
   bool changed(Object? item) {

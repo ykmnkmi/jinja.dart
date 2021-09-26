@@ -212,7 +212,7 @@ void main() {
 
       expect(
           () => env.getTemplate('level1').render(),
-          throwsA(predicate<TemplateSyntaxError>(
+          throwsA(predicate<TemplateRuntimeError>(
               (error) => error.message == 'required block \'x\' not found')));
       expect(env.getTemplate('level2').render(), equals('[2]'));
       expect(env.getTemplate('level3').render(), equals('[2]'));

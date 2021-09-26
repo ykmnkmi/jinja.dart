@@ -215,13 +215,21 @@ class Block extends Statement {
 
   @override
   String toString() {
-    var result = 'Block';
+    var result = 'Block($name';
 
     if (scoped) {
-      result += '.scoped';
+      result = '$result, scoped';
     }
 
-    return '$result($name, ${nodes.join(', ')})';
+    if (hasSuper) {
+      result = '$result, super';
+    }
+
+    if (nodes.isEmpty) {
+      return '$result)';
+    }
+
+    return '$result, ${nodes.join(', ')})';
   }
 }
 

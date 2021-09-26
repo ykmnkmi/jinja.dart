@@ -21,6 +21,47 @@ class RenderContext extends Context {
 
   final Map<String, List<Block>> blocks;
 
+  @protected
+  void assignTargets(Object? target, Object? current) {
+    if (target is String) {
+      set(target, current);
+      return;
+    }
+
+    if (target is List<String>) {
+      final values = utils.list(current);
+
+      if (values.length < target.length) {
+        throw StateError(
+            'not enough values to unpack (expected ${target.length}, got ${values.length})');
+      }
+
+      if (values.length > target.length) {
+        throw StateError(
+            'too many values to unpack (expected ${target.length})');
+      }
+
+      for (var i = 0; i < target.length; i++) {
+        set(target[i], values[i]);
+      }
+
+      return;
+    }
+
+    if (target is NamespaceValue) {
+      final namespace = resolve(target.name);
+
+      if (namespace is! Namespace) {
+        throw TemplateRuntimeError('non-namespace object');
+      }
+
+      namespace[target.item] = current;
+      return;
+    }
+
+    throw TypeError();
+  }
+
   Object? finalize(Object? object) {
     return environment.finalize(this, object);
   }
@@ -60,7 +101,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
   void visitAssign(Assign node, RenderContext context) {
     final target = node.target.resolve(context);
     final values = node.value.resolve(context);
-    assignTargetsToContext(context, target, values);
+    context.assignTargets(target, values);
   }
 
   @override
@@ -73,7 +114,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
     final filters = node.filters;
 
     if (filters == null || filters.isEmpty) {
-      assignTargetsToContext(context, target, context.escaped(value));
+      context.assignTargets(target, context.escaped(value));
       return;
     }
 
@@ -81,11 +122,11 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
       value = filter(context, (positional, named) {
         positional.insert(0, value);
         return context.environment
-            .callFilter(filter.name, positional, named, context: context);
+            .callFilter(filter.name, positional, named, context);
       });
     }
 
-    assignTargetsToContext(context, target, context.escaped(value));
+    context.assignTargets(target, context.escaped(value));
   }
 
   @override
@@ -98,7 +139,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
       if (node.required) {
         if (blocks.length == 1) {
           final name = node.name;
-          throw TemplateSyntaxError('required block \'$name\' not found');
+          throw TemplateRuntimeError('required block \'$name\' not found');
         }
       }
 
@@ -108,13 +149,13 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
       if (first.hasSuper) {
         String parent() {
           if (index < blocks.length - 1) {
-            final parentBlock = blocks[++index];
+            final parentBlock = blocks[index += 1];
             visitAll(parentBlock.nodes, context);
             return '';
           }
 
           // TODO: update error
-          throw Exception([blocks, node, index, blocks.length]);
+          throw TemplateRuntimeError();
         }
 
         context.push(<String, Object?>{'super': parent});
@@ -162,7 +203,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
       value = filter.call(context, (positional, named) {
         positional.insert(0, value);
         return context.environment
-            .callFilter(filter.name, positional, named, context: context);
+            .callFilter(filter.name, positional, named, context);
       });
     }
 
@@ -179,7 +220,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
       throw TypeError();
     }
 
-    String recurse(Object? iterable, [int depth = 0]) {
+    String render(Object? iterable, [int depth = 0]) {
       var values = utils.list(iterable);
 
       if (values.isEmpty) {
@@ -208,7 +249,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
         values = filtered;
       }
 
-      final loop = LoopContext(values, depth0: depth, recurse: recurse);
+      final loop = LoopContext(values, depth, render);
       Map<String, Object?> Function(Object?, Object?) unpack;
 
       if (node.hasLoop) {
@@ -231,7 +272,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
       return '';
     }
 
-    recurse(iterable);
+    render(iterable);
   }
 
   @override
@@ -311,55 +352,13 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
 
   @override
   void visitWith(With node, RenderContext context) {
-    final targets = List<Object?>.generate(
-        node.targets.length, (index) => node.targets[index].resolve(context));
-    final values = List<Object?>.generate(
-        node.values.length, (index) => node.values[index].resolve(context));
+    final targets =
+        node.targets.map<Object?>((target) => target.resolve(context)).toList();
+    final values =
+        node.values.map<Object?>((value) => value.resolve(context)).toList();
     context.push(getDataForTargets(targets, values));
     visitAll(node.nodes, context);
     context.pop();
-  }
-
-  @protected
-  static void assignTargetsToContext(
-      RenderContext context, Object? target, Object? current) {
-    if (target is String) {
-      context.set(target, current);
-      return;
-    }
-
-    if (target is List<String>) {
-      final values = utils.list(current);
-
-      if (values.length < target.length) {
-        throw StateError(
-            'not enough values to unpack (expected ${target.length}, got ${values.length})');
-      }
-
-      if (values.length > target.length) {
-        throw StateError(
-            'too many values to unpack (expected ${target.length})');
-      }
-
-      for (var i = 0; i < target.length; i++) {
-        context.set(target[i], values[i]);
-      }
-
-      return;
-    }
-
-    if (target is NamespaceValue) {
-      final namespace = context.resolve(target.name);
-
-      if (namespace is! Namespace) {
-        throw TemplateRuntimeError('non-namespace object');
-      }
-
-      namespace[target.item] = current;
-      return;
-    }
-
-    throw TypeError();
   }
 
   @protected

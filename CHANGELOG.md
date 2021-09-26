@@ -1,15 +1,14 @@
-## 0.4.0-dev.14
+## 0.4.0-dev.16
 - no dynamic template imports, only single constant template path/name.
-- `Template.renderMap` now deprecated.
+- no `Template.renderMap`.
 - `Template.render` now accepts `Map<String, Object?>`.
 - `FileSystemLoader` moved from `package:jinja/jinja.dart` to `package:jinja/loaders.dart`.
 - no `Undefined` and `missing`.
-- no `slice` expressions.
 - no slices and negative indexes.
 - new statements:
   - with
 - no `Undefined` and `missing`
-- internal improvments
+- refactoring
 - _work in progress_
 
 ## 0.3.4

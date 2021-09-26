@@ -33,19 +33,10 @@ class Context {
     return resolve('autoescape') as bool;
   }
 
-  Object? call(Object? object,
+  Object? call(dynamic object,
       [List<Object?>? positional, Map<Symbol, Object?>? named]) {
     positional ??= <Object?>[];
-
-    if (object is! Function) {
-      object = environment.getAttribute(object, 'call');
-    }
-
-    if (object is Function) {
-      return Function.apply(object, positional, named);
-    }
-
-    throw TypeError();
+    return Function.apply(object.call as Function, positional, named);
   }
 
   Object? escape(Object? value) {

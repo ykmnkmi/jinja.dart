@@ -230,7 +230,7 @@ class Environment {
   /// If [name] not found throws [TemplateRuntimeError].
   Object? callFilter(
       String name, List<Object?> positional, Map<Symbol, Object?> named,
-      {Context? context}) {
+      [Context? context]) {
     final filter = filters[name];
 
     if (filter == null) {
@@ -319,21 +319,21 @@ class Environment {
   Template fromString(String source, {String? path}) {
     final nodes = Parser(this, path: path).parse(source);
     // TODO: restore optimization
-    return Template.parsed(this, nodes);
+    return Template.parsed(this, nodes, path: path);
   }
 
+  /// Get an item or attribute of an object but prefer the attribute.
   Object? getAttribute(dynamic object, String field) {
     try {
       return fieldGetter(object, field);
     } on NoSuchMethodError {
-      try {
-        return object[field];
-      } on NoSuchMethodError {
-        return null;
-      }
+      // ...
     }
+
+    return object[field];
   }
 
+  /// Get an item or attribute of an object but prefer the item.
   Object? getItem(dynamic object, Object? key) {
     try {
       return object[key];
@@ -484,12 +484,6 @@ class Template extends Node {
   Template.parsed(this.environment, this.nodes, {this.path})
       : hasSelf = false,
         blocks = <Block>[] {
-    for (final node in nodes) {
-      if (node is Block) {
-        blocks.add(node);
-      }
-    }
-
     void self(Node node) {
       if (node is Name && node.name == 'self') {
         hasSelf = true;
@@ -499,7 +493,38 @@ class Template extends Node {
       node.visitChildrens(self);
     }
 
-    visitChildrens(self);
+    void blocks(Node node) {
+      if (node is Block) {
+        this.blocks.add(node);
+      }
+
+      node.visitChildrens(blocks);
+    }
+
+    void loop(Node node) {
+      if (node is Call) {
+        final expression = node.expression;
+
+        if (expression is Attribute && expression.attribute == 'cycle') {
+          var arguments = node.arguments;
+
+          if (arguments != null) {
+            node.arguments = arguments = <Expression>[ListLiteral(arguments)];
+
+            final dArguments = node.dArguments;
+
+            if (dArguments != null) {
+              arguments.add(dArguments);
+              node.dArguments = null;
+            }
+          }
+
+          return;
+        }
+      }
+
+      node.visitChildrens(loop);
+    }
 
     void namespace(Node node) {
       if (node is Call) {
@@ -511,10 +536,13 @@ class Template extends Node {
           final keywords = node.keywords;
 
           if (keywords != null && keywords.isNotEmpty) {
-            final dict = DictLiteral(Map<Expression, Expression>.fromEntries(
-                keywords.map((keyword) => keyword.toMapEntry())));
+            final dict = <Expression, Expression>{
+              for (final keyword in keywords)
+                Constant(keyword.key): keyword.value
+            };
+
+            arguments.add(DictLiteral(dict));
             node.keywords = null;
-            arguments.add(dict);
           }
 
           final dArguments = node.dArguments;
@@ -542,9 +570,17 @@ class Template extends Node {
       node.visitChildrens(namespace);
     }
 
-    visitChildrens(namespace);
+    nodes
+      ..forEach(self)
+      ..forEach(blocks)
+      ..forEach(loop)
+      ..forEach(namespace);
 
     // TODO: loop, namespace: replace Attribute with Item
+
+    if (nodes.isNotEmpty && nodes.first is Extends) {
+      nodes.length = 1;
+    }
   }
 
   Environment environment;
@@ -569,22 +605,17 @@ class Template extends Node {
     return '$buffer';
   }
 
-  @Deprecated('Use `render` instead. Will be removed in Dart 0.5.0')
-  String renderMap([Map<String, Object?>? data]) {
-    return render(data);
-  }
-
   @override
   void visitChildrens(NodeVisitor visitor) {
     nodes.forEach(visitor);
+
+    if (nodes.isNotEmpty && nodes.first is Extends) {
+      blocks.forEach(visitor);
+    }
   }
 
   @override
   String toString() {
-    if (path == null) {
-      return 'Template()';
-    }
-
-    return 'Template($path)';
+    return path == null ? 'Template()' : 'Template($path)';
   }
 }

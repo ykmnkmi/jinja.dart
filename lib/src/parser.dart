@@ -898,40 +898,33 @@ class Parser {
   }
 
   List<Node> subParse(TokenReader reader, {List<String>? endTokens}) {
-    final buffer = <Node>[];
     final nodes = <Node>[];
-    bool? firstNodeType;
+    bool? firstIsExtends;
 
     if (endTokens != null) {
       endTokensStack.add(endTokens);
     }
 
     // TODO: test conditional imports
-    void check(Node node) {
-      if (firstNodeType == null) {
-        firstNodeType = node is Extends;
+    Node check(Node node) {
+      if (firstIsExtends == null) {
+        firstIsExtends = node is Extends;
       } else if (node is Extends) {
-        if (firstNodeType == false) {
+        if (firstIsExtends == false) {
           // TODO: add error message
           fail('message false');
         }
 
-        if (firstNodeType == true) {
+        if (firstIsExtends == true) {
           // TODO: add error message
           fail('message true');
         }
-      } else if (firstNodeType == true && node is! Block) {
+      } else if (firstIsExtends == true && node is! Block) {
         // TODO: add error message
         fail('message else');
       }
-    }
 
-    void flushData() {
-      if (buffer.isNotEmpty) {
-        buffer.forEach(check);
-        nodes.addAll(buffer);
-        buffer.clear();
-      }
+      return node;
     }
 
     try {
@@ -940,33 +933,28 @@ class Parser {
 
         switch (token.type) {
           case 'data':
-            buffer.add(Data(token.value));
+            nodes.add(Data(token.value));
             reader.next();
             break;
           case 'variable_start':
             reader.next();
-            buffer.add(parseTuple(reader));
+            nodes.add(check(parseTuple(reader)));
             reader.expect('variable_end');
             break;
           case 'block_start':
-            flushData();
             reader.next();
 
             if (endTokens != null && reader.current.testAny(endTokens)) {
               return nodes;
             }
 
-            final node = parseStatement(reader);
-            check(node);
-            nodes.add(node);
+            nodes.add(check(parseStatement(reader)));
             reader.expect('block_end');
             break;
           default:
             throw AssertionError('unsuported token type: ${token.type}');
         }
       }
-
-      flushData();
     } finally {
       if (endTokens != null) {
         endTokensStack.removeLast();
