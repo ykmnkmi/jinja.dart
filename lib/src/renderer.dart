@@ -1,4 +1,3 @@
-import 'package:jinja/src/visitor.dart';
 import 'package:meta/meta.dart';
 
 import 'environment.dart';
@@ -6,6 +5,7 @@ import 'exceptions.dart';
 import 'nodes.dart';
 import 'runtime.dart';
 import 'utils.dart' as utils;
+import 'visitor.dart';
 
 class RenderContext extends Context {
   RenderContext(Environment environment, this.sink,

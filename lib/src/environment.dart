@@ -1,8 +1,6 @@
 import 'dart:collection' show HashMap, HashSet;
 import 'dart:math' show Random;
 
-import 'package:jinja/jinja.dart';
-
 import 'defaults.dart' as defaults;
 import 'exceptions.dart';
 import 'lexer.dart';
@@ -12,7 +10,6 @@ import 'parser.dart';
 import 'reader.dart';
 import 'renderer.dart';
 import 'runtime.dart';
-import 'utils.dart';
 import 'visitor.dart';
 
 typedef Finalizer = Object? Function(Object? value);
