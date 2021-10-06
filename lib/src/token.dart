@@ -115,7 +115,7 @@ abstract class BaseToken implements Token {
 
   @override
   bool testAny(Iterable<String> expressions) {
-    for (final expression in expressions) {
+    for (var expression in expressions) {
       if (!expression.contains(':')) {
         if (test(expression)) {
           return true;
@@ -124,7 +124,7 @@ abstract class BaseToken implements Token {
         continue;
       }
 
-      final parts = expression.split(':');
+      var parts = expression.split(':');
 
       if (test(parts[0], parts[1])) {
         return true;
@@ -174,7 +174,7 @@ class ValueToken extends BaseToken {
 
 String describeExpression(String expression) {
   if (expression.contains(':')) {
-    final parts = expression.split(':');
+    var parts = expression.split(':');
     assert(parts.length == 2);
 
     if (parts.first == 'name') {

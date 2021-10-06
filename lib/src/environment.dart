@@ -6,6 +6,7 @@ import 'exceptions.dart';
 import 'lexer.dart';
 import 'loaders.dart';
 import 'nodes.dart';
+import 'optimizer.dart';
 import 'parser.dart';
 import 'reader.dart';
 import 'renderer.dart';
@@ -228,7 +229,7 @@ class Environment {
   Object? callFilter(
       String name, List<Object?> positional, Map<Symbol, Object?> named,
       [Context? context]) {
-    final filter = filters[name];
+    var filter = filters[name];
 
     if (filter == null) {
       throw TemplateRuntimeError('no filter named $name');
@@ -251,7 +252,7 @@ class Environment {
   /// If [name] not found throws [TemplateRuntimeError].
   bool callTest(
       String name, List<Object?> positional, Map<Symbol, Object?> named) {
-    final test = tests[name];
+    var test = tests[name];
 
     if (test == null) {
       throw TemplateRuntimeError('no test named $name');
@@ -314,9 +315,11 @@ class Environment {
 
   /// Load a template from a source string without using [loader].
   Template fromString(String source, {String? path}) {
-    final nodes = Parser(this, path: path).parse(source);
-    // TODO: restore optimization
-    return Template.parsed(this, nodes, path: path);
+    var nodes = Parser(this, path: path).parse(source);
+    var template = Template.parsed(this, nodes, path: path);
+    return optimized
+        ? const Optimizer().visitTemplate(template, Context(this))
+        : template;
   }
 
   /// Get an item or attribute of an object but prefer the attribute.
@@ -376,7 +379,7 @@ class Environment {
   /// This can be useful for extension development and debugging templates.
   List<Node> parse(List<Token> tokens) {
     // TODO: handle error
-    final reader = TokenReader(tokens);
+    var reader = TokenReader(tokens);
     return parser.scan(reader);
   }
 
@@ -500,15 +503,15 @@ class Template extends Node {
 
     void loop(Node node) {
       if (node is Call) {
-        final expression = node.expression;
+        var expression = node.expression;
 
         if (expression is Attribute && expression.attribute == 'cycle') {
           var arguments = node.arguments;
 
           if (arguments != null) {
-            node.arguments = arguments = <Expression>[ListLiteral(arguments)];
+            node.arguments = arguments = <Expression>[Array(arguments)];
 
-            final dArguments = node.dArguments;
+            var dArguments = node.dArguments;
 
             if (dArguments != null) {
               arguments.add(dArguments);
@@ -525,31 +528,29 @@ class Template extends Node {
 
     void namespace(Node node) {
       if (node is Call) {
-        final expression = node.expression;
+        var expression = node.expression;
 
         if (expression is Name && expression.name == 'namespace') {
-          final arguments = <Expression>[...?node.arguments];
+          var arguments = <Expression>[...?node.arguments];
           node.arguments = null;
-          final keywords = node.keywords;
+          var keywords = node.keywords;
 
           if (keywords != null && keywords.isNotEmpty) {
-            final dict = <Expression, Expression>{
-              for (final keyword in keywords)
-                Constant(keyword.key): keyword.value
-            };
+            var pairs = List<Pair>.generate(
+                keywords.length, (index) => keywords[index].toPair());
 
-            arguments.add(DictLiteral(dict));
+            arguments.add(Dict(pairs));
             node.keywords = null;
           }
 
-          final dArguments = node.dArguments;
+          var dArguments = node.dArguments;
 
           if (dArguments != null) {
             arguments.add(dArguments);
             node.dArguments = null;
           }
 
-          final dKeywordArguments = node.dKeywords;
+          var dKeywordArguments = node.dKeywords;
 
           if (dKeywordArguments != null) {
             arguments.add(dKeywordArguments);
@@ -557,7 +558,7 @@ class Template extends Node {
           }
 
           if (arguments.isNotEmpty) {
-            node.arguments = <Expression>[ListLiteral(arguments)];
+            node.arguments = <Expression>[Array(arguments)];
           }
 
           return;
@@ -596,8 +597,8 @@ class Template extends Node {
   }
 
   String render([Map<String, Object?>? data]) {
-    final buffer = StringBuffer();
-    final context = RenderContext(environment, buffer, data: data);
+    var buffer = StringBuffer();
+    var context = RenderContext(environment, buffer, data: data);
     accept(const StringSinkRenderer(), context);
     return '$buffer';
   }

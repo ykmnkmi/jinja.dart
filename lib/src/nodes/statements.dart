@@ -44,7 +44,7 @@ class For extends Statement {
 
   List<Node>? orElse;
 
-  Test? test;
+  Expression? test;
 
   bool recursive;
 
@@ -55,11 +55,11 @@ class For extends Statement {
 
   @override
   void visitChildrens(NodeVisitor visitor) {
-    target.apply(visitor);
-    iterable.apply(visitor);
+    target.callBy(visitor);
+    iterable.callBy(visitor);
     nodes.forEach(visitor);
     orElse?.forEach(visitor);
-    test?.apply(visitor);
+    test?.callBy(visitor);
   }
 
   @override
@@ -106,9 +106,9 @@ class If extends Statement {
 
   @override
   void visitChildrens(NodeVisitor visitor) {
-    test.apply(visitor);
+    test.callBy(visitor);
     nodes.forEach(visitor);
-    nextIf?.apply(visitor);
+    nextIf?.callBy(visitor);
     orElse?.forEach(visitor);
   }
 
@@ -259,9 +259,9 @@ class Include extends Statement implements ImportContext {
 }
 
 class Do extends Statement {
-  Do(this.expressions);
+  Do(this.nodes);
 
-  List<Expression> expressions;
+  List<Expression> nodes;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -270,12 +270,12 @@ class Do extends Statement {
 
   @override
   void visitChildrens(NodeVisitor visitor) {
-    expressions.forEach(visitor);
+    nodes.forEach(visitor);
   }
 
   @override
   String toString() {
-    return 'Do(${expressions.join(', ')})';
+    return 'Do(${nodes.join(', ')})';
   }
 }
 
@@ -293,8 +293,8 @@ class Assign extends Statement {
 
   @override
   void visitChildrens(NodeVisitor visitor) {
-    target.apply(visitor);
-    value.apply(visitor);
+    target.callBy(visitor);
+    value.callBy(visitor);
   }
 
   @override
@@ -319,7 +319,7 @@ class AssignBlock extends Statement {
 
   @override
   void visitChildrens(NodeVisitor visitor) {
-    target.apply(visitor);
+    target.callBy(visitor);
     nodes.forEach(visitor);
     filters?.forEach(visitor);
   }
@@ -336,35 +336,12 @@ class AssignBlock extends Statement {
   }
 }
 
-abstract class ContextModifier extends Statement {}
-
-class Scope extends Statement {
-  Scope(this.modifier);
-
-  ContextModifier modifier;
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitScope(this, context);
-  }
-
-  @override
-  void visitChildrens(NodeVisitor visitor) {
-    modifier.apply(visitor);
-  }
-
-  @override
-  String toString() {
-    return 'Scope($modifier)';
-  }
-}
-
-class ScopedContextModifier extends ContextModifier {
+class ScopedContextModifier extends Statement {
   ScopedContextModifier(this.options, this.nodes);
 
-  List<Node> nodes;
-
   Map<String, Expression> options;
+
+  List<Node> nodes;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -379,6 +356,27 @@ class ScopedContextModifier extends ContextModifier {
 
   @override
   String toString() {
-    return 'ScopedContextModifier($options, $nodes)';
+    return 'ScopedContextModifier($options, ${nodes.join(', ')})';
+  }
+}
+
+class Scope extends Statement {
+  Scope(this.modifier);
+
+  ScopedContextModifier modifier;
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitScope(this, context);
+  }
+
+  @override
+  void visitChildrens(NodeVisitor visitor) {
+    modifier.callBy(visitor);
+  }
+
+  @override
+  String toString() {
+    return 'Scope($modifier)';
   }
 }

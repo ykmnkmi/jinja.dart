@@ -122,23 +122,23 @@ class Lexer {
             environment.leftStripBlocks ? compile('[^ \\t]') : null,
         newLine = environment.newLine,
         keepTrailingNewLine = environment.keepTrailingNewLine {
-    final blockSuffixRe = environment.trimBlocks ? r'\n?' : '';
+    var blockSuffixRe = environment.trimBlocks ? r'\n?' : '';
 
-    final commentStartRe = escape(environment.commentStart);
-    final commentEndRe = escape(environment.commentEnd);
-    final commentEnd = compile(
+    var commentStartRe = escape(environment.commentStart);
+    var commentEndRe = escape(environment.commentEnd);
+    var commentEnd = compile(
         '(.*?)((?:\\+$commentEndRe|-$commentEndRe\\s*|$commentEndRe$blockSuffixRe))');
 
-    final variableStartRe = escape(environment.variableStart);
-    final variableEndRe = escape(environment.variableEnd);
-    final variableEnd = compile('-$variableEndRe\\s*|$variableEndRe');
+    var variableStartRe = escape(environment.variableStart);
+    var variableEndRe = escape(environment.variableEnd);
+    var variableEnd = compile('-$variableEndRe\\s*|$variableEndRe');
 
-    final blockStartRe = escape(environment.blockStart);
-    final blockEndRe = escape(environment.blockEnd);
-    final blockEnd = compile(
+    var blockStartRe = escape(environment.blockStart);
+    var blockEndRe = escape(environment.blockEnd);
+    var blockEnd = compile(
         '(?:\\+$blockEndRe|-$blockEndRe\\s*|$blockEndRe$blockSuffixRe)');
 
-    final tagRules = <Rule>[
+    var tagRules = <Rule>[
       SingleTokenRule(whitespaceRe, 'whitespace'),
       SingleTokenRule(floatRe, 'float'),
       SingleTokenRule(integerRe, 'integer'),
@@ -147,7 +147,7 @@ class Lexer {
       SingleTokenRule(operatorRe, 'operator'),
     ];
 
-    final rootTagRules = <List<String>>[
+    var rootTagRules = <List<String>>[
       ['comment_start', environment.commentStart, commentStartRe],
       ['variable_start', environment.variableStart, variableStartRe],
       ['block_start', environment.blockStart, blockStartRe],
@@ -167,18 +167,18 @@ class Lexer {
 
     rootTagRules.sort((a, b) => b[1].length.compareTo(a[1].length));
 
-    final rawStart = compile(
+    var rawStart = compile(
         '(?<raw_start>$blockStartRe(-|\\+|)\\s*raw\\s*(?:-$blockEndRe\\s*|$blockEndRe))');
-    final rawEnd = compile('(.*?)((?:$blockStartRe(-|\\+|))\\s*endraw\\s*'
+    var rawEnd = compile('(.*?)((?:$blockStartRe(-|\\+|))\\s*endraw\\s*'
         '(?:\\+$blockEndRe|-$blockEndRe\\s*|$blockEndRe$blockSuffixRe))');
 
-    final rootParts = <String>[
+    var rootParts = <String>[
       rawStart.pattern,
-      for (final rule in rootTagRules) '(?<${rule.first}>${rule.last}(-|\\+|))',
+      for (var rule in rootTagRules) '(?<${rule.first}>${rule.last}(-|\\+|))',
     ];
 
-    final rootPartsRe = rootParts.join('|');
-    final data = compile('(.*?)(?:$rootPartsRe)');
+    var rootPartsRe = rootParts.join('|');
+    var data = compile('(.*?)(?:$rootPartsRe)');
 
     rules = <String, List<Rule>>{
       'root': <Rule>[
@@ -277,14 +277,14 @@ class Lexer {
   }
 
   List<Token> scan(StringScanner scanner, [String? state]) {
-    const List<String> endTokens = <String>[
+    const endTokens = <String>[
       'variable_end',
       'block_end',
       'linestatement_end'
     ];
 
-    final stack = <String>['root'];
-    final balancingStack = <String>[];
+    var stack = <String>['root'];
+    var balancingStack = <String>[];
 
     if (state != null && state != 'root') {
       assert(state == 'variable' || state == 'block');
@@ -297,24 +297,24 @@ class Lexer {
     var newLinesStripped = 0;
     var lineStarting = true;
 
-    final tokens = <Token>[];
+    var tokens = <Token>[];
 
     while (true) {
       var notBreak = true;
 
-      for (final rule in stateRules) {
+      for (var rule in stateRules) {
         if (!scanner.scan(rule.regExp)) {
           continue;
         }
 
-        final match = scanner.lastMatch as RegExpMatch;
+        var match = scanner.lastMatch as RegExpMatch;
 
         if (rule is MultiTokenRule) {
-          final groups = match.groups(
+          var groups = match.groups(
               List<int>.generate(match.groupCount, (index) => index + 1));
 
           if (rule.optionalLStrip) {
-            final text = groups[0]!;
+            var text = groups[0]!;
             String? stripSign;
 
             for (var i = 2; i < groups.length; i += 2) {
@@ -324,7 +324,7 @@ class Lexer {
             }
 
             if (stripSign == '-') {
-              final stripped = text.trimRight();
+              var stripped = text.trimRight();
               newLinesStripped = text
                   .substring(stripped.length)
                   .split('')
@@ -335,10 +335,10 @@ class Lexer {
                 leftStripUnlessRe != null &&
                 (!match.groupNames.contains('variable_start') ||
                     match.namedGroup('variable_start') == null)) {
-              final lastPosition = text.lastIndexOf('\n') + 1;
+              var lastPosition = text.lastIndexOf('\n') + 1;
 
               if (lastPosition > 0 || lineStarting) {
-                final index =
+                var index =
                     text.substring(lastPosition).indexOf(leftStripUnlessRe!);
 
                 if (index == -1) {
@@ -349,7 +349,7 @@ class Lexer {
           }
 
           for (var i = 0; i < rule.tokens.length; i += 1) {
-            final token = rule.tokens[i];
+            var token = rule.tokens[i];
 
             if (token.startsWith('@')) {
               // TODO: update error message
@@ -357,8 +357,8 @@ class Lexer {
             } else if (token == '#group') {
               var notFound = true;
 
-              for (final name in match.groupNames) {
-                final group = match.namedGroup(name);
+              for (var name in match.groupNames) {
+                var group = match.namedGroup(name);
 
                 if (group != null) {
                   tokens.add(Token(line, name, group));
@@ -374,7 +374,7 @@ class Lexer {
                     'dynamically but no group matched');
               }
             } else {
-              final data = groups[i];
+              var data = groups[i];
 
               if (data == null) {
                 tokens.add(Token.simple(line, token));
@@ -383,7 +383,7 @@ class Lexer {
                   tokens.add(Token(line, token, data));
                 }
 
-                for (final char in data.split('')) {
+                for (var char in data.split('')) {
                   if (char == '\n') {
                     line += 1;
                   }
@@ -400,8 +400,8 @@ class Lexer {
             continue;
           }
 
-          final data = match[0];
-          final token = rule.token;
+          var data = match[0];
+          var token = rule.token;
 
           if (token == 'operator') {
             if (data == '(') {
@@ -415,7 +415,7 @@ class Lexer {
                 throw TemplateSyntaxError('unexpected \'$data\'');
               }
 
-              final expected = balancingStack.removeLast();
+              var expected = balancingStack.removeLast();
 
               if (data != expected) {
                 throw TemplateSyntaxError(
@@ -440,7 +440,7 @@ class Lexer {
 
         lineStarting = match[0]!.endsWith('\n');
 
-        final position2 = match.end;
+        var position2 = match.end;
 
         if (rule.newState != null) {
           if (rule.newState == '#pop') {
@@ -448,8 +448,8 @@ class Lexer {
           } else if (rule.newState == '#group') {
             var notFound = true;
 
-            for (final name in match.groupNames) {
-              final group = match.namedGroup(name);
+            for (var name in match.groupNames) {
+              var group = match.namedGroup(name);
 
               if (group != null) {
                 stack.add(name);
@@ -487,17 +487,17 @@ class Lexer {
   }
 
   List<Token> tokenize(String source, {String? path}) {
-    final lines = split(newLineRe, source);
+    var lines = split(newLineRe, source);
 
     if (!keepTrailingNewLine && lines.last.isEmpty) {
       lines.removeLast();
     }
 
     source = lines.join('\n');
-    final scanner = StringScanner(source, sourceUrl: path);
-    final tokens = <Token>[];
+    var scanner = StringScanner(source, sourceUrl: path);
+    var tokens = <Token>[];
 
-    for (final token in scan(scanner)) {
+    for (var token in scan(scanner)) {
       if (ignoredTokens.any(token.test)) {
         continue;
       } else if (token.test('linestatement_start')) {
@@ -529,14 +529,14 @@ class Lexer {
   }
 
   static List<String> split(Pattern pattern, String text) {
-    final matches = pattern.allMatches(text).toList();
+    var matches = pattern.allMatches(text).toList();
 
     if (matches.isEmpty) {
       return <String>[text];
     }
 
-    final result = <String>[];
-    final length = matches.length;
+    var result = <String>[];
+    var length = matches.length;
     Match? match;
 
     for (var i = 0, start = 0; i < length; i += 1, start = match.end) {

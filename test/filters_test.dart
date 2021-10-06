@@ -52,17 +52,17 @@ class User extends MapBase<String, Object?> {
 void main() {
   group('Filter', () {
     test('filter calling', () {
-      final result = env.callFilter('sum', [[1, 2, 3]], {});
+      var result = env.callFilter('sum', [[1, 2, 3]], {});
       expect(result, equals(6));
     });
 
     test('capitalize', () {
-      final tmpl = env.fromString('{{ "foo bar"|capitalize }}');
+      var tmpl = env.fromString('{{ "foo bar"|capitalize }}');
       expect(tmpl.render(), equals('Foo bar'));
     });
 
     test('center', () {
-      final tmpl = env.fromString('{{ "foo"|center(9) }}');
+      var tmpl = env.fromString('{{ "foo"|center(9) }}');
       expect(tmpl.render(), equals('   foo   '));
     });
 
@@ -81,7 +81,7 @@ void main() {
     // test('dictsort', () {});
 
     test('batch', () {
-      final data = {'foo': range(10)};
+      var data = {'foo': range(10)};
       var tmpl = env.fromString('{{ foo|batch(3) }}');
       var result = tmpl.render(data);
       expect(result, equals('[[0, 1, 2], [3, 4, 5], [6, 7, 8], [9]]'));
@@ -91,7 +91,7 @@ void main() {
     });
 
     test('slice', () {
-      final data = {'foo': range(10)};
+      var data = {'foo': range(10)};
       var tmpl = env.fromString('{{ foo|slice(3) }}');
       var result = tmpl.render(data);
       expect(result, equals('[[0, 1, 2, 3], [4, 5, 6], [7, 8, 9]]'));
@@ -101,12 +101,12 @@ void main() {
     });
 
     test('escape', () {
-      final tmpl = env.fromString('''{{ '<">&'|escape }}''');
+      var tmpl = env.fromString('''{{ '<">&'|escape }}''');
       expect(tmpl.render(), equals('&lt;&#34;&gt;&amp;'));
     });
 
     test('trim', () {
-      final data = {'foo': '  ..stays..'};
+      var data = {'foo': '  ..stays..'};
       var tmpl = env.fromString('{{ foo|trim() }}');
       expect(tmpl.render(data), equals('..stays..'));
       tmpl = env.fromString('{{ foo|trim(".") }}');
@@ -142,19 +142,19 @@ void main() {
     });
 
     test('first', () {
-      final tmpl = env.fromString('{{ foo|first }}');
+      var tmpl = env.fromString('{{ foo|first }}');
       expect(tmpl.render({'foo': range(10)}), equals('0'));
     });
 
     test('float', () {
-      final tmpl = env.fromString('{{ value|float }}');
+      var tmpl = env.fromString('{{ value|float }}');
       expect(tmpl.render({'value': '42'}), equals('42.0'));
       expect(tmpl.render({'value': 'abc'}), equals('0.0'));
       expect(tmpl.render({'value': '32.32'}), equals('32.32'));
     });
 
     test('float default', () {
-      final tmpl = env.fromString('{{ value|float(defaultValue=1.0) }}');
+      var tmpl = env.fromString('{{ value|float(defaultValue=1.0) }}');
       expect(tmpl.render({'value': 'abc'}), equals('1.0'));
     });
 
@@ -172,7 +172,7 @@ void main() {
 
     test('int', () {
       // no bigint '12345678901234567890': '12345678901234567890'
-      final tmpl = env.fromString('{{ value|int }}');
+      var tmpl = env.fromString('{{ value|int }}');
       expect(tmpl.render({'value': '42'}), equals('42'));
       expect(tmpl.render({'value': 'abc'}), equals('0'));
       expect(tmpl.render({'value': '32.32'}), equals('32'));
@@ -188,7 +188,7 @@ void main() {
     });
 
     test('int default', () {
-      final tmpl = env.fromString('{{ value|int(defaultValue=1) }}');
+      var tmpl = env.fromString('{{ value|int(defaultValue=1) }}');
       expect(tmpl.render({'value': 'abc'}), equals('1'));
     });
 
@@ -201,37 +201,37 @@ void main() {
     });
 
     test('join attribute', () {
-      final tmpl = env.fromString('{{ users|join(", ", "username") }}');
-      final users = [User('foo'), User('bar')];
+      var tmpl = env.fromString('{{ users|join(", ", "username") }}');
+      var users = [User('foo'), User('bar')];
       expect(tmpl.render({'users': users}), equals('foo, bar'));
     });
 
     test('last', () {
-      final tmpl = env.fromString('''{{ foo|last }}''');
+      var tmpl = env.fromString('''{{ foo|last }}''');
       expect(tmpl.render({'foo': range(10)}), equals('9'));
     });
 
     test('length', () {
-      final tmpl = env.fromString('{{ "hello world"|length }}');
+      var tmpl = env.fromString('{{ "hello world"|length }}');
       expect(tmpl.render(), equals('11'));
     });
 
     test('lower', () {
-      final tmpl = env.fromString('''{{ "FOO"|lower }}''');
+      var tmpl = env.fromString('''{{ "FOO"|lower }}''');
       expect(tmpl.render(), equals('foo'));
     });
 
     test('pprint', () {
-      final tmpl = env.fromString('{{ value|pprint }}');
-      final list = <int>[for (var i = 0; i < 10; i += 1) i];
+      var tmpl = env.fromString('{{ value|pprint }}');
+      var list = <int>[for (var i = 0; i < 10; i += 1) i];
       expect(tmpl.render({'value': list}), equals(format(list)));
     });
 
     test('random', () {
-      final expected = '1234567890';
-      final random = Random(0);
-      final env = Environment(random: Random(0));
-      final tmpl = env.fromString('{{ "$expected"|random }}');
+      var expected = '1234567890';
+      var random = Random(0);
+      var env = Environment(random: Random(0));
+      var tmpl = env.fromString('{{ "$expected"|random }}');
 
       for (var i = 0; i < 10; i += 1) {
         expect(tmpl.render(), equals(expected[random.nextInt(10)]));
@@ -246,8 +246,8 @@ void main() {
     });
 
     test('string', () {
-      final values = [1, 2, 3, 4, 5];
-      final tmpl = env.fromString('{{ values|string }}');
+      var values = [1, 2, 3, 4, 5];
+      var tmpl = env.fromString('{{ values|string }}');
       expect(tmpl.render({'values': values}), equals('$values'));
     });
 
@@ -267,7 +267,7 @@ void main() {
     // htest('truncate end lengthh', () {});
 
     test('upper', () {
-      final tmpl = env.fromString('{{ "foo"|upper }}');
+      var tmpl = env.fromString('{{ "foo"|upper }}');
       expect(tmpl.render(), equals('FOO'));
     });
 
@@ -284,19 +284,18 @@ void main() {
     // test('urlize extra schemes parameter', () {});
 
     test('wordcount', () {
-      final tmpl = env.fromString('{{ "foo bar baz"|wordcount }}');
+      var tmpl = env.fromString('{{ "foo bar baz"|wordcount }}');
       expect(tmpl.render(), equals('3'));
     });
 
     test('block', () {
-      final tmpl =
+      var tmpl =
           env.fromString('{% filter lower|escape %}<HEHE>{% endfilter %}');
       expect(tmpl.render(), equals('&lt;hehe&gt;'));
     });
 
     test('chaining', () {
-      final tmpl =
-          env.fromString('{{ ["<foo>", "<bar>"]|first|upper|escape }}');
+      var tmpl = env.fromString('{{ ["<foo>", "<bar>"]|first|upper|escape }}');
       expect(tmpl.render(), equals('&lt;FOO&gt;'));
     });
 
@@ -355,7 +354,7 @@ void main() {
     // test('groupby default', () {});
 
     test('filtertag', () {
-      final tmpl = env.fromString(
+      var tmpl = env.fromString(
           '{% filter upper|replace(\'FOO\', \'foo\') %}foobar{% endfilter %}');
       expect(tmpl.render(), equals('fooBAR'));
     });
@@ -374,13 +373,13 @@ void main() {
     });
 
     test('force escape', () {
-      final tmpl = env.fromString('{{ x|forceescape }}');
-      final x = Markup.escaped('<div />');
+      var tmpl = env.fromString('{{ x|forceescape }}');
+      var x = Markup.escaped('<div />');
       expect(tmpl.render({'x': x}), equals('&lt;div /&gt;'));
     });
 
     test('safe', () {
-      final env = Environment(autoEscape: true);
+      var env = Environment(autoEscape: true);
       var tmpl = env.fromString('{{ "<div>foo</div>"|safe }}');
       expect(tmpl.render(), equals('<div>foo</div>'));
       tmpl = env.fromString('{{ "<div>foo</div>" }}');
@@ -430,9 +429,9 @@ void main() {
     // test('map default', () {});
 
     test('wordwrap', () {
-      final env = Environment(newLine: '\n');
-      final tmpl = env.fromString('{{ string|wordwrap(20) }}');
-      final result =
+      var env = Environment(newLine: '\n');
+      var tmpl = env.fromString('{{ string|wordwrap(20) }}');
+      var result =
           tmpl.render({'string': 'Hello!\nThis is Jinja saying something.'});
       expect(result, equals('Hello!\nThis is Jinja saying\nsomething.'));
     });

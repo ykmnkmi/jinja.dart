@@ -21,7 +21,7 @@ class Cycler extends Iterable<Object?> {
   }
 
   Object? next() {
-    final result = current;
+    var result = current;
     index = (index + 1) % length;
     return result;
   }
@@ -92,7 +92,6 @@ int count(dynamic iterable) {
   // }
 
   // throw TypeError();
-
   return iterable.length as int;
 }
 
@@ -179,7 +178,7 @@ void reprTo(Object? object, StringBuffer buffer,
   }
 
   if (object is Map<Object?, Object?>) {
-    final keys = object.keys.toList();
+    var keys = object.keys.toList();
     buffer.write('{');
 
     for (var i = 0; i < keys.length; i += 1) {

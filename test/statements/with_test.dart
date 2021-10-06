@@ -7,14 +7,13 @@ import '../environment.dart';
 void main() {
   group('With', () {
     test('with', () {
-      final tmpl = env.fromString('''
+      var tmpl = env.fromString('''
         {% with a=42, b=23 -%}
             {{ a }} = {{ b }}
         {% endwith -%}
             {{ a }} = {{ b }}
         ''');
-
-      final lines = const LineSplitter()
+      var lines = const LineSplitter()
           .convert(tmpl.render({'a': 1, 'b': 2}))
           .map((line) => line.trim())
           .where((line) => line.isNotEmpty);
@@ -22,7 +21,7 @@ void main() {
     });
 
     test('with argument scoping', () {
-      final tmpl = env.fromString('''
+      var tmpl = env.fromString('''
         {%- with a=1, b=2, c=b, d=e, e=5 -%}
             {{ a }}|{{ b }}|{{ c }}|{{ d }}|{{ e }}
         {%- endwith -%}

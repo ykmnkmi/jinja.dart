@@ -124,7 +124,7 @@ class LoopContext extends Iterable<Object?> {
       case 'changed':
         return changed;
       default:
-        final invocation = Invocation.getter(Symbol(key));
+        var invocation = Invocation.getter(Symbol(key));
         throw NoSuchMethodError.withInvocation(this, invocation);
     }
   }
@@ -165,13 +165,13 @@ class Namespace extends MapView<String, Object?> {
   }
 
   static Namespace factory([List<Object?>? datas]) {
-    final namespace = Namespace();
+    var namespace = Namespace();
 
     if (datas == null) {
       return namespace;
     }
 
-    for (final data in datas) {
+    for (var data in datas) {
       if (data is! Map) {
         throw TypeError();
       }

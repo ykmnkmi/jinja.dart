@@ -25,7 +25,7 @@ abstract class Node {
 }
 
 extension on Node {
-  void apply(NodeVisitor visitor) {
+  void callBy(NodeVisitor visitor) {
     visitor(this);
   }
 }
@@ -58,5 +58,26 @@ class Data extends Node {
   @override
   String toString() {
     return 'Data($literal)';
+  }
+}
+
+class Impossible implements Exception {
+  Impossible();
+}
+
+abstract class Expression extends Node {
+  const Expression();
+
+  Object? asConst(Context context) {
+    throw Impossible();
+  }
+
+  Object? resolve(Context context) {
+    return null;
+  }
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitExpession(this, context);
   }
 }

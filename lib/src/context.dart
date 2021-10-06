@@ -25,10 +25,12 @@ class Context {
 
   final Environment environment;
 
+  // TODO: change to single map
   final List<Map<String, Object?>> contexts;
 
   final int minimal;
 
+  // TODO: remove
   bool get autoEscape {
     return resolve('autoescape') as bool;
   }
@@ -64,7 +66,7 @@ class Context {
   }
 
   bool has(String key) {
-    for (final context in contexts.reversed) {
+    for (var context in contexts.reversed) {
       if (context.containsKey(key)) {
         return true;
       }
@@ -84,7 +86,7 @@ class Context {
   }
 
   Object? resolve(String key) {
-    for (final context in contexts.reversed) {
+    for (var context in contexts.reversed) {
       if (context.containsKey(key)) {
         return context[key];
       }

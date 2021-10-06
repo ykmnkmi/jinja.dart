@@ -1,26 +1,5 @@
 part of '../nodes.dart';
 
-class Impossible implements Exception {
-  Impossible();
-}
-
-abstract class Expression extends Node {
-  const Expression();
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitExpession(this, context);
-  }
-
-  Object? asConst(Context context) {
-    throw Impossible();
-  }
-
-  Object? resolve(Context context) {
-    return null;
-  }
-}
-
 enum AssignContext {
   load,
   store,
@@ -47,7 +26,7 @@ class Name extends Assignable {
   }
 
   @override
-  Expression asConst(Context context) {
+  Object? asConst(Context context) {
     throw Impossible();
   }
 
@@ -88,84 +67,212 @@ class NamespaceRef extends Expression {
   }
 }
 
-class Concat extends Expression {
-  Concat(this.expressions);
+class Constant extends Expression {
+  Constant(this.value);
 
-  List<Expression> expressions;
-
-  @override
-  String resolve(Context context) {
-    final buffer = StringBuffer();
-
-    for (final expression in expressions) {
-      buffer.write(expression.resolve(context));
-    }
-
-    return '$buffer';
-  }
+  Object? value;
 
   @override
-  void visitChildrens(NodeVisitor visitor) {
-    expressions.forEach(visitor);
+  Object? asConst(Context context) {
+    return value;
   }
-
-  @override
-  String toString() {
-    return 'Concat(${expressions.join(', ')})';
-  }
-}
-
-class Attribute extends Expression {
-  Attribute(this.attribute, this.value);
-
-  String attribute;
-
-  Expression value;
 
   @override
   Object? resolve(Context context) {
-    final value = this.value.resolve(context);
-    return context.environment.getAttribute(value, attribute);
-  }
-
-  @override
-  void visitChildrens(NodeVisitor visitor) {
-    value.apply(visitor);
+    return value;
   }
 
   @override
   String toString() {
-    return 'Attribute($attribute, $value)';
+    return 'Constant(${repr(value, true)})';
   }
 }
 
-class Item extends Expression {
-  Item(this.key, this.value);
+class Tuple extends Assignable {
+  Tuple(this.values, [AssignContext? context]) {
+    context = context ?? AssignContext.load;
+  }
+
+  List<Expression> values;
+
+  @override
+  AssignContext get context {
+    if (values.isEmpty) {
+      return AssignContext.load;
+    }
+
+    var first = values.first;
+    return first is Assignable ? first.context : AssignContext.load;
+  }
+
+  @override
+  set context(AssignContext context) {
+    if (values.isEmpty) {
+      return;
+    }
+
+    for (var value in values) {
+      if (value is! Assignable) {
+        throw TypeError();
+      }
+
+      value.context = context;
+    }
+  }
+
+  @override
+  bool get canAssign {
+    return values.every((value) => value is Assignable && !value.canAssign);
+  }
+
+  @override
+  List<Object?> asConst(Context context) {
+    return List<Object?>.generate(
+        values.length, (index) => values[index].asConst(context));
+  }
+
+  @override
+  List<Object?> resolve(Context context) {
+    return List<Object?>.generate(
+        values.length, (index) => values[index].resolve(context));
+  }
+
+  @override
+  void visitChildrens(NodeVisitor visitor) {
+    values.forEach(visitor);
+  }
+
+  @override
+  String toString() {
+    return 'Tuple(${values.join(', ')})';
+  }
+}
+
+class Array extends Expression {
+  Array(this.values);
+
+  List<Expression> values;
+
+  @override
+  List<Object?> asConst(Context context) {
+    return List<Object?>.generate(
+        values.length, (index) => values[index].asConst(context));
+  }
+
+  @override
+  List<Object?> resolve(Context context) {
+    return List<Object?>.generate(
+        values.length, (index) => values[index].resolve(context));
+  }
+
+  @override
+  void visitChildrens(NodeVisitor visitor) {
+    values.forEach(visitor);
+  }
+
+  @override
+  String toString() {
+    return 'Array(${values.join(', ')})';
+  }
+}
+
+class Pair extends Expression {
+  Pair(this.key, this.value);
 
   Expression key;
 
   Expression value;
 
   @override
-  Object? resolve(Context context) {
-    final key = this.key.resolve(context);
-    final value = this.value.resolve(context);
-    return context.environment.getItem(value, key);
+  MapEntry<Object?, Object?> asConst(Context context) {
+    return MapEntry<Object?, Object?>(
+        key.asConst(context), value.asConst(context));
+  }
+
+  @override
+  MapEntry<Object?, Object?> resolve(Context context) {
+    return MapEntry<Object?, Object?>(
+        key.resolve(context), value.resolve(context));
   }
 
   @override
   void visitChildrens(NodeVisitor visitor) {
-    key.apply(visitor);
-    value.apply(visitor);
+    key.callBy(visitor);
+    value.callBy(visitor);
+  }
+}
+
+class Dict extends Expression {
+  Dict(this.values);
+
+  List<Pair> values;
+
+  @override
+  Map<Object?, Object?> asConst(Context context) {
+    return Map<Object?, Object?>.fromEntries(values
+        .map<MapEntry<Object?, Object?>>((pair) => pair.asConst(context)));
+  }
+
+  @override
+  Map<Object?, Object?> resolve(Context context) {
+    return Map<Object?, Object?>.fromEntries(values
+        .map<MapEntry<Object?, Object?>>((pair) => pair.resolve(context)));
+  }
+
+  @override
+  void visitChildrens(NodeVisitor visitor) {
+    values.forEach(visitor);
   }
 
   @override
   String toString() {
-    return 'Item($key, $value)';
+    return 'Dict(${values.join(', ')})';
   }
 }
 
-typedef Callback = Object? Function(List<Object?>, Map<Symbol, Object?>);
+class Condition extends Expression {
+  Condition(this.test, this.value, [this.orElse]);
+
+  Expression test;
+
+  Expression value;
+
+  Expression? orElse;
+
+  @override
+  Object? asConst(Context context) {
+    if (boolean(test.asConst(context))) {
+      return value.asConst(context);
+    }
+
+    return orElse?.asConst(context);
+  }
+
+  @override
+  Object? resolve(Context context) {
+    if (boolean(test.resolve(context))) {
+      return value.resolve(context);
+    }
+
+    return orElse?.resolve(context);
+  }
+
+  @override
+  void visitChildrens(NodeVisitor visitor) {
+    test.callBy(visitor);
+    value.callBy(visitor);
+    orElse?.callBy(visitor);
+  }
+
+  @override
+  String toString() {
+    return orElse == null
+        ? 'Condition($test, $value)'
+        : 'Condition($test, $value, $orElse)';
+  }
+}
+
+typedef Callback<T> = T Function(List<Object?>, Map<Symbol, Object?>);
 
 class Keyword extends Expression {
   Keyword(this.key, this.value);
@@ -175,17 +282,22 @@ class Keyword extends Expression {
   Expression value;
 
   @override
-  MapEntry<Symbol, Object?> resolve(Context context) {
-    return MapEntry<Symbol, Object?>(Symbol(key), value.resolve(context));
+  Object? asConst(Context context) {
+    return value.asConst(context);
+  }
+
+  @override
+  Object? resolve(Context context) {
+    return value.resolve(context);
   }
 
   @override
   void visitChildrens(NodeVisitor visitor) {
-    value.apply(visitor);
+    value.callBy(visitor);
   }
 
-  MapEntry<Expression, Expression> toMapEntry() {
-    return MapEntry<Expression, Expression>(Constant(key), value);
+  Pair toPair() {
+    return Pair(Constant(key), value);
   }
 
   @override
@@ -205,61 +317,105 @@ class Callable extends Expression {
 
   Expression? dKeywords;
 
-  T call<T extends Object?>(Context context, Callback callback) {
-    final arguments = this.arguments;
+  Object? applyAsConst(Context context, Callback<Object?> callback) {
+    var arguments = this.arguments;
     List<Object?> positional;
 
-    if (arguments != null) {
-      positional = List<Object?>.generate(
-          arguments.length, (index) => arguments[index].resolve(context));
-    } else {
+    if (arguments == null) {
       positional = <Object?>[];
+    } else {
+      positional = arguments
+          .map<Object?>((argument) => argument.asConst(context))
+          .toList();
     }
 
-    final named = <Symbol, Object?>{};
-    final keywords = this.keywords;
+    var named = <Symbol, Object?>{};
+    var keywords = this.keywords;
 
     if (keywords != null) {
-      for (final argument in keywords) {
-        named[Symbol(argument.key)] = argument.value.resolve(context);
+      for (var argument in keywords) {
+        named[Symbol(argument.key)] = argument.asConst(context);
       }
     }
 
-    final dArguments = this.dArguments;
+    var dArguments = this.dArguments;
 
     if (dArguments != null) {
-      positional.addAll(dArguments.resolve(context) as Iterable<Object?>);
+      positional.addAll(dArguments.asConst(context) as Iterable<Object?>);
     }
 
-    final dKeywords = this.dKeywords;
+    var dKeywords = this.dKeywords;
 
     if (dKeywords != null) {
-      final resolvedKeywords = dKeywords.resolve(context);
+      var resolvedKeywords = dKeywords.asConst(context);
 
       if (resolvedKeywords is! Map) {
         throw TypeError();
       }
 
-      named.addAll(resolvedKeywords
-          .cast<String, Object?>()
-          .map<Symbol, Object?>(
-              (key, value) => MapEntry<Symbol, Object?>(Symbol(key), value)));
+      resolvedKeywords.cast<String, Object?>().forEach((key, value) {
+        named[Symbol(key)] = value;
+      });
     }
 
-    return callback(positional, named) as T;
+    return callback(positional, named);
+  }
+
+  T apply<T extends Object?>(Context context, Callback<T> callback) {
+    var arguments = this.arguments;
+    List<Object?> positional;
+
+    if (arguments == null) {
+      positional = <Object?>[];
+    } else {
+      positional = arguments
+          .map<Object?>((argument) => argument.resolve(context))
+          .toList();
+    }
+
+    var named = <Symbol, Object?>{};
+    var keywords = this.keywords;
+
+    if (keywords != null) {
+      for (var argument in keywords) {
+        named[Symbol(argument.key)] = argument.resolve(context);
+      }
+    }
+
+    var dArguments = this.dArguments;
+
+    if (dArguments != null) {
+      positional.addAll(dArguments.resolve(context) as Iterable<Object?>);
+    }
+
+    var dKeywords = this.dKeywords;
+
+    if (dKeywords != null) {
+      var resolvedKeywords = dKeywords.resolve(context);
+
+      if (resolvedKeywords is! Map) {
+        throw TypeError();
+      }
+
+      resolvedKeywords.cast<String, Object?>().forEach((key, value) {
+        named[Symbol(key)] = value;
+      });
+    }
+
+    return callback(positional, named);
   }
 
   @override
   void visitChildrens(NodeVisitor visitor) {
     arguments?.forEach(visitor);
     keywords?.forEach(visitor);
-    dArguments?.apply(visitor);
-    dKeywords?.apply(visitor);
+    dArguments?.callBy(visitor);
+    dKeywords?.callBy(visitor);
   }
 
   String printArguments({bool comma = false}) {
     var result = '';
-    final arguments = this.arguments;
+    var arguments = this.arguments;
 
     if (arguments != null && arguments.isNotEmpty) {
       if (comma) {
@@ -271,7 +427,7 @@ class Callable extends Expression {
       result = '$result${arguments.join(', ')}';
     }
 
-    final keywords = this.keywords;
+    var keywords = this.keywords;
 
     if (keywords != null && keywords.isNotEmpty) {
       if (comma) {
@@ -320,16 +476,24 @@ class Call extends Callable {
   Expression expression;
 
   @override
+  Object? asConst(Context context) {
+    var function = expression.asConst(context);
+    return applyAsConst(context, (positional, named) {
+      return context(function, positional, named);
+    });
+  }
+
+  @override
   Object? resolve(Context context) {
-    final function = expression.resolve(context);
-    return call(context, (positional, named) {
+    var function = expression.resolve(context);
+    return apply(context, (positional, named) {
       return context(function, positional, named);
     });
   }
 
   @override
   void visitChildrens(NodeVisitor visitor) {
-    expression.apply(visitor);
+    expression.callBy(visitor);
     super.visitChildrens(visitor);
   }
 
@@ -341,7 +505,8 @@ class Call extends Callable {
 
 class Filter extends Callable {
   Filter(this.name,
-      {List<Expression>? arguments,
+      {this.expression,
+      List<Expression>? arguments,
       List<Keyword>? keywords,
       Expression? dArguments,
       Expression? dKeywords})
@@ -349,13 +514,28 @@ class Filter extends Callable {
             arguments: arguments,
             keywords: keywords,
             dArguments: dArguments,
-            dKeywords: dKeywords);
+            dKeywords: dKeywords) {
+    if (expression != null) {
+      if (arguments == null) {
+        arguments = <Expression>[expression!];
+      } else {
+        arguments.add(expression!);
+      }
+    }
+  }
 
   String name;
 
+  Expression? expression;
+
+  @override
+  Object? asConst(Context context) {
+    throw Impossible();
+  }
+
   @override
   Object? resolve(Context context) {
-    return call(context, (positional, named) {
+    return apply(context, (positional, named) {
       return context.environment.callFilter(name, positional, named, context);
     });
   }
@@ -381,8 +561,19 @@ class Test extends Callable {
   String name;
 
   @override
+  Object? asConst(Context context) {
+    if (!context.environment.tests.containsKey(name)) {
+      throw Impossible();
+    }
+
+    return applyAsConst(context, (positional, named) {
+      return context.environment.callTest(name, positional, named);
+    });
+  }
+
+  @override
   bool resolve(Context context) {
-    return call<bool>(context, (positional, named) {
+    return apply<bool>(context, (positional, named) {
       return context.environment.callTest(name, positional, named);
     });
   }
@@ -401,18 +592,100 @@ class Operand extends Expression {
   Expression value;
 
   @override
+  Object? asConst(Context context) {
+    return value.asConst(context);
+  }
+
+  @override
   Object? resolve(Context context) {
     return value.resolve(context);
   }
 
   @override
   void visitChildrens(NodeVisitor visitor) {
-    value.apply(visitor);
+    value.callBy(visitor);
   }
 
   @override
   String toString() {
     return 'Operand(\'$operator\', $value)';
+  }
+}
+
+class Item extends Expression {
+  Item(this.key, this.value);
+
+  Expression key;
+
+  Expression value;
+
+  @override
+  Object? resolve(Context context) {
+    var key = this.key.resolve(context);
+    var value = this.value.resolve(context);
+    return context.environment.getItem(value, key);
+  }
+
+  @override
+  void visitChildrens(NodeVisitor visitor) {
+    key.callBy(visitor);
+    value.callBy(visitor);
+  }
+
+  @override
+  String toString() {
+    return 'Item($key, $value)';
+  }
+}
+
+class Attribute extends Expression {
+  Attribute(this.attribute, this.value);
+
+  String attribute;
+
+  Expression value;
+
+  @override
+  Object? resolve(Context context) {
+    var value = this.value.resolve(context);
+    return context.environment.getAttribute(value, attribute);
+  }
+
+  @override
+  void visitChildrens(NodeVisitor visitor) {
+    value.callBy(visitor);
+  }
+
+  @override
+  String toString() {
+    return 'Attribute($attribute, $value)';
+  }
+}
+
+class Concat extends Expression {
+  Concat(this.expressions);
+
+  List<Expression> expressions;
+
+  @override
+  String resolve(Context context) {
+    var buffer = StringBuffer();
+
+    for (var expression in expressions) {
+      buffer.write(expression.resolve(context));
+    }
+
+    return '$buffer';
+  }
+
+  @override
+  void visitChildrens(NodeVisitor visitor) {
+    expressions.forEach(visitor);
+  }
+
+  @override
+  String toString() {
+    return 'Concat(${expressions.join(', ')})';
   }
 }
 
@@ -423,54 +696,35 @@ class Compare extends Expression {
 
   List<Operand> operands;
 
-  @override
-  Object? resolve(Context context) {
-    var left = value.resolve(context);
-    var result = true;
+  @override // TODO: reduce operands if imposible
+  Object? asConst(Context context) {
+    var temp = value.asConst(context);
 
-    for (final operand in operands) {
-      final right = operand.resolve(context);
-
-      switch (operand.operator) {
-        case 'eq':
-          result = result && tests.isEqual(left, right);
-          break;
-        case 'ne':
-          result = result && tests.isNotEqual(left, right);
-          break;
-        case 'lt':
-          result = result && tests.isLessThan(left, right);
-          break;
-        case 'le':
-          result = result && tests.isLessThanOrEqual(left, right);
-          break;
-        case 'gt':
-          result = result && tests.isGreaterThan(left, right);
-          break;
-        case 'ge':
-          result = result && tests.isGreaterThanOrEqual(left, right);
-          break;
-        case 'in':
-          result = result && tests.isIn(left, right);
-          break;
-        case 'notin':
-          result = result && !tests.isIn(left, right);
-          break;
-      }
-
-      if (!result) {
+    for (var operand in operands) {
+      if (!calc(operand.operator, temp, temp = operand.asConst(context))) {
         return false;
       }
-
-      left = right;
     }
 
-    return result;
+    return true;
+  }
+
+  @override
+  Object? resolve(Context context) {
+    var temp = value.resolve(context);
+
+    for (var operand in operands) {
+      if (!calc(operand.operator, temp, temp = operand.resolve(context))) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   @override
   void visitChildrens(NodeVisitor visitor) {
-    value.apply(visitor);
+    value.callBy(visitor);
     operands.forEach(visitor);
   }
 
@@ -478,182 +732,29 @@ class Compare extends Expression {
   String toString() {
     return 'Compare($value, $operands)';
   }
-}
 
-class Condition extends Expression {
-  Condition(this.test, this.value, [this.orElse]);
-
-  Expression test;
-
-  Expression value;
-
-  Expression? orElse;
-
-  @override
-  Object? resolve(Context context) {
-    if (boolean(test.resolve(context))) {
-      return value.resolve(context);
+  static bool calc(String operator, Object? left, Object? right) {
+    switch (operator) {
+      case 'eq':
+        return tests.isEqual(left, right);
+      case 'ne':
+        return tests.isNotEqual(left, right);
+      case 'lt':
+        return tests.isLessThan(left, right);
+      case 'lteq':
+        return tests.isLessThanOrEqual(left, right);
+      case 'gt':
+        return tests.isGreaterThan(left, right);
+      case 'gteq':
+        return tests.isGreaterThanOrEqual(left, right);
+      case 'in':
+        return tests.isIn(left, right);
+      case 'notin':
+        return !tests.isIn(left, right);
+      default:
+        // TODO: update error
+        throw UnimplementedError(operator);
     }
-
-    return orElse?.resolve(context);
-  }
-
-  @override
-  void visitChildrens(NodeVisitor visitor) {
-    test.apply(visitor);
-    value.apply(visitor);
-    orElse?.apply(visitor);
-  }
-
-  @override
-  String toString() {
-    return orElse == null
-        ? 'Condition($test, $value)'
-        : 'Condition($test, $value, $orElse)';
-  }
-}
-
-abstract class Literal extends Expression {}
-
-class Constant extends Literal {
-  Constant(this.value);
-
-  Object? value;
-
-  @override
-  Object? asConst(Context context) {
-    return value;
-  }
-
-  @override
-  Object? resolve(Context context) {
-    return value;
-  }
-
-  @override
-  String toString() {
-    return 'Constant(${repr(value, true)})';
-  }
-}
-
-class TupleLiteral extends Literal implements Assignable {
-  TupleLiteral(this.values, [AssignContext? context]) {
-    context = context ?? AssignContext.load;
-  }
-
-  List<Expression> values;
-
-  @override
-  AssignContext get context {
-    if (values.isEmpty) {
-      return AssignContext.load;
-    }
-
-    final first = values.first;
-    return first is Assignable ? first.context : AssignContext.load;
-  }
-
-  @override
-  set context(AssignContext context) {
-    if (values.isEmpty) {
-      return;
-    }
-
-    for (final value in values) {
-      if (value is! Assignable) {
-        throw TypeError();
-      }
-
-      value.context = context;
-    }
-  }
-
-  @override
-  bool get canAssign {
-    return values.every((value) => value is Assignable && !value.canAssign);
-  }
-
-  @override
-  List<Object?> asConst(Context context) {
-    return List<Object?>.generate(
-        values.length, (index) => values[index].asConst(context));
-  }
-
-  @override
-  List<Object?> resolve(Context context) {
-    return List<Object?>.generate(
-        values.length, (index) => values[index].resolve(context));
-  }
-
-  @override
-  void visitChildrens(NodeVisitor visitor) {
-    values.forEach(visitor);
-  }
-
-  @override
-  String toString() {
-    return 'Tuple(${values.join(', ')})';
-  }
-}
-
-class ListLiteral extends Literal {
-  ListLiteral(this.values);
-
-  List<Expression> values;
-
-  @override
-  List<Object?> asConst(Context context) {
-    return List<Object?>.generate(
-        values.length, (index) => values[index].asConst(context));
-  }
-
-  @override
-  List<Object?> resolve(Context context) {
-    return List<Object?>.generate(
-        values.length, (index) => values[index].resolve(context));
-  }
-
-  @override
-  void visitChildrens(NodeVisitor visitor) {
-    values.forEach(visitor);
-  }
-
-  @override
-  String toString() {
-    return 'List(${values.join(', ')})';
-  }
-}
-
-class DictLiteral extends Literal {
-  DictLiteral(this.dict);
-
-  Map<Expression, Expression> dict;
-
-  @override
-  Map<Object?, Object?> asConst(Context context) {
-    return dict.map<Object?, Object?>((key, value) =>
-        MapEntry<Object?, Object?>(
-            key.asConst(context), value.asConst(context)));
-  }
-
-  @override
-  Map<Object?, Object?> resolve(Context context) {
-    return dict.map<Object?, Object?>((key, value) =>
-        MapEntry<Object?, Object?>(
-            key.resolve(context), value.resolve(context)));
-  }
-
-  @override
-  void visitChildrens(NodeVisitor visitor) {
-    dict.forEach((key, value) {
-      key.apply(visitor);
-      value.apply(visitor);
-    });
-  }
-
-  @override
-  String toString() {
-    return 'Dict $dict';
   }
 }
 
@@ -665,28 +766,42 @@ class Unary extends Expression {
   Expression value;
 
   @override
-  Object? resolve(Context context) {
-    final value = this.value.resolve(context);
-
-    switch (operator) {
-      case '+':
-        // how i should implement this?
-        return value;
-      case '-':
-        return -(value as dynamic);
-      case 'not':
-        return !boolean(value);
+  Object? asConst(Context context) {
+    try {
+      return calc(operator, value.asConst(context));
+    } catch (error) {
+      throw Impossible();
     }
   }
 
   @override
+  Object? resolve(Context context) {
+    return calc(operator, value.resolve(context));
+  }
+
+  @override
   void visitChildrens(NodeVisitor visitor) {
-    value.apply(visitor);
+    value.callBy(visitor);
   }
 
   @override
   String toString() {
     return 'Unary(\'$operator\', $value)';
+  }
+
+  static Object? calc(String operator, dynamic value) {
+    switch (operator) {
+      case '+':
+        // how i should implement this?
+        return value;
+      case '-':
+        return -value;
+      case 'not':
+        return !boolean(value);
+      default:
+        // TODO: update error
+        throw UnimplementedError();
+    }
   }
 }
 
@@ -700,10 +815,31 @@ class Binary extends Expression {
   Expression right;
 
   @override
-  Object? resolve(Context context) {
-    final dynamic left = this.left.resolve(context);
-    final dynamic right = this.right.resolve(context);
+  Object? asConst(Context context) {
+    try {
+      return calc(operator, left.asConst(context), right.asConst(context));
+    } catch (error) {
+      throw Impossible();
+    }
+  }
 
+  @override
+  Object? resolve(Context context) {
+    return calc(operator, left.resolve(context), right.resolve(context));
+  }
+
+  @override
+  void visitChildrens(NodeVisitor visitor) {
+    left.callBy(visitor);
+    right.callBy(visitor);
+  }
+
+  @override
+  String toString() {
+    return 'Binary(\'$operator\', $left, $right)';
+  }
+
+  static Object? calc(String operator, dynamic left, dynamic right) {
     switch (operator) {
       case '**':
         return math.pow(left as num, right as num);
@@ -723,17 +859,9 @@ class Binary extends Expression {
         return boolean(left) ? left : right;
       case 'and':
         return boolean(left) ? right : left;
+      default:
+        // TODO: update error
+        throw UnimplementedError();
     }
-  }
-
-  @override
-  void visitChildrens(NodeVisitor visitor) {
-    left.apply(visitor);
-    right.apply(visitor);
-  }
-
-  @override
-  String toString() {
-    return 'Binary(\'$operator\', $left, $right)';
   }
 }

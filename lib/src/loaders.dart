@@ -66,7 +66,7 @@ class MapLoader extends Loader {
 
   @override
   Template load(Environment environment, String template) {
-    final source = getSource(template);
+    var source = getSource(template);
     return environment.fromString(source, path: template);
   }
 }

@@ -13,10 +13,10 @@ import 'utils.dart';
 Object? Function(Object?) makeAttributeGetter(
     Environment environment, String attributeOrAttributes,
     {Object? Function(Object?)? postProcess, Object? defaultValue}) {
-  final attributes = attributeOrAttributes.split('.');
+  var attributes = attributeOrAttributes.split('.');
 
   Object? attributeGetter(Object? item) {
-    for (final part in attributes) {
+    for (var part in attributes) {
       item = doAttribute(environment, item, part);
 
       if (item == null) {
@@ -48,10 +48,10 @@ Object? doAttribute(Environment environment, Object? object, String attribute) {
 
 List<List<Object?>> doBatch(Iterable<Object?> items, int lineCount,
     [Object? fillWith]) {
-  final result = <List<Object?>>[];
+  var result = <List<Object?>>[];
   var temp = <Object?>[];
 
-  for (final item in items) {
+  for (var item in items) {
     if (temp.length == lineCount) {
       result.add(temp);
       temp = <Object?>[];
@@ -78,8 +78,7 @@ String doCapitalize(String string) {
     return string.toUpperCase();
   }
 
-  return string.substring(0, 1).toUpperCase() +
-      string.substring(1).toLowerCase();
+  return string[0].toUpperCase() + string.substring(1).toLowerCase();
 }
 
 String doCenter(String string, int width) {
@@ -87,8 +86,8 @@ String doCenter(String string, int width) {
     return string;
   }
 
-  final padLength = (width - string.length) ~/ 2;
-  final pad = ' ' * padLength;
+  var padLength = (width - string.length) ~/ 2;
+  var pad = ' ' * padLength;
   return pad + string + pad;
 }
 
@@ -105,11 +104,7 @@ List<Object?> doDictSort(Map<Comparable<Object?>, Object?> dict) {
 }
 
 Markup doEscape(Object? value) {
-  if (value is Markup) {
-    return value;
-  }
-
-  return Markup(value as String);
+  return value is Markup ? value : Markup(value as String);
 }
 
 String doFileSizeFormat(Object? value, [bool binary = false]) {
@@ -124,8 +119,7 @@ String doFileSizeFormat(Object? value, [bool binary = false]) {
     [' YiB', ' YB'],
   ];
 
-  final base = binary ? 1024 : 1000;
-
+  var base = binary ? 1024 : 1000;
   double bytes;
 
   if (value is num) {
@@ -140,7 +134,7 @@ String doFileSizeFormat(Object? value, [bool binary = false]) {
     return '1 Byte';
   } else if (bytes < base) {
     const suffix = ' Bytes';
-    final size = bytes.toStringAsFixed(1);
+    var size = bytes.toStringAsFixed(1);
 
     if (size.endsWith('.0')) {
       return size.substring(0, size.length - 2) + suffix;
@@ -148,8 +142,8 @@ String doFileSizeFormat(Object? value, [bool binary = false]) {
 
     return size + suffix;
   } else {
-    final k = binary ? 0 : 1;
-    num unit = 0;
+    var k = binary ? 0 : 1;
+    num unit = 0.0;
 
     for (var i = 0; i < 8; i += 1) {
       unit = math.pow(base, i + 2);
@@ -231,9 +225,9 @@ Object? doRandom(Environment environment, Object? value) {
     return null;
   }
 
-  final values = list(value);
-  final index = environment.random.nextInt(values.length);
-  final result = values[index];
+  var values = list(value);
+  var index = environment.random.nextInt(values.length);
+  var result = values[index];
   return value is Map ? value[result] : result;
 }
 
@@ -264,7 +258,7 @@ Object? doReplace(Object? object, String from, String to, [int? count]) {
 }
 
 Object? doReverse(Object? value) {
-  final values = list(value);
+  var values = list(value);
   return values.reversed;
 }
 
@@ -273,23 +267,21 @@ Markup doMarkSafe(String value) {
 }
 
 List<List<Object?>> doSlice(Object? value, int slices, [Object? fillWith]) {
-  final result = <List<Object?>>[];
-  final values = list(value);
-  final length = values.length;
-  final perSlice = length ~/ slices;
-  final withExtra = length % slices;
+  var result = <List<Object?>>[];
+  var values = list(value);
+  var length = values.length;
+  var perSlice = length ~/ slices;
+  var withExtra = length % slices;
 
   for (var i = 0, offset = 0; i < slices; i += 1) {
-    final start = offset + i * perSlice;
+    var start = offset + i * perSlice;
 
     if (i < withExtra) {
       offset += 1;
     }
 
-    final end = offset + (i + 1) * perSlice;
-    // sublist
-    final tmp =
-        List<Object?>.generate(end - start, (index) => values[start + index]);
+    var end = offset + (i + 1) * perSlice;
+    var tmp = List<Object?>.generate(end - start, (i) => values[start + i]);
 
     if (fillWith != null && i >= withExtra) {
       tmp.add(fillWith);
@@ -319,8 +311,8 @@ String doTrim(String value, [String? characters]) {
     return value.trim();
   }
 
-  final left = RegExp('^[$characters]+', multiLine: true);
-  final right = RegExp('[$characters]+\$', multiLine: true);
+  var left = RegExp('^[$characters]+', multiLine: true);
+  var right = RegExp('[$characters]+\$', multiLine: true);
   return value.replaceAll(left, '').replaceAll(right, '');
 }
 
@@ -329,7 +321,7 @@ String doUpper(String value) {
 }
 
 int doWordCount(String string) {
-  final matches = RegExp(r'\w+').allMatches(string);
+  var matches = RegExp(r'\w+').allMatches(string);
   return matches.length;
 }
 
@@ -337,17 +329,17 @@ String doWordWrap(Environment environment, String string, int width,
     {bool breakLongWords = true,
     String? wrapString,
     bool breakOnHyphens = true}) {
-  final wrapper = TextWrapper(
+  var wrapper = TextWrapper(
       width: width,
       expandTabs: false,
       replaceWhitespace: false,
       breakLongWords: breakLongWords,
       breakOnHyphens: breakOnHyphens);
-  wrapString ??= environment.newLine;
+  var wrap = wrapString ?? environment.newLine;
   return const LineSplitter()
       .convert(string)
-      .map<String>((line) => wrapper.wrap(line).join(wrapString!))
-      .join(wrapString);
+      .map<String>((line) => wrapper.wrap(line).join(wrap))
+      .join(wrap);
 }
 
 const Map<String, Function> filters = {
@@ -407,6 +399,11 @@ const Map<String, Function> filters = {
   // 'xmlattr': doXMLAttr,
 };
 
-const Set<String> contextFilters = {'join'};
+const Set<String> contextFilters = <String>{'join'};
 
-const Set<String> environmentFilters = {'attr', 'random', 'sum', 'wordwrap'};
+const Set<String> environmentFilters = <String>{
+  'attr',
+  'random',
+  'sum',
+  'wordwrap',
+};

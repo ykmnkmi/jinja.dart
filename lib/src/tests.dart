@@ -5,7 +5,7 @@ bool isBoolean(Object? object) {
 }
 
 bool isCallable(Object? object) {
-  // TODO: update
+  // or try to get call method?
   return object is Function;
 }
 

@@ -50,7 +50,7 @@ class TokenReader {
   }
 
   Token next() {
-    final result = current;
+    var result = current;
 
     if (pushed.isNotEmpty) {
       current = pushed.removeAt(0);

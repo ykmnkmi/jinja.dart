@@ -36,26 +36,26 @@ void main() {
   group('Syntax', () {
     test('call', () {
       Object? foo(dynamic a, {dynamic b}) => a + b;
-      final env = Environment(globals: {'foo': foo});
-      final tmpl = env.fromString('{{ foo(*["a"], **{"b": "c"}) }}');
+      var env = Environment(globals: {'foo': foo});
+      var tmpl = env.fromString('{{ foo(*["a"], **{"b": "c"}) }}');
       expect(tmpl.render(), equals('ac'));
     });
 
     test('attr', () {
-      final foo = {'bar': 42};
-      final tmpl = env.fromString('{{ foo.bar }}|{{ foo["bar"] }}');
+      var foo = {'bar': 42};
+      var tmpl = env.fromString('{{ foo.bar }}|{{ foo["bar"] }}');
       expect(tmpl.render({'foo': foo}), equals('42|42'));
     });
 
     test('subscript', () {
-      final foo = [0, 1, 2];
-      final tmpl = env.fromString('{{ foo[0] }}');
+      var foo = [0, 1, 2];
+      var tmpl = env.fromString('{{ foo[0] }}');
       expect(tmpl.render({'foo': foo}), equals('0'));
     });
 
     test('tuple', () {
       // tuple is list
-      final tmpl = env.fromString('{{ () }}|{{ (1,) }}|{{ (1, 2) }}');
+      var tmpl = env.fromString('{{ () }}|{{ (1,) }}|{{ (1, 2) }}');
       expect(tmpl.render(), equals('[]|[1]|[1, 2]'));
     });
 
@@ -102,7 +102,7 @@ void main() {
     });
 
     test('compare compound', () {
-      final data = {'a': 4, 'b': 2, 'c': 3};
+      var data = {'a': 4, 'b': 2, 'c': 3};
       var tmpl = env.fromString('{{ 4 < 2 < 3 }}');
       expect(tmpl.render(data), equals('false'));
       tmpl = env.fromString('{{ a < b < c }}');
@@ -118,7 +118,7 @@ void main() {
     });
 
     test('inop', () {
-      final tmpl =
+      var tmpl =
           env.fromString('{{ 1 in [1, 2, 3] }}|{{ 1 not in [1, 2, 3] }}');
       expect(tmpl.render(), equals('true|false'));
     });
@@ -162,13 +162,13 @@ void main() {
     });
 
     test('bool', () {
-      final tmpl = env.fromString(
+      var tmpl = env.fromString(
           '{{ true and false }}|{{ false or true }}|{{ not false }}');
       expect(tmpl.render(), equals('false|true|true'));
     });
 
     test('grouping', () {
-      final tmpl = env.fromString(
+      var tmpl = env.fromString(
           '{{ (true and false) or (false and true) and not false }}');
       expect(tmpl.render(), equals('false'));
     });
@@ -181,62 +181,56 @@ void main() {
     });
 
     test('conditional expression', () {
-      final tmpl = env.fromString('{{ 0 if true else 1 }}');
+      var tmpl = env.fromString('{{ 0 if true else 1 }}');
       expect(tmpl.render(), equals('0'));
     });
 
     test('short conditional expression', () {
-      final tmpl = env.fromString('<{{ 1 if false }}>');
+      var tmpl = env.fromString('<{{ 1 if false }}>');
       expect(tmpl.render(), equals('<>'));
     });
 
     test('filter priority', () {
-      final tmpl = env.fromString('{{ "foo" | upper + "bar" | upper }}');
+      var tmpl = env.fromString('{{ "foo" | upper + "bar" | upper }}');
       expect(tmpl.render(), equals('FOOBAR'));
     });
 
     test('function calls', () {
-      expect(() => env.fromString('{{ foo(*foo, bar) }}'),
-          equals(throwsA(isA<TemplateSyntaxError>())));
-      expect(() => env.fromString('{{ foo(*foo, *bar) }}'),
-          equals(throwsA(isA<TemplateSyntaxError>())));
-      expect(() => env.fromString('{{ foo(**foo, *bar) }}'),
-          equals(throwsA(isA<TemplateSyntaxError>())));
-      expect(() => env.fromString('{{ foo(**foo, bar) }}'),
-          equals(throwsA(isA<TemplateSyntaxError>())));
-      expect(() => env.fromString('{{ foo(**foo, **bar) }}'),
-          equals(throwsA(isA<TemplateSyntaxError>())));
-      expect(() => env.fromString('{{ foo(**foo, bar=42) }}'),
-          equals(throwsA(isA<TemplateSyntaxError>())));
-      expect(env.fromString('{{ foo(foo, bar) }}'), isA<Template>());
-      expect(env.fromString('{{ foo(foo, bar=42) }}'), isA<Template>());
-      expect(env.fromString('{{ foo(foo, bar=23, *args) }}'), isA<Template>());
-      expect(env.fromString('{{ foo(foo, *args, bar=23) }}'), isA<Template>());
-      expect(env.fromString('{{ foo(a, b=c, *d, **e) }}'), isA<Template>());
-      expect(env.fromString('{{ foo(*foo, bar=42) }}'), isA<Template>());
-      expect(env.fromString('{{ foo(*foo, **bar) }}'), isA<Template>());
-      expect(env.fromString('{{ foo(*foo, bar=42, **baz) }}'), isA<Template>());
-      expect(env.fromString('{{ foo(foo, *args, bar=23, **baz) }}'),
-          isA<Template>());
+      var matcher = equals(throwsA(isA<TemplateSyntaxError>()));
+      expect(() => env.fromString('{{ foo(*foo, bar) }}'), matcher);
+      expect(() => env.fromString('{{ foo(*foo, *bar) }}'), matcher);
+      expect(() => env.fromString('{{ foo(**foo, *bar) }}'), matcher);
+      expect(() => env.fromString('{{ foo(**foo, bar) }}'), matcher);
+      expect(() => env.fromString('{{ foo(**foo, **bar) }}'), matcher);
+      expect(() => env.fromString('{{ foo(**foo, bar=42) }}'), matcher);
+      matcher = isA<Template>();
+      expect(env.fromString('{{ foo(foo, bar) }}'), matcher);
+      expect(env.fromString('{{ foo(foo, bar=42) }}'), matcher);
+      expect(env.fromString('{{ foo(foo, bar=23, *args) }}'), matcher);
+      expect(env.fromString('{{ foo(foo, *args, bar=23) }}'), matcher);
+      expect(env.fromString('{{ foo(a, b=c, *d, **e) }}'), matcher);
+      expect(env.fromString('{{ foo(*foo, bar=42) }}'), matcher);
+      expect(env.fromString('{{ foo(*foo, **bar) }}'), matcher);
+      expect(env.fromString('{{ foo(*foo, bar=42, **baz) }}'), matcher);
+      expect(env.fromString('{{ foo(foo, *args, bar=23, **baz) }}'), matcher);
     });
 
     test('tuple expr', () {
-      expect(env.fromString('{{ () }}'), isA<Template>());
-      expect(env.fromString('{{ (1, 2) }}'), isA<Template>());
-      expect(env.fromString('{{ (1, 2,) }}'), isA<Template>());
-      expect(env.fromString('{{ 1, }}'), isA<Template>());
-      expect(env.fromString('{{ 1, 2 }}'), isA<Template>());
-      expect(env.fromString('{% for foo, bar in seq %}...{% endfor %}'),
-          isA<Template>());
-      expect(env.fromString('{% for x in foo, bar %}...{% endfor %}'),
-          isA<Template>());
-      expect(env.fromString('{% for x in foo, %}...{% endfor %}'),
-          isA<Template>());
+      var matcher = isA<Template>();
+      expect(env.fromString('{{ () }}'), matcher);
+      expect(env.fromString('{{ (1, 2) }}'), matcher);
+      expect(env.fromString('{{ (1, 2,) }}'), matcher);
+      expect(env.fromString('{{ 1, }}'), matcher);
+      expect(env.fromString('{{ 1, 2 }}'), matcher);
+      expect(
+          env.fromString('{% for foo, bar in seq %}...{% endfor %}'), matcher);
+      expect(env.fromString('{% for x in foo, bar %}...{% endfor %}'), matcher);
+      expect(env.fromString('{% for x in foo, %}...{% endfor %}'), matcher);
     });
 
     test('triling comma', () {
       // tuple is list
-      final tmpl = env.fromString('{{ (1, 2,) }}|{{ [1, 2,] }}|{{ {1: 2,} }}');
+      var tmpl = env.fromString('{{ (1, 2,) }}|{{ [1, 2,] }}|{{ {1: 2,} }}');
       expect(tmpl.render(), equals('[1, 2]|[1, 2]|{1: 2}'));
     });
 
@@ -248,22 +242,22 @@ void main() {
     });
 
     test('string concatenation', () {
-      final tmpl = env.fromString('{{ "foo" "bar" "baz" }}');
+      var tmpl = env.fromString('{{ "foo" "bar" "baz" }}');
       expect(tmpl.render(), equals('foobarbaz'));
     });
 
     test('notin', () {
-      final tmpl = env.fromString('{{ not 42 in bar }}');
+      var tmpl = env.fromString('{{ not 42 in bar }}');
       expect(tmpl.render({'bar': range(100)}), equals('false'));
     });
 
     test('operator precedence', () {
-      final tmpl = env.fromString('{{ 2 * 3 + 4 % 2 + 1 - 2 }}');
+      var tmpl = env.fromString('{{ 2 * 3 + 4 % 2 + 1 - 2 }}');
       expect(tmpl.render(), equals('5'));
     });
 
     test('raw2', () {
-      final tmpl =
+      var tmpl =
           env.fromString('{% raw %}{{ FOO }} and {% BAR %}{% endraw %}');
       expect(tmpl.render(), equals('{{ FOO }} and {% BAR %}'));
     });
@@ -282,30 +276,30 @@ void main() {
     });
 
     test('neg filter priority', () {
-      final tmpl = env.fromString('{{ -1|foo }}');
-      final node = tmpl.nodes[0];
+      var tmpl = env.fromString('{{ -1|foo }}');
+      var node = tmpl.nodes[0];
       expect(node, predicate<Filter>((filter) {
-        final expression = filter.arguments![0];
+        var expression = filter.arguments![0];
         return expression is Unary && expression.operator == '-';
       }));
     });
 
     test('const assign', () {
-      expect(() => env.fromString('{% set true = 42 %}'),
-          throwsA(isA<TemplateSyntaxError>()));
-      expect(() => env.fromString('{% for none in seq %}{% endfor %}'),
-          throwsA(isA<TemplateSyntaxError>()));
+      var matcher = throwsA(isA<TemplateSyntaxError>());
+      expect(() => env.fromString('{% set true = 42 %}'), matcher);
+      expect(
+          () => env.fromString('{% for none in seq %}{% endfor %}'), matcher);
     });
 
     test('localset', () {
-      final tmpl = env.fromString(
+      var tmpl = env.fromString(
           '{% set foo = 0 %}{% for item in [1, 2] %}{% set foo = 1 %}'
           '{% endfor %}{{ foo }}');
       expect(tmpl.render(), equals('0'));
     });
 
     test('parse unary', () {
-      final foo = {'bar': 42};
+      var foo = {'bar': 42};
       var tmpl = env.fromString('{{ -foo["bar"] }}');
       expect(tmpl.render({'foo': foo}), equals('-42'));
       tmpl = env.fromString('{{ foo["bar"] }}');

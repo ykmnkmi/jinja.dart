@@ -5,7 +5,7 @@ abstract class Visitor<C, R> {
   const Visitor();
 
   void visitAll(List<Node> nodes, C context) {
-    for (final node in nodes) {
+    for (var node in nodes) {
       node.accept(this, context);
     }
   }
@@ -20,7 +20,7 @@ abstract class Visitor<C, R> {
 
   R visitDo(Do node, C context);
 
-  R visitExpession(Expression expression, C context);
+  R visitExpession(Expression node, C context);
 
   R visitExtends(Extends node, C context);
 

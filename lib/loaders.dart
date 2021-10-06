@@ -24,13 +24,13 @@ export 'src/loaders.dart';
 ///     var loader = FileSystemLoader(path: 'path', followLinks: true)
 ///
 class FileSystemLoader extends Loader {
-  FileSystemLoader({
-    String? path,
-    List<String>? paths,
-    this.followLinks = true,
-    this.extensions = const <String>{'html'},
-    this.encoding = utf8,
-  }) : paths = paths ?? <String>[path ?? 'templates'];
+  FileSystemLoader(
+      {String? path,
+      List<String>? paths,
+      this.followLinks = true,
+      this.extensions = const <String>{'html'},
+      this.encoding = utf8})
+      : paths = paths ?? <String>[path ?? 'templates'];
 
   final List<String> paths;
 
@@ -41,11 +41,11 @@ class FileSystemLoader extends Loader {
   final Encoding encoding;
 
   File? findFile(String template) {
-    final pieces = template.split('/');
+    var pieces = template.split('/');
 
-    for (final path in paths) {
-      final templatePath = p.joinAll(<String>[path, ...pieces]);
-      final templateFile = File(templatePath);
+    for (var path in paths) {
+      var templatePath = p.joinAll(<String>[path, ...pieces]);
+      var templateFile = File(templatePath);
 
       if (templateFile.existsSync()) {
         return templateFile;
@@ -54,7 +54,7 @@ class FileSystemLoader extends Loader {
   }
 
   bool isTemplate(String path, [String? from]) {
-    final template = p.relative(path, from: from);
+    var template = p.relative(path, from: from);
     var ext = p.extension(template);
 
     if (ext.startsWith('.')) {
@@ -67,7 +67,7 @@ class FileSystemLoader extends Loader {
 
   @override
   String getSource(String template) {
-    final file = findFile(template);
+    var file = findFile(template);
 
     if (file == null) {
       throw TemplateNotFound(template: template);
@@ -78,18 +78,18 @@ class FileSystemLoader extends Loader {
 
   @override
   List<String> listTemplates() {
-    final found = <String>[];
+    var found = <String>[];
 
-    for (final path in paths) {
-      final directory = Directory(path);
+    for (var path in paths) {
+      var directory = Directory(path);
 
       if (directory.existsSync()) {
-        final entities =
+        var entities =
             directory.listSync(recursive: true, followLinks: followLinks);
 
-        for (final entity in entities) {
+        for (var entity in entities) {
           if (isTemplate(entity.path, path)) {
-            final template = p
+            var template = p
                 .relative(entity.path, from: path)
                 .replaceAll(Platform.pathSeparator, '/');
 
@@ -107,13 +107,13 @@ class FileSystemLoader extends Loader {
 
   @override
   Template load(Environment environment, String template) {
-    final file = findFile(template);
+    var file = findFile(template);
 
     if (file == null) {
       throw TemplateNotFound(template: template);
     }
 
-    final source = file.readAsStringSync(encoding: encoding);
+    var source = file.readAsStringSync(encoding: encoding);
     return environment.fromString(source, path: template);
   }
 
