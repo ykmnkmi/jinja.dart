@@ -128,6 +128,11 @@ class LoopContext extends Iterable<Object?> {
         throw NoSuchMethodError.withInvocation(this, invocation);
     }
   }
+
+  @override
+  String toString() {
+    return 'LoopContext()';
+  }
 }
 
 class LoopIterator extends Iterator<Object?> {

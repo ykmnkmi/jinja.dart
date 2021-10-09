@@ -327,10 +327,8 @@ class Environment {
     try {
       return fieldGetter(object, field);
     } on NoSuchMethodError {
-      // ...
+      return object[field];
     }
-
-    return object[field];
   }
 
   /// Get an item or attribute of an object but prefer the item.
@@ -338,10 +336,6 @@ class Environment {
     try {
       return object[key];
     } on NoSuchMethodError {
-      if (key is String) {
-        return getAttribute(object, key);
-      }
-
       return null;
     }
   }
@@ -362,7 +356,7 @@ class Environment {
   /// This requires that the loader supports the loader's
   /// [Loader.listTemplates] method.
   List<String> listTemplates() {
-    // TODO: add error message
+    // TODO: handle error
     return loader!.listTemplates();
   }
 
@@ -501,7 +495,7 @@ class Template extends Node {
       node.visitChildrens(blocks);
     }
 
-    void loop(Node node) {
+    void cycle(Node node) {
       if (node is Call) {
         var expression = node.expression;
 
@@ -519,6 +513,21 @@ class Template extends Node {
             }
           }
 
+          return;
+        }
+      }
+
+      node.visitChildrens(cycle);
+    }
+
+    Node? parent;
+
+    void loop(Node node) {
+      if (node is Attribute) {
+        var expression = node.value;
+
+        if (expression is Name && expression.name == 'loop') {
+          print(parent);
           return;
         }
       }
@@ -571,6 +580,7 @@ class Template extends Node {
     nodes
       ..forEach(self)
       ..forEach(blocks)
+      ..forEach(cycle)
       ..forEach(loop)
       ..forEach(namespace);
 

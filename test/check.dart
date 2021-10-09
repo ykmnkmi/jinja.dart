@@ -6,10 +6,10 @@ import 'package:stack_trace/stack_trace.dart';
 void main() {
   try {
     var env = Environment();
-    var tmpl = env.fromString('{% for item in seq %}{{ loop.changed(item) }},{% endfor %}');
+    var tmpl = env.fromString('{% set ns = namespace(a=1) %}{% set ns.b = 2 %}{{ ns.a }}');
     print(tmpl.nodes);
     print(tmpl.blocks);
-    print(tmpl.render({'seq': [null, null, 1, 2, 2, 3, 4, 4, 4]}));
+    print(tmpl.render());
   } catch (error, trace) {
     print(error);
     print(Trace.format(trace, terse: true));

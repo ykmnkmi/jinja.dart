@@ -151,7 +151,8 @@ void main() {
                 [{{ rowloop.index }}|{{ loop.index }}]
             {%- endfor %}
         {%- endfor %}''');
-      expect(tmpl.render({'table': ['ab', 'cd']}), equals('[1|1][1|2][2|1][2|2]'));
+      expect(
+        tmpl.render({'table': ['ab', 'cd']}), equals('[1|1][1|2][2|1][2|2]'));
     });
 
     // TODO: add test: recursive bug

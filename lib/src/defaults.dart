@@ -28,6 +28,6 @@ Object? finalize(Object? value) {
 }
 
 Object? fieldGetter(Object? object, String field) {
-  throw NoSuchMethodError.withInvocation(
-      object, Invocation.getter(Symbol(field)));
+  var invocation = Invocation.getter(Symbol(field));
+  throw NoSuchMethodError.withInvocation(object, invocation);
 }
