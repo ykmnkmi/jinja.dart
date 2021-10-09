@@ -520,20 +520,19 @@ class Template extends Node {
       node.visitChildrens(cycle);
     }
 
-    Node? parent;
+    // Node? parent;
 
-    void loop(Node node) {
-      if (node is Attribute) {
-        var expression = node.value;
+    // void loop(Node node) {
+    //   if (node is Attribute) {
+    //     var expression = node.value;
 
-        if (expression is Name && expression.name == 'loop') {
-          print(parent);
-          return;
-        }
-      }
+    //     if (expression is Name && expression.name == 'loop') {
+    //       return;
+    //     }
+    //   }
 
-      node.visitChildrens(loop);
-    }
+    //   node.visitChildrens(loop);
+    // }
 
     void namespace(Node node) {
       if (node is Call) {
@@ -581,7 +580,7 @@ class Template extends Node {
       ..forEach(self)
       ..forEach(blocks)
       ..forEach(cycle)
-      ..forEach(loop)
+      // ..forEach(loop)
       ..forEach(namespace);
 
     // TODO: loop, namespace: replace Attribute with Item

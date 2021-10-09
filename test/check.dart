@@ -6,7 +6,7 @@ import 'package:stack_trace/stack_trace.dart';
 void main() {
   try {
     var env = Environment();
-    var tmpl = env.fromString('{% set ns = namespace(a=1) %}{% set ns.b = 2 %}{{ ns.a }}');
+    var tmpl = env.fromString('''{% for item in [1, 2, 3, 5] -%}{{ loop.previtem | upper }}{%- endfor %}''');
     print(tmpl.nodes);
     print(tmpl.blocks);
     print(tmpl.render());

@@ -21,6 +21,10 @@ abstract class Node {
 
   R accept<C, R>(Visitor<C, R> visitor, C context);
 
+  Iterable<T> findAll<T extends Node>() {
+    throw UnimplementedError();
+  }
+
   void visitChildrens(NodeVisitor visitor) {}
 }
 

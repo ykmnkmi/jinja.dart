@@ -6,13 +6,13 @@ enum AssignContext {
   parameter,
 }
 
-abstract class Assignable extends Expression {
+mixin Assignable on Expression {
   bool get canAssign;
 
   abstract AssignContext context;
 }
 
-class Name extends Assignable {
+class Name extends Expression implements Assignable {
   Name(this.name, {this.context = AssignContext.load});
 
   String name;
@@ -67,7 +67,9 @@ class NamespaceRef extends Expression {
   }
 }
 
-class Constant extends Expression {
+abstract class Literal extends Expression {}
+
+class Constant extends Literal {
   Constant(this.value);
 
   Object? value;
@@ -88,7 +90,7 @@ class Constant extends Expression {
   }
 }
 
-class Tuple extends Assignable {
+class Tuple extends Literal implements Assignable {
   Tuple(this.values, [AssignContext? context]) {
     context = context ?? AssignContext.load;
   }
@@ -132,6 +134,11 @@ class Tuple extends Assignable {
   }
 
   @override
+  Iterable<T> findAll<T extends Node>() {
+    return values.whereType<T>();
+  }
+
+  @override
   List<Object?> resolve(Context context) {
     return List<Object?>.generate(
         values.length, (index) => values[index].resolve(context));
@@ -148,7 +155,7 @@ class Tuple extends Assignable {
   }
 }
 
-class Array extends Expression {
+class Array extends Literal {
   Array(this.values);
 
   List<Expression> values;
@@ -157,6 +164,11 @@ class Array extends Expression {
   List<Object?> asConst(Context context) {
     return List<Object?>.generate(
         values.length, (index) => values[index].asConst(context));
+  }
+
+  @override
+  Iterable<T> findAll<T extends Node>() {
+    return values.whereType<T>();
   }
 
   @override
@@ -190,6 +202,17 @@ class Pair extends Expression {
   }
 
   @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (key is T) {
+      yield key as T;
+    }
+
+    if (value is T) {
+      yield value as T;
+    }
+  }
+
+  @override
   MapEntry<Object?, Object?> resolve(Context context) {
     return MapEntry<Object?, Object?>(
         key.resolve(context), value.resolve(context));
@@ -202,31 +225,38 @@ class Pair extends Expression {
   }
 }
 
-class Dict extends Expression {
-  Dict(this.values);
+class Dict extends Literal {
+  Dict(this.pairs);
 
-  List<Pair> values;
+  List<Pair> pairs;
 
   @override
   Map<Object?, Object?> asConst(Context context) {
-    return Map<Object?, Object?>.fromEntries(values
-        .map<MapEntry<Object?, Object?>>((pair) => pair.asConst(context)));
+    return Map<Object?, Object?>.fromEntries(
+        pairs.map<MapEntry<Object?, Object?>>((pair) => pair.asConst(context)));
+  }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    for (var pair in pairs) {
+      yield* pair.findAll<T>();
+    }
   }
 
   @override
   Map<Object?, Object?> resolve(Context context) {
-    return Map<Object?, Object?>.fromEntries(values
-        .map<MapEntry<Object?, Object?>>((pair) => pair.resolve(context)));
+    return Map<Object?, Object?>.fromEntries(
+        pairs.map<MapEntry<Object?, Object?>>((pair) => pair.resolve(context)));
   }
 
   @override
   void visitChildrens(NodeVisitor visitor) {
-    values.forEach(visitor);
+    pairs.forEach(visitor);
   }
 
   @override
   String toString() {
-    return 'Dict(${values.join(', ')})';
+    return 'Dict(${pairs.join(', ')})';
   }
 }
 
@@ -246,6 +276,21 @@ class Condition extends Expression {
     }
 
     return orElse?.asConst(context);
+  }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (test is T) {
+      yield test as T;
+    }
+
+    if (value is T) {
+      yield value as T;
+    }
+
+    if (orElse is T) {
+      yield orElse as T;
+    }
   }
 
   @override
@@ -284,6 +329,13 @@ class Keyword extends Expression {
   @override
   Object? asConst(Context context) {
     return value.asConst(context);
+  }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (value is T) {
+      yield value as T;
+    }
   }
 
   @override
@@ -406,11 +458,28 @@ class Callable extends Expression {
   }
 
   @override
-  void visitChildrens(NodeVisitor visitor) {
-    arguments?.forEach(visitor);
-    keywords?.forEach(visitor);
-    dArguments?.callBy(visitor);
-    dKeywords?.callBy(visitor);
+  Iterable<T> findAll<T extends Node>() sync* {
+    var arguments = this.arguments;
+
+    if (arguments != null) {
+      yield* arguments.whereType<T>();
+    }
+
+    var keywords = this.keywords;
+
+    if (keywords != null) {
+      for (var keyword in keywords) {
+        yield* keyword.findAll<T>();
+      }
+    }
+
+    if (dArguments is T) {
+      yield dArguments as T;
+    }
+
+    if (dKeywords is T) {
+      yield dKeywords as T;
+    }
   }
 
   String printArguments({bool comma = false}) {
@@ -459,6 +528,14 @@ class Callable extends Expression {
 
     return result;
   }
+
+  @override
+  void visitChildrens(NodeVisitor visitor) {
+    arguments?.forEach(visitor);
+    keywords?.forEach(visitor);
+    dArguments?.callBy(visitor);
+    dKeywords?.callBy(visitor);
+  }
 }
 
 class Call extends Callable {
@@ -481,6 +558,15 @@ class Call extends Callable {
     return applyAsConst(context, (positional, named) {
       return context(function, positional, named);
     });
+  }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (expression is T) {
+      yield expression as T;
+    }
+
+    yield* super.findAll<T>();
   }
 
   @override
@@ -542,7 +628,7 @@ class Filter extends Callable {
 
   @override
   String toString() {
-    return 'Filter.$name(${printArguments()})';
+    return 'Filter.$name(${printArguments(comma: true)})';
   }
 }
 
@@ -584,40 +670,30 @@ class Test extends Callable {
   }
 }
 
-class Operand extends Expression {
-  Operand(this.operator, this.value);
-
-  String operator;
-
-  Expression value;
-
-  @override
-  Object? asConst(Context context) {
-    return value.asConst(context);
-  }
-
-  @override
-  Object? resolve(Context context) {
-    return value.resolve(context);
-  }
-
-  @override
-  void visitChildrens(NodeVisitor visitor) {
-    value.callBy(visitor);
-  }
-
-  @override
-  String toString() {
-    return 'Operand(\'$operator\', $value)';
-  }
-}
-
 class Item extends Expression {
   Item(this.key, this.value);
 
   Expression key;
 
   Expression value;
+
+  @override
+  Object? asConst(Context context) {
+    var key = this.key.asConst(context);
+    var value = this.value.asConst(context);
+    return context.environment.getItem(value, key);
+  }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (key is T) {
+      yield key as T;
+    }
+
+    if (value is T) {
+      yield value as T;
+    }
+  }
 
   @override
   Object? resolve(Context context) {
@@ -646,6 +722,19 @@ class Attribute extends Expression {
   Expression value;
 
   @override
+  Object? asConst(Context context) {
+    var value = this.value.asConst(context);
+    return context.environment.getAttribute(value, attribute);
+  }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (value is T) {
+      yield value as T;
+    }
+  }
+
+  @override
   Object? resolve(Context context) {
     var value = this.value.resolve(context);
     return context.environment.getAttribute(value, attribute);
@@ -663,15 +752,25 @@ class Attribute extends Expression {
 }
 
 class Concat extends Expression {
-  Concat(this.expressions);
+  Concat(this.values);
 
-  List<Expression> expressions;
+  List<Expression> values;
+
+  @override // TODO: try reduce operands if imposible
+  Object? asConst(Context context) {
+    return values.map<Object?>((value) => value.asConst(context)).join();
+  }
+
+  @override
+  Iterable<T> findAll<T extends Node>() {
+    return values.whereType<T>();
+  }
 
   @override
   String resolve(Context context) {
     var buffer = StringBuffer();
 
-    for (var expression in expressions) {
+    for (var expression in values) {
       buffer.write(expression.resolve(context));
     }
 
@@ -680,12 +779,47 @@ class Concat extends Expression {
 
   @override
   void visitChildrens(NodeVisitor visitor) {
-    expressions.forEach(visitor);
+    values.forEach(visitor);
   }
 
   @override
   String toString() {
-    return 'Concat(${expressions.join(', ')})';
+    return 'Concat(${values.join(', ')})';
+  }
+}
+
+class Operand extends Expression {
+  Operand(this.operator, this.value);
+
+  String operator;
+
+  Expression value;
+
+  @override
+  Object? asConst(Context context) {
+    return value.asConst(context);
+  }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (value is T) {
+      yield value as T;
+    }
+  }
+
+  @override
+  Object? resolve(Context context) {
+    return value.resolve(context);
+  }
+
+  @override
+  void visitChildrens(NodeVisitor visitor) {
+    value.callBy(visitor);
+  }
+
+  @override
+  String toString() {
+    return 'Operand(\'$operator\', $value)';
   }
 }
 
@@ -696,7 +830,7 @@ class Compare extends Expression {
 
   List<Operand> operands;
 
-  @override // TODO: reduce operands if imposible
+  @override // TODO: try reduce operands if imposible
   Object? asConst(Context context) {
     var temp = value.asConst(context);
 
@@ -707,6 +841,13 @@ class Compare extends Expression {
     }
 
     return true;
+  }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    for (var operand in operands) {
+      yield* operand.findAll<T>();
+    }
   }
 
   @override
@@ -775,6 +916,13 @@ class Unary extends Expression {
   }
 
   @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (value is T) {
+      yield value as T;
+    }
+  }
+
+  @override
   Object? resolve(Context context) {
     return calc(operator, value.resolve(context));
   }
@@ -820,6 +968,17 @@ class Binary extends Expression {
       return calc(operator, left.asConst(context), right.asConst(context));
     } catch (error) {
       throw Impossible();
+    }
+  }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (left is T) {
+      yield left as T;
+    }
+
+    if (right is T) {
+      yield right as T;
     }
   }
 

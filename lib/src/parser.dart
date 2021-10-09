@@ -810,7 +810,6 @@ class Parser {
 
     for (var filter in filters) {
       var arguments = filter.arguments;
-
       filter.expression = expression;
 
       if (arguments == null) {
