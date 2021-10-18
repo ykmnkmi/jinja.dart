@@ -8,6 +8,7 @@ import 'visitor.dart';
 part 'nodes/expressions.dart';
 part 'nodes/statements.dart';
 
+typedef NodeUpdater = Node Function(Node node);
 typedef NodeVisitor = void Function(Node node);
 
 abstract class ImportContext {
@@ -19,18 +20,27 @@ abstract class ImportContext {
 abstract class Node {
   const Node();
 
-  R accept<C, R>(Visitor<C, R> visitor, C context);
-
-  Iterable<T> findAll<T extends Node>() {
-    throw UnimplementedError();
+  List<Node> get childrens {
+    return const <Node>[];
   }
 
-  void visitChildrens(NodeVisitor visitor) {}
-}
+  Iterable<T> findAll<T extends Node>() {
+    return childrens.whereType<T>();
+  }
 
-extension on Node {
-  void callBy(NodeVisitor visitor) {
-    visitor(this);
+  R accept<C, R>(Visitor<C, R> visitor, C context);
+
+  T findOne<T extends Node>() {
+    var all = findAll<T>();
+    return all.first;
+  }
+
+  void update(NodeUpdater updater) {
+    throw UnimplementedError(runtimeType.toString());
+  }
+
+  void visitChildrens(NodeVisitor visitor) {
+    childrens.forEach(visitor);
   }
 }
 
@@ -57,7 +67,9 @@ class Data extends Node {
   }
 
   @override
-  void visitChildrens(NodeVisitor visitor) {}
+  void update(Node Function(Node node) updater) {
+    // TODO: remove
+  }
 
   @override
   String toString() {
@@ -72,16 +84,16 @@ class Impossible implements Exception {
 abstract class Expression extends Node {
   const Expression();
 
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitExpession(this, context);
+  }
+
   Object? asConst(Context context) {
     throw Impossible();
   }
 
   Object? resolve(Context context) {
     return null;
-  }
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitExpession(this, context);
   }
 }

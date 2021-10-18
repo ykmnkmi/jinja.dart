@@ -49,17 +49,19 @@ class For extends Statement {
   bool recursive;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitFor(this, context);
+  List<Node> get childrens {
+    return <Node>[
+      target,
+      iterable,
+      ...nodes,
+      ...?orElse,
+      if (test != null) test!
+    ];
   }
 
   @override
-  void visitChildrens(NodeVisitor visitor) {
-    target.callBy(visitor);
-    iterable.callBy(visitor);
-    nodes.forEach(visitor);
-    orElse?.forEach(visitor);
-    test?.callBy(visitor);
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitFor(this, context);
   }
 
   @override
@@ -89,15 +91,18 @@ class For extends Statement {
 }
 
 class If extends Statement {
-  If(this.test, this.nodes, {this.nextIf, this.orElse});
+  If(this.test, this.nodes, {this.orElse});
 
   Expression test;
 
   List<Node> nodes;
 
-  If? nextIf;
-
   List<Node>? orElse;
+
+  @override
+  List<Node> get childrens {
+    return <Node>[test, ...nodes, ...?orElse];
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -105,20 +110,8 @@ class If extends Statement {
   }
 
   @override
-  void visitChildrens(NodeVisitor visitor) {
-    test.callBy(visitor);
-    nodes.forEach(visitor);
-    nextIf?.callBy(visitor);
-    orElse?.forEach(visitor);
-  }
-
-  @override
   String toString() {
     var result = 'If($test, $nodes';
-
-    if (nextIf != null) {
-      result = '$result, next: $nextIf';
-    }
 
     if (orElse != null) {
       result = '$result, orElse: $orElse';
@@ -136,14 +129,13 @@ class FilterBlock extends Statement {
   List<Node> nodes;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitFilterBlock(this, context);
+  List<Node> get childrens {
+    return <Node>[...filters, ...nodes];
   }
 
   @override
-  void visitChildrens(NodeVisitor visitor) {
-    filters.forEach(visitor);
-    nodes.forEach(visitor);
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitFilterBlock(this, context);
   }
 
   @override
@@ -162,15 +154,13 @@ class With extends Statement {
   List<Node> nodes;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitWith(this, context);
+  List<Node> get childrens {
+    return <Node>[...targets, ...values, ...nodes];
   }
 
   @override
-  void visitChildrens(NodeVisitor visitor) {
-    targets.forEach(visitor);
-    values.forEach(visitor);
-    nodes.forEach(visitor);
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitWith(this, context);
   }
 
   @override
@@ -204,8 +194,8 @@ class Block extends Statement {
   List<Node> nodes;
 
   @override
-  void visitChildrens(NodeVisitor visitor) {
-    nodes.forEach(visitor);
+  List<Node> get childrens {
+    return nodes;
   }
 
   @override
@@ -264,13 +254,13 @@ class Do extends Statement {
   List<Expression> nodes;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitDo(this, context);
+  List<Node> get childrens {
+    return nodes;
   }
 
   @override
-  void visitChildrens(NodeVisitor visitor) {
-    nodes.forEach(visitor);
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitDo(this, context);
   }
 
   @override
@@ -287,14 +277,13 @@ class Assign extends Statement {
   Expression value;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitAssign(this, context);
+  List<Node> get childrens {
+    return <Node>[target, value];
   }
 
   @override
-  void visitChildrens(NodeVisitor visitor) {
-    target.callBy(visitor);
-    value.callBy(visitor);
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitAssign(this, context);
   }
 
   @override
@@ -313,15 +302,13 @@ class AssignBlock extends Statement {
   List<Filter>? filters;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitAssignBlock(this, context);
+  List<Node> get childrens {
+    return <Node>[target, ...nodes, ...?filters];
   }
 
   @override
-  void visitChildrens(NodeVisitor visitor) {
-    target.callBy(visitor);
-    nodes.forEach(visitor);
-    filters?.forEach(visitor);
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitAssignBlock(this, context);
   }
 
   @override
@@ -344,14 +331,13 @@ class ScopedContextModifier extends Statement {
   List<Node> nodes;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitScopedContextModifier(this, context);
+  List<Node> get childrens {
+    return <Node>[...nodes, ...options.values];
   }
 
   @override
-  void visitChildrens(NodeVisitor visitor) {
-    nodes.forEach(visitor);
-    options.values.forEach(visitor);
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitScopedContextModifier(this, context);
   }
 
   @override
@@ -366,13 +352,13 @@ class Scope extends Statement {
   ScopedContextModifier modifier;
 
   @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitScope(this, context);
+  List<Node> get childrens {
+    return <Node>[modifier];
   }
 
   @override
-  void visitChildrens(NodeVisitor visitor) {
-    modifier.callBy(visitor);
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitScope(this, context);
   }
 
   @override

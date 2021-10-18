@@ -205,13 +205,14 @@ class Parser {
         var test = parseTuple(reader, withCondition: false);
         var nodes = parseStatements(
             reader, <String>['name:elif', 'name:else', 'name:endif']);
-        node.nextIf = If(test, nodes);
-        node = node.nextIf!;
+        var next = If(test, nodes);
+        node.orElse = <Node>[next];
+        node = next;
         continue;
       }
 
       if (tag.test('name', 'else')) {
-        root.orElse = parseStatements(reader, <String>['name:endif'], true);
+        node.orElse = parseStatements(reader, <String>['name:endif'], true);
       }
 
       break;

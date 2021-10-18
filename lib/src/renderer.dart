@@ -279,17 +279,6 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
       return;
     }
 
-    var next = node.nextIf;
-
-    while (next != null) {
-      if (utils.boolean(next.test.resolve(context))) {
-        visitAll(next.nodes, context);
-        return;
-      }
-
-      next = next.nextIf;
-    }
-
     if (node.orElse != null) {
       visitAll(node.orElse!, context);
     }

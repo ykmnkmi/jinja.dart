@@ -109,12 +109,6 @@ class Optimizer implements Visitor<Context, Node> {
     node.test = node.test.accept(this, context) as Expression;
     visitAll(node.nodes, context);
 
-    var nextIf = node.nextIf;
-
-    if (nextIf != null) {
-      node.nextIf = visitIf(nextIf, context);
-    }
-
     var orElse = node.orElse;
 
     if (orElse != null) {

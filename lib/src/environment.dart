@@ -1,6 +1,8 @@
 import 'dart:collection' show HashMap, HashSet;
 import 'dart:math' show Random;
 
+import 'package:meta/meta.dart';
+
 import 'defaults.dart' as defaults;
 import 'exceptions.dart';
 import 'lexer.dart';
@@ -27,9 +29,11 @@ typedef FieldGetter = Object? Function(Object? object, String field);
 /// Instances of this class may be modified if they are not shared and if no
 /// template was loaded so far.
 class Environment {
-  static late final Expando<Lexer> lexers = Expando('lexerCache');
+  /// Cached [Lexer]'s
+  static final Expando<Lexer> lexers = Expando('lexerCache');
 
-  static late final Expando<Parser> parsers = Expando('parserCache');
+  /// Cached [Parser]'s
+  static final Expando<Parser> parsers = Expando('parserCache');
 
   /// If `loader` is not `null`, templates will be loaded
   Environment(
@@ -169,14 +173,20 @@ class Environment {
   /// disable that.
   final bool autoReload;
 
+  /// A map of variables that are available in every template loaded by
+  /// the environment.
   final Map<String, Object?> globals;
 
+  /// A map of filters that are available in every template loaded by
+  /// the environment.
   final Map<String, Function> filters;
 
   final Set<String> environmentFilters;
 
   final Set<String> contextFilters;
 
+  /// A map of tests that are available in every template loaded by
+  /// the environment.
   final Map<String, Function> tests;
 
   final Map<String, Template> templates;
@@ -226,6 +236,7 @@ class Environment {
   }
 
   /// If [name] not found throws [TemplateRuntimeError].
+  @internal
   Object? callFilter(
       String name, List<Object?> positional, Map<Symbol, Object?> named,
       [Context? context]) {
@@ -250,6 +261,7 @@ class Environment {
   }
 
   /// If [name] not found throws [TemplateRuntimeError].
+  @internal
   bool callTest(
       String name, List<Object?> positional, Map<Symbol, Object?> named) {
     var test = tests[name];
@@ -261,7 +273,80 @@ class Environment {
     return Function.apply(test, positional, named) as bool;
   }
 
-  Environment copyWith(
+  /// Get an item or attribute of an object but prefer the attribute.
+  @internal
+  Object? getAttribute(dynamic object, String field) {
+    try {
+      return fieldGetter(object, field);
+    } on NoSuchMethodError {
+      return object[field];
+    }
+  }
+
+  /// Get an item or attribute of an object but prefer the item.
+  @internal
+  Object? getItem(dynamic object, Object? key) {
+    try {
+      return object[key];
+    } on NoSuchMethodError {
+      return null;
+    }
+  }
+
+  /// Lex the given sourcecode and return a list of [Token]'s.
+  ///
+  /// This can be useful for extension development and debugging templates.
+  @internal
+  List<Token> lex(String source) {
+    // TODO: handle error
+    return lexer.tokenize(source);
+  }
+
+  /// Parse the sourcecode and return the abstract syntax tree.
+  ///
+  /// This is useful for debugging or to extract information from templates.
+  @internal
+  List<Node> parse(List<Token> tokens) {
+    // TODO: handle error
+    var reader = TokenReader(tokens);
+    return parser.scan(reader);
+  }
+
+  /// Load a template from a source string without using [loader].
+  Template fromString(String source, {String? path}) {
+    var nodes = Parser(this, path: path).parse(source);
+    var template = Template.parsed(this, nodes, path: path);
+    return optimized
+        ? const Optimizer().visitTemplate(template, Context(this))
+        : template;
+  }
+
+  /// Load a template by name with [loader] and return a
+  /// [Template]. If the template does not exist a [TemplateNotFound]
+  /// exception is thrown.
+  Template getTemplate(String template) {
+    // TODO: handle error
+    var loader = this.loader!;
+
+    if (autoReload) {
+      return templates[template] = loader.load(this, template);
+    }
+
+    return templates[template] ??= loader.load(this, template);
+  }
+
+  /// Returns a list of templates for this environment.
+  ///
+  /// This requires that the loader supports the loader's
+  /// [Loader.listTemplates] method.
+  List<String> listTemplates() {
+    // TODO: handle error
+    return loader!.listTemplates();
+  }
+
+  /// Create a new overlay environment that shares all the data with
+  /// the current environment except the overridden attributes.
+  Environment overlay(
       {String? commentStart,
       String? commentEnd,
       String? variableStart,
@@ -312,75 +397,6 @@ class Environment {
         random: random ?? this.random,
         fieldGetter: fieldGetter ?? this.fieldGetter);
   }
-
-  /// Load a template from a source string without using [loader].
-  Template fromString(String source, {String? path}) {
-    var nodes = Parser(this, path: path).parse(source);
-    var template = Template.parsed(this, nodes, path: path);
-    return optimized
-        ? const Optimizer().visitTemplate(template, Context(this))
-        : template;
-  }
-
-  /// Get an item or attribute of an object but prefer the attribute.
-  Object? getAttribute(dynamic object, String field) {
-    try {
-      return fieldGetter(object, field);
-    } on NoSuchMethodError {
-      return object[field];
-    }
-  }
-
-  /// Get an item or attribute of an object but prefer the item.
-  Object? getItem(dynamic object, Object? key) {
-    try {
-      return object[key];
-    } on NoSuchMethodError {
-      return null;
-    }
-  }
-
-  /// Load a template by name with [loader] and return a
-  /// [Template]. If the template does not exist a [TemplateNotFound]
-  /// exception is raised.
-  Template getTemplate(String template) {
-    if (autoReload && templates.containsKey(template)) {
-      return templates[template] = loadTemplate(template);
-    }
-
-    return templates[template] ??= loadTemplate(template);
-  }
-
-  /// Returns a list of templates for this environment.
-  ///
-  /// This requires that the loader supports the loader's
-  /// [Loader.listTemplates] method.
-  List<String> listTemplates() {
-    // TODO: handle error
-    return loader!.listTemplates();
-  }
-
-  /// Lex the given sourcecode and return a list of [Token]'s.
-  ///
-  /// This can be useful for extension development and debugging templates.
-  List<Token> lex(String source) {
-    // TODO: handle error
-    return lexer.tokenize(source);
-  }
-
-  /// Lex the given sourcecode and return a list of [Token]'s.
-  ///
-  /// This can be useful for extension development and debugging templates.
-  List<Node> parse(List<Token> tokens) {
-    // TODO: handle error
-    var reader = TokenReader(tokens);
-    return parser.scan(reader);
-  }
-
-  Template loadTemplate(String template) {
-    // TODO: handle error
-    return templates[template] = loader!.load(this, template);
-  }
 }
 
 /// The central `Template` object. This class represents a compiled template
@@ -420,7 +436,7 @@ class Template extends Node {
     Environment environment;
 
     if (parent != null) {
-      environment = parent.copyWith(
+      environment = parent.overlay(
           commentStart: commentStart,
           commentEnd: commentEnd,
           variableStart: variableStatr,
@@ -520,20 +536,6 @@ class Template extends Node {
       node.visitChildrens(cycle);
     }
 
-    // Node? parent;
-
-    // void loop(Node node) {
-    //   if (node is Attribute) {
-    //     var expression = node.value;
-
-    //     if (expression is Name && expression.name == 'loop') {
-    //       return;
-    //     }
-    //   }
-
-    //   node.visitChildrens(loop);
-    // }
-
     void namespace(Node node) {
       if (node is Call) {
         var expression = node.expression;
@@ -580,11 +582,28 @@ class Template extends Node {
       ..forEach(self)
       ..forEach(blocks)
       ..forEach(cycle)
-      // ..forEach(loop)
       ..forEach(namespace);
 
-    // TODO: loop, namespace: replace Attribute with Item
+    // Node replaceLoop(Node node) {
+    //   node.update(replaceLoop);
 
+    //   if (node is! Attribute) {
+    //     return node;
+    //   }
+
+    //   var expression = node.value;
+
+    //   if (expression is! Name || expression.name != 'loop') {
+    //     return node;
+    //   }
+
+    //   return Item(Constant(node.attribute), node.value);
+    // }
+
+    // TODO: namespace: replace Attribute with Item
+    // update(replaceLoop);
+
+    // TODO: remove and update Renderer
     if (nodes.isNotEmpty && nodes.first is Extends) {
       nodes.length = 1;
     }
@@ -610,6 +629,13 @@ class Template extends Node {
     var context = RenderContext(environment, buffer, data: data);
     accept(const StringSinkRenderer(), context);
     return '$buffer';
+  }
+
+  @override
+  void update(NodeUpdater updater) {
+    for (var i = 0; i < nodes.length; i += 1) {
+      nodes[i] = updater(nodes[i]);
+    }
   }
 
   @override
