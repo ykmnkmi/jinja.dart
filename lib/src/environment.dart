@@ -1,4 +1,4 @@
-import 'dart:collection' show HashMap, HashSet;
+import 'dart:collection' show HashMap;
 import 'dart:math' show Random;
 
 import 'package:jinja/src/utils.dart';
@@ -8,7 +8,6 @@ import 'defaults.dart' as defaults;
 import 'exceptions.dart';
 import 'lexer.dart';
 import 'loaders.dart';
-import 'modifiers.dart';
 import 'nodes.dart';
 import 'optimizer.dart';
 import 'parser.dart';
@@ -485,14 +484,59 @@ class Template extends Node {
     for (var node in findAll<Name>()) {
       if (node.name == 'self') {
         hasSelf = true;
-        return;
+        break;
+      }
+    }
+
+    for (var call in findAll<Call>()) {
+      var expression = call.expression;
+
+      if (expression is Attribute && expression.attribute == 'cycle') {
+        var arguments = call.arguments;
+
+        if (arguments != null) {
+          call.arguments = arguments = <Expression>[Array(arguments)];
+
+          var dArguments = call.dArguments;
+
+          if (dArguments != null) {
+            arguments.add(dArguments);
+            call.dArguments = null;
+          }
+        }
+      } else if (expression is Name && expression.name == 'namespace') {
+        var arguments = <Expression>[...?call.arguments];
+        call.arguments = null;
+        var keywords = call.keywords;
+
+        if (keywords != null && keywords.isNotEmpty) {
+          var pairs =
+              keywords.map<Pair>((keyword) => keyword.toPair()).toList();
+          arguments.add(Dict(pairs));
+          call.keywords = null;
+        }
+
+        var dArguments = call.dArguments;
+
+        if (dArguments != null) {
+          arguments.add(dArguments);
+          call.dArguments = null;
+        }
+
+        var dKeywordArguments = call.dKeywords;
+
+        if (dKeywordArguments != null) {
+          arguments.add(dKeywordArguments);
+          call.dKeywords = null;
+        }
+
+        if (arguments.isNotEmpty) {
+          call.arguments = <Expression>[Array(arguments)];
+        }
       }
     }
 
     blocks.addAll(findAll<Block>());
-    nodes
-      ..forEach(cycle)
-      ..forEach(namespace);
 
     // TODO: remove/update
     if (nodes.isNotEmpty && nodes.first is Extends) {
@@ -524,7 +568,7 @@ class Template extends Node {
     var buffer = StringBuffer();
     var context = RenderContext(environment, buffer, data: data);
     accept(const StringSinkRenderer(), context);
-    return '$buffer';
+    return buffer.toString();
   }
 
   @override
