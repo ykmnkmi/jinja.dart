@@ -5,7 +5,8 @@
 Variables, expressions, control structures and template inheritance.
 
 ## Breaking changes 0.4.0, less dynamic
-- no template variable imports.
+- no dynamic template imports, only single constant template path/name.
+- `Environment.copyWith` renamed to `Environment.overlay`
 - no `Template.renderMap`.
 - `Template.render` now accepts `Map<String, Object?>`.
 - `FileSystemLoader` moved from `package:jinja/jinja.dart` to `package:jinja/loaders.dart`.

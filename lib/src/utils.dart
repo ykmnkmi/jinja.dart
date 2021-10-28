@@ -117,38 +117,6 @@ List<Object?> list(Object? iterable) {
   throw TypeError();
 }
 
-class PassArgument {
-  static const PassArgument context = PassArgument(0);
-
-  static const PassArgument environment = PassArgument(1);
-
-  @internal
-  static final Expando<PassArgument> store = Expando<PassArgument>();
-
-  @internal
-  const PassArgument(this.value);
-
-  final Object value;
-
-  static PassArgument? getFrom(Function function) {
-    return store[function];
-  }
-}
-
-/// Pass the [Context] as the first argument to the function when
-/// called while rendering a template.
-Function passContext(Function function) {
-  PassArgument.store[function] = PassArgument.context;
-  return function;
-}
-
-/// Pass the [Environment] as the first argument to the function
-/// when called while rendering a template.
-Function passEnvironment(Function function) {
-  PassArgument.store[function] = PassArgument.environment;
-  return function;
-}
-
 Iterable<int> range(int stopOrStart, [int? stop, int step = 1]) sync* {
   if (step == 0) {
     throw StateError('range() argument 3 must not be zero');

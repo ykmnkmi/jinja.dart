@@ -1,8 +1,7 @@
 import 'dart:collection' show HashMap;
 import 'dart:math' show Random;
 
-import 'package:jinja/src/utils.dart';
-import 'package:meta/meta.dart';
+import 'package:meta/meta.dart' show internal;
 
 import 'defaults.dart' as defaults;
 import 'exceptions.dart';
@@ -57,8 +56,8 @@ class Environment {
       this.autoReload = true,
       Map<String, Object?>? globals,
       Map<String, Function>? filters,
-      Set<String>? environmentFilters,
-      Set<String>? contextFilters,
+      Map<String, Function>? environmentFilters,
+      Map<String, Function>? contextFilters,
       Map<String, Function>? tests,
       Map<String, Template>? templates,
       List<NodeVisitor>? modifiers,
@@ -74,6 +73,9 @@ class Environment {
                 : ((context, value) => finalize(value)),
         globals = HashMap<String, Object?>.of(defaults.globals),
         filters = HashMap<String, Function>.of(defaults.filters),
+        environmentFilters =
+            HashMap<String, Function>.of(defaults.environmentFilters),
+        contextFilters = HashMap<String, Function>.of(defaults.contextFilters),
         tests = HashMap<String, Function>.of(defaults.tests),
         templates = HashMap<String, Template>(),
         random = random ?? Random() {
@@ -83,6 +85,14 @@ class Environment {
 
     if (filters != null) {
       this.filters.addAll(filters);
+    }
+
+    if (environmentFilters != null) {
+      this.environmentFilters.addAll(environmentFilters);
+    }
+
+    if (contextFilters != null) {
+      this.contextFilters.addAll(contextFilters);
     }
 
     if (tests != null) {
@@ -172,14 +182,23 @@ class Environment {
   /// the environment.
   final Map<String, Function> filters;
 
+  // TODO: docs
+  final Map<String, Function> environmentFilters;
+
+  // TODO: docs
+  final Map<String, Function> contextFilters;
+
   /// A map of tests that are available in every template loaded by
   /// the environment.
   final Map<String, Function> tests;
 
+  // TODO: docs
   final Map<String, Template> templates;
 
+  // TODO: docs
   final Random random;
 
+  // TODO: docs
   final FieldGetter fieldGetter;
 
   @override
@@ -227,23 +246,25 @@ class Environment {
   Object? callFilter(
       String name, List<Object?> positional, Map<Symbol, Object?> named,
       [Context? context]) {
-    var filter = filters[name];
+    Function? filter;
 
-    if (filter == null) {
-      throw TemplateRuntimeError('no filter named $name');
-    }
-
-    var passArgument = PassArgument.getFrom(filter);
-
-    if (passArgument == PassArgument.context) {
+    if (filters.containsKey(name)) {
+      filter = filters[name];
+    } else if (environmentFilters.containsKey(name)) {
+      filter = environmentFilters[name];
+      positional.insert(0, this);
+    } else if (contextFilters.containsKey(name)) {
       if (context == null) {
         throw TemplateRuntimeError(
             'attempted to invoke context filter without context');
       }
 
+      filter = contextFilters[name];
       positional.insert(0, context);
-    } else if (passArgument == PassArgument.environment) {
-      positional.insert(0, this);
+    }
+
+    if (filter == null) {
+      throw TemplateRuntimeError('no filter named $name');
     }
 
     return Function.apply(filter, positional, named);
@@ -353,10 +374,10 @@ class Environment {
       bool? autoEscape,
       Loader? loader,
       bool? autoReload,
-      Map<String, dynamic>? globals,
+      Map<String, Object?>? globals,
       Map<String, Function>? filters,
-      Set<String>? environmentFilters,
-      Set<String>? contextFilters,
+      Map<String, Function>? environmentFilters,
+      Map<String, Function>? contextFilters,
       Map<String, Function>? tests,
       Random? random,
       FieldGetter? fieldGetter}) {
@@ -412,10 +433,10 @@ class Template extends Node {
       bool optimized = true,
       Function finalize = defaults.finalize,
       bool autoEscape = false,
-      Map<String, Object>? globals,
+      Map<String, Object?>? globals,
       Map<String, Function>? filters,
-      Set<String>? environmentFilters,
-      Set<String>? contextFilters,
+      Map<String, Function>? environmentFilters,
+      Map<String, Function>? contextFilters,
       Map<String, Function>? tests,
       List<NodeVisitor>? modifiers,
       Random? random,
@@ -478,6 +499,7 @@ class Template extends Node {
     return environment.fromString(source, path: path);
   }
 
+  // TODO: docs
   Template.parsed(this.environment, this.nodes, {this.path})
       : hasSelf = false,
         blocks = <Block>[] {
@@ -544,14 +566,19 @@ class Template extends Node {
     }
   }
 
+  // TODO: docs
   Environment environment;
 
+  // TODO: docs
   List<Node> nodes;
 
+  // TODO: docs
   List<Block> blocks;
 
+  // TODO: docs
   bool hasSelf;
 
+  // TODO: docs
   String? path;
 
   @override
@@ -564,6 +591,7 @@ class Template extends Node {
     return visitor.visitTemplate(this, context);
   }
 
+  // TODO: docs
   String render([Map<String, Object?>? data]) {
     var buffer = StringBuffer();
     var context = RenderContext(environment, buffer, data: data);

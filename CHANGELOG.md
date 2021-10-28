@@ -9,7 +9,6 @@
 - new statements:
   - `do`
   - `with`
-- no `Undefined` and `missing`
 - refactoring
 - _work in progress_
 
