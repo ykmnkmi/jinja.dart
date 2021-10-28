@@ -505,21 +505,24 @@ class Call extends Callable {
 
 class Filter extends Callable {
   Filter(this.name,
-      {this.expression,
+      {Expression? expression,
       List<Expression>? arguments,
       List<Keyword>? keywords,
       Expression? dArguments,
       Expression? dKeywords})
-      : super(
+      // TODO: remove after better null safety promotion
+      // ignore: prefer_initializing_formals
+      : expression = expression,
+        super(
             arguments: arguments,
             keywords: keywords,
             dArguments: dArguments,
             dKeywords: dKeywords) {
     if (expression != null) {
       if (arguments == null) {
-        arguments = <Expression>[expression!];
+        arguments = <Expression>[expression];
       } else {
-        arguments.add(expression!);
+        arguments.add(expression);
       }
     }
   }
@@ -542,7 +545,7 @@ class Filter extends Callable {
 
   @override
   String toString() {
-    return 'Filter.$name(${printArguments(comma: true)})';
+    return 'Filter.$name(${printArguments()})';
   }
 }
 

@@ -1,9 +1,9 @@
 library filters;
 
-import 'dart:convert';
+import 'dart:convert' show LineSplitter;
 import 'dart:math' as math;
 
-import 'package:textwrap/textwrap.dart';
+import 'package:textwrap/textwrap.dart' show TextWrapper;
 
 import 'environment.dart';
 import 'markup.dart';
@@ -338,13 +338,13 @@ String doWordWrap(Environment environment, String string, int width,
   var wrap = wrapString ?? environment.newLine;
   return const LineSplitter()
       .convert(string)
-      .map<String>((line) => wrapper.wrap(line).join(wrap))
+      .expand<String>((line) => wrapper.wrap(line))
       .join(wrap);
 }
 
-const Map<String, Function> filters = {
+final Map<String, Function> filters = <String, Function>{
   'abs': doAbs,
-  'attr': doAttribute,
+  'attr': passEnvironment(doAttribute),
   'batch': doBatch,
   'capitalize': doCapitalize,
   'center': doCenter,
@@ -359,23 +359,23 @@ const Map<String, Function> filters = {
   'float': doFloat,
   'forceescape': doForceEscape,
   'int': doInteger,
-  'join': doJoin,
+  'join': passContext(doJoin),
   'last': doLast,
   'length': count,
   'list': list,
   'lower': doLower,
   'pprint': doPPrint,
-  'random': doRandom,
+  'random': passEnvironment(doRandom),
   'replace': doReplace,
   'reverse': doReverse,
   'safe': doMarkSafe,
   'slice': doSlice,
   'string': doString,
-  'sum': doSum,
+  'sum': passEnvironment(doSum),
   'trim': doTrim,
   'upper': doUpper,
   'wordcount': doWordCount,
-  'wordwrap': doWordWrap,
+  'wordwrap': passEnvironment(doWordWrap),
 
   // 'format': doFormat,
   // 'groupby': doGroupBy,
@@ -397,13 +397,4 @@ const Map<String, Function> filters = {
   // 'urlencode': doURLEncode,
   // 'urlize': doURLize,
   // 'xmlattr': doXMLAttr,
-};
-
-const Set<String> contextFilters = <String>{'join'};
-
-const Set<String> environmentFilters = <String>{
-  'attr',
-  'random',
-  'sum',
-  'wordwrap',
 };

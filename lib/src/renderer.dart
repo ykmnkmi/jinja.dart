@@ -106,7 +106,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
   void visitAssignBlock(AssignBlock node, RenderContext context) {
     var target = node.target.resolve(context);
     var buffer = StringBuffer();
-    visitAll(node.nodes, RenderContext.from(context, buffer));
+    node.body.accept(this, RenderContext.from(context, buffer));
     Object? value = '$buffer';
 
     var filters = node.filters;
@@ -132,7 +132,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
     var blocks = context.blocks[node.name];
 
     if (blocks == null || blocks.isEmpty) {
-      visitAll(node.nodes, context);
+      node.body.accept(this, context);
     } else {
       if (node.required) {
         if (blocks.length == 1) {
@@ -148,7 +148,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
         String parent() {
           if (index < blocks.length - 1) {
             var parentBlock = blocks[index += 1];
-            visitAll(parentBlock.nodes, context);
+            parentBlock.body.accept(this, context);
             return '';
           }
 
@@ -156,10 +156,10 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
         }
 
         context.push(<String, Object?>{'super': parent});
-        visitAll(first.nodes, context);
+        first.body.accept(this, context);
         context.pop();
       } else {
-        visitAll(first.nodes, context);
+        first.body.accept(this, context);
       }
     }
   }
@@ -193,7 +193,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
   @override
   void visitFilterBlock(FilterBlock node, RenderContext context) {
     var buffer = StringBuffer();
-    visitAll(node.nodes, RenderContext.from(context, buffer));
+    node.body.accept(this, RenderContext.from(context, buffer));
     Object? value = '$buffer';
 
     for (var filter in node.filters) {
@@ -222,7 +222,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
 
       if (values.isEmpty) {
         if (orElse != null) {
-          visitAll(orElse, context);
+          orElse.accept(this, context);
         }
 
         return '';
@@ -262,7 +262,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
       for (var value in loop) {
         var data = unpack(targets, value);
         context.push(data);
-        visitAll(node.nodes, context);
+        node.body.accept(this, context);
         context.pop();
       }
 
@@ -275,12 +275,14 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
   @override
   void visitIf(If node, RenderContext context) {
     if (utils.boolean(node.test.resolve(context))) {
-      visitAll(node.nodes, context);
+      node.body.accept(this, context);
       return;
     }
 
-    if (node.orElse != null) {
-      visitAll(node.orElse!, context);
+    var orElse = node.orElse;
+
+    if (orElse != null) {
+      orElse.accept(this, context);
     }
   }
 
@@ -293,6 +295,11 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
     } else {
       template.accept(this, RenderContext(context.environment, context.sink));
     }
+  }
+
+  @override
+  Object? visitOutput(Output node, RenderContext context) {
+    visitAll(node.nodes, context);
   }
 
   @override
@@ -309,7 +316,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
     };
 
     context.push(data);
-    visitAll(node.nodes, context);
+    node.body.accept(this, context);
     context.pop();
   }
 
@@ -343,7 +350,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
     var values =
         node.values.map<Object?>((value) => value.resolve(context)).toList();
     context.push(getDataForTargets(targets, values));
-    visitAll(node.nodes, context);
+    node.body.accept(this, context);
     context.pop();
   }
 

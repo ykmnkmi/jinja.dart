@@ -19,7 +19,7 @@ class Extends extends Statement {
 }
 
 class For extends Statement {
-  For(this.target, this.iterable, this.nodes,
+  For(this.target, this.iterable, this.body,
       {this.orElse, this.test, this.recursive = false})
       : hasLoop = false {
     void visitor(Node node) {
@@ -38,11 +38,11 @@ class For extends Statement {
 
   Expression iterable;
 
-  List<Node> nodes;
+  Node body;
 
   bool hasLoop;
 
-  List<Node>? orElse;
+  Node? orElse;
 
   Expression? test;
 
@@ -53,9 +53,9 @@ class For extends Statement {
     return <Node>[
       target,
       iterable,
-      ...nodes,
-      ...?orElse,
-      if (test != null) test!
+      body,
+      if (orElse != null) orElse!,
+      if (test != null) test!,
     ];
   }
 
@@ -78,9 +78,7 @@ class For extends Statement {
       result = '$result, $test';
     }
 
-    if (nodes.isNotEmpty) {
-      result = '$result, $nodes';
-    }
+    result = '$result, $body';
 
     if (orElse != null) {
       result = '$result, orElse: $orElse';
@@ -91,17 +89,17 @@ class For extends Statement {
 }
 
 class If extends Statement {
-  If(this.test, this.nodes, {this.orElse});
+  If(this.test, this.body, {this.orElse});
 
   Expression test;
 
-  List<Node> nodes;
+  Node body;
 
-  List<Node>? orElse;
+  Node? orElse;
 
   @override
   List<Node> get childrens {
-    return <Node>[test, ...nodes, ...?orElse];
+    return <Node>[test, body, if (orElse != null) orElse!];
   }
 
   @override
@@ -111,7 +109,7 @@ class If extends Statement {
 
   @override
   String toString() {
-    var result = 'If($test, $nodes';
+    var result = 'If($test, $body';
 
     if (orElse != null) {
       result = '$result, orElse: $orElse';
@@ -122,15 +120,15 @@ class If extends Statement {
 }
 
 class FilterBlock extends Statement {
-  FilterBlock(this.filters, this.nodes);
+  FilterBlock(this.filters, this.body);
 
   List<Filter> filters;
 
-  List<Node> nodes;
+  Node body;
 
   @override
   List<Node> get childrens {
-    return <Node>[...filters, ...nodes];
+    return <Node>[...filters, body];
   }
 
   @override
@@ -140,22 +138,22 @@ class FilterBlock extends Statement {
 
   @override
   String toString() {
-    return 'FilterBlock($filters, $nodes)';
+    return 'FilterBlock($filters, $body)';
   }
 }
 
 class With extends Statement {
-  With(this.targets, this.values, this.nodes);
+  With(this.targets, this.values, this.body);
 
   List<Expression> targets;
 
   List<Expression> values;
 
-  List<Node> nodes;
+  Node body;
 
   @override
   List<Node> get childrens {
-    return <Node>[...targets, ...values, ...nodes];
+    return <Node>[...targets, ...values, body];
   }
 
   @override
@@ -165,12 +163,12 @@ class With extends Statement {
 
   @override
   String toString() {
-    return 'With($targets, $values, $nodes)';
+    return 'With($targets, $values, $body)';
   }
 }
 
 class Block extends Statement {
-  Block(this.name, this.scoped, this.required, this.nodes) : hasSuper = false {
+  Block(this.name, this.scoped, this.required, this.body) : hasSuper = false {
     void visitor(Node node) {
       if (node is Name && node.name == 'super') {
         hasSuper = true;
@@ -191,11 +189,11 @@ class Block extends Statement {
 
   bool hasSuper;
 
-  List<Node> nodes;
+  Node body;
 
   @override
   List<Node> get childrens {
-    return nodes;
+    return <Node>[body];
   }
 
   @override
@@ -215,11 +213,7 @@ class Block extends Statement {
       result = '$result, super';
     }
 
-    if (nodes.isEmpty) {
-      return '$result)';
-    }
-
-    return '$result, ${nodes.join(', ')})';
+    return '$result, $body)';
   }
 }
 
@@ -293,17 +287,17 @@ class Assign extends Statement {
 }
 
 class AssignBlock extends Statement {
-  AssignBlock(this.target, this.nodes, [this.filters]);
+  AssignBlock(this.target, this.body, [this.filters]);
 
   Expression target;
 
-  List<Node> nodes;
+  Node body;
 
   List<Filter>? filters;
 
   @override
   List<Node> get childrens {
-    return <Node>[target, ...nodes, ...?filters];
+    return <Node>[target, body, ...?filters];
   }
 
   @override
@@ -313,7 +307,7 @@ class AssignBlock extends Statement {
 
   @override
   String toString() {
-    var result = 'AssignBlock($target, $nodes';
+    var result = 'AssignBlock($target, $body';
 
     if (filters != null && filters!.isNotEmpty) {
       result = '$result, $filters';
@@ -324,15 +318,15 @@ class AssignBlock extends Statement {
 }
 
 class ScopedContextModifier extends Statement {
-  ScopedContextModifier(this.options, this.nodes);
+  ScopedContextModifier(this.options, this.body);
 
   Map<String, Expression> options;
 
-  List<Node> nodes;
+  Node body;
 
   @override
   List<Node> get childrens {
-    return <Node>[...nodes, ...options.values];
+    return <Node>[body, ...options.values];
   }
 
   @override
@@ -342,7 +336,7 @@ class ScopedContextModifier extends Statement {
 
   @override
   String toString() {
-    return 'ScopedContextModifier($options, ${nodes.join(', ')})';
+    return 'ScopedContextModifier($options, $body)';
   }
 }
 

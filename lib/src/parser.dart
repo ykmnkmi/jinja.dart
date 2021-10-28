@@ -157,7 +157,7 @@ class Parser {
 
     var filters = parseFilters(reader);
     var nodes = parseStatements(reader, <String>['name:endset'], true);
-    return AssignBlock(target, nodes, filters);
+    return AssignBlock(target, Output.orSingle(nodes), filters);
   }
 
   For parseFor(TokenReader reader) {
@@ -178,14 +178,16 @@ class Parser {
 
     var recursive = reader.skipIf('name', 'recursive');
     var nodes = parseStatements(reader, <String>['name:endfor', 'name:else']);
+    var body = Output.orSingle(nodes);
 
-    List<Node>? orElse;
+    Node? orElse;
 
     if (reader.next().test('name', 'else')) {
-      orElse = parseStatements(reader, <String>['name:endfor'], true);
+      var nodes = parseStatements(reader, <String>['name:endfor'], true);
+      orElse = Output.orSingle(nodes);
     }
 
-    return For(target, iterable, nodes,
+    return For(target, iterable, body,
         orElse: orElse, test: test, recursive: recursive);
   }
 
@@ -195,7 +197,7 @@ class Parser {
     var nodes = parseStatements(
         reader, <String>['name:elif', 'name:else', 'name:endif']);
 
-    var root = If(test, nodes);
+    var root = If(test, Output.orSingle(nodes));
     var node = root;
 
     while (true) {
@@ -205,14 +207,15 @@ class Parser {
         var test = parseTuple(reader, withCondition: false);
         var nodes = parseStatements(
             reader, <String>['name:elif', 'name:else', 'name:endif']);
-        var next = If(test, nodes);
-        node.orElse = <Node>[next];
+        var next = If(test, Output.orSingle(nodes));
+        node.orElse = next;
         node = next;
         continue;
       }
 
       if (tag.test('name', 'else')) {
-        node.orElse = parseStatements(reader, <String>['name:endif'], true);
+        var nodes = parseStatements(reader, <String>['name:endif'], true);
+        node.orElse = Output.orSingle(nodes);
       }
 
       break;
@@ -239,15 +242,16 @@ class Parser {
     }
 
     var nodes = parseStatements(reader, <String>['name:endwith'], true);
-    return With(targets, values, nodes);
+    return With(targets, values, Output.orSingle(nodes));
   }
 
   Scope parseAutoEscape(TokenReader reader) {
     reader.expect('name', 'autoescape');
     var escape = parseExpression(reader);
     var body = parseStatements(reader, <String>['name:endautoescape'], true);
-    return Scope(ScopedContextModifier(
-        <String, Expression>{'autoEscape': escape}, body));
+    var options = <String, Expression>{'autoEscape': escape};
+    var modifier = ScopedContextModifier(options, Output.orSingle(body));
+    return Scope(modifier);
   }
 
   Block parseBlock(TokenReader reader) {
@@ -284,7 +288,7 @@ class Parser {
       reader.next();
     }
 
-    return Block(name.value, scoped, required, nodes);
+    return Block(name.value, scoped, required, Output.orSingle(nodes));
   }
 
   Extends parseExtends(TokenReader reader) {
@@ -323,7 +327,7 @@ class Parser {
     reader.expect('name', 'filter');
     var filters = parseFilters(reader, true);
     var nodes = parseStatements(reader, <String>['name:endfilter'], true);
-    return FilterBlock(filters, nodes);
+    return FilterBlock(filters, Output.orSingle(nodes));
   }
 
   Expression parseAssignTarget(TokenReader reader,

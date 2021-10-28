@@ -1,3 +1,8 @@
+@visibleForTesting
+library runtime;
+
+import 'package:meta/meta.dart';
+
 export 'src/filters.dart';
 export 'src/exceptions.dart';
 export 'src/markup.dart';

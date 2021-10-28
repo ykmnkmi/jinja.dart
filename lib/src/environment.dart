@@ -1,12 +1,14 @@
 import 'dart:collection' show HashMap, HashSet;
 import 'dart:math' show Random;
 
+import 'package:jinja/src/utils.dart';
 import 'package:meta/meta.dart';
 
 import 'defaults.dart' as defaults;
 import 'exceptions.dart';
 import 'lexer.dart';
 import 'loaders.dart';
+import 'modifiers.dart';
 import 'nodes.dart';
 import 'optimizer.dart';
 import 'parser.dart';
@@ -73,8 +75,6 @@ class Environment {
                 : ((context, value) => finalize(value)),
         globals = HashMap<String, Object?>.of(defaults.globals),
         filters = HashMap<String, Function>.of(defaults.filters),
-        environmentFilters = HashSet<String>.of(defaults.environmentFilters),
-        contextFilters = HashSet<String>.of(defaults.contextFilters),
         tests = HashMap<String, Function>.of(defaults.tests),
         templates = HashMap<String, Template>(),
         random = random ?? Random() {
@@ -84,14 +84,6 @@ class Environment {
 
     if (filters != null) {
       this.filters.addAll(filters);
-    }
-
-    if (environmentFilters != null) {
-      this.environmentFilters.addAll(environmentFilters);
-    }
-
-    if (contextFilters != null) {
-      this.contextFilters.addAll(contextFilters);
     }
 
     if (tests != null) {
@@ -181,10 +173,6 @@ class Environment {
   /// the environment.
   final Map<String, Function> filters;
 
-  final Set<String> environmentFilters;
-
-  final Set<String> contextFilters;
-
   /// A map of tests that are available in every template loaded by
   /// the environment.
   final Map<String, Function> tests;
@@ -246,14 +234,16 @@ class Environment {
       throw TemplateRuntimeError('no filter named $name');
     }
 
-    if (contextFilters.contains(name)) {
+    var passArgument = PassArgument.getFrom(filter);
+
+    if (passArgument == PassArgument.context) {
       if (context == null) {
         throw TemplateRuntimeError(
             'attempted to invoke context filter without context');
       }
 
       positional.insert(0, context);
-    } else if (environmentFilters.contains(name)) {
+    } else if (passArgument == PassArgument.environment) {
       positional.insert(0, this);
     }
 
@@ -391,8 +381,6 @@ class Environment {
         autoReload: autoReload ?? this.autoReload,
         globals: globals ?? this.globals,
         filters: filters ?? this.filters,
-        environmentFilters: environmentFilters ?? this.environmentFilters,
-        contextFilters: contextFilters ?? this.contextFilters,
         tests: tests ?? this.tests,
         random: random ?? this.random,
         fieldGetter: fieldGetter ?? this.fieldGetter);
@@ -494,116 +482,19 @@ class Template extends Node {
   Template.parsed(this.environment, this.nodes, {this.path})
       : hasSelf = false,
         blocks = <Block>[] {
-    void self(Node node) {
-      if (node is Name && node.name == 'self') {
+    for (var node in findAll<Name>()) {
+      if (node.name == 'self') {
         hasSelf = true;
         return;
       }
-
-      node.visitChildrens(self);
     }
 
-    void blocks(Node node) {
-      if (node is Block) {
-        this.blocks.add(node);
-      }
-
-      node.visitChildrens(blocks);
-    }
-
-    void cycle(Node node) {
-      if (node is Call) {
-        var expression = node.expression;
-
-        if (expression is Attribute && expression.attribute == 'cycle') {
-          var arguments = node.arguments;
-
-          if (arguments != null) {
-            node.arguments = arguments = <Expression>[Array(arguments)];
-
-            var dArguments = node.dArguments;
-
-            if (dArguments != null) {
-              arguments.add(dArguments);
-              node.dArguments = null;
-            }
-          }
-
-          return;
-        }
-      }
-
-      node.visitChildrens(cycle);
-    }
-
-    void namespace(Node node) {
-      if (node is Call) {
-        var expression = node.expression;
-
-        if (expression is Name && expression.name == 'namespace') {
-          var arguments = <Expression>[...?node.arguments];
-          node.arguments = null;
-          var keywords = node.keywords;
-
-          if (keywords != null && keywords.isNotEmpty) {
-            var pairs = List<Pair>.generate(
-                keywords.length, (index) => keywords[index].toPair());
-
-            arguments.add(Dict(pairs));
-            node.keywords = null;
-          }
-
-          var dArguments = node.dArguments;
-
-          if (dArguments != null) {
-            arguments.add(dArguments);
-            node.dArguments = null;
-          }
-
-          var dKeywordArguments = node.dKeywords;
-
-          if (dKeywordArguments != null) {
-            arguments.add(dKeywordArguments);
-            node.dKeywords = null;
-          }
-
-          if (arguments.isNotEmpty) {
-            node.arguments = <Expression>[Array(arguments)];
-          }
-
-          return;
-        }
-      }
-
-      node.visitChildrens(namespace);
-    }
-
+    blocks.addAll(findAll<Block>());
     nodes
-      ..forEach(self)
-      ..forEach(blocks)
       ..forEach(cycle)
       ..forEach(namespace);
 
-    // Node replaceLoop(Node node) {
-    //   node.update(replaceLoop);
-
-    //   if (node is! Attribute) {
-    //     return node;
-    //   }
-
-    //   var expression = node.value;
-
-    //   if (expression is! Name || expression.name != 'loop') {
-    //     return node;
-    //   }
-
-    //   return Item(Constant(node.attribute), node.value);
-    // }
-
-    // TODO: namespace: replace Attribute with Item
-    // update(replaceLoop);
-
-    // TODO: remove and update Renderer
+    // TODO: remove/update
     if (nodes.isNotEmpty && nodes.first is Extends) {
       nodes.length = 1;
     }
@@ -620,6 +511,11 @@ class Template extends Node {
   String? path;
 
   @override
+  List<Node> get childrens {
+    return nodes;
+  }
+
+  @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitTemplate(this, context);
   }
@@ -632,23 +528,11 @@ class Template extends Node {
   }
 
   @override
-  void update(NodeUpdater updater) {
-    for (var i = 0; i < nodes.length; i += 1) {
-      nodes[i] = updater(nodes[i]);
-    }
-  }
-
-  @override
-  void visitChildrens(NodeVisitor visitor) {
-    nodes.forEach(visitor);
-
-    if (nodes.isNotEmpty && nodes.first is Extends) {
-      blocks.forEach(visitor);
-    }
-  }
-
-  @override
   String toString() {
-    return path == null ? 'Template()' : 'Template($path)';
+    if (path == null) {
+      return 'Template()';
+    }
+
+    return 'Template($path)';
   }
 }

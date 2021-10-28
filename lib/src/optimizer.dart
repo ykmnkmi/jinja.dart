@@ -27,20 +27,20 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   AssignBlock visitAssignBlock(AssignBlock node, Context context) {
-    final filters = node.filters;
+    var filters = node.filters;
 
     if (filters != null) {
       visitAll(filters, context);
     }
 
-    visitAll(node.nodes, context);
+    node.body = node.body.accept(this, context);
     node.target = node.target.accept(this, context) as Expression;
     return node;
   }
 
   @override
   Block visitBlock(Block node, Context context) {
-    visitAll(node.nodes, context);
+    node.body = node.body.accept(this, context);
     return node;
   }
 
@@ -73,7 +73,7 @@ class Optimizer implements Visitor<Context, Node> {
   @override
   FilterBlock visitFilterBlock(FilterBlock node, Context context) {
     visitAll(node.filters, context);
-    visitAll(node.nodes, context);
+    node.body = node.body.accept(this, context);
     return node;
   }
 
@@ -81,12 +81,12 @@ class Optimizer implements Visitor<Context, Node> {
   For visitFor(For node, Context context) {
     node.target = node.target.accept(this, context) as Expression;
     node.iterable = node.iterable.accept(this, context) as Expression;
-    visitAll(node.nodes, context);
+    node.body = node.body.accept(this, context);
 
     var orElse = node.orElse;
 
     if (orElse != null) {
-      visitAll(orElse, context);
+      node.orElse = orElse.accept(this, context);
     }
 
     var test = node.test;
@@ -107,12 +107,12 @@ class Optimizer implements Visitor<Context, Node> {
   @override
   If visitIf(If node, Context context) {
     node.test = node.test.accept(this, context) as Expression;
-    visitAll(node.nodes, context);
+    node.body = node.body.accept(this, context);
 
     var orElse = node.orElse;
 
     if (orElse != null) {
-      visitAll(orElse, context);
+      node.orElse = orElse.accept(this, context);
     }
 
     return node;
@@ -120,6 +120,12 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   Include visitInclude(Include node, Context context) {
+    return node;
+  }
+
+  @override
+  Node visitOutput(Output node, Context context) {
+    visitAll(node.nodes, context);
     return node;
   }
 
@@ -138,7 +144,7 @@ class Optimizer implements Visitor<Context, Node> {
           node.options[key]!.accept(this, context) as Expression;
     }
 
-    visitAll(node.nodes, context);
+    node.body = node.body.accept(this, context);
     return node;
   }
 
@@ -157,7 +163,7 @@ class Optimizer implements Visitor<Context, Node> {
   Node visitWith(With node, Context context) {
     visitAll(node.targets, context);
     visitAll(node.values, context);
-    visitAll(node.nodes, context);
+    node.body = node.body.accept(this, context);
     return node;
   }
 }

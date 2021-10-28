@@ -8,7 +8,6 @@ import 'visitor.dart';
 part 'nodes/expressions.dart';
 part 'nodes/statements.dart';
 
-typedef NodeUpdater = Node Function(Node node);
 typedef NodeVisitor = void Function(Node node);
 
 abstract class ImportContext {
@@ -24,23 +23,57 @@ abstract class Node {
     return const <Node>[];
   }
 
-  Iterable<T> findAll<T extends Node>() {
-    return childrens.whereType<T>();
-  }
-
   R accept<C, R>(Visitor<C, R> visitor, C context);
+
+  Iterable<T> findAll<T extends Node>() sync* {
+    for (var child in childrens) {
+      yield* child.findAll<T>();
+
+      if (child is T) {
+        yield child;
+      }
+    }
+  }
 
   T findOne<T extends Node>() {
     var all = findAll<T>();
     return all.first;
   }
 
-  void update(NodeUpdater updater) {
-    throw UnimplementedError(runtimeType.toString());
-  }
-
   void visitChildrens(NodeVisitor visitor) {
     childrens.forEach(visitor);
+  }
+}
+
+class Output extends Node {
+  Output(this.nodes);
+
+  List<Node> nodes;
+
+  @override
+  List<Node> get childrens {
+    return nodes;
+  }
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitOutput(this, context);
+  }
+
+  @override
+  String toString() {
+    return 'Output(${nodes.join(', ')})';
+  }
+
+  static Node orSingle(List<Node> nodes) {
+    switch (nodes.length) {
+      case 0:
+        return Data();
+      case 1:
+        return nodes[0];
+      default:
+        return Output(nodes);
+    }
   }
 }
 
@@ -64,11 +97,6 @@ class Data extends Node {
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitData(this, context);
-  }
-
-  @override
-  void update(Node Function(Node node) updater) {
-    // TODO: remove
   }
 
   @override

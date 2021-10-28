@@ -49,7 +49,7 @@ class LoopContext extends Iterable<Object?> {
     return index == length;
   }
 
-  Object? get nextitem {
+  Object? get next {
     if (!last) {
       return values[index0 + 1];
     }
@@ -57,12 +57,20 @@ class LoopContext extends Iterable<Object?> {
     return null;
   }
 
-  Object? get previtem {
+  Object? get nextitem {
+    return next;
+  }
+
+  Object? get prev {
     if (first) {
       return null;
     }
 
     return values[index0 - 1];
+  }
+
+  Object? get previtem {
+    return prev;
   }
 
   String call(Object? data) {
@@ -113,8 +121,12 @@ class LoopContext extends Iterable<Object?> {
         return first;
       case 'last':
         return last;
+      case 'prev':
+        return prev;
       case 'previtem':
         return previtem;
+      case 'next':
+        return next;
       case 'nextitem':
         return nextitem;
       case 'call':

@@ -6,10 +6,13 @@ import 'package:stack_trace/stack_trace.dart';
 void main() {
   try {
     var env = Environment();
-    var tmpl = env.fromString('''{% for item in [1, 2, 3, 5] -%}{{ loop.previtem }}{%- endfor %}''');
-    print(tmpl.nodes);
-    print(tmpl.blocks);
-    print(tmpl.render());
+    var tokens = env.lex('{% for item in values %}{{ range(loop.prev or 0) | sum }}{% endfor %}');
+    // print(tokens);
+    var nodes = env.parse(tokens);
+    print(nodes);
+    var template = Template.parsed(env, nodes);
+    print(template.nodes);
+    print(template.render({'values': [1, 2, 3, 4]}));
   } catch (error, trace) {
     print(error);
     print(Trace.format(trace, terse: true));

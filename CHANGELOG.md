@@ -1,12 +1,14 @@
 ## 0.4.0-dev.18
 - no dynamic template imports, only single constant template path/name.
+- `Environment.copyWith` renamed to `Environment.overlay`
 - no `Template.renderMap`.
 - `Template.render` now accepts `Map<String, Object?>`.
 - `FileSystemLoader` moved from `package:jinja/jinja.dart` to `package:jinja/loaders.dart`.
 - no `Undefined` and `missing`.
 - no slices and negative indexes.
 - new statements:
-  - with
+  - `do`
+  - `with`
 - no `Undefined` and `missing`
 - refactoring
 - _work in progress_
@@ -95,13 +97,13 @@
   - context
 - template:
   - update render function: `render(kv1: ..., kv2: ...)` calls `renderMap({'kv1': ..., 'kv2': ...})`
-  - add self namespace and self.blockName callback ref in context
+  - add `self` and `self.blockName` callback ref
 - removed filters:
   - batch
   - filesizeformat
 
 ## 0.0.8+1
-- Fixes
+- fixes
 
 ## 0.0.8
 - add and update filters
