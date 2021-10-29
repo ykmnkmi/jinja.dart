@@ -764,7 +764,7 @@ class Parser {
     fail('expected subscript expression', token.line);
   }
 
-  void parseCallableArguments(TokenReader reader, Callable callable) {
+  void parseSignature(TokenReader reader, Callable callable) {
     var token = reader.expect('lparen');
     var arguments = callable.arguments ??= <Expression>[];
     var keywords = callable.keywords ??= <Keyword>[];
@@ -817,7 +817,7 @@ class Parser {
 
   Call parseCall(TokenReader reader, Expression expression) {
     var call = Call(expression);
-    parseCallableArguments(reader, call);
+    parseSignature(reader, call);
     return call;
   }
 
@@ -852,7 +852,7 @@ class Parser {
       var filter = Filter(token.value);
 
       if (reader.current.test('lparen')) {
-        parseCallableArguments(reader, filter);
+        parseSignature(reader, filter);
       }
 
       filters.add(filter);
@@ -880,7 +880,7 @@ class Parser {
     const deny = ['name:else', 'name:or', 'name:and'];
 
     if (current.test('lparen')) {
-      parseCallableArguments(reader, test);
+      parseSignature(reader, test);
     } else if (current.testAny(allow) && !current.testAny(deny)) {
       if (current.test('name', 'is')) {
         fail('You cannot chain multiple tests with is');
