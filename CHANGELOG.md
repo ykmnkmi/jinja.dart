@@ -1,4 +1,4 @@
-## 0.4.0-dev.23
+## 0.4.0-dev.24
 - no `Undefined` and `missing`
 - no slices and negative indexes
 - no dynamic template imports, only single constant template path/name
