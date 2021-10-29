@@ -15,13 +15,16 @@ import 'renderer.dart';
 import 'runtime.dart';
 import 'visitor.dart';
 
+// TODO: docs
 typedef Finalizer = Object? Function(Object? value);
 
-typedef ContextFinalizer = Object? Function(Context context, Object? value);
+// TODO: docs
+typedef ContextFinalizer = Object? Function(Context ctx, Object? value);
 
-typedef EnvironmentFinalizer = Object? Function(
-    Environment environment, Object? value);
+// TODO: docs
+typedef EnvironmentFinalizer = Object? Function(Environment env, Object? value);
 
+// TODO: docs
 typedef FieldGetter = Object? Function(Object? object, String field);
 
 /// The core component of Jinja 2 is the Environment. It contains

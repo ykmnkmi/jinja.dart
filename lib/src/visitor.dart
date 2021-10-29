@@ -195,7 +195,7 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
 
   @override
   void visitDo(Do node, ExpressionUpdater context) {
-    visitAll(node.nodes, context);
+    node.expression = visitExpession(node.expression, context);
   }
 
   @override

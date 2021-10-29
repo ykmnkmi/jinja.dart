@@ -1,28 +1,29 @@
 import 'package:jinja/jinja.dart';
-import 'package:jinja/runtime.dart';
 import 'package:test/test.dart';
 
-const layout = '''|{% block block1 %}block 1 from layout{% endblock %}
+import 'package:jinja/src/utils.dart';
+
+const String layout = '''|{% block block1 %}block 1 from layout{% endblock %}
 |{% block block2 %}block 2 from layout{% endblock %}
 |{% block block3 %}
 {% block block4 %}nested block 4 from layout{% endblock %}
 {% endblock %}|''';
 
-const level1 = '''{% extends "layout" %}
+const String level1 = '''{% extends "layout" %}
 {% block block1 %}block 1 from level1{% endblock %}''';
 
-const level2 = '''{% extends "level1" %}
+const String level2 = '''{% extends "level1" %}
 {% block block2 %}{% block block5 %}nested block 5 from level2{%
 endblock %}{% endblock %}''';
 
-const level3 = '''{% extends "level2" %}
+const String level3 = '''{% extends "level2" %}
 {% block block5 %}block 5 from level3{% endblock %}
 {% block block4 %}block 4 from level3{% endblock %}''';
 
-const level4 = '''{% extends "level3" %}
+const String level4 = '''{% extends "level3" %}
 {% block block3 %}block 3 from level4{% endblock %}''';
 
-const working = '''{% extends "layout" %}
+const String working = '''{% extends "layout" %}
 {% block block1 %}
   {% if false %}
     {% block block2 %}
@@ -31,7 +32,7 @@ const working = '''{% extends "layout" %}
   {% endif %}
 {% endblock %}''';
 
-const doublee = '''{% extends "layout" %}
+const String doublee = '''{% extends "layout" %}
 {% extends "layout" %}
 {% block block1 %}
   {% if false %}
@@ -41,7 +42,7 @@ const doublee = '''{% extends "layout" %}
   {% endif %}
 {% endblock %}''';
 
-const mapping = <String, String>{
+const Map <String, String>mapping = <String, String>{
   'layout': layout,
   'level1': level1,
   'level2': level2,

@@ -1,14 +1,16 @@
-## 0.4.0-dev.18
-- no dynamic template imports, only single constant template path/name.
+## 0.4.0-dev.23
+- no `Undefined` and `missing`
+- no slices and negative indexes
+- no dynamic template imports, only single constant template path/name
 - `Environment.copyWith` renamed to `Environment.overlay`
-- no `Template.renderMap`.
-- `Template.render` now accepts `Map<String, Object?>`.
-- `FileSystemLoader` moved from `package:jinja/jinja.dart` to `package:jinja/loaders.dart`.
-- no `Undefined` and `missing`.
-- no slices and negative indexes.
+- `Template.render` now accepts `Map<String, Object?>`
+- no `Template.renderMap`
+- `Loader.listSources` renamed to `Loader.listTemplates`
+- `FileSystemLoader` moved from `package:jinja/jinja.dart` to `package:jinja/loaders.dart`
 - new statements:
   - `do`
   - `with`
+- add `print` to globals
 - refactoring
 - _work in progress_
 

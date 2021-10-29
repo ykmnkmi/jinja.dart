@@ -243,13 +243,13 @@ class Include extends Statement implements ImportContext {
 }
 
 class Do extends Statement {
-  Do(this.nodes);
+  Do(this.expression);
 
-  List<Expression> nodes;
+  Expression expression;
 
   @override
   List<Node> get childrens {
-    return nodes;
+    return <Node>[expression];
   }
 
   @override
@@ -259,7 +259,7 @@ class Do extends Statement {
 
   @override
   String toString() {
-    return 'Do(${nodes.join(', ')})';
+    return 'Do($expression)';
   }
 }
 

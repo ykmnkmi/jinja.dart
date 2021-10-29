@@ -1,8 +1,9 @@
 import 'dart:collection';
 
 import 'package:jinja/jinja.dart';
-import 'package:jinja/runtime.dart';
 import 'package:test/test.dart';
+
+import 'package:jinja/src/markup.dart';
 
 import 'environment.dart';
 

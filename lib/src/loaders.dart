@@ -21,11 +21,6 @@ abstract class Loader {
     return true;
   }
 
-  @Deprecated('Use `listTemplates` instead. Will be removed in 0.5.0.')
-  List<String> listSources() {
-    return listTemplates();
-  }
-
   /// Iterates over all templates.
   List<String> listTemplates() {
     throw UnsupportedError('this loader cannot iterate over all templates');
@@ -36,7 +31,7 @@ abstract class Loader {
 
 /// Loads a template from a map. It's passed a map of strings bound to
 /// template names.
-/// This loader is useful for testing:
+/// This loader is useful for testing.
 ///
 ///     var loader = MapLoader({'index.html': 'source here'})
 ///

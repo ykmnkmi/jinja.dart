@@ -20,6 +20,7 @@ const bool keepTrailingNewLine = false;
 const Map<String, Object?> globals = <String, Object?>{
   'namespace': Namespace.factory,
   'list': list,
+  'print': print,
   'range': range,
 };
 

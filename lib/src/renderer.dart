@@ -171,9 +171,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
 
   @override
   void visitDo(Do node, RenderContext context) {
-    for (var node in node.nodes) {
-      node.resolve(context);
-    }
+    node.expression.resolve(context);
   }
 
   @override

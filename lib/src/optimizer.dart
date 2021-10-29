@@ -51,7 +51,7 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   Do visitDo(Do node, Context context) {
-    visitAll(node.nodes, context);
+    node.expression = node.expression.accept(this, context) as Expression;
     return node;
   }
 

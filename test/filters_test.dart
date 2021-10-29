@@ -2,8 +2,10 @@ import 'dart:collection' show MapBase;
 import 'dart:math' show Random;
 
 import 'package:jinja/jinja.dart';
-import 'package:jinja/runtime.dart';
 import 'package:test/test.dart';
+
+import 'package:jinja/src/markup.dart';
+import 'package:jinja/src/utils.dart';
 
 import 'environment.dart';
 

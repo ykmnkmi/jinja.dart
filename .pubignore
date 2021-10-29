@@ -1,5 +1,6 @@
 .dart_tool/
 .idea/
+.DS_store
 .notes
 .packages
 bin/

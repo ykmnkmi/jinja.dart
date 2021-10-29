@@ -1,6 +1,8 @@
 import 'package:jinja/jinja.dart';
-import 'package:jinja/runtime.dart';
 import 'package:test/test.dart';
+
+import 'package:jinja/src/context.dart';
+import 'package:jinja/src/utils.dart';
 
 void main() {
   group('ExtendedAPI', () {

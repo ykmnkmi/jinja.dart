@@ -1,7 +1,9 @@
-import 'package:jinja/ast.dart';
 import 'package:jinja/jinja.dart';
-import 'package:jinja/runtime.dart' show range;
 import 'package:test/test.dart';
+
+import 'package:jinja/src/lexer.dart';
+import 'package:jinja/src/reader.dart';
+import 'package:jinja/src/utils.dart';
 
 import 'environment.dart';
 

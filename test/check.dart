@@ -1,12 +1,19 @@
 // ignore_for_file: avoid_print
 
 import 'package:jinja/jinja.dart';
+import 'package:jinja/reflection.dart';
 import 'package:stack_trace/stack_trace.dart';
+
+const String source = '''
+{%- set items = [] %}
+{%- for char in "foo" %}
+    {%- do items.add(loop.index0 ~ char) %}
+{%- endfor %}{{ items|join(', ') }}''';
 
 void main() {
   try {
-    var env = Environment();
-    var tokens = env.lex('{% for i in [1] if loop.index == 0 %}.{% endfor %}');
+    var env = Environment(fieldGetter: fieldGetter);
+    var tokens = env.lex(source);
     // print(tokens);
     var nodes = env.parse(tokens);
     print(nodes);

@@ -87,6 +87,55 @@ class Parser {
     }
   }
 
+  T parseImportContext<T extends ImportContext>(TokenReader reader, T node,
+      [bool defaultValue = true]) {
+    if (reader.current.testAny(<String>['name:with', 'name:without']) &&
+        reader.look().test('name', 'context')) {
+      node.withContext = reader.current.value == 'with';
+      reader.skip(2);
+    } else {
+      node.withContext = defaultValue;
+    }
+
+    return node;
+  }
+
+  Expression parseAssignTarget(TokenReader reader,
+      {List<String>? extraEndRules,
+      bool nameOnly = false,
+      bool withNamespace = false,
+      bool withTuple = true}) {
+    var line = reader.current.line;
+    Expression target;
+
+    if (withNamespace && reader.look().test('dot')) {
+      var namespace = reader.expect('name');
+      reader.next(); // skip dot
+      var attribute = reader.expect('name');
+
+      target = NamespaceRef(namespace.value, attribute.value);
+    } else if (nameOnly) {
+      var name = reader.expect('name');
+
+      target = Name(name.value, context: AssignContext.store);
+    } else {
+      if (withTuple) {
+        target =
+            parseTuple(reader, simplified: true, extraEndRules: extraEndRules);
+      } else {
+        target = parsePrimary(reader);
+      }
+
+      if (target is Assignable) {
+        target.context = AssignContext.store;
+      } else {
+        fail('can\'t assign to ${target.runtimeType}', line);
+      }
+    }
+
+    return target;
+  }
+
   Node parseStatement(TokenReader reader) {
     var token = reader.current;
 
@@ -99,24 +148,26 @@ class Parser {
 
     try {
       switch (token.value) {
-        case 'set':
-          return parseSet(reader);
+        case 'extends':
+          return parseExtends(reader);
         case 'for':
           return parseFor(reader);
         case 'if':
           return parseIf(reader);
-        case 'with':
-          return parseWith(reader);
-        case 'autoescape':
-          return parseAutoEscape(reader);
-        case 'block':
-          return parseBlock(reader);
-        case 'extends':
-          return parseExtends(reader);
-        case 'include':
-          return parseInclude(reader);
         case 'filter':
           return parseFilterBlock(reader);
+        case 'with':
+          return parseWith(reader);
+        case 'block':
+          return parseBlock(reader);
+        case 'include':
+          return parseInclude(reader);
+        case 'do':
+          return parseDo(reader);
+        case 'set':
+          return parseAssign(reader);
+        case 'autoescape':
+          return parseAutoEscape(reader);
         default:
           tagStack.removeLast();
           popTag = false;
@@ -146,18 +197,16 @@ class Parser {
     return nodes;
   }
 
-  Statement parseSet(TokenReader reader) {
-    reader.expect('name', 'set');
-    var target = parseAssignTarget(reader, withNamespace: true);
+  Extends parseExtends(TokenReader reader) {
+    reader.expect('name', 'extends');
+    var node = parsePrimary(reader);
 
-    if (reader.skipIf('assign')) {
-      var expression = parseTuple(reader);
-      return Assign(target, expression);
+    if (node is! Constant) {
+      // TODO: update error
+      fail('template name or path expected');
     }
 
-    var filters = parseFilters(reader);
-    var nodes = parseStatements(reader, <String>['name:endset'], true);
-    return AssignBlock(target, Output.orSingle(nodes), filters);
+    return Extends(node.value as String);
   }
 
   For parseFor(TokenReader reader) {
@@ -224,6 +273,13 @@ class Parser {
     return root;
   }
 
+  FilterBlock parseFilterBlock(TokenReader reader) {
+    reader.expect('name', 'filter');
+    var filters = parseFilters(reader, true);
+    var nodes = parseStatements(reader, <String>['name:endfilter'], true);
+    return FilterBlock(filters, Output.orSingle(nodes));
+  }
+
   With parseWith(TokenReader reader) {
     reader.expect('name', 'with');
     var targets = <Expression>[];
@@ -243,15 +299,6 @@ class Parser {
 
     var nodes = parseStatements(reader, <String>['name:endwith'], true);
     return With(targets, values, Output.orSingle(nodes));
-  }
-
-  Scope parseAutoEscape(TokenReader reader) {
-    reader.expect('name', 'autoescape');
-    var escape = parseExpression(reader);
-    var body = parseStatements(reader, <String>['name:endautoescape'], true);
-    var options = <String, Expression>{'autoEscape': escape};
-    var modifier = ScopedContextModifier(options, Output.orSingle(body));
-    return Scope(modifier);
   }
 
   Block parseBlock(TokenReader reader) {
@@ -291,31 +338,6 @@ class Parser {
     return Block(name.value, scoped, required, Output.orSingle(nodes));
   }
 
-  Extends parseExtends(TokenReader reader) {
-    reader.expect('name', 'extends');
-    var node = parsePrimary(reader);
-
-    if (node is! Constant) {
-      // TODO: update error
-      fail('template name or path expected');
-    }
-
-    return Extends(node.value as String);
-  }
-
-  T parseImportContext<T extends ImportContext>(TokenReader reader, T node,
-      [bool defaultValue = true]) {
-    if (reader.current.testAny(<String>['name:with', 'name:without']) &&
-        reader.look().test('name', 'context')) {
-      node.withContext = reader.current.value == 'with';
-      reader.skip(2);
-    } else {
-      node.withContext = defaultValue;
-    }
-
-    return node;
-  }
-
   Include parseInclude(TokenReader reader) {
     reader.expect('name', 'include');
     var name = reader.expect('string');
@@ -323,47 +345,32 @@ class Parser {
     return parseImportContext<Include>(reader, node, true);
   }
 
-  FilterBlock parseFilterBlock(TokenReader reader) {
-    reader.expect('name', 'filter');
-    var filters = parseFilters(reader, true);
-    var nodes = parseStatements(reader, <String>['name:endfilter'], true);
-    return FilterBlock(filters, Output.orSingle(nodes));
+  Do parseDo(TokenReader reader) {
+    reader.expect('name', 'do');
+    return Do(parseTuple(reader));
   }
 
-  Expression parseAssignTarget(TokenReader reader,
-      {List<String>? extraEndRules,
-      bool nameOnly = false,
-      bool withNamespace = false,
-      bool withTuple = true}) {
-    var line = reader.current.line;
-    Expression target;
+  Statement parseAssign(TokenReader reader) {
+    reader.expect('name', 'set');
+    var target = parseAssignTarget(reader, withNamespace: true);
 
-    if (withNamespace && reader.look().test('dot')) {
-      var namespace = reader.expect('name');
-      reader.next(); // skip dot
-      var attribute = reader.expect('name');
-
-      target = NamespaceRef(namespace.value, attribute.value);
-    } else if (nameOnly) {
-      var name = reader.expect('name');
-
-      target = Name(name.value, context: AssignContext.store);
-    } else {
-      if (withTuple) {
-        target =
-            parseTuple(reader, simplified: true, extraEndRules: extraEndRules);
-      } else {
-        target = parsePrimary(reader);
-      }
-
-      if (target is Assignable) {
-        target.context = AssignContext.store;
-      } else {
-        fail('can\'t assign to ${target.runtimeType}', line);
-      }
+    if (reader.skipIf('assign')) {
+      var expression = parseTuple(reader);
+      return Assign(target, expression);
     }
 
-    return target;
+    var filters = parseFilters(reader);
+    var nodes = parseStatements(reader, <String>['name:endset'], true);
+    return AssignBlock(target, Output.orSingle(nodes), filters);
+  }
+
+  Scope parseAutoEscape(TokenReader reader) {
+    reader.expect('name', 'autoescape');
+    var escape = parseExpression(reader);
+    var body = parseStatements(reader, <String>['name:endautoescape'], true);
+    var options = <String, Expression>{'autoEscape': escape};
+    var modifier = ScopedContextModifier(options, Output.orSingle(body));
+    return Scope(modifier);
   }
 
   Expression parseExpression(TokenReader reader, [bool withCondition = true]) {

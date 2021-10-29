@@ -5,18 +5,18 @@
 Variables, expressions, control structures and template inheritance.
 
 ## Breaking changes 0.4.0, less dynamic
-- no dynamic template imports, only single constant template path/name.
+- no `Undefined` and `missing`
+- no slices and negative indexes
+- no dynamic template imports, only single constant template path/name
 - `Environment.copyWith` renamed to `Environment.overlay`
-- no `Template.renderMap`.
-- `Template.render` now accepts `Map<String, Object?>`.
-- `FileSystemLoader` moved from `package:jinja/jinja.dart` to `package:jinja/loaders.dart`.
-- no `Undefined` and `missing`.
-- no slices and negative indexes.
+- `Template.render` now accepts `Map<String, Object?>`
+- no `Template.renderMap`
+- `Loader.listSources` renamed to `Loader.listTemplates`
+- `FileSystemLoader` moved from `package:jinja/jinja.dart` to `package:jinja/loaders.dart`
 - _work in progress_
 
 ## Documentation
-
-Mostly same as [Jinja](https://jinja.palletsprojects.com/en/3.0.x/templates/) template documentation.
+Mostly same as [Jinja](https://jinja.palletsprojects.com/en/3.0.x/templates/) template documentation. _work in progress_.
 
 ## Differences
 _work in progress_
@@ -27,8 +27,8 @@ import 'package:jinja/jinja.dart';
 
 // ...
 
-final environment = Environment(blockStart: '...', blockEnd: '...');
-final template = env.fromString('...source...');
+var environment = Environment(blockStart: '...', blockEnd: '...');
+var template = env.fromString('...source...');
 
 sink.write(template.render({'key': value}));
 ```
@@ -150,6 +150,7 @@ See also examples with [conduit][conduit_example] and [reflectable][reflectable_
 - List of Global Functions
   - list
   - namespace
+  - print
   - range
 - Loaders
   - FileSystemLoader
