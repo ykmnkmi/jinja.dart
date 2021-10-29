@@ -6,7 +6,7 @@ import 'package:stack_trace/stack_trace.dart';
 void main() {
   try {
     var env = Environment();
-    var tokens = env.lex('{% for i in range(5) %}{{ loop.index }}{% endfor %}');
+    var tokens = env.lex('{% for i in [1] if loop.index == 0 %}.{% endfor %}');
     // print(tokens);
     var nodes = env.parse(tokens);
     print(nodes);

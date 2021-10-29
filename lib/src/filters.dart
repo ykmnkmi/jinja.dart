@@ -104,7 +104,11 @@ List<Object?> doDictSort(Map<Comparable<Object?>, Object?> dict) {
 }
 
 Markup doEscape(Object? value) {
-  return value is Markup ? value : Markup(value as String);
+  if (value is Markup) {
+    return value;
+  }
+
+  return Markup(value as String);
 }
 
 String doFileSizeFormat(Object? value, [bool binary = false]) {
@@ -228,7 +232,12 @@ Object? doRandom(Environment environment, Object? value) {
   var values = list(value);
   var index = environment.random.nextInt(values.length);
   var result = values[index];
-  return value is Map ? value[result] : result;
+
+  if (value is Map) {
+    return value[result];
+  }
+
+  return result;
 }
 
 Object? doReplace(Object? object, String from, String to, [int? count]) {
@@ -254,7 +263,11 @@ Object? doReplace(Object? object, String from, String to, [int? count]) {
     }
   }
 
-  return isNotMarkup ? string : Markup(string);
+  if (isNotMarkup) {
+    return string;
+  }
+
+  return Markup(string);
 }
 
 Object? doReverse(Object? value) {

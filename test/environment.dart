@@ -1,3 +1,3 @@
 import 'package:jinja/jinja.dart';
 
-late final env = Environment();
+late final Environment env = Environment();

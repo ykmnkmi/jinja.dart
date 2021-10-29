@@ -43,9 +43,11 @@ class Name extends Expression implements Assignable {
 
   @override
   String toString() {
-    return context == AssignContext.load
-        ? 'Name($name)'
-        : 'Name($name, $context)';
+    if (context == AssignContext.load) {
+      return 'Name($name)';
+    }
+
+    return 'Name($name, $context)';
   }
 }
 
@@ -104,7 +106,12 @@ class Tuple extends Literal implements Assignable {
     }
 
     var first = values.first;
-    return first is Assignable ? first.context : AssignContext.load;
+
+    if (first is Assignable) {
+      return first.context;
+    }
+
+    return AssignContext.load;
   }
 
   @override
@@ -134,14 +141,20 @@ class Tuple extends Literal implements Assignable {
 
   @override
   List<Object?> asConst(Context context) {
-    return List<Object?>.generate(
-        values.length, (index) => values[index].asConst(context));
+    return generate(values, (i) => values[i].asConst(context));
   }
 
   @override
   List<Object?> resolve(Context context) {
-    return List<Object?>.generate(
-        values.length, (index) => values[index].resolve(context));
+    return generate(values, (i) => values[i].resolve(context));
+  }
+
+  @override
+  void update(ExpressionUpdater updater) {
+    for (var i = 0; i < values.length; i += 1) {
+      values[i].update(updater);
+      values[i] = updater(values[i]);
+    }
   }
 
   @override
@@ -162,14 +175,20 @@ class Array extends Literal {
 
   @override
   List<Object?> asConst(Context context) {
-    return List<Object?>.generate(
-        values.length, (index) => values[index].asConst(context));
+    return generate(values, (index) => values[index].asConst(context));
   }
 
   @override
   List<Object?> resolve(Context context) {
-    return List<Object?>.generate(
-        values.length, (index) => values[index].resolve(context));
+    return generate(values, (index) => values[index].resolve(context));
+  }
+
+  @override
+  void update(ExpressionUpdater updater) {
+    for (var i = 0; i < values.length; i += 1) {
+      values[i].update(updater);
+      values[i] = updater(values[i]);
+    }
   }
 
   @override
@@ -201,6 +220,17 @@ class Pair extends Expression {
     return MapEntry<Object?, Object?>(
         key.resolve(context), value.resolve(context));
   }
+
+  @override
+  void update(ExpressionUpdater updater) {
+    key = updater(key);
+    value = updater(value);
+  }
+
+  @override
+  String toString() {
+    return 'Pair($key, $value)';
+  }
 }
 
 class Dict extends Literal {
@@ -223,6 +253,13 @@ class Dict extends Literal {
   Map<Object?, Object?> resolve(Context context) {
     return Map<Object?, Object?>.fromEntries(
         pairs.map<MapEntry<Object?, Object?>>((pair) => pair.resolve(context)));
+  }
+
+  @override
+  void update(ExpressionUpdater updater) {
+    for (var i = 0; i < pairs.length; i += 1) {
+      pairs[i].update(updater);
+    }
   }
 
   @override
@@ -264,14 +301,29 @@ class Condition extends Expression {
   }
 
   @override
+  void update(ExpressionUpdater updater) {
+    test.update(updater);
+    test = updater(test);
+    value.update(updater);
+    value = updater(value);
+
+    var orElse = this.orElse;
+
+    if (orElse != null) {
+      orElse.update(updater);
+      this.orElse = updater(orElse);
+    }
+  }
+
+  @override
   String toString() {
-    return orElse == null
-        ? 'Condition($test, $value)'
-        : 'Condition($test, $value, $orElse)';
+    if (orElse == null) {
+      return 'Condition($test, $value)';
+    }
+
+    return 'Condition($test, $value, $orElse)';
   }
 }
-
-typedef Callback<T> = T Function(List<Object?>, Map<Symbol, Object?>);
 
 class Keyword extends Expression {
   Keyword(this.key, this.value);
@@ -300,10 +352,17 @@ class Keyword extends Expression {
   }
 
   @override
+  void update(ExpressionUpdater updater) {
+    value = updater(value);
+  }
+
+  @override
   String toString() {
     return 'Keyword($key, $value)';
   }
 }
+
+typedef Callback<T> = T Function(List<Object?>, Map<Symbol, Object?>);
 
 class Callable extends Expression {
   Callable({this.arguments, this.keywords, this.dArguments, this.dKeywords});
@@ -333,9 +392,7 @@ class Callable extends Expression {
     if (arguments == null) {
       positional = <Object?>[];
     } else {
-      positional = arguments
-          .map<Object?>((argument) => argument.asConst(context))
-          .toList();
+      positional = generate(arguments, (i) => arguments[i].asConst(context));
     }
 
     var named = <Symbol, Object?>{};
@@ -377,9 +434,7 @@ class Callable extends Expression {
     if (arguments == null) {
       positional = <Object?>[];
     } else {
-      positional = arguments
-          .map<Object?>((argument) => argument.resolve(context))
-          .toList();
+      positional = generate(arguments, (i) => arguments[i].resolve(context));
     }
 
     var named = <Symbol, Object?>{};
@@ -460,6 +515,40 @@ class Callable extends Expression {
 
     return result;
   }
+
+  @override
+  void update(ExpressionUpdater updater) {
+    var arguments = this.arguments;
+
+    if (arguments != null) {
+      for (var i = 0; i < arguments.length; i += 1) {
+        arguments[i].update(updater);
+        arguments[i] = updater(arguments[i]);
+      }
+    }
+
+    var keywords = this.keywords;
+
+    if (keywords != null) {
+      for (var i = 0; i < keywords.length; i += 1) {
+        keywords[i].update(updater);
+      }
+    }
+
+    var dArguments = this.dArguments;
+
+    if (dArguments != null) {
+      dArguments.update(updater);
+      this.dArguments = updater(dArguments);
+    }
+
+    var dKeywords = this.dKeywords;
+
+    if (dKeywords != null) {
+      dKeywords.update(updater);
+      this.dKeywords = updater(dKeywords);
+    }
+  }
 }
 
 class Call extends Callable {
@@ -495,6 +584,13 @@ class Call extends Callable {
     return apply(context, (positional, named) {
       return context(function, positional, named);
     });
+  }
+
+  @override
+  void update(ExpressionUpdater updater) {
+    expression.update(updater);
+    expression = updater(expression);
+    super.update(updater);
   }
 
   @override
@@ -588,6 +684,8 @@ class Test extends Callable {
 }
 
 class Item extends Expression {
+  factory Item.string(String key, Expression value) = ItemString;
+
   Item(this.key, this.value);
 
   Expression key;
@@ -614,8 +712,67 @@ class Item extends Expression {
   }
 
   @override
+  void update(ExpressionUpdater updater) {
+    key.update(updater);
+    key = updater(key);
+    value.update(updater);
+    value = updater(value);
+  }
+
+  @override
   String toString() {
     return 'Item($key, $value)';
+  }
+}
+
+class ItemString extends Expression implements Item {
+  ItemString(this.keyString, this.value);
+
+  String keyString;
+
+  @override
+  Expression value;
+
+  @override
+  Expression get key {
+    return Constant(keyString);
+  }
+
+  @override
+  set key(Expression key) {
+    if (key is Constant) {
+      keyString = key.value as String;
+    } else {
+      throw ArgumentError.value(key);
+    }
+  }
+
+  @override
+  List<Node> get childrens {
+    return <Node>[key, value];
+  }
+
+  @override
+  Object? asConst(Context context) {
+    var value = this.value.asConst(context);
+    return context.environment.getItem(value, keyString);
+  }
+
+  @override
+  Object? resolve(Context context) {
+    var value = this.value.resolve(context);
+    return context.environment.getItem(value, keyString);
+  }
+
+  @override
+  void update(ExpressionUpdater updater) {
+    value.update(updater);
+    value = updater(value);
+  }
+
+  @override
+  String toString() {
+    return 'Item.string($keyString, $value)';
   }
 }
 
@@ -641,6 +798,12 @@ class Attribute extends Expression {
   Object? resolve(Context context) {
     var value = this.value.resolve(context);
     return context.environment.getAttribute(value, attribute);
+  }
+
+  @override
+  void update(ExpressionUpdater updater) {
+    value.update(updater);
+    value = updater(value);
   }
 
   @override
@@ -676,6 +839,14 @@ class Concat extends Expression {
   }
 
   @override
+  void update(ExpressionUpdater updater) {
+    for (var i = 0; i < values.length; i += 1) {
+      values[i].update(updater);
+      values[i] = updater(values[i]);
+    }
+  }
+
+  @override
   String toString() {
     return 'Concat(${values.join(', ')})';
   }
@@ -701,6 +872,12 @@ class Operand extends Expression {
   @override
   Object? resolve(Context context) {
     return value.resolve(context);
+  }
+
+  @override
+  void update(ExpressionUpdater updater) {
+    value.update(updater);
+    value = updater(value);
   }
 
   @override
@@ -745,6 +922,16 @@ class Compare extends Expression {
     }
 
     return true;
+  }
+
+  @override
+  void update(ExpressionUpdater updater) {
+    value.update(updater);
+    value = updater(value);
+
+    for (var i = 0; i < operands.length; i += 1) {
+      operands[i].update(updater);
+    }
   }
 
   @override
@@ -804,6 +991,12 @@ class Unary extends Expression {
   }
 
   @override
+  void update(ExpressionUpdater updater) {
+    value.update(updater);
+    value = updater(value);
+  }
+
+  @override
   String toString() {
     return 'Unary(\'$operator\', $value)';
   }
@@ -850,6 +1043,14 @@ class Binary extends Expression {
   @override
   Object? resolve(Context context) {
     return calc(operator, left.resolve(context), right.resolve(context));
+  }
+
+  @override
+  void update(ExpressionUpdater updater) {
+    left.update(updater);
+    left = updater(left);
+    right.update(updater);
+    right = updater(right);
   }
 
   @override

@@ -1,6 +1,8 @@
 import 'environment.dart';
 import 'nodes.dart';
 
+typedef ExpressionUpdater = Expression Function(Expression expression);
+
 abstract class Visitor<C, R> {
   const Visitor();
 
@@ -138,8 +140,176 @@ abstract class ThrowingVisitor<C, R> implements Visitor<C, R> {
   }
 }
 
-typedef ExpressionMapper = Expression Function(Expression expression);
+class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
+  const ExpressionMapper();
 
-class ExpressionVisitor extends ThrowingVisitor<ExpressionMapper, void> {
-  const ExpressionVisitor();
+  @override
+  void visitAll(List<Node> nodes, ExpressionUpdater context) {
+    for (var i = 0; i < nodes.length; i += 1) {
+      var node = nodes[i];
+
+      if (node is Expression) {
+        nodes[i] = visitExpession(node, context);
+      } else {
+        node.accept(this, context);
+      }
+    }
+  }
+
+  @override
+  void visitAssign(Assign node, ExpressionUpdater context) {
+    node.target = visitExpession(node.target, context);
+    node.value = visitExpession(node.value, context);
+  }
+
+  @override
+  void visitAssignBlock(AssignBlock node, ExpressionUpdater context) {
+    node.target = node.target.accept(this, context) as Expression;
+
+    var body = node.body;
+
+    if (body is Expression) {
+      node.body = visitExpession(body, context);
+    }
+
+    var filters = node.filters;
+
+    if (filters != null) {
+      visitAll(filters, context);
+    }
+  }
+
+  @override
+  void visitBlock(Block node, ExpressionUpdater context) {
+    var body = node.body;
+
+    if (body is Expression) {
+      node.body = visitExpession(body, context);
+    } else {
+      body.accept(this, context);
+    }
+  }
+
+  @override
+  void visitData(Data node, ExpressionUpdater context) {}
+
+  @override
+  void visitDo(Do node, ExpressionUpdater context) {
+    visitAll(node.nodes, context);
+  }
+
+  @override
+  Expression visitExpession(Expression node, ExpressionUpdater context) {
+    node.update(context);
+    return node;
+  }
+
+  @override
+  void visitExtends(Extends node, ExpressionUpdater context) {}
+
+  @override
+  void visitFilterBlock(FilterBlock node, ExpressionUpdater context) {
+    visitAll(node.filters, context);
+
+    var body = node.body;
+
+    if (body is Expression) {
+      node.body = visitExpession(body, context);
+    } else {
+      body.accept(this, context);
+    }
+  }
+
+  @override
+  void visitFor(For node, ExpressionUpdater context) {
+    node.target = node.target.accept(this, context) as Expression;
+    node.iterable = node.iterable.accept(this, context) as Expression;
+
+    var test = node.test;
+
+    if (test != null) {
+      node.test = visitExpession(test, context);
+    }
+
+    var body = node.body;
+
+    if (body is Expression) {
+      node.body = visitExpession(body, context);
+    } else {
+      body.accept(this, context);
+    }
+
+    var orElse = node.orElse;
+
+    if (orElse is Expression) {
+      node.orElse = visitExpession(orElse, context);
+    } else if (orElse != null) {
+      orElse.accept(this, context);
+    }
+  }
+
+  @override
+  void visitIf(If node, ExpressionUpdater context) {
+    node.test = node.test.accept(this, context) as Expression;
+
+    var body = node.body;
+
+    if (body is Expression) {
+      node.body = visitExpession(body, context);
+    } else {
+      body.accept(this, context);
+    }
+
+    var orElse = node.orElse;
+
+    if (orElse is Expression) {
+      node.orElse = visitExpession(orElse, context);
+    } else if (orElse != null) {
+      orElse.accept(this, context);
+    }
+  }
+
+  @override
+  void visitInclude(Include node, ExpressionUpdater context) {}
+
+  @override
+  void visitOutput(Output node, ExpressionUpdater context) {
+    visitAll(node.nodes, context);
+  }
+
+  @override
+  void visitScope(Scope node, ExpressionUpdater context) {
+    node.modifier.accept(this, context);
+  }
+
+  @override
+  void visitScopedContextModifier(
+      ScopedContextModifier node, ExpressionUpdater context) {
+    var body = node.body;
+
+    if (body is Expression) {
+      node.body = visitExpession(body, context);
+    } else {
+      body.accept(this, context);
+    }
+  }
+
+  @override
+  void visitTemplate(Template node, ExpressionUpdater context) {
+    visitAll(node.nodes, context);
+  }
+
+  @override
+  void visitWith(With node, ExpressionUpdater context) {
+    visitAll(node.targets, context);
+    visitAll(node.values, context);
+
+    var body = node.body;
+
+    if (body is Expression) {
+      node.body = visitExpession(body, context);
+    } else {
+      body.accept(this, context);
+    }
+  }
 }

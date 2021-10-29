@@ -24,7 +24,7 @@ void main() {
   });
 
   group('Lexer', () {
-    const seq123 = {'seq': [0, 1, 2]};
+    const seq = {'seq': [0, 1, 2]};
 
     test('raw', () {
       var tmpl = env.fromString('{% raw %}foo{% endraw %}|'
@@ -60,7 +60,7 @@ void main() {
           variableEnd: '}');
       var tmpl = env.fromString(r'''{% for item in seq
             %}${{'foo': item}|string|upper}{% endfor %}''');
-      expect(tmpl.render(seq123), equals('{FOO: 0}{FOO: 1}{FOO: 2}'));
+      expect(tmpl.render(seq), equals('{FOO: 0}{FOO: 1}{FOO: 2}'));
     });
 
     test('comments', () {
@@ -75,7 +75,7 @@ void main() {
   <li>{item}</li>
 <!--- endfor -->
 </ul>''');
-      expect(tmpl.render(seq123),
+      expect(tmpl.render(seq),
           equals('<ul>\n  <li>0</li>\n  <li>1</li>\n  <li>2</li>\n</ul>'));
     });
 

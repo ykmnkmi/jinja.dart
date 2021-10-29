@@ -101,7 +101,11 @@ abstract class BaseToken implements Token {
       type ??= this.type;
     }
 
-    return value == null ? Token.simple(line, type) : Token(line, type, value);
+    if (value == null) {
+      return Token.simple(line, type);
+    }
+
+    return Token(line, type, value);
   }
 
   @override

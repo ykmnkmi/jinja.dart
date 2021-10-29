@@ -143,6 +143,11 @@ Iterable<int> range(int stopOrStart, [int? stop, int step = 1]) sync* {
   }
 }
 
+List<R> generate<T, R>(List<T> list, R Function(int index) generator,
+    [bool growable = true]) {
+  return List<R>.generate(list.length, generator, growable: growable);
+}
+
 String repr(Object? object, [bool escapeNewlines = false]) {
   final buffer = StringBuffer();
   reprTo(object, buffer, escapeNewlines);

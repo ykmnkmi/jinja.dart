@@ -1,4 +1,3 @@
-import 'package:jinja/jinja.dart';
 import 'package:jinja/runtime.dart';
 import 'package:test/test.dart';
 
@@ -86,7 +85,9 @@ void main() {
       var tmpl = env.fromString('''{% for item in seq -%}
             {{ loop.changed(item) }},
         {%- endfor %}''');
-      var output = tmpl.render({'seq': [null, null, 1, 2, 2, 3, 4, 4, 4]});
+      var output = tmpl.render({
+        'seq': [null, null, 1, 2, 2, 3, 4, 4, 4]
+      });
       expect(
           output, equals('true,false,true,true,false,true,true,false,false,'));
     });

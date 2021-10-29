@@ -21,12 +21,12 @@ void main() {
 
     test('erb syntax', () {
       var env = Environment(
-        blockStart: '<%',
-        blockEnd: '%>',
-        variableStart: '<%=',
-        variableEnd: '%>',
-        commentStart: '<%#',
-        commentEnd: '%>');
+          blockStart: '<%',
+          blockEnd: '%>',
+          variableStart: '<%=',
+          variableEnd: '%>',
+          commentStart: '<%#',
+          commentEnd: '%>');
       var tmpl = env.fromString('<%# I\'m a comment %>'
           '<% for item in seq -%>\n    <%= item %><%- endfor %>');
       expect(tmpl.render({'seq': range(5)}), equals('01234'));
@@ -34,12 +34,12 @@ void main() {
 
     test('comment syntax', () {
       var env = Environment(
-        blockStart: '<!--',
-        blockEnd: '-->',
-        variableStart: '\${',
-        variableEnd: '}',
-        commentStart: '<!--#',
-        commentEnd: '-->');
+          blockStart: '<!--',
+          blockEnd: '-->',
+          variableStart: '\${',
+          variableEnd: '}',
+          commentStart: '<!--#',
+          commentEnd: '-->');
       var tmpl = env.fromString('<!--# I\'m a comment -->'
           '<!-- for item in seq --->    \${item}<!--- endfor -->');
       expect(tmpl.render({'seq': range(5)}), equals('01234'));
@@ -59,14 +59,14 @@ void main() {
 
     test('line syntax', () {
       var env = Environment(
-        blockStart: '<%',
-        blockEnd: '%>',
-        variableStart: '\${',
-        variableEnd: '}',
-        commentStart: '<%#',
-        commentEnd: '%>',
-        lineCommentPrefix: '##',
-        lineStatementPrefix: '%');
+          blockStart: '<%',
+          blockEnd: '%>',
+          variableStart: '\${',
+          variableEnd: '}',
+          commentStart: '<%#',
+          commentEnd: '%>',
+          lineCommentPrefix: '##',
+          lineStatementPrefix: '%');
       var sequence = range(5).toList();
       var tmpl = env.fromString('<%# regular comment %>\n% for item in seq:\n'
           '    \${item} ## the rest of the stuff\n% endfor');
@@ -83,24 +83,24 @@ void main() {
     test('line syntax priority', () {
       var seq = [1, 2];
       var env = Environment(
-        variableStart: '\${',
-        variableEnd: '}',
-        commentStart: '/*',
-        commentEnd: '*/',
-        lineCommentPrefix: '#',
-        lineStatementPrefix: '##');
+          variableStart: '\${',
+          variableEnd: '}',
+          commentStart: '/*',
+          commentEnd: '*/',
+          lineCommentPrefix: '#',
+          lineStatementPrefix: '##');
       var tmpl =
           env.fromString('/* ignore me.\n   I\'m a multiline comment */\n'
               '## for item in seq:\n* \${item}          '
               '# this is just extra stuff\n## endfor\n');
       expect(tmpl.render({'seq': seq}).trim(), equals('* 1\n* 2'));
       env = Environment(
-        variableStart: '\${',
-        variableEnd: '}',
-        commentStart: '/*',
-        commentEnd: '*/',
-        lineCommentPrefix: '##',
-        lineStatementPrefix: '#');
+          variableStart: '\${',
+          variableEnd: '}',
+          commentStart: '/*',
+          commentEnd: '*/',
+          lineCommentPrefix: '##',
+          lineStatementPrefix: '#');
       tmpl = env.fromString('/* ignore me.\n   I\'m a multiline comment */\n'
           '# for item in seq:\n* \${item}          '
           '## this is just extra stuff\n    '
@@ -110,15 +110,10 @@ void main() {
 
     test('error messages', () {
       void assertError(String source, String expekted) {
-        void callback() {
-          env.fromString(source);
-        }
-
-        bool matcher(TemplateSyntaxError error) {
-          return error.message == expekted;
-        }
-
-        expect(callback, throwsA(predicate<TemplateSyntaxError>(matcher)));
+        expect(
+            () => env.fromString(source),
+            throwsA(predicate<TemplateSyntaxError>(
+                (error) => error.message == expekted)));
       }
 
       assertError(

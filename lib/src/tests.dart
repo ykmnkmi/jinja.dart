@@ -14,7 +14,11 @@ bool isDefined(Object? value) {
 }
 
 bool isDivisibleBy(num value, num divider) {
-  return divider == 0 ? false : value % divider == 0;
+  if (divider == 0) {
+    return false;
+  }
+
+  return value % divider == 0;
 }
 
 bool isEqual(Object? value, Object? other) {

@@ -124,4 +124,6 @@ abstract class Expression extends Node {
   Object? resolve(Context context) {
     return null;
   }
+
+  void update(ExpressionUpdater updater) {}
 }

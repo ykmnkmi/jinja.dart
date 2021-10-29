@@ -296,11 +296,7 @@ class Environment {
   /// Get an item or attribute of an object but prefer the item.
   @internal
   Object? getItem(dynamic object, Object? key) {
-    try {
-      return object[key];
-    } on NoSuchMethodError {
-      return null;
-    }
+    return object[key];
   }
 
   /// Lex the given sourcecode and return a list of [Token]'s.
@@ -557,6 +553,18 @@ class Template extends Node {
         }
       }
     }
+
+    accept(const ExpressionMapper(), (Expression expression) {
+      if (expression is Attribute) {
+        var value = expression.value;
+
+        if (value is Name && (value.name == 'loop' || value.name == 'self')) {
+          return Item.string(expression.attribute, value);
+        }
+      }
+
+      return expression;
+    });
 
     blocks.addAll(findAll<Block>());
 

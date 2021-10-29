@@ -257,8 +257,7 @@ void main() {
     });
 
     test('raw2', () {
-      var tmpl =
-          env.fromString('{% raw %}{{ FOO }} and {% BAR %}{% endraw %}');
+      var tmpl = env.fromString('{% raw %}{{ FOO }} and {% BAR %}{% endraw %}');
       expect(tmpl.render(), equals('{{ FOO }} and {% BAR %}'));
     });
 

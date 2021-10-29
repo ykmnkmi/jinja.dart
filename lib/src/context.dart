@@ -50,7 +50,11 @@ class Context {
       return value;
     }
 
-    return autoEscape ? Markup(value) : value;
+    if (autoEscape) {
+      return Markup(value);
+    }
+
+    return value;
   }
 
   Object? escaped(Object? value) {
@@ -62,7 +66,11 @@ class Context {
       return value;
     }
 
-    return autoEscape ? Escaped(value) : value;
+    if (autoEscape) {
+      return Escaped(value);
+    }
+
+    return value;
   }
 
   bool has(String key) {

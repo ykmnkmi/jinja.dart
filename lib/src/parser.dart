@@ -367,7 +367,11 @@ class Parser {
   }
 
   Expression parseExpression(TokenReader reader, [bool withCondition = true]) {
-    return withCondition ? parseCondition(reader) : parseOr(reader);
+    if (withCondition) {
+      return parseCondition(reader);
+    }
+
+    return parseOr(reader);
   }
 
   Expression parseCondition(TokenReader reader, [bool withCondExpr = true]) {
