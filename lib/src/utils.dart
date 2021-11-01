@@ -147,7 +147,7 @@ List<R> generate<T, R>(List<T> list, R Function(int index) generator,
 }
 
 String repr(Object? object, [bool escapeNewlines = false]) {
-  final buffer = StringBuffer();
+  var buffer = StringBuffer();
   reprTo(object, buffer, escapeNewlines);
   return '$buffer';
 }

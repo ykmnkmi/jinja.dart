@@ -164,7 +164,7 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
 
   @override
   void visitAssignBlock(AssignBlock node, ExpressionUpdater context) {
-    node.target = node.target.accept(this, context) as Expression;
+    node.target = visitExpession(node.target, context);
 
     var body = node.body;
 
@@ -222,8 +222,8 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
 
   @override
   void visitFor(For node, ExpressionUpdater context) {
-    node.target = node.target.accept(this, context) as Expression;
-    node.iterable = node.iterable.accept(this, context) as Expression;
+    node.target = visitExpession(node.target, context);
+    node.iterable = visitExpession(node.iterable, context);
 
     var test = node.test;
 
@@ -250,7 +250,7 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
 
   @override
   void visitIf(If node, ExpressionUpdater context) {
-    node.test = node.test.accept(this, context) as Expression;
+    node.test = visitExpession(node.test, context);
 
     var body = node.body;
 

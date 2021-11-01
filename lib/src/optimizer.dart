@@ -20,8 +20,8 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   Assign visitAssign(Assign node, Context context) {
-    node.target = node.target.accept(this, context) as Expression;
-    node.value = node.value.accept(this, context) as Expression;
+    node.target = visitExpession(node.target, context);
+    node.value = visitExpession(node.value, context);
     return node;
   }
 
@@ -34,7 +34,7 @@ class Optimizer implements Visitor<Context, Node> {
     }
 
     node.body = node.body.accept(this, context);
-    node.target = node.target.accept(this, context) as Expression;
+    node.target = visitExpession(node.target, context);
     return node;
   }
 
@@ -51,7 +51,7 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   Do visitDo(Do node, Context context) {
-    node.expression = node.expression.accept(this, context) as Expression;
+    node.expression = visitExpession(node.expression, context);
     return node;
   }
 
@@ -79,8 +79,8 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   For visitFor(For node, Context context) {
-    node.target = node.target.accept(this, context) as Expression;
-    node.iterable = node.iterable.accept(this, context) as Expression;
+    node.target = visitExpession(node.target, context);
+    node.iterable = visitExpession(node.iterable, context);
     node.body = node.body.accept(this, context);
 
     var orElse = node.orElse;
@@ -92,7 +92,7 @@ class Optimizer implements Visitor<Context, Node> {
     var test = node.test;
 
     if (test != null) {
-      var value = test.accept(this, context) as Expression;
+      var value = visitExpession(test, context);
 
       if (value is Constant && boolean(value.value)) {
         node.test = null;
@@ -106,7 +106,7 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   If visitIf(If node, Context context) {
-    node.test = node.test.accept(this, context) as Expression;
+    node.test = visitExpession(node.test, context);
     node.body = node.body.accept(this, context);
 
     var orElse = node.orElse;
@@ -140,8 +140,7 @@ class Optimizer implements Visitor<Context, Node> {
   ScopedContextModifier visitScopedContextModifier(
       ScopedContextModifier node, Context context) {
     for (var key in node.options.keys) {
-      node.options[key] =
-          node.options[key]!.accept(this, context) as Expression;
+      node.options[key] = visitExpession(node.options[key]!, context);
     }
 
     node.body = node.body.accept(this, context);

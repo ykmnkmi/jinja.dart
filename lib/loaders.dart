@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:path/path.dart' as p;
+import 'package:path/path.dart' show extension, joinAll, relative;
 
 import 'src/environment.dart';
 import 'src/exceptions.dart';
@@ -42,7 +42,7 @@ class FileSystemLoader extends Loader {
     var pieces = template.split('/');
 
     for (var path in paths) {
-      var templatePath = p.joinAll(<String>[path, ...pieces]);
+      var templatePath = joinAll(<String>[path, ...pieces]);
       var templateFile = File(templatePath);
 
       if (templateFile.existsSync()) {
@@ -52,15 +52,14 @@ class FileSystemLoader extends Loader {
   }
 
   bool isTemplate(String path, [String? from]) {
-    var template = p.relative(path, from: from);
-    var ext = p.extension(template);
+    var template = relative(path, from: from);
+    var ext = extension(template);
 
     if (ext.startsWith('.')) {
       ext = ext.substring(1);
     }
 
-    return extensions.contains(ext) &&
-        FileSystemEntity.typeSync(path) == FileSystemEntityType.file;
+    return extensions.contains(ext) && FileSystemEntity.isFileSync(path);
   }
 
   @override
@@ -87,8 +86,7 @@ class FileSystemLoader extends Loader {
 
         for (var entity in entities) {
           if (isTemplate(entity.path, path)) {
-            var template = p
-                .relative(entity.path, from: path)
+            var template = relative(entity.path, from: path)
                 .replaceAll(Platform.pathSeparator, '/');
 
             if (!found.contains(template)) {

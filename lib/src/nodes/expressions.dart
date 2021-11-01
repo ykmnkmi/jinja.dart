@@ -635,7 +635,7 @@ class Filter extends Callable {
   @override
   Object? resolve(Context context) {
     return apply(context, (positional, named) {
-      return context.environment.callFilter(name, positional, named, context);
+      return context.filter(name, positional, named);
     });
   }
 
@@ -666,14 +666,14 @@ class Test extends Callable {
     }
 
     return applyAsConst(context, (positional, named) {
-      return context.environment.callTest(name, positional, named);
+      return context.test(name, positional, named);
     });
   }
 
   @override
   bool resolve(Context context) {
     return apply<bool>(context, (positional, named) {
-      return context.environment.callTest(name, positional, named);
+      return context.test(name, positional, named);
     });
   }
 
@@ -946,13 +946,13 @@ class Compare extends Expression {
       case 'ne':
         return tests.isNotEqual(left, right);
       case 'lt':
-        return tests.isLessThan(left, right);
+        return tests.isLessThan(left as Comparable, right as Comparable);
       case 'lteq':
-        return tests.isLessThanOrEqual(left, right);
+        return tests.isLessThanOrEqual(left as Comparable, right as Comparable);
       case 'gt':
-        return tests.isGreaterThan(left, right);
+        return tests.isGreaterThan(left as Comparable, right as Comparable);
       case 'gteq':
-        return tests.isGreaterThanOrEqual(left, right);
+        return tests.isGreaterThanOrEqual(left as Comparable, right as Comparable);
       case 'in':
         return tests.isIn(left, right);
       case 'notin':

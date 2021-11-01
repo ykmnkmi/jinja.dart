@@ -37,27 +37,21 @@ String escape(String text) {
     result.write(text.substring(start));
   }
 
-  return '$result';
+  return result.toString();
 }
 
 class Markup {
-  const Markup(this.value);
+  const Markup.escape(this.value);
 
-  factory Markup.escape(Object? value) {
+  factory Markup(Object? value) {
     if (value is Markup) {
       return value;
     }
 
-    return Markup(value);
+    return Markup.escape(value);
   }
 
-  factory Markup.escaped(Object? value) {
-    if (value is Markup) {
-      return value;
-    }
-
-    return Escaped(value);
-  }
+  const factory Markup.escaped(Object? value) = Escaped;
 
   final Object? value;
 
@@ -73,12 +67,12 @@ class Markup {
 
   @override
   String toString() {
-    return escape('$value');
+    return escape(value.toString());
   }
 }
 
 class Escaped implements Markup {
-  Escaped(this.value);
+  const Escaped(this.value);
 
   @override
   final Object? value;
@@ -95,6 +89,6 @@ class Escaped implements Markup {
 
   @override
   String toString() {
-    return '$value';
+    return value.toString();
   }
 }

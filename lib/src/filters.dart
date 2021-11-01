@@ -3,9 +3,9 @@ library filters;
 import 'dart:convert' show LineSplitter;
 import 'dart:math' as math;
 
+import 'package:jinja/jinja.dart';
 import 'package:textwrap/textwrap.dart' show TextWrapper;
 
-import 'environment.dart';
 import 'markup.dart';
 import 'runtime.dart';
 import 'utils.dart';
@@ -14,10 +14,9 @@ Object? Function(Object?) makeAttributeGetter(
     Environment environment, String attributeOrAttributes,
     {Object? Function(Object?)? postProcess, Object? defaultValue}) {
   var attributes = attributeOrAttributes.split('.');
-
-  Object? attributeGetter(Object? item) {
+  return (Object? item) {
     for (var part in attributes) {
-      item = doAttribute(environment, item, part);
+      item = environment.getAttribute(item, part);
 
       if (item == null) {
         if (defaultValue != null) {
@@ -33,9 +32,7 @@ Object? Function(Object?) makeAttributeGetter(
     }
 
     return item;
-  }
-
-  return attributeGetter;
+  };
 }
 
 num doAbs(num number) {
@@ -99,16 +96,50 @@ Object? doDefault(Object? value, [Object? d = '', bool asBoolean = false]) {
   return value;
 }
 
-List<Object?> doDictSort(Map<Comparable<Object?>, Object?> dict) {
-  throw UnimplementedError();
+List<Object?> doDictSort(Map<Object?, Object?> dict,
+    {bool caseSensetive = false, String by = 'key', bool reverse = false}) {
+  int pos;
+
+  switch (by) {
+    case 'key':
+      pos = 0;
+      break;
+    case 'value':
+      pos = 1;
+      break;
+    default:
+      throw FilterArgumentError('you can only sort by either "key" or "value"');
+  }
+
+  var order = reverse ? -1 : 1;
+  var entities = dict.entries
+      .map<List<Object?>>((entity) => <Object?>[entity.key, entity.value])
+      .toList(growable: false);
+
+  Comparable<Object?> Function(List<Object?> values) getter;
+
+  if (caseSensetive) {
+    getter = (List<Object?> values) {
+      return values[pos] as Comparable;
+    };
+  } else {
+    getter = (List<Object?> values) {
+      var value = values[pos];
+
+      if (value is String) {
+        return value.toLowerCase();
+      }
+
+      return value as Comparable;
+    };
+  }
+
+  entities.sort((a, b) => getter(a).compareTo(getter(b)) * order);
+  return entities;
 }
 
 Markup doEscape(Object? value) {
-  if (value is Markup) {
-    return value;
-  }
-
-  return Markup(value as String);
+  return Markup(value);
 }
 
 String doFileSizeFormat(Object? value, [bool binary = false]) {
@@ -174,11 +205,11 @@ double doFloat(String value, {double defaultValue = 0.0}) {
 }
 
 Markup doForceEscape(Object? value) {
-  return Markup('$value');
+  return Markup(value.toString());
 }
 
 int doInteger(String value, {int defaultValue = 0, int base = 10}) {
-  if (base == 16 && value.startsWith('0x')) {
+  if (base == 16 && value.toLowerCase().startsWith('0x')) {
     value = value.substring(2);
   }
 
@@ -200,13 +231,13 @@ int doInteger(String value, {int defaultValue = 0, int base = 10}) {
 Object? doJoin(Context context, Iterable<Object?> values,
     [String delimiter = '', String? attribute]) {
   if (attribute != null) {
-    values = values
-        .map<Object?>(makeAttributeGetter(context.environment, attribute));
+    var getter = makeAttributeGetter(context.environment, attribute);
+    values = values.map<Object?>(getter);
   }
 
   if (context.autoEscape) {
-    return Escaped(
-        values.map<Object?>((value) => Markup.escape(value)).join(delimiter));
+    values = values.map<Markup>((value) => Markup(value));
+    return Escaped(values.join(delimiter));
   }
 
   return values.join(delimiter);
@@ -248,10 +279,10 @@ Object? doReplace(Object? object, String from, String to, [int? count]) {
     string = object;
     isNotMarkup = true;
   } else if (object is Markup) {
-    string = '$object';
+    string = object.toString();
     isNotMarkup = false;
   } else {
-    string = '$object';
+    string = object.toString();
     isNotMarkup = true;
   }
 
@@ -307,7 +338,7 @@ List<List<Object?>> doSlice(Object? value, int slices, [Object? fillWith]) {
 }
 
 String doString(Object? value) {
-  return '$value';
+  return value.toString();
 }
 
 num doSum(Environment environment, Iterable<Object?> values,

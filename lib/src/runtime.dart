@@ -177,7 +177,7 @@ class Namespace extends MapView<String, Object?> {
 
   @override
   String toString() {
-    final values = entries.map((entry) => '${entry.key}: ${entry.value}');
+    var values = entries.map((entry) => '${entry.key}: ${entry.value}');
     return 'Namespace(${values.join(', ')})';
   }
 

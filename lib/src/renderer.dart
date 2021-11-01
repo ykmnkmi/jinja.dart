@@ -112,19 +112,18 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
     var filters = node.filters;
 
     if (filters == null || filters.isEmpty) {
-      context.assignTargets(target, context.escaped(value));
+      context.assignTargets(target, context.escape(value, true));
       return;
     }
 
     for (var filter in filters) {
       value = filter.apply(context, (positional, named) {
         positional.insert(0, value);
-        return context.environment
-            .callFilter(filter.name, positional, named, context);
+        return context.filter(filter.name, positional, named);
       });
     }
 
-    context.assignTargets(target, context.escaped(value));
+    context.assignTargets(target, context.escape(value, true));
   }
 
   @override

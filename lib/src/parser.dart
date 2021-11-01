@@ -886,7 +886,7 @@ class Parser {
         fail('You cannot chain multiple tests with is');
       }
 
-      final argument = parsePostfix(reader, parsePrimary(reader));
+      var argument = parsePostfix(reader, parsePrimary(reader));
       test.arguments!.add(argument);
     }
 

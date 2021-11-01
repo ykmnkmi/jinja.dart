@@ -41,7 +41,7 @@ class Context {
     return Function.apply(object.call as Function, positional, named);
   }
 
-  Object? escape(Object? value) {
+  Object? escape(Object? value, [bool escaped = false]) {
     if (value == null) {
       return null;
     }
@@ -51,23 +51,11 @@ class Context {
     }
 
     if (autoEscape) {
-      return Markup(value);
-    }
+      if (escaped) {
+        return Markup.escaped(value);
+      }
 
-    return value;
-  }
-
-  Object? escaped(Object? value) {
-    if (value == null) {
-      return null;
-    }
-
-    if (value is Markup) {
-      return value;
-    }
-
-    if (autoEscape) {
-      return Escaped(value);
+      return Markup.escape(value);
     }
 
     return value;
@@ -101,5 +89,14 @@ class Context {
     }
 
     return null;
+  }
+
+  Object? filter(
+      String name, List<Object?> positional, Map<Symbol, Object?> named) {
+    return environment.callFilter(name, positional, named, this);
+  }
+
+  bool test(String name, List<Object?> positional, Map<Symbol, Object?> named) {
+    return environment.callTest(name, positional, named);
   }
 }
