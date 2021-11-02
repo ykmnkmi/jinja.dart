@@ -29,8 +29,9 @@ class Context {
 
   Object? call(dynamic object,
       [List<Object?>? positional, Map<Symbol, Object?>? named]) {
+    var function = object.call as Function;
     positional ??= <Object?>[];
-    return Function.apply(object.call as Function, positional, named);
+    return Function.apply(function, positional, named);
   }
 
   Object? escape(Object? value, [bool escaped = false]) {
