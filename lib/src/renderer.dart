@@ -4,7 +4,7 @@ import 'environment.dart';
 import 'exceptions.dart';
 import 'nodes.dart';
 import 'runtime.dart';
-import 'utils.dart' as utils;
+import 'utils.dart';
 import 'visitor.dart';
 
 class RenderContext extends Context {
@@ -21,6 +21,36 @@ class RenderContext extends Context {
 
   final Map<String, List<Block>> blocks;
 
+  LoopContext? loop;
+
+  Map<String, Object?> save(Map<String, Object?> map) {
+    var save = <String, Object?>{};
+
+    for (var key in map.keys) {
+      save[key] = context[key];
+      context[key] = map[key];
+    }
+
+    return save;
+  }
+
+  void restore(Map<String, Object?> map) {
+    context.addAll(map);
+  }
+
+  void set(String key, Object? value) {
+    context[key] = value;
+  }
+
+  bool remove(String name) {
+    if (context.containsKey(name)) {
+      context.remove(name);
+      return true;
+    }
+
+    return false;
+  }
+
   @protected
   void assignTargets(Object? target, Object? current) {
     if (target is String) {
@@ -29,7 +59,7 @@ class RenderContext extends Context {
     }
 
     if (target is List<String>) {
-      var values = utils.list(current);
+      var values = list(current);
 
       if (values.length < target.length) {
         throw StateError('not enough values to unpack');
@@ -62,21 +92,6 @@ class RenderContext extends Context {
 
   Object? finalize(Object? object) {
     return environment.finalize(this, object);
-  }
-
-  bool remove(String name) {
-    for (var context in contexts.reversed) {
-      if (context.containsKey(name)) {
-        context.remove(name);
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  void set(String key, Object? value) {
-    contexts.last[key] = value;
   }
 
   void write(Object? object) {
@@ -154,9 +169,9 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
           throw TemplateRuntimeError();
         }
 
-        context.push(<String, Object?>{'super': parent});
+        context.set('super', parent);
         first.body.accept(this, context);
-        context.pop();
+        context.remove('super');
       } else {
         first.body.accept(this, context);
       }
@@ -215,7 +230,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
     }
 
     String render(Object? iterable, [int depth = 0]) {
-      var values = utils.list(iterable);
+      var values = list(iterable);
 
       if (values.isEmpty) {
         if (orElse != null) {
@@ -231,38 +246,28 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
 
         for (var value in values) {
           var data = getDataForTargets(targets, value);
-          context.push(data);
+          data = context.save(data);
 
-          if (utils.boolean(test.resolve(context))) {
+          if (boolean(test.resolve(context))) {
             filtered.add(value);
           }
 
-          context.pop();
+          context.restore(data);
         }
 
         values = filtered;
       }
 
       var loop = LoopContext(values, depth, render);
-      Map<String, Object?> Function(Object?, Object?) unpack;
-
-      if (node.hasLoop) {
-        unpack = (Object? target, Object? value) {
-          var data = getDataForTargets(target, value);
-          data['loop'] = loop;
-          return data;
-        };
-      } else {
-        unpack = getDataForTargets;
-      }
+      var data = context.save({'loop': loop});
 
       for (var value in loop) {
-        var data = unpack(targets, value);
-        context.push(data);
+        var data = context.save(getDataForTargets(targets, value));
         node.body.accept(this, context);
-        context.pop();
+        context.restore(data);
       }
 
+      context.restore(data);
       return '';
     }
 
@@ -271,7 +276,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
 
   @override
   void visitIf(If node, RenderContext context) {
-    if (utils.boolean(node.test.resolve(context))) {
+    if (boolean(node.test.resolve(context))) {
       node.body.accept(this, context);
       return;
     }
@@ -312,9 +317,9 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
         entry.key: entry.value.resolve(context)
     };
 
-    context.push(data);
+    data = context.save(data);
     node.body.accept(this, context);
-    context.pop();
+    context.restore(data);
   }
 
   @override
@@ -342,13 +347,13 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
 
   @override
   void visitWith(With node, RenderContext context) {
-    var targets =
-        node.targets.map<Object?>((target) => target.resolve(context)).toList();
-    var values =
-        node.values.map<Object?>((value) => value.resolve(context)).toList();
-    context.push(getDataForTargets(targets, values));
+    var expressions = node.targets;
+    var targets = generate(expressions, (i) => expressions[i].resolve(context));
+    expressions = node.values;
+    var values = generate(expressions, (i) => expressions[i].resolve(context));
+    var data = context.save(getDataForTargets(targets, values));
     node.body.accept(this, context);
-    context.pop();
+    context.restore(data);
   }
 
   @protected
@@ -360,30 +365,20 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
 
     if (targets is List) {
       var names = targets.cast<String>();
-      List<Object?> list;
+      var values = list(current);
 
-      if (current is List) {
-        list = current;
-      } else if (current is Iterable) {
-        list = current.toList();
-      } else if (current is String) {
-        list = current.split('');
-      } else {
-        throw TypeError();
-      }
-
-      if (list.length < names.length) {
+      if (values.length < names.length) {
         throw StateError(
-            'not enough values to unpack (expected ${names.length}, got ${list.length})');
+            'not enough values to unpack (expected ${names.length}, got ${values.length})');
       }
 
-      if (list.length > names.length) {
+      if (values.length > names.length) {
         throw StateError(
             'too many values to unpack (expected ${names.length})');
       }
 
       return <String, Object?>{
-        for (var i = 0; i < names.length; i++) names[i]: list[i]
+        for (var i = 0; i < names.length; i++) names[i]: values[i]
       };
     }
 

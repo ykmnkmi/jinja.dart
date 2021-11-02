@@ -73,34 +73,6 @@ class LoopContext extends Iterable<Object?> {
     return prev;
   }
 
-  String call(Object? data) {
-    return recurse(data, depth);
-  }
-
-  Object? cycle(Iterable<Object?> values, [Iterable<Object?>? iterable]) {
-    if (values.isEmpty && iterable != null && iterable.isEmpty) {
-      throw TypeError();
-    }
-
-    if (iterable != null) {
-      values = values.followedBy(iterable);
-    }
-
-    return values.elementAt(index0 % values.length);
-  }
-
-  bool changed(Object? item) {
-    if (index0 == 0) {
-      return true;
-    }
-
-    if (item == previtem) {
-      return false;
-    }
-
-    return true;
-  }
-
   Object? operator [](String key) {
     switch (key) {
       case 'length':
@@ -139,6 +111,34 @@ class LoopContext extends Iterable<Object?> {
         var invocation = Invocation.getter(Symbol(key));
         throw NoSuchMethodError.withInvocation(this, invocation);
     }
+  }
+
+  String call(Object? data) {
+    return recurse(data, depth);
+  }
+
+  Object? cycle(Iterable<Object?> values, [Iterable<Object?>? iterable]) {
+    if (values.isEmpty && iterable != null && iterable.isEmpty) {
+      throw TypeError();
+    }
+
+    if (iterable != null) {
+      values = values.followedBy(iterable);
+    }
+
+    return values.elementAt(index0 % values.length);
+  }
+
+  bool changed(Object? item) {
+    if (index0 == 0) {
+      return true;
+    }
+
+    if (item == previtem) {
+      return false;
+    }
+
+    return true;
   }
 
   @override

@@ -5,12 +5,8 @@ typedef ContextCallback<C extends Context> = void Function(C context);
 
 class Context {
   Context(this.environment, [Map<String, Object?>? data])
-      : contexts = <Map<String, Object?>>[
-          environment.globals,
-          <String, Object?>{...?data}
-        ],
-        minimal = 2 {
-    contexts[1]
+      : context = <String, Object?>{...environment.globals, ...?data} {
+    context
       ..['context'] = this
       ..['ctx'] = this
       ..['environment'] = environment
@@ -20,15 +16,11 @@ class Context {
 
   Context.from(Context context)
       : environment = context.environment,
-        contexts = context.contexts,
-        minimal = context.contexts.length;
+        context = Map<String, Object?>.of(context.context);
 
   final Environment environment;
 
-  // TODO: change to single map
-  final List<Map<String, Object?>> contexts;
-
-  final int minimal;
+  final Map<String, Object?> context;
 
   // TODO: remove
   bool get autoEscape {
@@ -62,33 +54,11 @@ class Context {
   }
 
   bool has(String key) {
-    for (var context in contexts.reversed) {
-      if (context.containsKey(key)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  void pop() {
-    if (contexts.length > minimal) {
-      contexts.removeLast();
-    }
-  }
-
-  void push(Map<String, Object?> context) {
-    contexts.add(context);
+    return context.containsKey(key);
   }
 
   Object? resolve(String key) {
-    for (var context in contexts.reversed) {
-      if (context.containsKey(key)) {
-        return context[key];
-      }
-    }
-
-    return null;
+    return context[key];
   }
 
   Object? filter(

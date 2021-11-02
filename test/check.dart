@@ -5,14 +5,14 @@ import 'package:jinja/reflection.dart';
 import 'package:stack_trace/stack_trace.dart';
 
 const String source = '''
-{%- set items = [] %}
-{%- for char in "foo" %}
-    {%- do items.add(loop.index0 ~ char) %}
-{%- endfor %}{{ items|join(', ') }}''';
+{% with a=42, b=23 -%}
+  {{ a }} = {{ b }}
+{% endwith -%}
+  {{ a }} = {{ b }}''';
 
 void main() {
   try {
-    var env = Environment(fieldGetter: fieldGetter);
+    var env = Environment(fieldGetter: fieldGetter, optimized: false);
     var tokens = env.lex(source);
     // print(tokens);
     var nodes = env.parse(tokens);
