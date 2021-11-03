@@ -4,7 +4,7 @@ import 'markup.dart';
 typedef ContextCallback<C extends Context> = void Function(C context);
 
 class Context {
-  Context(this.environment, [Map<String, Object?>? data])
+  Context(this.environment, {this.parent, Map<String, Object?>? data})
       : context = <String, Object?>{...environment.globals, ...?data} {
     context
       ..['context'] = this
@@ -14,11 +14,9 @@ class Context {
       ..['autoescape'] = environment.autoEscape;
   }
 
-  Context.from(Context context)
-      : environment = context.environment,
-        context = Map<String, Object?>.of(context.context);
-
   final Environment environment;
+
+  final Map<String, Object?>? parent;
 
   final Map<String, Object?> context;
 
@@ -32,6 +30,10 @@ class Context {
     var function = object.call as Function;
     positional ??= <Object?>[];
     return Function.apply(function, positional, named);
+  }
+
+  Context derived() {
+    return Context(environment, parent: context);
   }
 
   Object? escape(Object? value, [bool escaped = false]) {
@@ -55,11 +57,35 @@ class Context {
   }
 
   bool has(String key) {
-    return context.containsKey(key);
+    if (context.containsKey(key)) {
+      return true;
+    }
+
+    var parent = this.parent;
+
+    if (parent == null) {
+      return false;
+    }
+
+    return parent.containsKey(key);
+  }
+
+  Object? get(String key) {
+    return context[key];
   }
 
   Object? resolve(String key) {
-    return context[key];
+    if (context.containsKey(key)) {
+      return context[key];
+    }
+
+    var parent = this.parent;
+
+    if (parent == null) {
+      return null;
+    }
+
+    return parent[key];
   }
 
   Object? filter(

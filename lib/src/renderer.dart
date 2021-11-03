@@ -9,19 +9,24 @@ import 'visitor.dart';
 
 class RenderContext extends Context {
   RenderContext(Environment environment, this.sink,
-      {Map<String, Object?>? data})
-      : blocks = <String, List<Block>>{},
-        super(environment, data);
-
-  RenderContext.from(Context context, this.sink)
-      : blocks = <String, List<Block>>{},
-        super.from(context);
+      {Map<String, List<Block>>? blocks,
+      Map<String, Object?>? parent,
+      Map<String, Object?>? data})
+      : blocks = blocks ?? <String, List<Block>>{},
+        super(environment, parent: parent, data: data);
 
   final StringSink sink;
 
   final Map<String, List<Block>> blocks;
 
-  LoopContext? loop;
+  @override
+  RenderContext derived(
+      {StringBuffer? buffer,
+      Map<String, List<Block>>? blocks,
+      Map<String, Object?>? data}) {
+    return RenderContext(environment, buffer ?? sink,
+        blocks: blocks ?? this.blocks, parent: context, data: data);
+  }
 
   Map<String, Object?> save(Map<String, Object?> map) {
     var save = <String, Object?>{};
@@ -121,8 +126,8 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
   void visitAssignBlock(AssignBlock node, RenderContext context) {
     var target = node.target.resolve(context);
     var buffer = StringBuffer();
-    node.body.accept(this, RenderContext.from(context, buffer));
-    Object? value = '$buffer';
+    node.body.accept(this, context.derived(buffer: buffer));
+    Object? value = buffer.toString();
 
     var filters = node.filters;
 
@@ -205,14 +210,13 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
   @override
   void visitFilterBlock(FilterBlock node, RenderContext context) {
     var buffer = StringBuffer();
-    node.body.accept(this, RenderContext.from(context, buffer));
+    node.body.accept(this, context.derived(buffer: buffer));
     Object? value = '$buffer';
 
     for (var filter in node.filters) {
       value = filter.apply(context, (positional, named) {
         positional.insert(0, value);
-        return context.environment
-            .callFilter(filter.name, positional, named, context);
+        return context.filter(filter.name, positional, named);
       });
     }
 
@@ -259,15 +263,16 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
       }
 
       var loop = LoopContext(values, depth, render);
-      var data = context.save({'loop': loop});
+      var parent = context.get('loop');
+      context.set('loop', loop);
 
       for (var value in loop) {
-        var data = context.save(getDataForTargets(targets, value));
-        node.body.accept(this, context);
-        context.restore(data);
+        var data = getDataForTargets(targets, value);
+        var forContext = context.derived(data: data);
+        node.body.accept(this, forContext);
       }
 
-      context.restore(data);
+      context.set('loop', parent);
       return '';
     }
 
