@@ -4,18 +4,14 @@ import 'package:jinja/jinja.dart';
 import 'package:jinja/reflection.dart';
 import 'package:stack_trace/stack_trace.dart';
 
-const String source = '''
-{%- set items = [] %}
-{%- for char in "foo" %}
-    {%- do items.add(loop.index0 ~ char) %}
-{%- endfor %}{{ items|join(', ') }}''';
+const String source = '''{{ "o" == "foo" }}''';
 
 void main() {
   try {
     var env = Environment(fieldGetter: fieldGetter);
-    var tokens = env.lex(source);
+    // var tokens = env.lex(source);
     // print(tokens);
-    var nodes = env.parse(tokens);
+    var nodes = env.parse(source);
     print(nodes);
     var template = Template.parsed(env, nodes);
     print(template.nodes);

@@ -41,13 +41,12 @@ bool isFloat(Object? value) {
   return value is double;
 }
 
-bool isGreaterThanOrEqual(
-    Comparable<Object?> value, Comparable<Object?> other) {
-  return value.compareTo(other) >= 0;
+bool isGreaterThanOrEqual(Object? value, Object? other) {
+  return (value as Comparable<Object?>).compareTo(other) >= 0;
 }
 
-bool isGreaterThan(Comparable<Object?> value, Comparable<Object?> other) {
-  return value.compareTo(other) > 0;
+bool isGreaterThan(Object? value, Object? other) {
+  return (value as Comparable<Object?>).compareTo(other) > 0;
 }
 
 bool isIn(Object? value, Object? values) {
@@ -78,12 +77,12 @@ bool isIterable(Object? value) {
   return value is Iterable;
 }
 
-bool isLessThanOrEqual(Comparable<Object?> value, Comparable<Object?> other) {
-  return value.compareTo(other) <= 0;
+bool isLessThanOrEqual(Object? value, Object? other) {
+  return (value as Comparable<Object?>).compareTo(other) <= 0;
 }
 
-bool isLessThan(Comparable<Object?> value, Comparable<Object?> other) {
-  return value.compareTo(other) < 0;
+bool isLessThan(Object? value, Object? other) {
+  return (value as Comparable<Object?>).compareTo(other) < 0;
 }
 
 bool isLower(String value) {
