@@ -606,7 +606,7 @@ class Filter extends Callable {
       List<Keyword>? keywords,
       Expression? dArguments,
       Expression? dKeywords})
-      // TODO: remove after better null safety promotion
+      // remove after better null safety promotion
       // ignore: prefer_initializing_formals
       : expression = expression,
         super(
@@ -852,10 +852,56 @@ class Concat extends Expression {
   }
 }
 
+enum CompareOperator {
+  equal,
+  notEqual,
+  lessThan,
+  lessThanOrEqual,
+  greaterThan,
+  greaterThanOrEqual,
+  contains,
+  notContains,
+}
+
 class Operand extends Expression {
+  factory Operand.from(String string, Expression value) {
+    CompareOperator operator;
+
+    switch (string) {
+      case 'eq':
+        operator = CompareOperator.equal;
+        break;
+      case 'ne':
+        operator = CompareOperator.notEqual;
+        break;
+      case 'lt':
+        operator = CompareOperator.lessThan;
+        break;
+      case 'lteq':
+        operator = CompareOperator.lessThanOrEqual;
+        break;
+      case 'gt':
+        operator = CompareOperator.greaterThan;
+        break;
+      case 'gteq':
+        operator = CompareOperator.greaterThanOrEqual;
+        break;
+      case 'in':
+        operator = CompareOperator.contains;
+        break;
+      case 'notin':
+        operator = CompareOperator.notContains;
+        break;
+      default:
+        throw UnimplementedError('compare operator: $string');
+    }
+
+    return Operand(operator, value);
+  }
+
   Operand(this.operator, this.value);
 
-  String operator;
+  CompareOperator operator;
 
   Expression value;
 
@@ -882,7 +928,7 @@ class Operand extends Expression {
 
   @override
   String toString() {
-    return 'Operand(\'$operator\', $value)';
+    return 'Operand(${operator.name}, $value)';
   }
 }
 
@@ -939,27 +985,24 @@ class Compare extends Expression {
     return 'Compare($value, $operands)';
   }
 
-  static bool calc(String operator, Object? left, Object? right) {
+  static bool calc(CompareOperator operator, Object? left, Object? right) {
     switch (operator) {
-      case 'eq':
+      case CompareOperator.equal:
         return tests.isEqual(left, right);
-      case 'ne':
+      case CompareOperator.notEqual:
         return tests.isNotEqual(left, right);
-      case 'lt':
-        return tests.isLessThan(left as Comparable, right as Comparable);
-      case 'lteq':
-        return tests.isLessThanOrEqual(left as Comparable, right as Comparable);
-      case 'gt':
-        return tests.isGreaterThan(left as Comparable, right as Comparable);
-      case 'gteq':
-        return tests.isGreaterThanOrEqual(left as Comparable, right as Comparable);
-      case 'in':
+      case CompareOperator.lessThan:
+        return tests.isLessThan(left, right);
+      case CompareOperator.lessThanOrEqual:
+        return tests.isLessThanOrEqual(left, right);
+      case CompareOperator.greaterThan:
+        return tests.isGreaterThan(left, right);
+      case CompareOperator.greaterThanOrEqual:
+        return tests.isGreaterThanOrEqual(left, right);
+      case CompareOperator.contains:
         return tests.isIn(left, right);
-      case 'notin':
+      case CompareOperator.notContains:
         return !tests.isIn(left, right);
-      default:
-        // TODO: update error
-        throw UnimplementedError(operator);
     }
   }
 }

@@ -435,13 +435,13 @@ class Parser {
       if (reader.current.testAny(['eq', 'ne', 'lt', 'lteq', 'gt', 'gteq'])) {
         var type = reader.current.type;
         reader.next();
-        operands.add(Operand(type, parseMath1(reader)));
+        operands.add(Operand.from(type, parseMath1(reader)));
       } else if (reader.skipIf('name', 'in')) {
-        operands.add(Operand('in', parseMath1(reader)));
+        operands.add(Operand(CompareOperator.contains, parseMath1(reader)));
       } else if (reader.current.test('name', 'not') &&
           reader.look().test('name', 'in')) {
         reader.skip(2);
-        operands.add(Operand('notin', parseMath1(reader)));
+        operands.add(Operand(CompareOperator.notContains, parseMath1(reader)));
       } else {
         break;
       }

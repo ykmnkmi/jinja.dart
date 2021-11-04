@@ -307,7 +307,6 @@ class Environment {
   /// This can be useful for extension development and debugging templates.
   @internal
   List<Token> lex(String source) {
-    // TODO: handle error
     return lexer.tokenize(source);
   }
 
@@ -315,8 +314,8 @@ class Environment {
   ///
   /// This is useful for debugging or to extract information from templates.
   @internal
-  List<Node> parse(List<Token> tokens) {
-    // TODO: handle error
+  List<Node> parse(String source) {
+    var tokens = lex(source);
     var reader = TokenReader(tokens);
     return parser.scan(reader);
   }
@@ -325,17 +324,23 @@ class Environment {
   Template fromString(String source, {String? path}) {
     var nodes = Parser(this, path: path).parse(source);
     var template = Template.parsed(this, nodes, path: path);
-    return optimized
-        ? const Optimizer().visitTemplate(template, Context(this))
-        : template;
+
+    if (optimized) {
+      template.accept(const Optimizer(), Context(this));
+    }
+
+    return template;
   }
 
   /// Load a template by name with [loader] and return a
   /// [Template]. If the template does not exist a [TemplateNotFound]
   /// exception is thrown.
   Template getTemplate(String template) {
-    // TODO: handle error
-    var loader = this.loader!;
+    var loader = this.loader;
+
+    if (loader == null) {
+      throw StateError('no loader for this environment specified');
+    }
 
     if (autoReload) {
       return templates[template] = loader.load(this, template);
@@ -349,8 +354,13 @@ class Environment {
   /// This requires that the loader supports the loader's
   /// [Loader.listTemplates] method.
   List<String> listTemplates() {
-    // TODO: handle error
-    return loader!.listTemplates();
+    var loader = this.loader;
+
+    if (loader == null) {
+      throw StateError('no loader for this environment specified');
+    }
+
+    return loader.listTemplates();
   }
 
   /// Create a new overlay environment that shares all the data with
