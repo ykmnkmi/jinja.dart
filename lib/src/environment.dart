@@ -1,8 +1,6 @@
 import 'dart:collection' show HashMap;
 import 'dart:math' show Random;
 
-import 'package:meta/meta.dart' show internal;
-
 import 'defaults.dart' as defaults;
 import 'exceptions.dart';
 import 'lexer.dart';
@@ -15,17 +13,15 @@ import 'renderer.dart';
 import 'runtime.dart';
 import 'visitor.dart';
 
-// TODO: docs
+/// Signature for the object attribute getter.
+typedef FieldGetter = Object? Function(Object? object, String field);
+
+/// Signature for the object attribute getter.
 typedef Finalizer = Object? Function(Object? value);
 
-// TODO: docs
-typedef ContextFinalizer = Object? Function(Context ctx, Object? value);
-
-// TODO: docs
 typedef EnvironmentFinalizer = Object? Function(Environment env, Object? value);
 
-// TODO: docs
-typedef FieldGetter = Object? Function(Object? object, String field);
+typedef ContextFinalizer = Object? Function(Context ctx, Object? value);
 
 /// The core component of Jinja 2 is the Environment. It contains
 /// important shared variables like configuration, filters, tests and others.
@@ -53,7 +49,7 @@ class Environment {
       this.newLine = defaults.newLine,
       this.keepTrailingNewLine = defaults.keepTrailingNewLine,
       this.optimized = true,
-      Function finalize = defaults.finalize,
+      this.finalize = defaults.finalize,
       this.autoEscape = false,
       this.loader,
       this.autoReload = true,
@@ -63,13 +59,12 @@ class Environment {
       Map<String, Function>? contextFilters,
       Map<String, Function>? tests,
       Map<String, Template>? templates,
-      List<NodeVisitor>? modifiers,
       Random? random,
       this.fieldGetter = defaults.fieldGetter})
       : assert(finalize is Finalizer ||
             finalize is ContextFinalizer ||
             finalize is EnvironmentFinalizer),
-        finalize = finalize is EnvironmentFinalizer
+        wrappedFinalize = finalize is EnvironmentFinalizer
             ? ((context, value) => finalize(context.environment, value))
             : finalize is ContextFinalizer
                 ? finalize
@@ -159,7 +154,9 @@ class Environment {
   ///
   /// For example one can convert `null` (`none`) implicitly into an empty
   /// string here.
-  final ContextFinalizer finalize;
+  final Function finalize;
+
+  final ContextFinalizer wrappedFinalize;
 
   /// If set to `true` the XML/HTML autoescaping feature is enabled by
   /// default.
@@ -245,7 +242,6 @@ class Environment {
   }
 
   /// If [name] not found throws [TemplateRuntimeError].
-  @internal
   Object? callFilter(
       String name, List<Object?> positional, Map<Symbol, Object?> named,
       [Context? context]) {
@@ -274,7 +270,6 @@ class Environment {
   }
 
   /// If [name] not found throws [TemplateRuntimeError].
-  @internal
   bool callTest(
       String name, List<Object?> positional, Map<Symbol, Object?> named) {
     var test = tests[name];
@@ -287,7 +282,6 @@ class Environment {
   }
 
   /// Get an item or attribute of an object but prefer the attribute.
-  @internal
   Object? getAttribute(dynamic object, String field) {
     try {
       return fieldGetter(object, field);
@@ -297,7 +291,6 @@ class Environment {
   }
 
   /// Get an item or attribute of an object but prefer the item.
-  @internal
   Object? getItem(dynamic object, Object? key) {
     return object[key];
   }
@@ -305,7 +298,6 @@ class Environment {
   /// Lex the given sourcecode and return a list of [Token]'s.
   ///
   /// This can be useful for extension development and debugging templates.
-  @internal
   List<Token> lex(String source) {
     return lexer.tokenize(source);
   }
@@ -313,7 +305,6 @@ class Environment {
   /// Parse the sourcecode and return the abstract syntax tree.
   ///
   /// This is useful for debugging or to extract information from templates.
-  @internal
   List<Node> parse(String source) {
     var tokens = lex(source);
     var reader = TokenReader(tokens);
@@ -500,7 +491,6 @@ class Template extends Node {
           environmentFilters: environmentFilters,
           contextFilters: contextFilters,
           tests: tests,
-          modifiers: modifiers,
           random: random,
           fieldGetter: fieldGetter);
     }

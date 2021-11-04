@@ -1,5 +1,3 @@
-import 'package:meta/meta.dart';
-
 import 'environment.dart';
 import 'exceptions.dart';
 import 'nodes.dart';
@@ -56,7 +54,6 @@ class RenderContext extends Context {
     return false;
   }
 
-  @protected
   void assignTargets(Object? target, Object? current) {
     if (target is String) {
       set(target, current);
@@ -96,7 +93,7 @@ class RenderContext extends Context {
   }
 
   Object? finalize(Object? object) {
-    return environment.finalize(this, object);
+    return environment.wrappedFinalize(this, object);
   }
 
   void write(Object? object) {
@@ -105,7 +102,6 @@ class RenderContext extends Context {
 }
 
 class StringSinkRenderer extends Visitor<RenderContext, Object?> {
-  @literal
   const StringSinkRenderer();
 
   @override
@@ -361,7 +357,6 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
     context.restore(data);
   }
 
-  @protected
   static Map<String, Object?> getDataForTargets(
       Object? targets, Object? current) {
     if (targets is String) {

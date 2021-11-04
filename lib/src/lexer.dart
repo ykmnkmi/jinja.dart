@@ -310,8 +310,8 @@ class Lexer {
         var match = scanner.lastMatch as RegExpMatch;
 
         if (rule is MultiTokenRule) {
-          var groups = match.groups(
-              List<int>.generate(match.groupCount, (index) => index + 1));
+          var indexes = List<int>.generate(match.groupCount, (i) => i + 1);
+          var groups = match.groups(indexes);
 
           if (rule.optionalLStrip) {
             var text = groups[0]!;
@@ -325,11 +325,15 @@ class Lexer {
 
             if (stripSign == '-') {
               var stripped = text.trimRight();
-              newLinesStripped = text
-                  .substring(stripped.length)
-                  .split('')
-                  .fold<int>(
-                      0, (count, char) => char == '\n' ? count + 1 : count);
+              var substring = text.substring(stripped.length);
+              newLinesStripped = 0;
+
+              for (var char in substring.split('')) {
+                if (char == '\n') {
+                  newLinesStripped += 1;
+                }
+              }
+
               groups[0] = stripped;
             } else if (stripSign != '+' &&
                 leftStripUnlessRe != null &&
@@ -362,9 +366,13 @@ class Lexer {
 
                 if (group != null) {
                   tokens.add(Token(line, name, group));
-                  line += group.split('').fold<int>(
-                      0, (count, char) => char == '\n' ? count + 1 : count);
                   notFound = false;
+
+                  for (var char in group.split('')) {
+                    if (char == '\n') {
+                      line += 1;
+                    }
+                  }
                 }
               }
 
@@ -431,16 +439,18 @@ class Lexer {
               tokens.add(Token(line, token, data));
             }
 
-            line += data.split('').fold<int>(
-                0, (count, char) => char == '\n' ? count + 1 : count);
+            for (var char in data.split('')) {
+              if (char == '\n') {
+                line += 1;
+              }
+            }
           }
         } else {
           throw UnsupportedError('${rule.runtimeType}');
         }
 
-        lineStarting = match[0]!.endsWith('\n');
-
         var position2 = match.end;
+        lineStarting = match[0]!.endsWith('\n');
 
         if (rule.newState != null) {
           if (rule.newState == '#pop') {
@@ -458,8 +468,9 @@ class Lexer {
             }
 
             if (notFound) {
-              throw Exception(
-                  '${rule.regExp} wanted to resolve the token dynamically but no group matched');
+              // TODO: update error
+              throw Exception('${rule.regExp} wanted to resolve the token '
+                  'dynamically but no group matched');
             }
           } else {
             stack.add(rule.newState!);
@@ -467,7 +478,9 @@ class Lexer {
 
           stateRules = rules[stack.last]!;
         } else if (position == position2) {
-          throw '${rule.regExp} yielded empty string without stack change';
+          // TODO: update error
+          throw Exception(
+              '${rule.regExp} yielded empty string without stack change');
         }
 
         position = position2;
