@@ -5,12 +5,13 @@
 Variables, expressions, control structures and template inheritance.
 
 ## Breaking changes 0.4.0, less dynamic
-- no `Undefined` and `missing`
-- no slices and negative indexes
-- no dynamic template imports, only single constant template path/name
+- remove `Undefined` and `missing`
+- remove slices and negative indexes
+- remove dynamic template imports, only single constant template path/name
 - `Environment.copyWith` renamed to `Environment.overlay`
-- `Template.render` now accepts `Map<String, Object?>`
-- no `Template.renderMap`
+- `Environment.copyWith` renamed to `Environment.overlay`
+- remove dynamic `Template.render` method
+- `Template.renderMap` renamed to `Template.render`
 - `Loader.listSources` renamed to `Loader.listTemplates`
 - `FileSystemLoader` moved from `package:jinja/jinja.dart` to `package:jinja/loaders.dart`
 - _work in progress_
@@ -43,7 +44,6 @@ See also examples with [conduit][conduit_example] and [reflectable][reflectable_
     - selectAutoescape
   - addExtension
   - compileExpression
-  - shared
 - Template
   - generate
   - stream
@@ -59,7 +59,8 @@ See also examples with [conduit][conduit_example] and [reflectable][reflectable_
   - Expression Statement
   - Loop Controls
   - Debug Statement
-- ... working
+- Template compiler
+- ...
 
 ### Done:
 - Variables

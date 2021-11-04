@@ -91,21 +91,10 @@ abstract class BaseToken implements Token {
     value ??= this.value;
 
     if (type != null && Token.common.containsKey(type)) {
-      if (Token.common[type] != value) {
-        // TODO: update error message
-        throw TemplateSyntaxError('$this');
-      }
-
-      value = null;
-    } else {
-      type ??= this.type;
-    }
-
-    if (value == null) {
       return Token.simple(line, type);
     }
 
-    return Token(line, type, value);
+    return Token(line, type ?? this.type, value);
   }
 
   @override
@@ -197,85 +186,47 @@ String describeToken(Token token) {
   return describeTokenType(token.type);
 }
 
+const Map<String, String> tokenDescriptions = <String, String>{
+  'add': '+',
+  'sub': '-',
+  'div': '/',
+  'floordiv': '//',
+  'mul': '*',
+  'mod': '%',
+  'pow': '**',
+  'tilde': '~',
+  'lbracket': '[',
+  'rbracket': ']',
+  'lparen': '(',
+  'rparen': ')',
+  'lbrace': '{',
+  'rbrace': '}',
+  'eq': '==',
+  'ne': '!=',
+  'gt': '>',
+  'gteq': '>=',
+  'lt': '<',
+  'lteq': '<=',
+  'assign': '=',
+  'dot': '.',
+  'colon': ':',
+  'pipe': '|',
+  'comma': ',',
+  'semicolon': ';',
+  'comment_start': 'start of comment',
+  'comment_end': 'end of comment',
+  'comment': 'comment',
+  'linecomment': 'comment',
+  'block_start': 'start of statement block',
+  'block_end': 'end of statement block',
+  'variable_start': 'start of print statement',
+  'variable_end': 'end of print statement',
+  'linestatement_start': 'start of line statement',
+  'linestatement_end': 'end of line statement',
+  'data': 'template data / text',
+  'eof': 'end of template',
+};
+
 String describeTokenType(String type) {
-  switch (type) {
-    case 'add':
-      return '+';
-    case 'sub':
-      return '-';
-    case 'div':
-      return '/';
-    case 'floordiv':
-      return '//';
-    case 'mul':
-      return '*';
-    case 'mod':
-      return '%';
-    case 'pow':
-      return '**';
-    case 'tilde':
-      return '~';
-    case 'lbracket':
-      return '[';
-    case 'rbracket':
-      return ']';
-    case 'lparen':
-      return '(';
-    case 'rparen':
-      return ')';
-    case 'lbrace':
-      return '{';
-    case 'rbrace':
-      return '}';
-    case 'eq':
-      return '==';
-    case 'ne':
-      return '!=';
-    case 'gt':
-      return '>';
-    case 'gteq':
-      return '>=';
-    case 'lt':
-      return '<';
-    case 'lteq':
-      return '<=';
-    case 'assign':
-      return '=';
-    case 'dot':
-      return '.';
-    case 'colon':
-      return ':';
-    case 'pipe':
-      return '|';
-    case 'comma':
-      return ',';
-    case 'semicolon':
-      return ';';
-    case 'comment_start':
-      return 'start of comment';
-    case 'comment_end':
-      return 'end of comment';
-    case 'comment':
-      return 'comment';
-    case 'linecomment':
-      return 'comment';
-    case 'block_start':
-      return 'start of statement block';
-    case 'block_end':
-      return 'end of statement block';
-    case 'variable_start':
-      return 'start of print statement';
-    case 'variable_end':
-      return 'end of print statement';
-    case 'linestatement_start':
-      return 'start of line statement';
-    case 'linestatement_end':
-      return 'end of line statement';
-    case 'data':
-      return 'template data / text';
-    case 'eof':
-      return 'end of template';
-    default:
-      return type;
-  }
+  return tokenDescriptions[type] ?? type;
 }
