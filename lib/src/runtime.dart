@@ -1,7 +1,5 @@
 import 'dart:collection' show MapView;
 
-export 'context.dart';
-
 class LoopContext extends Iterable<Object?> {
   LoopContext(this.values, this.depth0, this.recurse)
       : length = values.length,

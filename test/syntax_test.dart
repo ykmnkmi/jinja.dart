@@ -277,9 +277,11 @@ void main() {
     test('neg filter priority', () {
       var tmpl = env.fromString('{{ -1|foo }}');
       var node = tmpl.nodes[0];
+
       expect(node, predicate<Filter>((filter) {
         var expression = filter.arguments![0];
-        return expression is Unary && expression.operator == '-';
+        return expression is Unary &&
+            expression.operator == UnaryOperator.minus;
       }));
     });
 

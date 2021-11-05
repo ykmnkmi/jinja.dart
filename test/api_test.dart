@@ -27,23 +27,23 @@ void main() {
     });
 
     test('no finalize template data', () {
-      var env = Environment(finalize: (dynamic obj) => obj.runtimeType);
+      var env = Environment(finalize: (Object? obj) => obj.runtimeType);
       var tmpl = env.fromString('<{{ value }}>');
       expect(tmpl.render({'value': 123}), equals('<int>'));
     });
 
     test('context finalize', () {
-      var env = Environment(
-          finalize: (Context context, Object? value) =>
-              (value as dynamic) * context.resolve('scale'));
+      Object? finalize(Context context, dynamic value) =>
+          value * context.resolve('scale');
+      var env = Environment(finalize: finalize);
       var tmpl = env.fromString('{{ value }}');
       expect(tmpl.render({'value': 5, 'scale': 3}), equals('15'));
     });
 
     test('env autoescape', () {
-      var env = Environment(
-          finalize: (Environment environment, Object? value) =>
-              '${environment.variableStart} ${repr(value)} ${environment.variableEnd}');
+      Object? finalize(Environment environment, Object? value) =>
+          '${environment.variableStart} ${repr(value)} ${environment.variableEnd}';
+      var env = Environment(finalize: finalize);
       var tmpl = env.fromString('{{ value }}');
       expect(tmpl.render({'value': 'hello'}), equals("{{ 'hello' }}"));
     });

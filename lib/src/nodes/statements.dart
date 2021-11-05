@@ -1,5 +1,11 @@
 part of '../nodes.dart';
 
+abstract class ImportContext {
+  bool get withContext;
+
+  set withContext(bool withContext);
+}
+
 abstract class Statement extends Node {}
 
 class Extends extends Statement {
