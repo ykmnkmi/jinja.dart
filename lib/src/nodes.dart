@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'context.dart';
 import 'runtime.dart';
 import 'tests.dart' as tests;
 import 'utils.dart';
@@ -9,12 +10,6 @@ part 'nodes/expressions.dart';
 part 'nodes/statements.dart';
 
 typedef NodeVisitor = void Function(Node node);
-
-abstract class ImportContext {
-  bool get withContext;
-
-  set withContext(bool withContext);
-}
 
 abstract class Node {
   const Node();
@@ -103,27 +98,4 @@ class Data extends Node {
   String toString() {
     return 'Data($literal)';
   }
-}
-
-class Impossible implements Exception {
-  Impossible();
-}
-
-abstract class Expression extends Node {
-  const Expression();
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitExpession(this, context);
-  }
-
-  Object? asConst(Context context) {
-    throw Impossible();
-  }
-
-  Object? resolve(Context context) {
-    return null;
-  }
-
-  void update(ExpressionUpdater updater) {}
 }

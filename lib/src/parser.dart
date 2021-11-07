@@ -402,7 +402,7 @@ class Parser {
     var expression = parseAnd(reader);
 
     while (reader.skipIf('name', 'or')) {
-      expression = Binary('or', expression, parseAnd(reader));
+      expression = Binary(BinaryOperator.or, expression, parseAnd(reader));
     }
 
     return expression;
@@ -412,7 +412,7 @@ class Parser {
     var expression = parseNot(reader);
 
     while (reader.skipIf('name', 'and')) {
-      expression = Binary('and', expression, parseNot(reader));
+      expression = Binary(BinaryOperator.and, expression, parseNot(reader));
     }
 
     return expression;
@@ -421,7 +421,7 @@ class Parser {
   Expression parseNot(TokenReader reader) {
     if (reader.current.test('name', 'not')) {
       reader.next();
-      return Unary('not', parseNot(reader));
+      return Unary(UnaryOperator.not, parseNot(reader));
     }
 
     return parseCompare(reader);
@@ -431,20 +431,25 @@ class Parser {
     var expression = parseMath1(reader);
     var operands = <Operand>[];
 
+    outer:
     while (true) {
+      CompareOperator operator;
+
       if (reader.current.testAny(['eq', 'ne', 'lt', 'lteq', 'gt', 'gteq'])) {
-        var type = reader.current.type;
+        var token = reader.current;
         reader.next();
-        operands.add(Operand.from(type, parseMath1(reader)));
+        operator = Operand.operatorFrom(token.type)!;
       } else if (reader.skipIf('name', 'in')) {
-        operands.add(Operand(CompareOperator.contains, parseMath1(reader)));
+        operator = CompareOperator.contains;
       } else if (reader.current.test('name', 'not') &&
           reader.look().test('name', 'in')) {
         reader.skip(2);
-        operands.add(Operand(CompareOperator.notContains, parseMath1(reader)));
+        operator = CompareOperator.notContains;
       } else {
-        break;
+        break outer;
       }
+
+      operands.add(Operand(operator, parseMath1(reader)));
     }
 
     if (operands.isEmpty) {
@@ -459,18 +464,22 @@ class Parser {
 
     outer:
     while (true) {
+      BinaryOperator operator;
+
       switch (reader.current.type) {
         case 'add':
           reader.next();
-          expression = Binary('+', expression, parseConcat(reader));
+          operator = BinaryOperator.plus;
           break;
         case 'sub':
           reader.next();
-          expression = Binary('-', expression, parseConcat(reader));
+          operator = BinaryOperator.minus;
           break;
         default:
           break outer;
       }
+
+      expression = Binary(operator, expression, parseConcat(reader));
     }
 
     return expression;
@@ -496,26 +505,30 @@ class Parser {
 
     outer:
     while (true) {
+      BinaryOperator operator;
+
       switch (reader.current.type) {
         case 'mul':
           reader.next();
-          expression = Binary('*', expression, parsePow(reader));
+          operator = BinaryOperator.multiple;
           break;
         case 'div':
           reader.next();
-          expression = Binary('/', expression, parsePow(reader));
+          operator = BinaryOperator.division;
           break;
         case 'floordiv':
           reader.next();
-          expression = Binary('//', expression, parsePow(reader));
+          operator = BinaryOperator.floorDivision;
           break;
         case 'mod':
           reader.next();
-          expression = Binary('%', expression, parsePow(reader));
+          operator = BinaryOperator.module;
           break;
         default:
           break outer;
       }
+
+      expression = Binary(operator, expression, parsePow(reader));
     }
 
     return expression;
@@ -526,7 +539,7 @@ class Parser {
 
     while (reader.current.test('pow')) {
       reader.next();
-      expression = Binary('**', expression, parseUnary(reader));
+      expression = Binary(BinaryOperator.power, expression, parseUnary(reader));
     }
 
     return expression;
@@ -539,12 +552,12 @@ class Parser {
       case 'add':
         reader.next();
         expression = parseUnary(reader, withFilter: false);
-        expression = Unary('+', expression);
+        expression = Unary(UnaryOperator.plus, expression);
         break;
       case 'sub':
         reader.next();
         expression = parseUnary(reader, withFilter: false);
-        expression = Unary('-', expression);
+        expression = Unary(UnaryOperator.minus, expression);
         break;
       default:
         expression = parsePrimary(reader);
@@ -594,8 +607,10 @@ class Parser {
           reader.next();
         }
 
-        expression = Constant(
-            '$buffer'.replaceAll(r'\\r', '\r').replaceAll(r'\\n', '\n'));
+        expression = Constant(buffer
+            .toString()
+            .replaceAll(r'\\r', '\r')
+            .replaceAll(r'\\n', '\n'));
         break;
       case 'integer':
       case 'float':
@@ -891,7 +906,7 @@ class Parser {
     }
 
     if (negated) {
-      expression = Unary('not', expression);
+      expression = Unary(UnaryOperator.not, expression);
     }
 
     return expression;

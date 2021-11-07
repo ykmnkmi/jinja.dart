@@ -6,6 +6,29 @@ enum AssignContext {
   parameter,
 }
 
+class Impossible implements Exception {
+  Impossible();
+}
+
+abstract class Expression extends Node {
+  const Expression();
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitExpession(this, context);
+  }
+
+  Object? asConst(Context context) {
+    throw Impossible();
+  }
+
+  Object? resolve(Context context) {
+    return null;
+  }
+
+  void update(ExpressionUpdater updater) {}
+}
+
 mixin Assignable on Expression {
   bool get canAssign;
 
@@ -864,41 +887,6 @@ enum CompareOperator {
 }
 
 class Operand extends Expression {
-  factory Operand.from(String string, Expression value) {
-    CompareOperator operator;
-
-    switch (string) {
-      case 'eq':
-        operator = CompareOperator.equal;
-        break;
-      case 'ne':
-        operator = CompareOperator.notEqual;
-        break;
-      case 'lt':
-        operator = CompareOperator.lessThan;
-        break;
-      case 'lteq':
-        operator = CompareOperator.lessThanOrEqual;
-        break;
-      case 'gt':
-        operator = CompareOperator.greaterThan;
-        break;
-      case 'gteq':
-        operator = CompareOperator.greaterThanOrEqual;
-        break;
-      case 'in':
-        operator = CompareOperator.contains;
-        break;
-      case 'notin':
-        operator = CompareOperator.notContains;
-        break;
-      default:
-        throw UnimplementedError('compare operator: $string');
-    }
-
-    return Operand(operator, value);
-  }
-
   Operand(this.operator, this.value);
 
   CompareOperator operator;
@@ -929,6 +917,29 @@ class Operand extends Expression {
   @override
   String toString() {
     return 'Operand(${operator.name}, $value)';
+  }
+
+  static CompareOperator? operatorFrom(String operator) {
+    switch (operator) {
+      case 'eq':
+        return CompareOperator.equal;
+      case 'ne':
+        return CompareOperator.notEqual;
+      case 'lt':
+        return CompareOperator.lessThan;
+      case 'lteq':
+        return CompareOperator.lessThanOrEqual;
+      case 'gt':
+        return CompareOperator.greaterThan;
+      case 'gteq':
+        return CompareOperator.greaterThanOrEqual;
+      case 'in':
+        return CompareOperator.contains;
+      case 'notin':
+        return CompareOperator.notContains;
+      default:
+        return null;
+    }
   }
 }
 
@@ -1007,10 +1018,16 @@ class Compare extends Expression {
   }
 }
 
+enum UnaryOperator {
+  plus,
+  minus,
+  not,
+}
+
 class Unary extends Expression {
   Unary(this.operator, this.value);
 
-  String operator;
+  UnaryOperator operator;
 
   Expression value;
 
@@ -1041,29 +1058,38 @@ class Unary extends Expression {
 
   @override
   String toString() {
-    return 'Unary(\'$operator\', $value)';
+    return 'Unary(${operator.name}, $value)';
   }
 
-  static Object? calc(String operator, dynamic value) {
+  static Object? calc(UnaryOperator operator, dynamic value) {
     switch (operator) {
-      case '+':
+      case UnaryOperator.plus:
         // how i should implement this?
         return value;
-      case '-':
+      case UnaryOperator.minus:
         return -value;
-      case 'not':
+      case UnaryOperator.not:
         return !boolean(value);
-      default:
-        // TODO: update error
-        throw UnimplementedError();
     }
   }
+}
+
+enum BinaryOperator {
+  power,
+  module,
+  floorDivision,
+  division,
+  multiple,
+  minus,
+  plus,
+  or,
+  and,
 }
 
 class Binary extends Expression {
   Binary(this.operator, this.left, this.right);
 
-  String operator;
+  BinaryOperator operator;
 
   Expression left;
 
@@ -1098,32 +1124,29 @@ class Binary extends Expression {
 
   @override
   String toString() {
-    return 'Binary(\'$operator\', $left, $right)';
+    return 'Binary(${operator.name}, $left, $right)';
   }
 
-  static Object? calc(String operator, dynamic left, dynamic right) {
+  static Object? calc(BinaryOperator operator, dynamic left, dynamic right) {
     switch (operator) {
-      case '**':
+      case BinaryOperator.power:
         return math.pow(left as num, right as num);
-      case '%':
+      case BinaryOperator.module:
         return left % right;
-      case '//':
+      case BinaryOperator.floorDivision:
         return left ~/ right;
-      case '/':
+      case BinaryOperator.division:
         return left / right;
-      case '*':
+      case BinaryOperator.multiple:
         return left * right;
-      case '-':
+      case BinaryOperator.minus:
         return left - right;
-      case '+':
+      case BinaryOperator.plus:
         return left + right;
-      case 'or':
+      case BinaryOperator.or:
         return boolean(left) ? left : right;
-      case 'and':
+      case BinaryOperator.and:
         return boolean(left) ? right : left;
-      default:
-        // TODO: update error
-        throw UnimplementedError();
     }
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:collection' show HashMap;
 import 'dart:math' show Random;
 
+import 'context.dart';
 import 'defaults.dart' as defaults;
 import 'exceptions.dart';
 import 'lexer.dart';
@@ -10,18 +11,13 @@ import 'optimizer.dart';
 import 'parser.dart';
 import 'reader.dart';
 import 'renderer.dart';
-import 'runtime.dart';
 import 'visitor.dart';
 
 /// Signature for the object attribute getter.
 typedef FieldGetter = Object? Function(Object? object, String field);
 
-/// Signature for the object attribute getter.
+/// Signature for the [Environment.finalize] field.
 typedef Finalizer = Object? Function(Object? value);
-
-typedef EnvironmentFinalizer = Object? Function(Environment env, Object? value);
-
-typedef ContextFinalizer = Object? Function(Context ctx, Object? value);
 
 /// The core component of Jinja 2 is the Environment. It contains
 /// important shared variables like configuration, filters, tests and others.
@@ -62,13 +58,15 @@ class Environment {
       Random? random,
       this.fieldGetter = defaults.fieldGetter})
       : assert(finalize is Finalizer ||
-            finalize is ContextFinalizer ||
-            finalize is EnvironmentFinalizer),
-        wrappedFinalize = finalize is EnvironmentFinalizer
-            ? ((context, value) => finalize(context.environment, value))
-            : finalize is ContextFinalizer
-                ? finalize
-                : ((context, value) => finalize(value)),
+            finalize is Object? Function(Context context, Object? value) ||
+            finalize is Object? Function(
+                Environment environment, Object? value)),
+        wrappedFinalize =
+            finalize is Object? Function(Environment environment, Object? value)
+                ? ((context, value) => finalize(context.environment, value))
+                : finalize is Object? Function(Context context, Object? value)
+                    ? finalize
+                    : ((context, value) => finalize(value)),
         globals = HashMap<String, Object?>.of(defaults.globals),
         filters = HashMap<String, Function>.of(defaults.filters),
         environmentFilters =
@@ -156,7 +154,7 @@ class Environment {
   /// string here.
   final Function finalize;
 
-  final ContextFinalizer wrappedFinalize;
+  final Object? Function(Context context, Object? value) wrappedFinalize;
 
   /// If set to `true` the XML/HTML autoescaping feature is enabled by
   /// default.
@@ -182,17 +180,19 @@ class Environment {
   /// the environment.
   final Map<String, Function> filters;
 
-  // TODO: docs
+  /// A map of environment filters that are available in every template
+  /// loaded by the environment.
   final Map<String, Function> environmentFilters;
 
-  // TODO: docs
+  /// A map of context filters that are available in every template
+  /// loaded by the environment.
   final Map<String, Function> contextFilters;
 
   /// A map of tests that are available in every template loaded by
   /// the environment.
   final Map<String, Function> tests;
 
-  // TODO: docs
+  /// Parsed templates cache.
   final Map<String, Template> templates;
 
   // TODO: docs
