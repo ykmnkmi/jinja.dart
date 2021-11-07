@@ -42,7 +42,7 @@ const String doublee = '''{% extends "layout" %}
   {% endif %}
 {% endblock %}''';
 
-const Map <String, String>mapping = <String, String>{
+const Map<String, String> mapping = <String, String>{
   'layout': layout,
   'level1': level1,
   'level2': level2,

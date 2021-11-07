@@ -141,7 +141,8 @@ Iterable<int> range(int stopOrStart, [int? stop, int step = 1]) sync* {
   }
 }
 
-List<Object?> generate(List<Object?> list, Object? Function(int index) generator,
+List<Object?> generate(
+    List<Object?> list, Object? Function(int index) generator,
     [bool growable = true]) {
   return List<Object?>.generate(list.length, generator, growable: growable);
 }
@@ -149,7 +150,7 @@ List<Object?> generate(List<Object?> list, Object? Function(int index) generator
 String repr(Object? object, [bool escapeNewlines = false]) {
   var buffer = StringBuffer();
   reprTo(object, buffer, escapeNewlines);
-  return '$buffer';
+  return buffer.toString();
 }
 
 void reprTo(Object? object, StringBuffer buffer,
@@ -163,7 +164,7 @@ void reprTo(Object? object, StringBuffer buffer,
       });
     }
 
-    buffer.write('\'$object\'');
+    buffer.write("'$object'");
     return;
   }
 
