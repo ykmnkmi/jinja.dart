@@ -4,7 +4,7 @@ import 'package:jinja/jinja.dart';
 import 'package:jinja/loaders.dart';
 
 void main() {
-  var path = Platform.script.resolve('templates').toFilePath();
+  var path = Directory.current.uri.resolve('example/templates').toFilePath();
 
   var env = Environment(
     globals: <String, Object?>{
