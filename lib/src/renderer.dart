@@ -326,24 +326,18 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
 
   @override
   void visitTemplate(Template node, RenderContext context) {
+    var self = Namespace();
+
     for (var block in node.blocks) {
       var blocks = context.blocks[block.name] ??= <Block>[];
       blocks.add(block);
+      self[block.name] = () {
+        block.accept(this, context);
+        return '';
+      };
     }
 
-    if (node.hasSelf) {
-      var self = Namespace();
-
-      for (var block in node.blocks) {
-        self[block.name] = () {
-          block.accept(this, context);
-          return '';
-        };
-      }
-
-      context.set('self', self);
-    }
-
+    context.set('self', self);
     visitAll(node.nodes, context);
   }
 

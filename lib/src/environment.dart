@@ -1,6 +1,8 @@
 import 'dart:collection' show HashMap;
 import 'dart:math' show Random;
 
+import 'package:meta/meta.dart' show visibleForTesting;
+
 import 'context.dart';
 import 'defaults.dart' as defaults;
 import 'exceptions.dart';
@@ -154,6 +156,7 @@ class Environment {
   /// string here.
   final Function finalize;
 
+  @visibleForTesting
   final Object? Function(Context context, Object? value) wrappedFinalize;
 
   /// If set to `true` the XML/HTML autoescaping feature is enabled by
@@ -192,13 +195,15 @@ class Environment {
   /// the environment.
   final Map<String, Function> tests;
 
-  /// Parsed templates cache.
+  /// A map of parsed templates loaded by the environment.
   final Map<String, Template> templates;
 
-  // TODO: docs
+  /// [Random] generator used by some filters.
   final Random random;
 
-  // TODO: docs
+  /// Function called by [getAttribute] to get object attribute.
+  ///
+  /// Default function throws [NoSuchMethodError].
   final FieldGetter fieldGetter;
 
   @override
@@ -498,17 +503,9 @@ class Template extends Node {
     return environment.fromString(source, path: path);
   }
 
-  // TODO: docs
+  @visibleForTesting
   Template.parsed(this.environment, this.nodes, {this.path})
-      : hasSelf = false,
-        blocks = <Block>[] {
-    for (var node in findAll<Name>()) {
-      if (node.name == 'self') {
-        hasSelf = true;
-        break;
-      }
-    }
-
+      : blocks = <Block>[] {
     for (var call in findAll<Call>()) {
       var expression = call.expression;
 
@@ -577,20 +574,17 @@ class Template extends Node {
     }
   }
 
-  // TODO: docs
-  Environment environment;
+  /// The environment used to parse and render template.
+  final Environment environment;
 
-  // TODO: docs
-  List<Node> nodes;
+  /// Modified nodes.
+  final List<Node> nodes;
 
-  // TODO: docs
-  List<Block> blocks;
+  /// Modified blocks.
+  final List<Block> blocks;
 
-  // TODO: docs
-  bool hasSelf;
-
-  // TODO: docs
-  String? path;
+  /// The path to the template if it was loaded.
+  final String? path;
 
   @override
   List<Node> get childrens {
@@ -602,7 +596,7 @@ class Template extends Node {
     return visitor.visitTemplate(this, context);
   }
 
-  // TODO: docs
+  /// If no arguments are given the context will be empty.
   String render([Map<String, Object?>? data]) {
     var buffer = StringBuffer();
     var context = RenderContext(environment, buffer, data: data);
