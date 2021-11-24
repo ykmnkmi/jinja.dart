@@ -7,23 +7,19 @@ import 'utils.dart';
 import 'visitor.dart';
 
 class RenderContext extends Context {
-  RenderContext(Environment environment, this.sink,
+  RenderContext(Environment environment,
       {Map<String, List<Block>>? blocks,
       Map<String, Object?>? parent,
       Map<String, Object?>? data})
       : blocks = blocks ?? <String, List<Block>>{},
         super(environment, parent: parent, data: data);
 
-  final StringSink sink;
-
   final Map<String, List<Block>> blocks;
 
   @override
   RenderContext derived(
-      {StringBuffer? buffer,
-      Map<String, List<Block>>? blocks,
-      Map<String, Object?>? data}) {
-    return RenderContext(environment, buffer ?? sink,
+      {Map<String, List<Block>>? blocks, Map<String, Object?>? data}) {
+    return RenderContext(environment,
         blocks: blocks ?? this.blocks, parent: context, data: data);
   }
 
@@ -53,6 +49,10 @@ class RenderContext extends Context {
     }
 
     return false;
+  }
+
+  Object? finalize(Object? object) {
+    return environment.wrappedFinalize(this, object);
   }
 
   void assignTargets(Object? target, Object? current) {
@@ -92,9 +92,132 @@ class RenderContext extends Context {
 
     throw TypeError();
   }
+}
 
-  Object? finalize(Object? object) {
-    return environment.wrappedFinalize(this, object);
+class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
+  const IterableRenderer();
+
+  @override
+  Iterable<String> visitAll(List<Node> nodes, RenderContext context) sync* {
+    for (var node in nodes) {
+      yield* node.accept(this, context);
+    }
+  }
+
+  @override
+  Iterable<String> visitAssign(Assign node, RenderContext context) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Iterable<String> visitAssignBlock(AssignBlock node, RenderContext context) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Iterable<String> visitBlock(Block node, RenderContext context) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Iterable<String> visitData(Data node, RenderContext context) sync* {
+    yield node.data;
+  }
+
+  @override
+  Iterable<String> visitDo(Do node, RenderContext context) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Iterable<String> visitExpession(
+      Expression node, RenderContext context) sync* {
+    var value = node.resolve(context);
+    value = context.finalize(value);
+    value = context.escape(value);
+    yield value.toString();
+  }
+
+  @override
+  Iterable<String> visitExtends(Extends node, RenderContext context) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Iterable<String> visitFilterBlock(FilterBlock node, RenderContext context) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Iterable<String> visitFor(For node, RenderContext context) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Iterable<String> visitIf(If node, RenderContext context) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Iterable<String> visitInclude(Include node, RenderContext context) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Iterable<String> visitOutput(Output node, RenderContext context) {
+    return visitAll(node.nodes, context);
+  }
+
+  @override
+  Iterable<String> visitScope(Scope node, RenderContext context) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Iterable<String> visitScopedContextModifier(
+      ScopedContextModifier node, RenderContext context) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Iterable<String> visitTemplate(Template node, RenderContext context) {
+    var self = Namespace();
+
+    for (var block in node.blocks) {
+      var blocks = context.blocks[block.name] ??= <Block>[];
+      blocks.add(block);
+      self[block.name] = () {
+        block.accept(this, context);
+        return '';
+      };
+    }
+
+    context.set('self', self);
+    return visitAll(node.nodes, context);
+  }
+
+  @override
+  Iterable<String> visitWith(With node, RenderContext context) {
+    throw UnimplementedError();
+  }
+}
+
+class StringSinkRenderContext extends RenderContext {
+  StringSinkRenderContext(Environment environment, this.sink,
+      {Map<String, List<Block>>? blocks,
+      Map<String, Object?>? parent,
+      Map<String, Object?>? data})
+      : super(environment, blocks: blocks, parent: parent, data: data);
+
+  final StringSink sink;
+
+  @override
+  StringSinkRenderContext derived(
+      {StringBuffer? buffer,
+      Map<String, List<Block>>? blocks,
+      Map<String, Object?>? data}) {
+    return StringSinkRenderContext(environment, buffer ?? sink,
+        blocks: blocks ?? this.blocks, parent: context, data: data);
   }
 
   void write(Object? object) {
@@ -102,25 +225,25 @@ class RenderContext extends Context {
   }
 }
 
-class StringSinkRenderer extends Visitor<RenderContext, Object?> {
+class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
   const StringSinkRenderer();
 
   @override
-  void visitAll(List<Node> nodes, RenderContext context) {
+  void visitAll(List<Node> nodes, StringSinkRenderContext context) {
     for (var node in nodes) {
       node.accept(this, context);
     }
   }
 
   @override
-  void visitAssign(Assign node, RenderContext context) {
+  void visitAssign(Assign node, StringSinkRenderContext context) {
     var target = node.target.resolve(context);
     var values = node.value.resolve(context);
     context.assignTargets(target, values);
   }
 
   @override
-  void visitAssignBlock(AssignBlock node, RenderContext context) {
+  void visitAssignBlock(AssignBlock node, StringSinkRenderContext context) {
     var target = node.target.resolve(context);
     var buffer = StringBuffer();
     node.body.accept(this, context.derived(buffer: buffer));
@@ -144,7 +267,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
   }
 
   @override
-  void visitBlock(Block node, RenderContext context) {
+  void visitBlock(Block node, StringSinkRenderContext context) {
     var blocks = context.blocks[node.name];
 
     if (blocks == null || blocks.isEmpty) {
@@ -181,31 +304,31 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
   }
 
   @override
-  void visitData(Data node, RenderContext context) {
+  void visitData(Data node, StringSinkRenderContext context) {
     context.write(node.data);
   }
 
   @override
-  void visitDo(Do node, RenderContext context) {
+  void visitDo(Do node, StringSinkRenderContext context) {
     node.expression.resolve(context);
   }
 
   @override
-  void visitExpession(Expression node, RenderContext context) {
+  void visitExpession(Expression node, StringSinkRenderContext context) {
     var value = node.resolve(context);
-    value = context.escape(value);
     value = context.finalize(value);
+    value = context.escape(value);
     context.write(value);
   }
 
   @override
-  void visitExtends(Extends node, RenderContext context) {
+  void visitExtends(Extends node, StringSinkRenderContext context) {
     var template = context.environment.getTemplate(node.path);
     template.accept(this, context);
   }
 
   @override
-  void visitFilterBlock(FilterBlock node, RenderContext context) {
+  void visitFilterBlock(FilterBlock node, StringSinkRenderContext context) {
     var buffer = StringBuffer();
     node.body.accept(this, context.derived(buffer: buffer));
     Object? value = '$buffer';
@@ -221,7 +344,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
   }
 
   @override
-  void visitFor(For node, RenderContext context) {
+  void visitFor(For node, StringSinkRenderContext context) {
     var targets = node.target.resolve(context);
     var iterable = node.iterable.resolve(context);
     var orElse = node.orElse;
@@ -277,7 +400,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
   }
 
   @override
-  void visitIf(If node, RenderContext context) {
+  void visitIf(If node, StringSinkRenderContext context) {
     if (boolean(node.test.resolve(context))) {
       node.body.accept(this, context);
       return;
@@ -291,29 +414,30 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
   }
 
   @override
-  void visitInclude(Include node, RenderContext context) {
+  void visitInclude(Include node, StringSinkRenderContext context) {
     var template = context.environment.getTemplate(node.template);
 
     if (node.withContext) {
       template.accept(this, context);
     } else {
-      template.accept(this, RenderContext(context.environment, context.sink));
+      context = StringSinkRenderContext(context.environment, context.sink);
+      template.accept(this, context);
     }
   }
 
   @override
-  Object? visitOutput(Output node, RenderContext context) {
+  Object? visitOutput(Output node, StringSinkRenderContext context) {
     visitAll(node.nodes, context);
   }
 
   @override
-  void visitScope(Scope node, RenderContext context) {
+  void visitScope(Scope node, StringSinkRenderContext context) {
     node.modifier.accept(this, context);
   }
 
   @override
   Object? visitScopedContextModifier(
-      ScopedContextModifier node, RenderContext context) {
+      ScopedContextModifier node, StringSinkRenderContext context) {
     var data = <String, Object?>{
       for (var entry in node.options.entries)
         entry.key: entry.value.resolve(context)
@@ -325,7 +449,7 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
   }
 
   @override
-  void visitTemplate(Template node, RenderContext context) {
+  void visitTemplate(Template node, StringSinkRenderContext context) {
     var self = Namespace();
 
     for (var block in node.blocks) {
@@ -342,11 +466,11 @@ class StringSinkRenderer extends Visitor<RenderContext, Object?> {
   }
 
   @override
-  void visitWith(With node, RenderContext context) {
-    var expressions = node.targets;
-    var targets = generate(expressions, (i) => expressions[i].resolve(context));
-    expressions = node.values;
-    var values = generate(expressions, (i) => expressions[i].resolve(context));
+  void visitWith(With node, StringSinkRenderContext context) {
+    var targets = List<Object?>.generate(
+        node.targets.length, (i) => node.targets[i].resolve(context));
+    var values = List<Object?>.generate(
+        node.values.length, (i) => node.values[i].resolve(context));
     var data = context.save(getDataForTargets(targets, values));
     node.body.accept(this, context);
     context.restore(data);

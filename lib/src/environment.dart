@@ -1,7 +1,7 @@
 import 'dart:collection' show HashMap;
 import 'dart:math' show Random;
 
-import 'package:meta/meta.dart' show visibleForTesting;
+import 'package:meta/meta.dart' show internal;
 
 import 'context.dart';
 import 'defaults.dart' as defaults;
@@ -11,7 +11,6 @@ import 'loaders.dart';
 import 'nodes.dart';
 import 'optimizer.dart';
 import 'parser.dart';
-import 'reader.dart';
 import 'renderer.dart';
 import 'visitor.dart';
 
@@ -156,7 +155,7 @@ class Environment {
   /// string here.
   final Function finalize;
 
-  @visibleForTesting
+  @internal
   final Object? Function(Context context, Object? value) wrappedFinalize;
 
   /// If set to `true` the XML/HTML autoescaping feature is enabled by
@@ -312,8 +311,7 @@ class Environment {
   /// This is useful for debugging or to extract information from templates.
   List<Node> parse(String source) {
     var tokens = lex(source);
-    var reader = TokenReader(tokens);
-    return parser.scan(reader);
+    return parser.scan(tokens);
   }
 
   /// Load a template from a source string without using [loader].
@@ -503,7 +501,7 @@ class Template extends Node {
     return environment.fromString(source, path: path);
   }
 
-  @visibleForTesting
+  @internal
   Template.parsed(this.environment, this.nodes, {this.path})
       : blocks = <Block>[] {
     for (var call in findAll<Call>()) {
@@ -529,7 +527,7 @@ class Template extends Node {
 
         if (keywords != null && keywords.isNotEmpty) {
           var pairs =
-              keywords.map<Pair>((keyword) => keyword.toPair()).toList();
+              List<Pair>.generate(keywords.length, (i) => keywords[i].toPair());
           arguments.add(Dict(pairs));
           call.keywords = null;
         }
@@ -596,20 +594,22 @@ class Template extends Node {
     return visitor.visitTemplate(this, context);
   }
 
+  /// It accepts the same arguments as [render].
+  Iterable<String> generate([Map<String, Object?>? data]) {
+    var context = RenderContext(environment, data: data);
+    return accept(const IterableRenderer(), context);
+  }
+
   /// If no arguments are given the context will be empty.
   String render([Map<String, Object?>? data]) {
     var buffer = StringBuffer();
-    var context = RenderContext(environment, buffer, data: data);
+    var context = StringSinkRenderContext(environment, buffer, data: data);
     accept(const StringSinkRenderer(), context);
     return buffer.toString();
   }
 
   @override
   String toString() {
-    if (path == null) {
-      return 'Template()';
-    }
-
-    return 'Template($path)';
+    return path == null ? 'Template()' : 'Template($path)';
   }
 }

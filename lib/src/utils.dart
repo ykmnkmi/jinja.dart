@@ -141,12 +141,6 @@ Iterable<int> range(int stopOrStart, [int? stop, int step = 1]) sync* {
   }
 }
 
-List<Object?> generate(
-    List<Object?> list, Object? Function(int index) generator,
-    [bool growable = true]) {
-  return List<Object?>.generate(list.length, generator, growable: growable);
-}
-
 String repr(Object? object, [bool escapeNewlines = false]) {
   var buffer = StringBuffer();
   reprTo(object, buffer, escapeNewlines);

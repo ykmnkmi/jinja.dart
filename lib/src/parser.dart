@@ -912,7 +912,8 @@ class Parser {
     return expression;
   }
 
-  List<Node> scan(TokenReader reader) {
+  List<Node> scan(List<Token> tokens) {
+    var reader = TokenReader(tokens);
     return subParse(reader);
   }
 
@@ -985,8 +986,7 @@ class Parser {
 
   List<Node> parse(String template) {
     var tokens = environment.lexer.tokenize(template, path: path);
-    var reader = TokenReader(tokens);
-    return scan(reader);
+    return scan(tokens);
   }
 
   @override

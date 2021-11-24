@@ -164,12 +164,14 @@ class Tuple extends Literal implements Assignable {
 
   @override
   List<Object?> asConst(Context context) {
-    return generate(values, (i) => values[i].asConst(context));
+    return List<Object?>.generate(
+        values.length, (i) => values[i].asConst(context));
   }
 
   @override
   List<Object?> resolve(Context context) {
-    return generate(values, (i) => values[i].resolve(context));
+    return List<Object?>.generate(
+        values.length, (i) => values[i].resolve(context));
   }
 
   @override
@@ -198,12 +200,14 @@ class Array extends Literal {
 
   @override
   List<Object?> asConst(Context context) {
-    return generate(values, (index) => values[index].asConst(context));
+    return List<Object?>.generate(
+        values.length, (i) => values[i].asConst(context));
   }
 
   @override
   List<Object?> resolve(Context context) {
-    return generate(values, (index) => values[index].resolve(context));
+    return List<Object?>.generate(
+        values.length, (i) => values[i].resolve(context));
   }
 
   @override
@@ -415,7 +419,8 @@ class Callable extends Expression {
     if (arguments == null) {
       positional = <Object?>[];
     } else {
-      positional = generate(arguments, (i) => arguments[i].asConst(context));
+      positional = List<Object?>.generate(
+          arguments.length, (i) => arguments[i].asConst(context));
     }
 
     var named = <Symbol, Object?>{};
@@ -457,7 +462,8 @@ class Callable extends Expression {
     if (arguments == null) {
       positional = <Object?>[];
     } else {
-      positional = generate(arguments, (i) => arguments[i].resolve(context));
+      positional = List<Object?>.generate(
+          arguments.length, (i) => arguments[i].resolve(context));
     }
 
     var named = <Symbol, Object?>{};
