@@ -8,15 +8,15 @@ const String source = '''{{ "Hello " ~ name ~ "!" }}''';
 void main() {
   try {
     var env = Environment();
-    var tokens = env.lex(source);
-    print(tokens);
-    env.parser.scan(tokens);
+    // var tokens = env.lex(source);
+    // print(tokens);
+    // env.parser.scan(tokens);
     var nodes = env.parse(source);
     print(nodes);
     var template = Template.parsed(env, nodes);
     print(template.nodes);
-    print(template.generate());
-    print(template.render());
+    print(template.generate({'name': 'world'}));
+    print(template.render({'name': 'world'}));
   } catch (error, trace) {
     print(error);
     print(Trace.format(trace, terse: true));

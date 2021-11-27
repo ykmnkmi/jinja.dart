@@ -15,7 +15,9 @@ class User extends MapBase<String, Object?> {
   String username;
 
   @override
-  Iterable<String> get keys => const <String>['username'];
+  Iterable<String> get keys {
+    return const <String>['username'];
+  }
 
   @override
   String operator [](Object? key) {

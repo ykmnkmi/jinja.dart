@@ -45,7 +45,6 @@ See also examples with [conduit][conduit_example] and [reflectable][reflectable_
   - addExtension
   - compileExpression
 - Template
-  - generate
   - stream
 - List of Control Structures
   - Macros

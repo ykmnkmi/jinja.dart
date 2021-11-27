@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'context.dart';
 import 'runtime.dart';
-import 'tests.dart' as tests;
+import 'tests.dart';
 import 'utils.dart';
 import 'visitor.dart';
 

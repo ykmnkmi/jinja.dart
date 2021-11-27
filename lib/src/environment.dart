@@ -251,9 +251,7 @@ class Environment {
       [Context? context]) {
     Function? filter;
 
-    if (filters.containsKey(name)) {
-      filter = filters[name];
-    } else if (environmentFilters.containsKey(name)) {
+    if (environmentFilters.containsKey(name)) {
       filter = environmentFilters[name];
       positional.insert(0, this);
     } else if (contextFilters.containsKey(name)) {
@@ -264,6 +262,8 @@ class Environment {
 
       filter = contextFilters[name];
       positional.insert(0, context);
+    } else if (filters.containsKey(name)) {
+      filter = filters[name];
     }
 
     if (filter == null) {
@@ -606,6 +606,7 @@ class Template extends Node {
     var context = StringSinkRenderContext(environment, buffer, data: data);
     accept(const StringSinkRenderer(), context);
     return buffer.toString();
+    // return generate(data).join();
   }
 
   @override

@@ -323,46 +323,25 @@ class AssignBlock extends Statement {
   }
 }
 
-class ScopedContextModifier extends Statement {
-  ScopedContextModifier(this.options, this.body);
+class AutoEscape extends Statement {
+  AutoEscape(this.value, this.body);
 
-  Map<String, Expression> options;
+  Expression value;
 
   Node body;
 
   @override
   List<Node> get childrens {
-    return <Node>[body, ...options.values];
+    return <Node>[value, body];
   }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitScopedContextModifier(this, context);
+    return visitor.visitAutoEscape(this, context);
   }
 
   @override
   String toString() {
-    return 'ScopedContextModifier($options, $body)';
-  }
-}
-
-class Scope extends Statement {
-  Scope(this.modifier);
-
-  ScopedContextModifier modifier;
-
-  @override
-  List<Node> get childrens {
-    return <Node>[modifier];
-  }
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitScope(this, context);
-  }
-
-  @override
-  String toString() {
-    return 'Scope($modifier)';
+    return 'AutoEscape($value, $body)';
   }
 }

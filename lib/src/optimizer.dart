@@ -39,6 +39,12 @@ class Optimizer implements Visitor<Context, Node> {
   }
 
   @override
+  Node visitAutoEscape(AutoEscape node, Context context) {
+    node.value = visitExpession(node.value, context);
+    return node;
+  }
+
+  @override
   Block visitBlock(Block node, Context context) {
     node.body = node.body.accept(this, context);
     return node;
@@ -126,24 +132,6 @@ class Optimizer implements Visitor<Context, Node> {
   @override
   Node visitOutput(Output node, Context context) {
     visitAll(node.nodes, context);
-    return node;
-  }
-
-  @override
-  Scope visitScope(Scope node, Context context) {
-    node.modifier =
-        node.modifier.accept(this, context) as ScopedContextModifier;
-    return node;
-  }
-
-  @override
-  ScopedContextModifier visitScopedContextModifier(
-      ScopedContextModifier node, Context context) {
-    for (var key in node.options.keys) {
-      node.options[key] = visitExpession(node.options[key]!, context);
-    }
-
-    node.body = node.body.accept(this, context);
     return node;
   }
 

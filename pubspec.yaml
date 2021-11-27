@@ -3,10 +3,10 @@ description: >-
   Jinja2 server-side template engine for Dart.
   Variables, expressions, control structures and template inheritance.
 homepage: https://github.com/ykmnkmi/jinja.dart
-version: 0.4.0-dev.30
+version: 0.4.0-dev.31
 
 environment:
-  sdk: '>=2.14.0 <3.0.0'
+  sdk: '>=2.15.0 <3.0.0'
 
 dependencies:
   meta: ^1.7.0

@@ -412,7 +412,7 @@ class Callable extends Expression {
     ];
   }
 
-  Object? applyAsConst(Context context, Callback<Object?> callback) {
+  Object? applyConst(Context context, Callback<Object?> callback) {
     var arguments = this.arguments;
     List<Object?> positional;
 
@@ -498,7 +498,7 @@ class Callable extends Expression {
     return callback(positional, named);
   }
 
-  String printArguments({bool comma = false}) {
+  String format({bool comma = false}) {
     var result = '';
     var arguments = this.arguments;
 
@@ -602,7 +602,7 @@ class Call extends Callable {
   @override
   Object? asConst(Context context) {
     var function = expression.asConst(context);
-    return applyAsConst(context, (positional, named) {
+    return applyConst(context, (positional, named) {
       return context(function, positional, named);
     });
   }
@@ -624,7 +624,7 @@ class Call extends Callable {
 
   @override
   String toString() {
-    return 'Call($expression${printArguments(comma: true)})';
+    return 'Call($expression${this.format(comma: true)})';
   }
 }
 
@@ -637,24 +637,47 @@ class Filter extends Callable {
       Expression? dKeywords})
       // remove after better null safety promotion
       // ignore: prefer_initializing_formals
-      : expression = expression,
+      : hasExpression = expression != null,
         super(
             arguments: arguments,
             keywords: keywords,
             dArguments: dArguments,
-            dKeywords: dKeywords) {
-    if (expression != null) {
-      if (arguments == null) {
-        arguments = <Expression>[expression];
-      } else {
-        arguments.add(expression);
-      }
-    }
-  }
+            dKeywords: dKeywords);
 
   String name;
 
-  Expression? expression;
+  bool hasExpression;
+
+  set expression(Expression? expression) {
+    var arguments = this.arguments;
+
+    if (arguments == null) {
+      if (expression == null) {
+        hasExpression = false;
+        return;
+      }
+
+      hasExpression = true;
+      this.arguments = <Expression>[expression];
+      return;
+    }
+
+    if (hasExpression) {
+      if (expression == null) {
+        hasExpression = false;
+        arguments.removeAt(0);
+        return;
+      }
+
+      arguments[0] = expression;
+      return;
+    }
+
+    if (expression != null) {
+      hasExpression = true;
+      arguments.insert(0, expression);
+    }
+  }
 
   @override
   Object? asConst(Context context) {
@@ -670,7 +693,7 @@ class Filter extends Callable {
 
   @override
   String toString() {
-    return 'Filter.$name(${printArguments()})';
+    return 'Filter.$name(${this.format()})';
   }
 }
 
@@ -694,7 +717,7 @@ class Test extends Callable {
       throw Impossible();
     }
 
-    return applyAsConst(context, (positional, named) {
+    return applyConst(context, (positional, named) {
       return context.test(name, positional, named);
     });
   }
@@ -708,7 +731,7 @@ class Test extends Callable {
 
   @override
   String toString() {
-    return 'Test.$name(${printArguments()})';
+    return 'Test.$name(${this.format()})';
   }
 }
 
@@ -1005,21 +1028,21 @@ class Compare extends Expression {
   static bool calc(CompareOperator operator, Object? left, Object? right) {
     switch (operator) {
       case CompareOperator.equal:
-        return tests.isEqual(left, right);
+        return isEqual(left, right);
       case CompareOperator.notEqual:
-        return tests.isNotEqual(left, right);
+        return isNotEqual(left, right);
       case CompareOperator.lessThan:
-        return tests.isLessThan(left, right);
+        return isLessThan(left, right);
       case CompareOperator.lessThanOrEqual:
-        return tests.isLessThanOrEqual(left, right);
+        return isLessThanOrEqual(left, right);
       case CompareOperator.greaterThan:
-        return tests.isGreaterThan(left, right);
+        return isGreaterThan(left, right);
       case CompareOperator.greaterThanOrEqual:
-        return tests.isGreaterThanOrEqual(left, right);
+        return isGreaterThanOrEqual(left, right);
       case CompareOperator.contains:
-        return tests.isIn(left, right);
+        return isIn(left, right);
       case CompareOperator.notContains:
-        return !tests.isIn(left, right);
+        return !isIn(left, right);
     }
   }
 }

@@ -364,13 +364,11 @@ class Parser {
     return AssignBlock(target, Output.orSingle(nodes), filters);
   }
 
-  Scope parseAutoEscape(TokenReader reader) {
+  AutoEscape parseAutoEscape(TokenReader reader) {
     reader.expect('name', 'autoescape');
     var escape = parseExpression(reader);
     var body = parseStatements(reader, <String>['name:endautoescape'], true);
-    var options = <String, Expression>{'autoEscape': escape};
-    var modifier = ScopedContextModifier(options, Output.orSingle(body));
-    return Scope(modifier);
+    return AutoEscape(escape, Output.orSingle(body));
   }
 
   Expression parseExpression(TokenReader reader, [bool withCondition = true]) {
@@ -840,15 +838,7 @@ class Parser {
     var filters = parseFilters(reader);
 
     for (var filter in filters) {
-      var arguments = filter.arguments;
       filter.expression = expression;
-
-      if (arguments == null) {
-        filter.arguments = <Expression>[expression];
-      } else {
-        arguments.insert(0, expression);
-      }
-
       expression = filter;
     }
 

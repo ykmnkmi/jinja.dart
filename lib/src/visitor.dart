@@ -16,6 +16,8 @@ abstract class Visitor<C, R> {
 
   R visitAssignBlock(AssignBlock node, C context);
 
+  R visitAutoEscape(AutoEscape node, C context);
+
   R visitBlock(Block node, C context);
 
   R visitData(Data node, C context);
@@ -35,10 +37,6 @@ abstract class Visitor<C, R> {
   R visitInclude(Include node, C context);
 
   R visitOutput(Output node, C context);
-
-  R visitScope(Scope node, C context);
-
-  R visitScopedContextModifier(ScopedContextModifier node, C context);
 
   R visitTemplate(Template node, C context);
 
@@ -120,16 +118,6 @@ abstract class ThrowingVisitor<C, R> implements Visitor<C, R> {
   }
 
   @override
-  R visitScope(Scope node, C context) {
-    fail(node, context);
-  }
-
-  @override
-  R visitScopedContextModifier(ScopedContextModifier node, C context) {
-    fail(node, context);
-  }
-
-  @override
   R visitTemplate(Template node, C context) {
     fail(node, context);
   }
@@ -177,6 +165,11 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
     if (filters != null) {
       visitAll(filters, context);
     }
+  }
+
+  @override
+  void visitAutoEscape(AutoEscape node, ExpressionUpdater context) {
+    node.value = visitExpession(node.value, context);
   }
 
   @override
@@ -275,23 +268,6 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
   @override
   void visitOutput(Output node, ExpressionUpdater context) {
     visitAll(node.nodes, context);
-  }
-
-  @override
-  void visitScope(Scope node, ExpressionUpdater context) {
-    node.modifier.accept(this, context);
-  }
-
-  @override
-  void visitScopedContextModifier(
-      ScopedContextModifier node, ExpressionUpdater context) {
-    var body = node.body;
-
-    if (body is Expression) {
-      node.body = visitExpession(body, context);
-    } else {
-      body.accept(this, context);
-    }
   }
 
   @override

@@ -5,13 +5,13 @@ typedef ContextCallback<C extends Context> = void Function(C context);
 
 class Context {
   Context(this.environment, {this.parent, Map<String, Object?>? data})
-      : context = <String, Object?>{...environment.globals, ...?data} {
+      : context = <String, Object?>{...environment.globals, ...?data},
+        autoEscape = environment.autoEscape {
     context
       ..['context'] = this
       ..['ctx'] = this
       ..['environment'] = environment
-      ..['env'] = environment
-      ..['autoescape'] = environment.autoEscape;
+      ..['env'] = environment;
   }
 
   final Environment environment;
@@ -20,10 +20,7 @@ class Context {
 
   final Map<String, Object?> context;
 
-  // TODO: remove
-  bool get autoEscape {
-    return resolve('autoescape') as bool;
-  }
+  bool autoEscape;
 
   Object? call(dynamic object,
       [List<Object?>? positional, Map<Symbol, Object?>? named]) {
@@ -86,6 +83,14 @@ class Context {
     }
 
     return parent[key];
+  }
+
+  Object? item(Object? value, Object? key) {
+    return environment.getItem(value, key);
+  }
+
+  Object? attribute(Object? value, String key) {
+    return environment.getAttribute(value, key);
   }
 
   Object? filter(

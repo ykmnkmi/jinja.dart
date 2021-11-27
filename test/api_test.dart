@@ -14,7 +14,7 @@ void main() {
     });
 
     test('finalize', () {
-      var env = Environment(finalize: (dynamic obj) => obj ?? '');
+      var env = Environment(finalize: (Object? obj) => obj ?? '');
       var tmpl = env.fromString('{% for item in seq %}|{{ item }}{% endfor %}');
       var seq = [null, 1, 'foo'];
       expect(tmpl.render({'seq': seq}), equals('||1|foo'));
