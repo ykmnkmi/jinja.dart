@@ -37,26 +37,36 @@ class TemplateSyntaxError extends TemplateError {
 
   @override
   String toString() {
-    var prefix = 'TemplateSyntaxError';
+    var result = runtimeType.toString();
 
     if (path != null) {
-      if (prefix.contains(',')) {
-        prefix += ', file: $path';
+      if (result.contains(',')) {
+        result += ', file: $path';
       }
 
-      prefix += ' file: $path';
+      result += ' file: $path';
     }
 
     if (line != null) {
-      if (prefix.contains(',')) {
-        prefix += ', line: $line';
+      if (result.contains(',')) {
+        result += ', line: $line';
       } else {
-        prefix += ' line: $line';
+        result += ' line: $line';
       }
     }
 
-    return '$prefix: $message';
+    return '$result: $message';
   }
+}
+
+/// Like a template syntax error, but covers cases where something in the
+/// template caused an error at compile time that wasn't necessarily caused
+/// by a syntax error.
+///
+/// However it's a direct subclass of [TemplateSyntaxError] and has the same
+/// attributes.
+class TemplateAssertionError extends TemplateError {
+  const TemplateAssertionError([Object? message]) : super(message);
 }
 
 /// A generic runtime error in the template engine.

@@ -1,51 +1,3 @@
-class Cycler extends Iterable<Object?> {
-  Cycler(List<Object?> values)
-      : values = List<dynamic>.of(values),
-        length = values.length,
-        index = 0;
-
-  final List<Object?> values;
-
-  @override
-  final int length;
-
-  int index;
-
-  Object? get current {
-    return values[index];
-  }
-
-  @override
-  Iterator<Object?> get iterator {
-    return CyclerIterator(this);
-  }
-
-  Object? next() {
-    var result = current;
-    index = (index + 1) % length;
-    return result;
-  }
-
-  void reset() {
-    index = 0;
-  }
-}
-
-class CyclerIterator extends Iterator<Object?> {
-  CyclerIterator(this.cycler);
-
-  final Cycler cycler;
-
-  @override
-  Object? current;
-
-  @override
-  bool moveNext() {
-    current = cycler.next();
-    return true;
-  }
-}
-
 bool boolean(Object? value) {
   if (value == null) {
     return false;
@@ -74,10 +26,6 @@ bool boolean(Object? value) {
   return true;
 }
 
-String format(Object? object) {
-  return repr(object);
-}
-
 int count(dynamic iterable) {
   // if (iterable is Iterable) {
   //   return iterable.length;
@@ -93,6 +41,10 @@ int count(dynamic iterable) {
 
   // throw TypeError();
   return iterable.length as int;
+}
+
+String format(Object? object) {
+  return repr(object);
 }
 
 List<Object?> list(Object? iterable) {

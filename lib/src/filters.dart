@@ -386,8 +386,9 @@ String doWordWrap(Environment environment, String string, int width,
       .join(wrap);
 }
 
-const Map<String, Function> filters = <String, Function>{
+final Map<String, Function> filters = <String, Function>{
   'abs': doAbs,
+  'attr': passEnvironment(doAttribute),
   'batch': doBatch,
   'capitalize': doCapitalize,
   'center': doCenter,
@@ -402,19 +403,23 @@ const Map<String, Function> filters = <String, Function>{
   'float': doFloat,
   'forceescape': doForceEscape,
   'int': doInteger,
+  'join': passContext(doJoin),
   'last': doLast,
   'length': count,
   'list': list,
   'lower': doLower,
   'pprint': doPPrint,
+  'random': passEnvironment(doRandom),
   'replace': doReplace,
   'reverse': doReverse,
   'safe': doMarkSafe,
   'slice': doSlice,
   'string': doString,
+  'sum': passEnvironment(doSum),
   'trim': doTrim,
   'upper': doUpper,
   'wordcount': doWordCount,
+  'wordwrap': passEnvironment(doWordWrap),
 
   // 'format': doFormat,
   // 'groupby': doGroupBy,
@@ -436,15 +441,4 @@ const Map<String, Function> filters = <String, Function>{
   // 'urlencode': doURLEncode,
   // 'urlize': doURLize,
   // 'xmlattr': doXMLAttr,
-};
-
-const Map<String, Function> environmentFilters = <String, Function>{
-  'attr': doAttribute,
-  'random': doRandom,
-  'sum': doSum,
-  'wordwrap': doWordWrap,
-};
-
-const Map<String, Function> contextFilters = <String, Function>{
-  'join': doJoin,
 };

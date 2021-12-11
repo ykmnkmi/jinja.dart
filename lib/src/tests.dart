@@ -133,7 +133,7 @@ bool isUpper(String value) {
   return value == value.toUpperCase();
 }
 
-const Map<String, Function> tests = {
+final Map<String, Function> tests = <String, Function>{
   '!=': isNotEqual,
   '<': isLessThan,
   '<=': isLessThanOrEqual,

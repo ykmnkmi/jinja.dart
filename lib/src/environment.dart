@@ -20,16 +20,48 @@ typedef FieldGetter = Object? Function(Object? object, String field);
 /// Signature for the [Environment.finalize] field.
 typedef Finalizer = Object? Function(Object? value);
 
+// TODO(doc): update
+@internal
+enum PassArgument {
+  context,
+  environment,
+}
+
+/// Pass the [Context] as the first argument to the applied function when
+/// called while rendering a template.
+///
+/// Can be used on functions, filters, and tests.
+Function passContext(Function function) {
+  Environment.passArguments[function] = PassArgument.context;
+  return function;
+}
+
+/// Pass the [Environment] as the first argument to the applied function when
+/// called while rendering a template.
+///
+/// Can be used on functions, filters, and tests.
+Function passEnvironment(Function function) {
+  Environment.passArguments[function] = PassArgument.environment;
+  return function;
+}
+
 /// The core component of Jinja 2 is the Environment. It contains
 /// important shared variables like configuration, filters, tests and others.
 /// Instances of this class may be modified if they are not shared and if no
 /// template was loaded so far.
 class Environment {
   /// Cached [Lexer]'s
-  static final Expando<Lexer> lexers = Expando('lexerCache');
+  @internal
+  static final Expando<Lexer> lexers = Expando<Lexer>();
 
   /// Cached [Parser]'s
-  static final Expando<Parser> parsers = Expando('parserCache');
+  @internal
+  static final Expando<Parser> parsers = Expando<Parser>();
+
+  /// Cached functions, filters, and tests pass arguments.
+  // TODO(doc): update
+  @internal
+  static final Expando<PassArgument> passArguments = Expando<PassArgument>();
 
   /// If `loader` is not `null`, templates will be loaded
   Environment(
@@ -52,8 +84,6 @@ class Environment {
       this.autoReload = true,
       Map<String, Object?>? globals,
       Map<String, Function>? filters,
-      Map<String, Function>? environmentFilters,
-      Map<String, Function>? contextFilters,
       Map<String, Function>? tests,
       Map<String, Template>? templates,
       Random? random,
@@ -70,9 +100,6 @@ class Environment {
                     : ((context, value) => finalize(value)),
         globals = HashMap<String, Object?>.of(defaults.globals),
         filters = HashMap<String, Function>.of(defaults.filters),
-        environmentFilters =
-            HashMap<String, Function>.of(defaults.environmentFilters),
-        contextFilters = HashMap<String, Function>.of(defaults.contextFilters),
         tests = HashMap<String, Function>.of(defaults.tests),
         templates = HashMap<String, Template>(),
         random = random ?? Random() {
@@ -82,14 +109,6 @@ class Environment {
 
     if (filters != null) {
       this.filters.addAll(filters);
-    }
-
-    if (environmentFilters != null) {
-      this.environmentFilters.addAll(environmentFilters);
-    }
-
-    if (contextFilters != null) {
-      this.contextFilters.addAll(contextFilters);
     }
 
     if (tests != null) {
@@ -182,14 +201,6 @@ class Environment {
   /// the environment.
   final Map<String, Function> filters;
 
-  /// A map of environment filters that are available in every template
-  /// loaded by the environment.
-  final Map<String, Function> environmentFilters;
-
-  /// A map of context filters that are available in every template
-  /// loaded by the environment.
-  final Map<String, Function> contextFilters;
-
   /// A map of tests that are available in every template loaded by
   /// the environment.
   final Map<String, Function> tests;
@@ -245,44 +256,46 @@ class Environment {
         leftStripBlocks == other.leftStripBlocks;
   }
 
+  /// Common filter and test caller.
+  @internal
+  Object? callCommon(String name, List<Object?> positional,
+      Map<Symbol, Object?> named, bool isFilter, Context? context) {
+    var type = isFilter ? 'filter' : 'test';
+    var map = isFilter ? filters : tests;
+    var function = map[name];
+
+    if (function == null) {
+      throw TemplateRuntimeError('no $type named \'$name\'');
+    }
+
+    var pass = passArguments[function];
+
+    if (pass == PassArgument.context) {
+      if (context == null) {
+        throw TemplateRuntimeError(
+            'attempted to invoke context $type without context');
+      }
+
+      positional.insert(0, context);
+    } else if (pass == PassArgument.environment) {
+      positional.insert(0, this);
+    }
+
+    return Function.apply(function, positional, named);
+  }
+
   /// If [name] not found throws [TemplateRuntimeError].
   Object? callFilter(
       String name, List<Object?> positional, Map<Symbol, Object?> named,
       [Context? context]) {
-    Function? filter;
-
-    if (environmentFilters.containsKey(name)) {
-      filter = environmentFilters[name];
-      positional.insert(0, this);
-    } else if (contextFilters.containsKey(name)) {
-      if (context == null) {
-        throw TemplateRuntimeError(
-            'attempted to invoke context filter without context');
-      }
-
-      filter = contextFilters[name];
-      positional.insert(0, context);
-    } else if (filters.containsKey(name)) {
-      filter = filters[name];
-    }
-
-    if (filter == null) {
-      throw TemplateRuntimeError('no filter named $name');
-    }
-
-    return Function.apply(filter, positional, named);
+    return callCommon(name, positional, named, true, context);
   }
 
   /// If [name] not found throws [TemplateRuntimeError].
   bool callTest(
-      String name, List<Object?> positional, Map<Symbol, Object?> named) {
-    var test = tests[name];
-
-    if (test == null) {
-      throw TemplateRuntimeError('no test named $name');
-    }
-
-    return Function.apply(test, positional, named) as bool;
+      String name, List<Object?> positional, Map<Symbol, Object?> named,
+      [Context? context]) {
+    return callCommon(name, positional, named, false, context) as bool;
   }
 
   /// Get an item or attribute of an object but prefer the attribute.
@@ -491,8 +504,6 @@ class Template extends Node {
           autoReload: false,
           globals: globals,
           filters: filters,
-          environmentFilters: environmentFilters,
-          contextFilters: contextFilters,
           tests: tests,
           random: random,
           fieldGetter: fieldGetter);
@@ -504,6 +515,8 @@ class Template extends Node {
   @internal
   Template.parsed(this.environment, this.nodes, {this.path})
       : blocks = <Block>[] {
+    // TODO(refactoring): move modifiers to visitor
+
     for (var call in findAll<Call>()) {
       var expression = call.expression;
 

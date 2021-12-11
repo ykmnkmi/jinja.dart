@@ -1,5 +1,50 @@
 import 'dart:collection' show MapView;
 
+class Namespace extends MapView<String, Object?> {
+  Namespace([Map<String, Object?>? context]) : super(<String, Object?>{}) {
+    if (context != null) {
+      addAll(context);
+    }
+  }
+
+  @override
+  String toString() {
+    var values = entries.map((entry) => '${entry.key}: ${entry.value}');
+    return 'Namespace(${values.join(', ')})';
+  }
+
+  static Namespace factory([List<Object?>? datas]) {
+    var namespace = Namespace();
+
+    if (datas == null) {
+      return namespace;
+    }
+
+    for (var data in datas) {
+      if (data is! Map) {
+        throw TypeError();
+      }
+
+      namespace.addAll(data.cast<String, Object?>());
+    }
+
+    return namespace;
+  }
+}
+
+class NamespaceValue {
+  NamespaceValue(this.name, this.item);
+
+  String name;
+
+  String item;
+
+  @override
+  String toString() {
+    return 'NameSpaceValue($name, $item)';
+  }
+}
+
 class LoopContext extends Iterable<Object?> {
   LoopContext(this.values, this.depth0, this.recurse)
       : length = values.length,
@@ -166,47 +211,50 @@ class LoopIterator extends Iterator<Object?> {
   }
 }
 
-class Namespace extends MapView<String, Object?> {
-  Namespace([Map<String, Object?>? context]) : super(<String, Object?>{}) {
-    if (context != null) {
-      addAll(context);
-    }
+class Cycler extends Iterable<Object?> {
+  Cycler(List<Object?> values)
+      : values = List<dynamic>.of(values),
+        length = values.length,
+        index = 0;
+
+  final List<Object?> values;
+
+  @override
+  final int length;
+
+  int index;
+
+  Object? get current {
+    return values[index];
   }
 
   @override
-  String toString() {
-    var values = entries.map((entry) => '${entry.key}: ${entry.value}');
-    return 'Namespace(${values.join(', ')})';
+  Iterator<Object?> get iterator {
+    return CyclerIterator(this);
   }
 
-  static Namespace factory([List<Object?>? datas]) {
-    var namespace = Namespace();
+  Object? next() {
+    var result = current;
+    index = (index + 1) % length;
+    return result;
+  }
 
-    if (datas == null) {
-      return namespace;
-    }
-
-    for (var data in datas) {
-      if (data is! Map) {
-        throw TypeError();
-      }
-
-      namespace.addAll(data.cast<String, Object?>());
-    }
-
-    return namespace;
+  void reset() {
+    index = 0;
   }
 }
 
-class NamespaceValue {
-  NamespaceValue(this.name, this.item);
+class CyclerIterator extends Iterator<Object?> {
+  CyclerIterator(this.cycler);
 
-  String name;
-
-  String item;
+  final Cycler cycler;
 
   @override
-  String toString() {
-    return 'NameSpaceValue($name, $item)';
+  Object? current;
+
+  @override
+  bool moveNext() {
+    current = cycler.next();
+    return true;
   }
 }

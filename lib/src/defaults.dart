@@ -1,7 +1,7 @@
 import 'runtime.dart';
 import 'utils.dart';
 
-export 'filters.dart' show filters, environmentFilters, contextFilters;
+export 'filters.dart' show filters;
 export 'tests.dart' show tests;
 
 const String blockStart = '{%';

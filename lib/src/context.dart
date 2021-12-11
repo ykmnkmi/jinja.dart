@@ -6,13 +6,7 @@ typedef ContextCallback<C extends Context> = void Function(C context);
 class Context {
   Context(this.environment, {this.parent, Map<String, Object?>? data})
       : context = <String, Object?>{...environment.globals, ...?data},
-        autoEscape = environment.autoEscape {
-    context
-      ..['context'] = this
-      ..['ctx'] = this
-      ..['environment'] = environment
-      ..['env'] = environment;
-  }
+        autoEscape = environment.autoEscape;
 
   final Environment environment;
 

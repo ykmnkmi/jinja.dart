@@ -37,24 +37,31 @@ class MyMap extends MapBase<Object?, Object?> {
 void main() {
   group('Test', () {
     test('defined', () {
-      final tmpl =
-          env.fromString('{{ missing is defined }}|{{ true is defined }}');
-      expect(tmpl.render(), equals('false|true'));
+      var tmpl = env.fromString('{{ missing is defined }}');
+      expect(tmpl.render(), equals('false'));
+      tmpl = env.fromString('{{ true is defined }}');
+      expect(tmpl.render(), equals('true'));
     });
 
     test('even', () {
-      final tmpl = env.fromString('{{ 1 is even }}|{{ 2 is even }}');
-      expect(tmpl.render(), equals('false|true'));
+      var tmpl = env.fromString('{{ 1 is even }}');
+      expect(tmpl.render(), equals('false'));
+      tmpl = env.fromString('{{ 2 is even }}');
+      expect(tmpl.render(), equals('true'));
     });
 
     test('odd', () {
-      final tmpl = env.fromString('{{ 1 is odd }}|{{ 2 is odd }}');
-      expect(tmpl.render(), equals('true|false'));
+      var tmpl = env.fromString('{{ 1 is odd }}');
+      expect(tmpl.render(), equals('true'));
+      tmpl = env.fromString('{{ 2 is odd }}');
+      expect(tmpl.render(), equals('false'));
     });
 
     test('lower', () {
-      final tmpl = env.fromString('{{ "foo" is lower }}|{{ "FOO" is lower }}');
-      expect(tmpl.render(), equals('true|false'));
+      var tmpl = env.fromString('{{ "foo" is lower }}');
+      expect(tmpl.render(), equals('true'));
+      tmpl = env.fromString('{{ "FOO" is lower }}');
+      expect(tmpl.render(), equals('false'));
     });
 
     test('types', () {
@@ -134,17 +141,17 @@ void main() {
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ none is number }}');
       expect(tmpl.render(), equals('false'));
-      // difference: false is not num
+      // TODO(difference): false is not num
       tmpl = env.fromString('{{ false is number }}');
       expect(tmpl.render(), equals('false'));
-      // difference: true is not num
+      // TODO(difference): true is not num
       tmpl = env.fromString('{{ true is number }}');
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ 42 is number }}');
       expect(tmpl.render(), equals('true'));
       tmpl = env.fromString('{{ 3.14159 is number }}');
       expect(tmpl.render(), equals('true'));
-      // not supported: complex
+      // TODO(difference): complex not supported
       // tmpl = env.fromString('{{ complex is number }}');
       // expect(tmpl.render(), equals('true'));
       tmpl = env.fromString('{{ (10 ** 100) is number }}');
@@ -185,20 +192,20 @@ void main() {
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ {} is mapping }}');
       expect(tmpl.render(), equals('true'));
-      tmpl = env.fromString('{{ md is mapping }}');
-      expect(tmpl.render({'md': MyMap()}), equals('true'));
+      tmpl = env.fromString('{{ mydict is mapping }}');
+      expect(tmpl.render({'mydict': MyMap()}), equals('true'));
       tmpl = env.fromString('{{ none is iterable }}');
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ false is iterable }}');
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ 42 is iterable }}');
       expect(tmpl.render(), equals('false'));
-      // difference: string is not iterable
+      // TODO(difference): string is not iterable
       tmpl = env.fromString('{{ "foo" is iterable }}');
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ [] is iterable }}');
       expect(tmpl.render(), equals('true'));
-      // difference: map is not iterable
+      // TODO(difference): map is not iterable
       tmpl = env.fromString('{{ {} is iterable }}');
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ range(5) is iterable }}');
@@ -220,12 +227,14 @@ void main() {
     });
 
     test('upper', () {
-      final tmpl = env.fromString('{{ "FOO" is upper }}|{{ "foo" is upper }}');
-      expect(tmpl.render(), equals('true|false'));
+      var tmpl = env.fromString('{{ "FOO" is upper }}');
+      expect(tmpl.render(), equals('true'));
+      tmpl = env.fromString('{{ "foo" is upper }}');
+      expect(tmpl.render(), equals('false'));
     });
 
     test('equal to', () {
-      final data = {'foo': 12, 'bar': 'baz'};
+      var data = {'foo': 12, 'bar': 'baz'};
       var tmpl = env.fromString('{{ foo is eq 12 }}');
       expect(tmpl.render(data), equals('true'));
       tmpl = env.fromString('{{ foo is eq 0 }}');
@@ -279,7 +288,7 @@ void main() {
     });
 
     test('no paren for arg 1', () {
-      final tmpl = env.fromString('{{ foo is sameas none }}');
+      var tmpl = env.fromString('{{ foo is sameas none }}');
       expect(tmpl.render({'foo': null}), equals('true'));
     });
 
@@ -305,19 +314,18 @@ void main() {
     });
 
     test('multiple test', () {
-      final items = <Object?>[];
+      var items = <Object?>[];
 
       bool matching(Object? x, Object? y) {
         items.add(<Object?>[x, y]);
         return false;
       }
 
-      final env = Environment(tests: {'matching': matching});
-      final tmpl = env
+      var env = Environment(tests: {'matching': matching});
+      var tmpl = env
           .fromString('{{ "us-west-1" is matching "(us-east-1|ap-northeast-1)"'
               ' or "stage" is matching "(dev|stage)" }}');
-      final result = tmpl.render();
-
+      var result = tmpl.render();
       expect(result, equals('false'));
       expect(items[0], equals(['us-west-1', '(us-east-1|ap-northeast-1)']));
       expect(items[1], equals(['stage', '(dev|stage)']));
@@ -344,11 +352,21 @@ void main() {
       expect(tmpl.render(), equals('false'));
     });
 
-    // TODO: add test: name undefined
-    // test('name undefined', () {});
+    test('name undefined', () {
+      expect(
+          () => env.fromString('{{ "o" is in "foo" }}'),
+          throwsA(predicate<TemplateAssertionError>(
+              (error) => error.message == 'no test named \'f\'')));
+    });
 
-    // TODO: add test: name undefined in if
-    // test('name undefined in if', () {});
+    test('name undefined in if', () {
+      var tmpl = env.fromString('{% if x is defined %}{{ x is f }}{% endif %}');
+      expect(tmpl.render(), equals(''));
+      expect(
+          () => tmpl.render({'x': 1}),
+          throwsA(predicate<TemplateRuntimeError>(
+              (error) => error.message == 'no test named \'f\'')));
+    });
 
     // TODO: add test: is filter
     // test('is filter', () {});

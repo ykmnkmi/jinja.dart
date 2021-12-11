@@ -2,6 +2,7 @@ import 'package:jinja/jinja.dart';
 import 'package:test/test.dart';
 
 import 'package:jinja/src/context.dart';
+import 'package:jinja/src/runtime.dart';
 import 'package:jinja/src/utils.dart';
 
 void main() {

@@ -9,8 +9,9 @@ doc/api/
 packages/
 web/
 pubspec.lock
+**/**.dill
+**/**.jit
 **/**.aot
 **/**.exe
-**/**.jit
 **/**.py
 **/**.pyc

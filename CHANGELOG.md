@@ -12,6 +12,7 @@
   - `with`
 - add `print` to globals
 - refactoring
+- internal changes
 - _work in progress_
 
 ## 0.3.4
@@ -35,7 +36,7 @@
 - add loader tests
 - template:
   - change `Template.parsed` constructor definition to `Template.parsed(this.env, this.body, [this.path])`
-- internal fixes
+- internal changes
 
 ## 0.2.4
 - dart issue [41362](https://github.com/dart-lang/sdk/issues/41362)
