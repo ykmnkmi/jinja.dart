@@ -25,8 +25,8 @@ class User extends MapBase<String, Object?> {
       case 'username':
         return username;
       default:
-        throw NoSuchMethodError.withInvocation(
-            this, Invocation.getter(Symbol('$key')));
+        var invocation = Invocation.getter(Symbol(key.toString()));
+        throw NoSuchMethodError.withInvocation(this, invocation);
     }
   }
 
@@ -37,8 +37,8 @@ class User extends MapBase<String, Object?> {
         username = value as String;
         break;
       default:
-        throw NoSuchMethodError.withInvocation(
-            this, Invocation.setter(Symbol(key), value));
+        var invocation = Invocation.setter(Symbol(key), value);
+        throw NoSuchMethodError.withInvocation(this, invocation);
     }
   }
 

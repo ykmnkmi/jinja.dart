@@ -21,7 +21,6 @@ typedef FieldGetter = Object? Function(Object? object, String field);
 typedef Finalizer = Object? Function(Object? value);
 
 // TODO(doc): update
-@internal
 enum PassArgument {
   context,
   environment,
@@ -256,6 +255,57 @@ class Environment {
         leftStripBlocks == other.leftStripBlocks;
   }
 
+  /// Creates a copy of the environment with specified attributes overridden.
+  Environment copyWith(
+      {String? commentStart,
+      String? commentEnd,
+      String? variableStart,
+      String? variableEnd,
+      String? blockStart,
+      String? blockEnd,
+      String? lineCommentPrefix,
+      String? lineStatementPrefix,
+      bool? leftStripBlocks,
+      bool? trimBlocks,
+      String? newLine,
+      bool? keepTrailingNewLine,
+      bool? optimized,
+      Function? finalize,
+      bool? autoEscape,
+      Loader? loader,
+      bool? autoReload,
+      Map<String, Object?>? globals,
+      Map<String, Function>? filters,
+      Map<String, Function>? environmentFilters,
+      Map<String, Function>? contextFilters,
+      Map<String, Function>? tests,
+      Random? random,
+      FieldGetter? fieldGetter}) {
+    return Environment(
+        commentStart: commentStart ?? this.commentStart,
+        commentEnd: commentEnd ?? this.commentEnd,
+        variableStart: variableStart ?? this.variableStart,
+        variableEnd: variableEnd ?? this.variableEnd,
+        blockStart: blockStart ?? this.blockStart,
+        blockEnd: blockEnd ?? this.blockEnd,
+        lineCommentPrefix: lineCommentPrefix ?? this.lineCommentPrefix,
+        lineStatementPrefix: lineStatementPrefix ?? this.lineStatementPrefix,
+        leftStripBlocks: leftStripBlocks ?? this.leftStripBlocks,
+        trimBlocks: trimBlocks ?? this.trimBlocks,
+        newLine: newLine ?? this.newLine,
+        keepTrailingNewLine: keepTrailingNewLine ?? this.keepTrailingNewLine,
+        optimized: optimized ?? this.optimized,
+        finalize: finalize ?? this.finalize,
+        autoEscape: autoEscape ?? this.autoEscape,
+        loader: loader ?? this.loader,
+        autoReload: autoReload ?? this.autoReload,
+        globals: globals ?? this.globals,
+        filters: filters ?? this.filters,
+        tests: tests ?? this.tests,
+        random: random ?? this.random,
+        fieldGetter: fieldGetter ?? this.fieldGetter);
+  }
+
   /// Common filter and test caller.
   @internal
   Object? callCommon(String name, List<Object?> positional,
@@ -285,25 +335,25 @@ class Environment {
   }
 
   /// If [name] not found throws [TemplateRuntimeError].
-  Object? callFilter(
-      String name, List<Object?> positional, Map<Symbol, Object?> named,
-      [Context? context]) {
+  Object? callFilter(String name, List<Object?> positional,
+      [Map<Symbol, Object?> named = const <Symbol, Object?>{},
+      Context? context]) {
     return callCommon(name, positional, named, true, context);
   }
 
   /// If [name] not found throws [TemplateRuntimeError].
-  bool callTest(
-      String name, List<Object?> positional, Map<Symbol, Object?> named,
-      [Context? context]) {
+  bool callTest(String name, List<Object?> positional,
+      [Map<Symbol, Object?> named = const <Symbol, Object?>{},
+      Context? context]) {
     return callCommon(name, positional, named, false, context) as bool;
   }
 
   /// Get an item or attribute of an object but prefer the attribute.
-  Object? getAttribute(dynamic object, String field) {
+  Object? getAttribute(dynamic object, String attrbute) {
     try {
-      return fieldGetter(object, field);
+      return fieldGetter(object, attrbute);
     } on NoSuchMethodError {
-      return object[field];
+      return object[attrbute];
     }
   }
 
@@ -369,58 +419,6 @@ class Environment {
 
     return loader.listTemplates();
   }
-
-  /// Create a new overlay environment that shares all the data with
-  /// the current environment except the overridden attributes.
-  Environment overlay(
-      {String? commentStart,
-      String? commentEnd,
-      String? variableStart,
-      String? variableEnd,
-      String? blockStart,
-      String? blockEnd,
-      String? lineCommentPrefix,
-      String? lineStatementPrefix,
-      bool? leftStripBlocks,
-      bool? trimBlocks,
-      String? newLine,
-      bool? keepTrailingNewLine,
-      bool? optimized,
-      Function? finalize,
-      bool? autoEscape,
-      Loader? loader,
-      bool? autoReload,
-      Map<String, Object?>? globals,
-      Map<String, Function>? filters,
-      Map<String, Function>? environmentFilters,
-      Map<String, Function>? contextFilters,
-      Map<String, Function>? tests,
-      Random? random,
-      FieldGetter? fieldGetter}) {
-    return Environment(
-        commentStart: commentStart ?? this.commentStart,
-        commentEnd: commentEnd ?? this.commentEnd,
-        variableStart: variableStart ?? this.variableStart,
-        variableEnd: variableEnd ?? this.variableEnd,
-        blockStart: blockStart ?? this.blockStart,
-        blockEnd: blockEnd ?? this.blockEnd,
-        lineCommentPrefix: lineCommentPrefix ?? this.lineCommentPrefix,
-        lineStatementPrefix: lineStatementPrefix ?? this.lineStatementPrefix,
-        leftStripBlocks: leftStripBlocks ?? this.leftStripBlocks,
-        trimBlocks: trimBlocks ?? this.trimBlocks,
-        newLine: newLine ?? this.newLine,
-        keepTrailingNewLine: keepTrailingNewLine ?? this.keepTrailingNewLine,
-        optimized: optimized ?? this.optimized,
-        finalize: finalize ?? this.finalize,
-        autoEscape: autoEscape ?? this.autoEscape,
-        loader: loader ?? this.loader,
-        autoReload: autoReload ?? this.autoReload,
-        globals: globals ?? this.globals,
-        filters: filters ?? this.filters,
-        tests: tests ?? this.tests,
-        random: random ?? this.random,
-        fieldGetter: fieldGetter ?? this.fieldGetter);
-  }
 }
 
 /// The central `Template` object. This class represents a compiled template
@@ -460,7 +458,7 @@ class Template extends Node {
     Environment environment;
 
     if (parent != null) {
-      environment = parent.overlay(
+      environment = parent.copyWith(
           commentStart: commentStart,
           commentEnd: commentEnd,
           variableStart: variableStatr,
@@ -619,7 +617,6 @@ class Template extends Node {
     var context = StringSinkRenderContext(environment, buffer, data: data);
     accept(const StringSinkRenderer(), context);
     return buffer.toString();
-    // return generate(data).join();
   }
 
   @override

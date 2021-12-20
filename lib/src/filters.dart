@@ -10,30 +10,63 @@ import 'context.dart';
 import 'markup.dart';
 import 'utils.dart';
 
-Object? Function(Object?) makeAttributeGetter(
-    Environment environment, String attributeOrAttributes,
-    {Object? Function(Object?)? postProcess, Object? defaultValue}) {
-  var attributes = attributeOrAttributes.split('.');
-  return (Object? item) {
-    for (var part in attributes) {
-      item = environment.getAttribute(item, part);
+// TODO(doc): add
+final Map<String, Function> filters = <String, Function>{
+  'abs': doAbs,
+  'attr': passEnvironment(doAttribute),
+  'batch': doBatch,
+  'capitalize': doCapitalize,
+  'center': doCenter,
+  'count': count,
+  'd': doDefault,
+  'default': doDefault,
+  'dictsort': doDictSort,
+  'e': doEscape,
+  'escape': doEscape,
+  'filesizeformat': doFileSizeFormat,
+  'first': doFirst,
+  'float': doFloat,
+  'forceescape': doForceEscape,
+  'int': doInteger,
+  'join': passContext(doJoin),
+  'last': doLast,
+  'length': count,
+  'list': list,
+  'lower': doLower,
+  'pprint': doPPrint,
+  'random': passEnvironment(doRandom),
+  'replace': doReplace,
+  'reverse': doReverse,
+  'safe': doMarkSafe,
+  'slice': doSlice,
+  'string': doString,
+  'sum': passEnvironment(doSum),
+  'trim': doTrim,
+  'upper': doUpper,
+  'wordcount': doWordCount,
+  'wordwrap': passEnvironment(doWordWrap),
 
-      if (item == null) {
-        if (defaultValue != null) {
-          item = defaultValue;
-        }
-
-        break;
-      }
-    }
-
-    if (postProcess != null) {
-      item = postProcess(item);
-    }
-
-    return item;
-  };
-}
+  // 'format': doFormat,
+  // 'groupby': doGroupBy,
+  // 'indent': doIndent,
+  // 'map': doMap,
+  // 'max': doMax,
+  // 'min': doMin,
+  // 'reject': doReject,
+  // 'rejectattr': doRejectAttr,
+  // 'round': doRound,
+  // 'select': doSelect,
+  // 'selectattr': doSelectAttr,
+  // 'sort': doSort,
+  // 'striptags': doStripTags,
+  // 'title': doTitle,
+  // 'tojson': doToJson,
+  // 'truncate': doTruncate,
+  // 'unique': doUnique,
+  // 'urlencode': doURLEncode,
+  // 'urlize': doURLize,
+  // 'xmlattr': doXMLAttr,
+};
 
 num doAbs(num number) {
   return number.abs();
@@ -251,6 +284,10 @@ String doLower(String string) {
   return string.toLowerCase();
 }
 
+Markup doMarkSafe(String value) {
+  return Markup.escaped(value);
+}
+
 String doPPrint(Object? object) {
   return format(object);
 }
@@ -304,10 +341,6 @@ Object? doReplace(Object? object, String from, String to, [int? count]) {
 Object? doReverse(Object? value) {
   var values = list(value);
   return values.reversed;
-}
-
-Markup doMarkSafe(String value) {
-  return Markup.escaped(value);
 }
 
 List<List<Object?>> doSlice(Object? value, int slices, [Object? fillWith]) {
@@ -386,59 +419,27 @@ String doWordWrap(Environment environment, String string, int width,
       .join(wrap);
 }
 
-final Map<String, Function> filters = <String, Function>{
-  'abs': doAbs,
-  'attr': passEnvironment(doAttribute),
-  'batch': doBatch,
-  'capitalize': doCapitalize,
-  'center': doCenter,
-  'count': count,
-  'd': doDefault,
-  'default': doDefault,
-  'dictsort': doDictSort,
-  'e': doEscape,
-  'escape': doEscape,
-  'filesizeformat': doFileSizeFormat,
-  'first': doFirst,
-  'float': doFloat,
-  'forceescape': doForceEscape,
-  'int': doInteger,
-  'join': passContext(doJoin),
-  'last': doLast,
-  'length': count,
-  'list': list,
-  'lower': doLower,
-  'pprint': doPPrint,
-  'random': passEnvironment(doRandom),
-  'replace': doReplace,
-  'reverse': doReverse,
-  'safe': doMarkSafe,
-  'slice': doSlice,
-  'string': doString,
-  'sum': passEnvironment(doSum),
-  'trim': doTrim,
-  'upper': doUpper,
-  'wordcount': doWordCount,
-  'wordwrap': passEnvironment(doWordWrap),
+Object? Function(Object?) makeAttributeGetter(
+    Environment environment, String attributeOrAttributes,
+    {Object? Function(Object?)? postProcess, Object? defaultValue}) {
+  var attributes = attributeOrAttributes.split('.');
+  return (Object? item) {
+    for (var part in attributes) {
+      item = environment.getAttribute(item, part);
 
-  // 'format': doFormat,
-  // 'groupby': doGroupBy,
-  // 'indent': doIndent,
-  // 'map': doMap,
-  // 'max': doMax,
-  // 'min': doMin,
-  // 'reject': doReject,
-  // 'rejectattr': doRejectAttr,
-  // 'round': doRound,
-  // 'select': doSelect,
-  // 'selectattr': doSelectAttr,
-  // 'sort': doSort,
-  // 'striptags': doStripTags,
-  // 'title': doTitle,
-  // 'tojson': doToJson,
-  // 'truncate': doTruncate,
-  // 'unique': doUnique,
-  // 'urlencode': doURLEncode,
-  // 'urlize': doURLize,
-  // 'xmlattr': doXMLAttr,
-};
+      if (item == null) {
+        if (defaultValue != null) {
+          item = defaultValue;
+        }
+
+        break;
+      }
+    }
+
+    if (postProcess != null) {
+      item = postProcess(item);
+    }
+
+    return item;
+  };
+}

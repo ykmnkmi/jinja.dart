@@ -93,6 +93,6 @@ class Context {
   }
 
   bool test(String name, List<Object?> positional, Map<Symbol, Object?> named) {
-    return environment.callTest(name, positional, named);
+    return environment.callTest(name, positional, named, this);
   }
 }

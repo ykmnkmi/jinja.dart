@@ -3,7 +3,7 @@
 import 'package:jinja/jinja.dart';
 import 'package:stack_trace/stack_trace.dart';
 
-const String source = '''{{ "Hello " ~ name ~ "!" }}''';
+const String source = '''{{ 0 }}''';
 
 void main() {
   try {
@@ -17,6 +17,8 @@ void main() {
     print(template.nodes);
     print(template.generate({'name': 'world'}));
     print(template.render({'name': 'world'}));
+  } on TemplateError catch (error) {
+    print(error.message);
   } catch (error, trace) {
     print(error);
     print(Trace.format(trace, terse: true));

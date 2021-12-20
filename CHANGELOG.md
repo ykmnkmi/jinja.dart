@@ -1,8 +1,7 @@
 ## 0.4.0-dev.31
 - remove `Undefined` and `missing`
 - remove slices and negative indexes
-- remove dynamic template imports, only single constant template path/name
-- `Environment.copyWith` renamed to `Environment.overlay`
+- remove dynamic template imports, only single template path/name,
 - remove dynamic `Template.render` method
 - `Template.renderMap` renamed to `Template.render`
 - `Loader.listSources` renamed to `Loader.listTemplates`

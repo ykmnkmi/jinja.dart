@@ -1,25 +1,30 @@
 # Jinja for Dart
 [![Pub](https://img.shields.io/pub/v/jinja.svg)](https://pub.dev/packages/jinja)
 
-[Jinja](https://www.palletsprojects.com/p/jinja/) server-side template engine port for Dart 2.
+[Jinja][jinja] server-side template engine port for Dart 2.
 Variables, expressions, control structures and template inheritance.
 
 ## Breaking changes 0.4.0, less dynamic
 - remove `Undefined` and `missing`
 - remove slices and negative indexes
-- remove dynamic template imports, only single constant template path/name
-- `Environment.copyWith` renamed to `Environment.overlay`
-- `Environment.copyWith` renamed to `Environment.overlay`
+- remove dynamic template imports, only single template path/name,
 - remove dynamic `Template.render` method
 - `Template.renderMap` renamed to `Template.render`
 - `Loader.listSources` renamed to `Loader.listTemplates`
-- `FileSystemLoader` moved from `package:jinja/jinja.dart` to `package:jinja/loaders.dart`
+- `FileSystemLoader` moved from `package:jinja/jinja.dart`
+  to `package:jinja/loaders.dart`
 - _work in progress_
 
 ## Documentation
-Mostly same as [Jinja](https://jinja.palletsprojects.com/en/3.0.x/templates/) template documentation. _work in progress_.
+Mostly same as [Jinja](https://jinja.palletsprojects.com/en/3.0.x/templates/)
+template documentation. _work in progress_.
 
 ## Differences
+Tests:
+- `defined` and `undefined` tests compares value with `null`
+- boolean is not `number`
+- string and map is not `iterable`
+- complex not supported
 _work in progress_
 
 ## Example
@@ -34,7 +39,8 @@ var template = env.fromString('...source...');
 sink.write(template.render({'key': value}));
 ```
 
-See also examples with [conduit][conduit_example] and [reflectable][reflectable_example].
+See also examples with [conduit][conduit_example]
+and [reflectable][reflectable_example].
 
 ## Status:
 ### TODO:
@@ -156,12 +162,16 @@ See also examples with [conduit][conduit_example] and [reflectable][reflectable_
   - FileSystemLoader
   - MapLoader (DictLoader)
 - Extensions
+  - Do Statement
   - With Statement
 - Autoescape Overrides
 
 ## Contributing
-If you found a bug, just create a [new issue][new_issue] or even better fork and issue a pull request with your fix.
+If you found a bug, typo or you have better description or comment
+for documents, just create a [new issue][new_issue] or even better
+fork and issue a pull request with your fix.
 
+[jinja]: https://www.palletsprojects.com/p/jinja
 [conduit_example]: https://github.com/ykmnkmi/jinja_conduit_example
 [reflectable_example]: https://github.com/ykmnkmi/jinja_reflectable_example
 [new_issue]: https://github.com/ykmnkmi/dart-jinja/issues/new

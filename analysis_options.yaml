@@ -2,8 +2,9 @@ include: package:lints/recommended.yaml
 
 analyzer:
   exclude:
-    - example/**
+    - build/*
   language:
+    strict-casts: true
     strict-inference: true
     strict-raw-types: true
   strong-mode:
@@ -13,3 +14,4 @@ analyzer:
 linter:
   rules:
     avoid_print: true
+    library_prefixes: false

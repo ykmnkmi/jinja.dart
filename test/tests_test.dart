@@ -141,19 +141,14 @@ void main() {
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ none is number }}');
       expect(tmpl.render(), equals('false'));
-      // TODO(difference): false is not num
       tmpl = env.fromString('{{ false is number }}');
       expect(tmpl.render(), equals('false'));
-      // TODO(difference): true is not num
       tmpl = env.fromString('{{ true is number }}');
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ 42 is number }}');
       expect(tmpl.render(), equals('true'));
       tmpl = env.fromString('{{ 3.14159 is number }}');
       expect(tmpl.render(), equals('true'));
-      // TODO(difference): complex not supported
-      // tmpl = env.fromString('{{ complex is number }}');
-      // expect(tmpl.render(), equals('true'));
       tmpl = env.fromString('{{ (10 ** 100) is number }}');
       expect(tmpl.render(), equals('true'));
       tmpl = env.fromString('{{ none is string }}');
@@ -200,12 +195,10 @@ void main() {
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ 42 is iterable }}');
       expect(tmpl.render(), equals('false'));
-      // TODO(difference): string is not iterable
       tmpl = env.fromString('{{ "foo" is iterable }}');
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ [] is iterable }}');
       expect(tmpl.render(), equals('true'));
-      // TODO(difference): map is not iterable
       tmpl = env.fromString('{{ {} is iterable }}');
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ range(5) is iterable }}');
@@ -354,7 +347,7 @@ void main() {
 
     test('name undefined', () {
       expect(
-          () => env.fromString('{{ "o" is in "foo" }}'),
+          () => env.fromString('{{ x is f }}'),
           throwsA(predicate<TemplateAssertionError>(
               (error) => error.message == 'no test named \'f\'')));
     });
@@ -368,10 +361,14 @@ void main() {
               (error) => error.message == 'no test named \'f\'')));
     });
 
-    // TODO: add test: is filter
-    // test('is filter', () {});
+    test('is filter', () {
+      expect(env.callTest('filter', <Object?>['string']), isTrue);
+      expect(env.callTest('filter', <Object?>['badName']), isFalse);
+    });
 
-    // TODO: add test: is test
-    // test('is test', () {});
+    test('is test', () {
+      expect(env.callTest('test', <Object?>['number']), isTrue);
+      expect(env.callTest('test', <Object?>['badName']), isFalse);
+    });
   });
 }
