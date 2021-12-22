@@ -43,6 +43,48 @@ int count(dynamic iterable) {
   return iterable.length as int;
 }
 
+String escape(String text) {
+  var start = 0;
+  StringBuffer? result;
+
+  for (var i = 0; i < text.length; i++) {
+    String? replacement;
+
+    switch (text[i]) {
+      case '&':
+        replacement = '&amp;';
+        break;
+      case '"':
+        replacement = '&#34;';
+        break;
+      case "'":
+        replacement = '&#39;';
+        break;
+      case '<':
+        replacement = '&lt;';
+        break;
+      case '>':
+        replacement = '&gt;';
+        break;
+    }
+
+    if (replacement != null) {
+      result ??= StringBuffer();
+      result.write(text.substring(start, i));
+      result.write(replacement);
+      start = i + 1;
+    }
+  }
+
+  if (result == null) {
+    return text;
+  } else {
+    result.write(text.substring(start));
+  }
+
+  return result.toString();
+}
+
 String format(Object? object) {
   return repr(object);
 }

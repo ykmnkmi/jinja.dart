@@ -4,7 +4,6 @@ import 'dart:math' show Random;
 import 'package:jinja/jinja.dart';
 import 'package:test/test.dart';
 
-import 'package:jinja/src/markup.dart';
 import 'package:jinja/src/utils.dart';
 
 import 'environment.dart';
@@ -21,25 +20,23 @@ class User extends MapBase<String, Object?> {
 
   @override
   String operator [](Object? key) {
-    switch (key) {
-      case 'username':
-        return username;
-      default:
-        var invocation = Invocation.getter(Symbol(key.toString()));
-        throw NoSuchMethodError.withInvocation(this, invocation);
+    if (key == 'username') {
+      return username;
     }
+
+    var invocation = Invocation.getter(Symbol(key.toString()));
+    throw NoSuchMethodError.withInvocation(this, invocation);
   }
 
   @override
   void operator []=(String key, Object? value) {
-    switch (key) {
-      case 'username':
-        username = value as String;
-        break;
-      default:
-        var invocation = Invocation.setter(Symbol(key), value);
-        throw NoSuchMethodError.withInvocation(this, invocation);
+    if (key == 'username') {
+      username = value as String;
+      return;
     }
+
+    var invocation = Invocation.setter(Symbol(key), value);
+    throw NoSuchMethodError.withInvocation(this, invocation);
   }
 
   @override
@@ -56,8 +53,8 @@ class User extends MapBase<String, Object?> {
 void main() {
   group('Filter', () {
     test('filter calling', () {
-      var result = env.callFilter('sum', [[1, 2, 3]], {});
-      expect(result, equals(6));
+      var list = [1, 2, 3];
+      expect(env.callFilter('sum', [list]), equals(6));
     });
 
     test('capitalize', () {
@@ -81,8 +78,18 @@ void main() {
       expect(tmpl.render({'given': 'yes'}), equals('yes'));
     });
 
-    // TODO: add test: dictsort
-    // test('dictsort', () {});
+    test('dictsort', () {
+      var foo = {'aa': 0, 'b': 1, 'c': 2, 'AB': 3};
+      var tmpl = env.fromString('{{ foo|dictsort() }}');
+      expect(tmpl.render({'foo': foo}),
+          equals('[[aa, 0], [AB, 3], [b, 1], [c, 2]]'));
+      tmpl = env.fromString('{{ foo|dictsort(caseSensetive=true) }}');
+      expect(tmpl.render({'foo': foo}),
+          equals('[[AB, 3], [aa, 0], [b, 1], [c, 2]]'));
+      tmpl = env.fromString('{{ foo|dictsort(reverse=true) }}');
+      expect(tmpl.render({'foo': foo}),
+          equals('[[c, 2], [b, 1], [AB, 3], [aa, 0]]'));
+    });
 
     test('batch', () {
       var data = {'foo': range(10)};
@@ -111,7 +118,7 @@ void main() {
 
     test('trim', () {
       var data = {'foo': '  ..stays..'};
-      var tmpl = env.fromString('{{ foo|trim() }}');
+      var tmpl = env.fromString('{{ foo|trim }}');
       expect(tmpl.render(data), equals('..stays..'));
       tmpl = env.fromString('{{ foo|trim(".") }}');
       expect(tmpl.render(data), equals('  ..stays'));
@@ -119,8 +126,14 @@ void main() {
       expect(tmpl.render(data), equals('stays'));
     });
 
-    // add test: striptags
-    // test('striptags', () {});
+    test('striptags', () {
+      var foo = '  <p>just a small   \n <a href="#">'
+          'example</a> link</p>\n<p>to a webpage</p> '
+          '<!-- <p>and some commented stuff</p> -->';
+      var tmpl = env.fromString('{{ foo|striptags }}');
+      expect(tmpl.render({'foo': foo}),
+          equals('just a small example link to a webpage'));
+    });
 
     test('filesizeformat', () {
       var tmpl = env.fromString('{{ 100|filesizeformat }}');
@@ -175,7 +188,6 @@ void main() {
     // test('indent width string', () {});
 
     test('int', () {
-      // no bigint '12345678901234567890': '12345678901234567890'
       var tmpl = env.fromString('{{ value|int }}');
       expect(tmpl.render({'value': '42'}), equals('42'));
       expect(tmpl.render({'value': 'abc'}), equals('0'));
@@ -374,12 +386,6 @@ void main() {
       expect(tmpl.render({'string': '<foo>'}), equals('42foo&gt;'));
       tmpl = env.fromString('{{ string|replace("o", ">x<") }}');
       expect(tmpl.render({'string': 'foo'}), equals('f&gt;x&lt;&gt;x&lt;'));
-    });
-
-    test('force escape', () {
-      var tmpl = env.fromString('{{ x|forceescape }}');
-      var x = Markup.escaped('<div />');
-      expect(tmpl.render({'x': x}), equals('&lt;div /&gt;'));
     });
 
     test('safe', () {

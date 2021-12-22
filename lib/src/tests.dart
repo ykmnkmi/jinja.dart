@@ -1,5 +1,4 @@
 import 'environment.dart';
-import 'markup.dart';
 
 // TODO(doc): add
 final Map<String, Function> tests = <String, Function>{
@@ -15,7 +14,6 @@ final Map<String, Function> tests = <String, Function>{
   'divisibleby': isDivisibleBy,
   'eq': isEqual,
   'equalto': isEqual,
-  'escaped': isEscaped,
   'even': isEven,
   'false': isFalse,
   'filter': passEnvironment(isFilter),
@@ -78,11 +76,6 @@ bool isDivisibleBy(num value, num divider) {
 /// Same as `a == b`.
 bool isEqual(Object? value, Object? other) {
   return value == other;
-}
-
-/// Check if the value is escaped.
-bool isEscaped(Object? value) {
-  return value is Markup;
 }
 
 /// Return `true` if the variable is even.

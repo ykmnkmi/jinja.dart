@@ -120,7 +120,7 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
     var filters = node.filters;
 
     if (filters == null || filters.isEmpty) {
-      context.assignTargets(target, context.escape(value, true));
+      context.assignTargets(target, value);
       return;
     }
 
@@ -131,7 +131,7 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
       });
     }
 
-    context.assignTargets(target, context.escape(value, true));
+    context.assignTargets(target, value);
   }
 
   @override
@@ -193,8 +193,13 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
   Iterable<String> visitExpession(
       Expression node, RenderContext context) sync* {
     var value = node.resolve(context);
-    value = context.finalize(value);
-    yield context.escape(value).toString();
+    var string = context.finalize(value).toString();
+
+    if (context.autoEscape) {
+      string = escape(string);
+    }
+
+    yield string;
   }
 
   @override
@@ -215,7 +220,13 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
       });
     }
 
-    yield context.escape(value).toString();
+    var string = value.toString();
+
+    if (context.autoEscape) {
+      string = escape(string);
+    }
+
+    yield string;
   }
 
   @override
@@ -379,14 +390,20 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
     var target = node.target.resolve(context);
     var buffer = StringBuffer();
     node.body.accept(this, context.derived(buffer: buffer));
-    Object? value = buffer.toString();
-
     var filters = node.filters;
 
     if (filters == null || filters.isEmpty) {
-      context.assignTargets(target, context.escape(value, true));
+      var string = buffer.toString();
+
+      if (context.autoEscape) {
+        string = escape(string);
+      }
+
+      context.assignTargets(target, string);
       return;
     }
+
+    Object? value = buffer.toString();
 
     for (var filter in filters) {
       value = filter.apply(context, (positional, named) {
@@ -395,7 +412,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
       });
     }
 
-    context.assignTargets(target, context.escape(value, true));
+    context.assignTargets(target, value);
   }
 
   @override
@@ -455,10 +472,13 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
 
   @override
   void visitExpession(Expression node, StringSinkRenderContext context) {
-    var value = node.resolve(context);
-    value = context.finalize(value);
-    value = context.escape(value);
-    context.write(value);
+    var string = context.finalize(node.resolve(context)).toString();
+
+    if (context.autoEscape) {
+      string = escape(string);
+    }
+
+    context.write(string);
   }
 
   @override

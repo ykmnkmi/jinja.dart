@@ -57,8 +57,7 @@ class Environment {
   @internal
   static final Expando<Parser> parsers = Expando<Parser>();
 
-  /// Cached functions, filters, and tests pass arguments.
-  // TODO(doc): update
+  /// [PassArgument] values configurations for functions, filters, and tests.
   @internal
   static final Expando<PassArgument> passArguments = Expando<PassArgument>();
 
@@ -306,6 +305,43 @@ class Environment {
         fieldGetter: fieldGetter ?? this.fieldGetter);
   }
 
+  /// Lex the given sourcecode and return a list of [Token]'s.
+  ///
+  /// This can be useful for extension development and debugging templates.
+  List<Token> lex(String source) {
+    return lexer.tokenize(source);
+  }
+
+  /// Parse the sourcecode and return the abstract syntax tree.
+  ///
+  /// This is useful for debugging or to extract information from templates.
+  List<Node> parse(String source) {
+    var tokens = lex(source);
+    return parser.scan(tokens);
+  }
+
+  /// Load a template from a source string without using [loader].
+  Template fromString(String source, {String? path}) {
+    var nodes = Parser(this, path: path).parse(source);
+    var template = Template.parsed(this, nodes, path: path);
+
+    if (optimized) {
+      template.accept(const Optimizer(), Context(this));
+    }
+
+    return template;
+  }
+
+  /// Get an item or attribute of an object but prefer the attribute.
+  Object? getAttribute(dynamic object, String attrbute) {
+    return fieldGetter(object, attrbute);
+  }
+
+  /// Get an item or attribute of an object but prefer the item.
+  Object? getItem(dynamic object, Object? key) {
+    return object[key];
+  }
+
   /// Common filter and test caller.
   @internal
   Object? callCommon(String name, List<Object?> positional,
@@ -348,45 +384,18 @@ class Environment {
     return callCommon(name, positional, named, false, context) as bool;
   }
 
-  /// Get an item or attribute of an object but prefer the attribute.
-  Object? getAttribute(dynamic object, String attrbute) {
-    try {
-      return fieldGetter(object, attrbute);
-    } on NoSuchMethodError {
-      return object[attrbute];
-    }
-  }
-
-  /// Get an item or attribute of an object but prefer the item.
-  Object? getItem(dynamic object, Object? key) {
-    return object[key];
-  }
-
-  /// Lex the given sourcecode and return a list of [Token]'s.
+  /// Returns a list of templates for this environment.
   ///
-  /// This can be useful for extension development and debugging templates.
-  List<Token> lex(String source) {
-    return lexer.tokenize(source);
-  }
+  /// This requires that the loader supports the loader's
+  /// [Loader.listTemplates] method.
+  List<String> listTemplates() {
+    var loader = this.loader;
 
-  /// Parse the sourcecode and return the abstract syntax tree.
-  ///
-  /// This is useful for debugging or to extract information from templates.
-  List<Node> parse(String source) {
-    var tokens = lex(source);
-    return parser.scan(tokens);
-  }
-
-  /// Load a template from a source string without using [loader].
-  Template fromString(String source, {String? path}) {
-    var nodes = Parser(this, path: path).parse(source);
-    var template = Template.parsed(this, nodes, path: path);
-
-    if (optimized) {
-      template.accept(const Optimizer(), Context(this));
+    if (loader == null) {
+      throw StateError('no loader for this environment specified');
     }
 
-    return template;
+    return loader.listTemplates();
   }
 
   /// Load a template by name with [loader] and return a
@@ -404,20 +413,6 @@ class Environment {
     }
 
     return templates[template] ??= loader.load(this, template);
-  }
-
-  /// Returns a list of templates for this environment.
-  ///
-  /// This requires that the loader supports the loader's
-  /// [Loader.listTemplates] method.
-  List<String> listTemplates() {
-    var loader = this.loader;
-
-    if (loader == null) {
-      throw StateError('no loader for this environment specified');
-    }
-
-    return loader.listTemplates();
   }
 }
 

@@ -20,6 +20,10 @@ Mostly same as [Jinja](https://jinja.palletsprojects.com/en/3.0.x/templates/)
 template documentation. _work in progress_.
 
 ## Differences
+Common:
+- bigint not supported
+Filters:
+- `default` filter compares value with `null`
 Tests:
 - `defined` and `undefined` tests compares value with `null`
 - boolean is not `number`

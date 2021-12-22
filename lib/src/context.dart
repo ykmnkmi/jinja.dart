@@ -1,5 +1,4 @@
 import 'environment.dart';
-import 'markup.dart';
 
 typedef ContextCallback<C extends Context> = void Function(C context);
 
@@ -25,26 +24,6 @@ class Context {
 
   Context derived() {
     return Context(environment, parent: context);
-  }
-
-  Object? escape(Object? value, [bool escaped = false]) {
-    if (value == null) {
-      return null;
-    }
-
-    if (value is Markup) {
-      return value;
-    }
-
-    if (autoEscape) {
-      if (escaped) {
-        return Markup.escaped(value);
-      }
-
-      return Markup.escape(value);
-    }
-
-    return value;
   }
 
   bool has(String key) {

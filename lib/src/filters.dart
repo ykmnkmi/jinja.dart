@@ -3,11 +3,11 @@ library filters;
 import 'dart:convert' show LineSplitter;
 import 'dart:math' as math;
 
-import 'package:jinja/jinja.dart';
 import 'package:textwrap/textwrap.dart' show TextWrapper;
 
 import 'context.dart';
-import 'markup.dart';
+import 'environment.dart';
+import 'exceptions.dart';
 import 'utils.dart';
 
 // TODO(doc): add
@@ -26,18 +26,15 @@ final Map<String, Function> filters = <String, Function>{
   'filesizeformat': doFileSizeFormat,
   'first': doFirst,
   'float': doFloat,
-  'forceescape': doForceEscape,
   'int': doInteger,
   'join': passContext(doJoin),
   'last': doLast,
   'length': count,
   'list': list,
   'lower': doLower,
-  'pprint': doPPrint,
   'random': passEnvironment(doRandom),
   'replace': doReplace,
   'reverse': doReverse,
-  'safe': doMarkSafe,
   'slice': doSlice,
   'string': doString,
   'sum': passEnvironment(doSum),
@@ -68,14 +65,24 @@ final Map<String, Function> filters = <String, Function>{
   // 'xmlattr': doXMLAttr,
 };
 
+/// Return the absolute value of the argument.
 num doAbs(num number) {
   return number.abs();
 }
 
+/// Get an attribute of an object.
+///
+/// `foo|attr('bar')` works like `foo.bar` just that always an attribute
+/// is returned and items are not looked up.
 Object? doAttribute(Environment environment, Object? object, String attribute) {
   return environment.getAttribute(object, attribute);
 }
 
+/// A filter that batches items.
+///
+/// It works pretty much like slice just the other way round. It returns
+/// a list of lists with the given number of items. If you provide
+/// a second parameter this is used to fill up missing items.
 List<List<Object?>> doBatch(Iterable<Object?> items, int lineCount,
     [Object? fillWith]) {
   var result = <List<Object?>>[];
@@ -103,6 +110,8 @@ List<List<Object?>> doBatch(Iterable<Object?> items, int lineCount,
   return result;
 }
 
+/// Capitalize a value. The first character will be uppercase,
+/// all others lowercase.
 String doCapitalize(String string) {
   if (string.length == 1) {
     return string.toUpperCase();
@@ -111,6 +120,7 @@ String doCapitalize(String string) {
   return string[0].toUpperCase() + string.substring(1).toLowerCase();
 }
 
+/// Centers the value in a field of a given width.
 String doCenter(String string, int width) {
   if (string.length >= width) {
     return string;
@@ -121,6 +131,7 @@ String doCenter(String string, int width) {
   return pad + string + pad;
 }
 
+/// If the value is null it will return the passed default value, otherwise the value of the variable.
 Object? doDefault(Object? value, [Object? d = '', bool asBoolean = false]) {
   if (value == null || asBoolean && !boolean(value)) {
     return d;
@@ -129,6 +140,7 @@ Object? doDefault(Object? value, [Object? d = '', bool asBoolean = false]) {
   return value;
 }
 
+/// Sort a dict and yield `[key, value]` pairs.
 List<Object?> doDictSort(Map<Object?, Object?> dict,
     {bool caseSensetive = false, String by = 'key', bool reverse = false}) {
   int pos;
@@ -141,13 +153,13 @@ List<Object?> doDictSort(Map<Object?, Object?> dict,
       pos = 1;
       break;
     default:
-      throw FilterArgumentError('you can only sort by either "key" or "value"');
+      throw FilterArgumentError("you can only sort by either 'key' or 'value'");
   }
 
   var order = reverse ? -1 : 1;
   var entities = dict.entries
-      .map<List<Object?>>((entity) => <Object?>[entity.key, entity.value])
-      .toList(growable: false);
+      .map<List<Object?>>((entry) => <Object?>[entry.key, entry.value])
+      .toList();
 
   Comparable<Object?> Function(List<Object?> values) getter;
 
@@ -158,12 +170,7 @@ List<Object?> doDictSort(Map<Object?, Object?> dict,
   } else {
     getter = (List<Object?> values) {
       var value = values[pos];
-
-      if (value is String) {
-        return value.toLowerCase();
-      }
-
-      return value as Comparable;
+      return value is String ? value.toLowerCase() : value as Comparable;
     };
   }
 
@@ -171,10 +178,18 @@ List<Object?> doDictSort(Map<Object?, Object?> dict,
   return entities;
 }
 
-Markup doEscape(Object? value) {
-  return Markup(value);
+/// Replace the characters `&`, `<`, `>`, `'`, and `"`
+/// in the string with HTML-safe sequences.
+///
+/// Use this if you need to display text that might contain such characters in HTML.
+String? doEscape(Object? value) {
+  return value == null ? null : escape(value.toString());
 }
 
+/// Format the value like a 'human-readable' file size (i.e. 13 kB, 4.1 MB, 102 Bytes, etc).
+///
+/// Per default decimal prefixes are used (Mega, Giga, etc.), if the second
+/// parameter is set to True the binary prefixes are used (Mebi, Gibi).
 String doFileSizeFormat(Object? value, [bool binary = false]) {
   const suffixes = <List<String>>[
     [' KiB', ' kB'],
@@ -225,52 +240,49 @@ String doFileSizeFormat(Object? value, [bool binary = false]) {
   }
 }
 
+/// Return the first item of a sequence.
 Object? doFirst(Iterable<Object?> values) {
   return values.first;
 }
 
-double doFloat(String value, {double defaultValue = 0.0}) {
-  try {
-    return double.tryParse(value) ?? defaultValue;
-  } on FormatException {
-    return defaultValue;
-  }
+/// Convert the value into a floating point number.
+///
+/// If the conversion doesn’t work it will return 0.0.
+/// You can override this default using the first parameter.
+double doFloat(String value, [double defaultValue = 0.0]) {
+  return double.tryParse(value) ?? defaultValue;
 }
 
-Markup doForceEscape(Object? value) {
-  return Markup(value.toString());
-}
+/// Convert the value into an integer.
+///
+/// If value start with '0x' or '0X'
+/// If the conversion doesn’t work it will return 0.
+/// You can override this default using the first parameter.
+int doInteger(String value, [int defaultValue = 0]) {
+  var base = 10;
 
-int doInteger(String value, {int defaultValue = 0, int base = 10}) {
-  if (base == 16 && value.toLowerCase().startsWith('0x')) {
+  if (value.length > 2 && value.substring(0, 2) == '0x') {
+    base = 16;
     value = value.substring(2);
   }
 
-  try {
-    return int.parse(value, radix: base);
-  } on FormatException {
-    if (base == 10) {
-      try {
-        return double.parse(value).toInt();
-      } on FormatException {
-        return defaultValue;
-      }
-    }
+  return int.tryParse(value, radix: base) ?? defaultValue;
 
-    return defaultValue;
-  }
+  // TODO(refactoring): test needing
+  // if (base == 10) {
+  //   try {
+  //     return double.parse(value).toInt();
+  //   } on FormatException {
+  //     return orElse;
+  //   }
+  // }
 }
 
 Object? doJoin(Context context, Iterable<Object?> values,
-    [String delimiter = '', String? attribute]) {
+    {String delimiter = '', String? attribute}) {
   if (attribute != null) {
     var getter = makeAttributeGetter(context.environment, attribute);
     values = values.map<Object?>(getter);
-  }
-
-  if (context.autoEscape) {
-    values = values.map<Markup>((value) => Markup(value));
-    return Escaped(values.join(delimiter));
   }
 
   return values.join(delimiter);
@@ -282,14 +294,6 @@ Object? doLast(Iterable<Object?> values) {
 
 String doLower(String string) {
   return string.toLowerCase();
-}
-
-Markup doMarkSafe(String value) {
-  return Markup.escaped(value);
-}
-
-String doPPrint(Object? object) {
-  return format(object);
 }
 
 Object? doRandom(Environment environment, Object? value) {
@@ -310,17 +314,11 @@ Object? doRandom(Environment environment, Object? value) {
 
 Object? doReplace(Object? object, String from, String to, [int? count]) {
   String string;
-  bool isNotMarkup;
 
   if (object is String) {
     string = object;
-    isNotMarkup = true;
-  } else if (object is Markup) {
-    string = object.toString();
-    isNotMarkup = false;
   } else {
     string = object.toString();
-    isNotMarkup = true;
   }
 
   if (count == null) {
@@ -331,11 +329,7 @@ Object? doReplace(Object? object, String from, String to, [int? count]) {
     }
   }
 
-  if (isNotMarkup) {
-    return string;
-  }
-
-  return Markup(string);
+  return string;
 }
 
 Object? doReverse(Object? value) {
@@ -419,6 +413,11 @@ String doWordWrap(Environment environment, String string, int width,
       .join(wrap);
 }
 
+/// Returns a callable that looks up the given attribute from a
+/// passed object with the rules of the environment.
+///
+/// Dots are allowed to access attributes of attributes.
+/// Integer parts in paths are looked up as integers.
 Object? Function(Object?) makeAttributeGetter(
     Environment environment, String attributeOrAttributes,
     {Object? Function(Object?)? postProcess, Object? defaultValue}) {
