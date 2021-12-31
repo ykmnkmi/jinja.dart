@@ -1,6 +1,5 @@
 import 'dart:collection';
 
-import 'package:jinja/jinja.dart';
 import 'package:test/test.dart';
 
 import 'environment.dart';
@@ -281,6 +280,13 @@ void main() {
     test('no paren for arg 1', () {
       var tmpl = env.fromString('{{ foo is sameas none }}');
       expect(tmpl.render({'foo': null}), equals('true'));
+    });
+
+    test('escaped', () {
+      var tmpl = env.fromString('{{  x is escaped }}');
+      expect(tmpl.render({'x': 'foo'}), equals('false'));
+      tmpl = env.fromString('{{ y is escaped  }}');
+      expect(tmpl.render({'y': Markup('foo')}), equals('true'));
     });
 
     test('greater than', () {

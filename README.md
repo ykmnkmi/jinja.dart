@@ -4,7 +4,7 @@
 [Jinja][jinja] server-side template engine port for Dart 2.
 Variables, expressions, control structures and template inheritance.
 
-## Breaking changes 0.4.0, less dynamic
+## Breaking changes 0.4.0, less dynamic, more Dart'ish
 - remove `Undefined` and `missing`
 - remove slices and negative indexes
 - remove dynamic template imports, only single template path/name,
@@ -138,6 +138,7 @@ and [reflectable][reflectable_example].
   - escaped
   - even
   - false
+  - filter
   - float
   - ge, >=
   - gt, greaterthan, >
@@ -155,6 +156,7 @@ and [reflectable][reflectable_example].
   - sameas
   - sequence
   - string
+  - test
   - true
   - upper
 - List of Global Functions

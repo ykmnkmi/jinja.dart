@@ -1,6 +1,6 @@
 import 'package:test/test.dart' hide escape;
 
-import 'package:jinja/src/utils.dart';
+import 'environment.dart';
 
 void main() {
   group('Escape', () {

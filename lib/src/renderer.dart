@@ -1,6 +1,7 @@
 import 'context.dart';
 import 'environment.dart';
 import 'exceptions.dart';
+import 'markup.dart';
 import 'nodes.dart';
 import 'runtime.dart';
 import 'utils.dart';
@@ -120,6 +121,10 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
     var filters = node.filters;
 
     if (filters == null || filters.isEmpty) {
+      if (context.autoEscape) {
+        value = Markup.escaped(value);
+      }
+
       context.assignTargets(target, value);
       return;
     }
@@ -129,6 +134,10 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
         positional.insert(0, value);
         return context.filter(filter.name, positional, named);
       });
+    }
+
+    if (context.autoEscape) {
+      value = Markup.escaped(value);
     }
 
     context.assignTargets(target, value);
@@ -192,14 +201,8 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
   @override
   Iterable<String> visitExpession(
       Expression node, RenderContext context) sync* {
-    var value = node.resolve(context);
-    var string = context.finalize(value).toString();
-
-    if (context.autoEscape) {
-      string = escape(string);
-    }
-
-    yield string;
+    var value = context.finalize(node.resolve(context));
+    yield context.escape(value).toString();
   }
 
   @override
@@ -220,13 +223,7 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
       });
     }
 
-    var string = value.toString();
-
-    if (context.autoEscape) {
-      string = escape(string);
-    }
-
-    yield string;
+    yield context.escape(value).toString();
   }
 
   @override
@@ -390,20 +387,18 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
     var target = node.target.resolve(context);
     var buffer = StringBuffer();
     node.body.accept(this, context.derived(buffer: buffer));
+
+    Object? value = buffer.toString();
     var filters = node.filters;
 
     if (filters == null || filters.isEmpty) {
-      var string = buffer.toString();
-
       if (context.autoEscape) {
-        string = escape(string);
+        value = Markup.escaped(value);
       }
 
-      context.assignTargets(target, string);
+      context.assignTargets(target, context.escape(value));
       return;
     }
-
-    Object? value = buffer.toString();
 
     for (var filter in filters) {
       value = filter.apply(context, (positional, named) {
@@ -412,7 +407,11 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
       });
     }
 
-    context.assignTargets(target, value);
+    if (context.autoEscape) {
+      value = Markup.escaped(value);
+    }
+
+    context.assignTargets(target, context.escape(value));
   }
 
   @override
@@ -472,13 +471,10 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
 
   @override
   void visitExpession(Expression node, StringSinkRenderContext context) {
-    var string = context.finalize(node.resolve(context)).toString();
-
-    if (context.autoEscape) {
-      string = escape(string);
-    }
-
-    context.write(string);
+    var value = node.resolve(context);
+    value = context.finalize(value);
+    value = context.escape(value);
+    context.write(value);
   }
 
   @override

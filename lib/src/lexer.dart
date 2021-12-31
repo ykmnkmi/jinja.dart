@@ -109,13 +109,13 @@ class Lexer {
   Lexer(Environment environment)
       : newLineRe = RegExp('(\r\n|\r|\n)'),
         whitespaceRe = RegExp('\\s+'),
-        nameRe = RegExp('[a-zA-Z\$_][a-zA-Z0-9\$_]*', unicode: true),
+        nameRe = RegExp('[a-zA-Z\$_][a-zA-Z0-9\$_]*'),
         stringRe = RegExp(
             '(\'([^\'\\\\]*(?:\\\\.[^\'\\\\]*)*)\'|"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)")',
             dotAll: true),
-        integerRe = RegExp('(\\d+_)*\\d+'),
+        integerRe = RegExp('(0[xX](_?[\\da-fA-F])+|\\d(_?\\d)*)'),
         floatRe = RegExp(
-            '(?<!\\.)(\\d+_)*\\d+((\\.(\\d+_)*\\d+)?e[+\\-]?(\\d+_)*\\d+|\\.(\\d+_)*\\d+)'),
+            '(?<!\\.)(\\d+_)*\\d+((\\.(\\d+_)*\\d+)?[eE][+\\-]?(\\d+_)*\\d+|\\.(\\d+_)*\\d+)'),
         operatorRe = RegExp(
             '\\+|-|\\/\\/|\\/|\\*\\*|\\*|%|~|\\[|\\]|\\(|\\)|{|}|==|!=|<=|>=|=|<|>|\\.|:|\\||,|;'),
         leftStripUnlessRe =
@@ -148,17 +148,17 @@ class Lexer {
     ];
 
     var rootTagRules = <List<String>>[
-      ['comment_start', environment.commentStart, commentStartRe],
-      ['variable_start', environment.variableStart, variableStartRe],
-      ['block_start', environment.blockStart, blockStartRe],
+      <String>['comment_start', environment.commentStart, commentStartRe],
+      <String>['variable_start', environment.variableStart, variableStartRe],
+      <String>['block_start', environment.blockStart, blockStartRe],
       if (environment.lineCommentPrefix != null)
-        [
+        <String>[
           'linecomment_start',
           environment.lineCommentPrefix!,
           '(?:^|(?<=\\S))[^\\S\r\n]*' + environment.lineCommentPrefix!
         ],
       if (environment.lineStatementPrefix != null)
-        [
+        <String>[
           'linestatement_start',
           environment.lineStatementPrefix!,
           '^[ \t\v]*' + environment.lineStatementPrefix!

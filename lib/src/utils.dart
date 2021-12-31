@@ -1,3 +1,5 @@
+import 'package:textwrap/utils.dart';
+
 bool boolean(Object? value) {
   if (value == null) {
     return false;
@@ -190,4 +192,14 @@ void reprTo(Object? object, StringBuffer buffer,
   }
 
   buffer.write(object);
+}
+
+String stripTags(String value) {
+  if (value.isEmpty) {
+    return '';
+  }
+
+  return RegExp('\\s+')
+      .split(value.replaceAll(RegExp('(<!--.*?-->|<[^>]*>)'), ''))
+      .join(' ');
 }

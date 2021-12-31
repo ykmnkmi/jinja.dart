@@ -3,22 +3,23 @@
 import 'package:jinja/jinja.dart';
 import 'package:stack_trace/stack_trace.dart';
 
-const String source = '''{{ 0 }}''';
+const String source = '''{{ 34.56 }}''';
 
 void main() {
   try {
-    var env = Environment();
-    // var tokens = env.lex(source);
-    // print(tokens);
-    // env.parser.scan(tokens);
-    var nodes = env.parse(source);
+    var env = Environment(autoEscape: true);
+    var tokens = env.lex(source);
+    print(tokens);
+    var nodes = env.parser.scan(tokens);
+    // var nodes = env.parse(source);
     print(nodes);
     var template = Template.parsed(env, nodes);
     print(template.nodes);
     print(template.generate({'name': 'world'}));
     print(template.render({'name': 'world'}));
-  } on TemplateError catch (error) {
+  } on TemplateError catch (error, trace) {
     print(error.message);
+    print(Trace.format(trace, terse: true));
   } catch (error, trace) {
     print(error);
     print(Trace.format(trace, terse: true));
