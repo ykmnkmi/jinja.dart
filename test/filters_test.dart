@@ -164,14 +164,14 @@ void main() {
     });
 
     test('float', () {
-      var tmpl = env.fromString('{{ value|float }}');
+      var tmpl = env.fromString('{{ value|float|default(0.0) }}');
       expect(tmpl.render({'value': '42'}), equals('42.0'));
       expect(tmpl.render({'value': 'abc'}), equals('0.0'));
       expect(tmpl.render({'value': '32.32'}), equals('32.32'));
     });
 
     test('float default', () {
-      var tmpl = env.fromString('{{ value|float(defaultValue=1.0) }}');
+      var tmpl = env.fromString('{{ value|float|default(1.0) }}');
       expect(tmpl.render({'value': 'abc'}), equals('1.0'));
     });
 
@@ -188,23 +188,21 @@ void main() {
     // test('indent width string', () {});
 
     test('int', () {
-      var tmpl = env.fromString('{{ value|int }}');
+      var tmpl = env.fromString('{{ value|int|default(0) }}');
       expect(tmpl.render({'value': '42'}), equals('42'));
       expect(tmpl.render({'value': 'abc'}), equals('0'));
       expect(tmpl.render({'value': '32.32'}), equals('32'));
     });
 
     test('int base', () {
-      var tmpl = env.fromString('{{ value|int(base=16) }}');
-      expect(tmpl.render({'value': '0x4d32'}), equals('19762'));
-      tmpl = env.fromString('{{ value|int(base=8) }}');
-      expect(tmpl.render({'value': '011'}), equals('9'));
-      tmpl = env.fromString('{{ value|int(base=16) }}');
-      expect(tmpl.render({'value': '0x33Z'}), equals('0'));
+      var tmpl = env.fromString('{{ value|int(8)|default(0) }}');
+      expect(tmpl.render({'value': '11'}), equals('9'));
+      tmpl = env.fromString('{{ value|int(16)|default(0) }}');
+      expect(tmpl.render({'value': '33Z'}), equals('0'));
     });
 
     test('int default', () {
-      var tmpl = env.fromString('{{ value|int(defaultValue=1) }}');
+      var tmpl = env.fromString('{{ value|int|default(1) }}');
       expect(tmpl.render({'value': 'abc'}), equals('1'));
     });
 
@@ -217,7 +215,7 @@ void main() {
     });
 
     test('join attribute', () {
-      var tmpl = env.fromString('{{ users|join(", ", "username") }}');
+      var tmpl = env.fromString('{{ users|map(attribute=username)|join(", ") }}');
       var users = [User('foo'), User('bar')];
       expect(tmpl.render({'users': users}), equals('foo, bar'));
     });
@@ -235,12 +233,6 @@ void main() {
     test('lower', () {
       var tmpl = env.fromString('''{{ "FOO"|lower }}''');
       expect(tmpl.render(), equals('foo'));
-    });
-
-    test('pprint', () {
-      var tmpl = env.fromString('{{ value|pprint }}');
-      var list = <int>[for (var i = 0; i < 10; i += 1) i];
-      expect(tmpl.render({'value': list}), equals(format(list)));
     });
 
     test('random', () {
@@ -386,6 +378,12 @@ void main() {
       expect(tmpl.render({'string': '<foo>'}), equals('42foo&gt;'));
       tmpl = env.fromString('{{ string|replace("o", ">x<") }}');
       expect(tmpl.render({'string': 'foo'}), equals('f&gt;x&lt;&gt;x&lt;'));
+    });
+
+    test('force escape', () {
+      var tmpl = env.fromString('{{ x|forceescape }}');
+      var x = Markup.escaped('<div />');
+      expect(tmpl.render({'x': x}), equals('&lt;div /&gt;'));
     });
 
     test('safe', () {

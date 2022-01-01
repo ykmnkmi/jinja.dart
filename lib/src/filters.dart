@@ -8,6 +8,7 @@ import 'package:textwrap/textwrap.dart' show TextWrapper;
 import 'context.dart';
 import 'environment.dart';
 import 'exceptions.dart';
+import 'markup.dart';
 import 'utils.dart';
 
 // TODO(doc): add
@@ -26,6 +27,7 @@ final Map<String, Function> filters = <String, Function>{
   'filesizeformat': doFileSizeFormat,
   'first': doFirst,
   'float': doFloat,
+  'forceescape': doForceEscape,
   'int': doInteger,
   'join': passContext(doJoin),
   'last': doLast,
@@ -35,8 +37,10 @@ final Map<String, Function> filters = <String, Function>{
   'random': passEnvironment(doRandom),
   'replace': doReplace,
   'reverse': doReverse,
+  'safe': doMarkSafe,
   'slice': doSlice,
   'string': doString,
+  'striptags': doStripTags,
   'sum': passEnvironment(doSum),
   'trim': doTrim,
   'upper': doUpper,
@@ -55,7 +59,6 @@ final Map<String, Function> filters = <String, Function>{
   // 'select': doSelect,
   // 'selectattr': doSelectAttr,
   // 'sort': doSort,
-  // 'striptags': doStripTags,
   // 'title': doTitle,
   // 'tojson': doToJson,
   // 'truncate': doTruncate,
@@ -113,8 +116,8 @@ List<List<Object?>> doBatch(Iterable<Object?> items, int lineCount,
 /// Capitalize a value. The first character will be uppercase,
 /// all others lowercase.
 String doCapitalize(String string) {
-  if (string.length == 1) {
-    return string.toUpperCase();
+  if (string.isEmpty) {
+    return '';
   }
 
   return string[0].toUpperCase() + string.substring(1).toLowerCase();
@@ -165,12 +168,17 @@ List<Object?> doDictSort(Map<Object?, Object?> dict,
 
   if (caseSensetive) {
     getter = (List<Object?> values) {
-      return values[pos] as Comparable;
+      return values[pos] as Comparable<Object?>;
     };
   } else {
     getter = (List<Object?> values) {
       var value = values[pos];
-      return value is String ? value.toLowerCase() : value as Comparable;
+
+      if (value is String) {
+        return value.toLowerCase();
+      }
+
+      return value as Comparable<Object?>;
     };
   }
 
@@ -182,8 +190,8 @@ List<Object?> doDictSort(Map<Object?, Object?> dict,
 /// in the string with HTML-safe sequences.
 ///
 /// Use this if you need to display text that might contain such characters in HTML.
-String? doEscape(Object? value) {
-  return value == null ? null : escape(value.toString());
+Object? doEscape(Object? value) {
+  return Markup(value);
 }
 
 /// Format the value like a 'human-readable' file size (i.e. 13 kB, 4.1 MB, 102 Bytes, etc).
@@ -249,40 +257,32 @@ Object? doFirst(Iterable<Object?> values) {
 ///
 /// If the conversion doesn’t work it will return 0.0.
 /// You can override this default using the first parameter.
-double doFloat(String value, [double defaultValue = 0.0]) {
-  return double.tryParse(value) ?? defaultValue;
+double? doFloat(String value) {
+  return double.tryParse(value);
+}
+
+/// Enforce HTML escaping.
+///
+/// This will probably double escape variables.
+Markup doForceEscape(Object? value) {
+  return Markup(value.toString());
 }
 
 /// Convert the value into an integer.
-///
-/// If value start with '0x' or '0X'
-/// If the conversion doesn’t work it will return 0.
-/// You can override this default using the first parameter.
-int doInteger(String value, [int defaultValue = 0]) {
-  var base = 10;
-
-  if (value.length > 2 && value.substring(0, 2) == '0x') {
-    base = 16;
-    value = value.substring(2);
-  }
-
-  return int.tryParse(value, radix: base) ?? defaultValue;
-
-  // TODO(refactoring): test needing
-  // if (base == 10) {
-  //   try {
-  //     return double.parse(value).toInt();
-  //   } on FormatException {
-  //     return orElse;
-  //   }
-  // }
+int? doInteger(String value, [int base = 10]) {
+  return int.tryParse(value, radix: base) ?? num.tryParse(value)?.toInt();
 }
 
+/// Return a string which is the concatenation of the strings in the
+/// sequence.
+///
+/// The separator between elements is an empty string per
+/// default, you can define it with the optional parameter
 Object? doJoin(Context context, Iterable<Object?> values,
-    {String delimiter = '', String? attribute}) {
-  if (attribute != null) {
-    var getter = makeAttributeGetter(context.environment, attribute);
-    values = values.map<Object?>(getter);
+    [String delimiter = '']) {
+  if (context.autoEscape) {
+    values = values.map<Markup>(Markup.new);
+    return Escaped(values.join(delimiter));
   }
 
   return values.join(delimiter);
@@ -296,6 +296,13 @@ String doLower(String string) {
   return string.toLowerCase();
 }
 
+/// Mark the value as safe which means that in an environment
+/// with automatic escaping enabled this variable will not be escaped.
+Markup doMarkSafe(String value) {
+  return Markup.escaped(value);
+}
+
+/// Return a random item from the sequence.
 Object? doRandom(Environment environment, Object? value) {
   if (value == null) {
     return null;
@@ -312,13 +319,26 @@ Object? doRandom(Environment environment, Object? value) {
   return result;
 }
 
+/// Return a copy of the value with all occurrences of a substring
+/// replaced with a new one.
+///
+/// The first argument is the substring that should be replaced,
+/// the second is the replacement string.
+/// If the optional third argument [count] is given, only the first
+/// `count` occurrences are replaced.
 Object? doReplace(Object? object, String from, String to, [int? count]) {
   String string;
+  bool isNotMarkup;
 
   if (object is String) {
     string = object;
+    isNotMarkup = true;
+  } else if (object is Markup) {
+    string = object.toString();
+    isNotMarkup = false;
   } else {
     string = object.toString();
+    isNotMarkup = true;
   }
 
   if (count == null) {
@@ -329,14 +349,25 @@ Object? doReplace(Object? object, String from, String to, [int? count]) {
     }
   }
 
-  return string;
+  if (isNotMarkup) {
+    return string;
+  }
+
+  return Markup(string);
 }
 
+/// Reverse the object or return an iterator
+/// that iterates over it the other way round.
 Object? doReverse(Object? value) {
   var values = list(value);
   return values.reversed;
 }
 
+/// Slice an iterator and return a list of lists containing
+/// those items.
+///
+/// Useful if you want to create a div containing
+/// three ul tags that represent columns.
 List<List<Object?>> doSlice(Object? value, int slices, [Object? fillWith]) {
   var result = <List<Object?>>[];
   var values = list(value);
@@ -364,19 +395,25 @@ List<List<Object?>> doSlice(Object? value, int slices, [Object? fillWith]) {
   return result;
 }
 
+/// A string representation of this object.
 String doString(Object? value) {
   return value.toString();
 }
 
-num doSum(Environment environment, Iterable<Object?> values,
-    {String? attribute, num start = 0}) {
-  if (attribute != null) {
-    values = values.map<Object?>(makeAttributeGetter(environment, attribute));
-  }
+/// Strip SGML/XML tags and replace adjacent whitespace by one space.
+String doStripTags(String value) {
+  return stripTags(value);
+}
 
+/// Returns the sum of a sequence of numbers plus the value of parameter
+/// `start`.
+///
+/// When the sequence is empty it returns start.
+num doSum(Environment environment, Iterable<Object?> values, [num start = 0]) {
   return values.cast<num>().fold<num>(start, (s, n) => s + n);
 }
 
+/// Strip leading and trailing characters, by default whitespace.
 String doTrim(String value, [String? characters]) {
   if (characters == null) {
     return value.trim();
@@ -387,15 +424,20 @@ String doTrim(String value, [String? characters]) {
   return value.replaceAll(left, '').replaceAll(right, '');
 }
 
+/// Convert a value to uppercase.
 String doUpper(String value) {
   return value.toUpperCase();
 }
 
+/// Count the words in that string.
 int doWordCount(String string) {
   var matches = RegExp(r'\w+').allMatches(string);
   return matches.length;
 }
 
+/// Wrap a string to the given width.
+///
+/// Existing newlines are treated as paragraphs to be wrapped separately.
 String doWordWrap(Environment environment, String string, int width,
     {bool breakLongWords = true,
     String? wrapString,
