@@ -1,53 +1,13 @@
-import 'dart:collection' show MapBase;
 import 'dart:math' show Random;
 
-import 'package:jinja/jinja.dart';
 import 'package:test/test.dart';
-
-import 'package:jinja/src/utils.dart';
 
 import 'environment.dart';
 
-class User extends MapBase<String, Object?> {
+class User {
   User(this.username);
 
   String username;
-
-  @override
-  Iterable<String> get keys {
-    return const <String>['username'];
-  }
-
-  @override
-  String operator [](Object? key) {
-    if (key == 'username') {
-      return username;
-    }
-
-    var invocation = Invocation.getter(Symbol(key.toString()));
-    throw NoSuchMethodError.withInvocation(this, invocation);
-  }
-
-  @override
-  void operator []=(String key, Object? value) {
-    if (key == 'username') {
-      username = value as String;
-      return;
-    }
-
-    var invocation = Invocation.setter(Symbol(key), value);
-    throw NoSuchMethodError.withInvocation(this, invocation);
-  }
-
-  @override
-  void clear() {
-    throw UnimplementedError();
-  }
-
-  @override
-  Object? remove(Object? key) {
-    throw UnimplementedError();
-  }
 }
 
 void main() {
@@ -215,7 +175,8 @@ void main() {
     });
 
     test('join attribute', () {
-      var tmpl = env.fromString('{{ users|map(attribute=username)|join(", ") }}');
+      var tmpl =
+          env.fromString('{{ users|map(attribute="username")|join(", ") }}');
       var users = [User('foo'), User('bar')];
       expect(tmpl.render({'users': users}), equals('foo, bar'));
     });

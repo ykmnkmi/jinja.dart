@@ -83,12 +83,15 @@ class Context {
     return environment.getAttribute(value, key);
   }
 
-  Object? filter(
-      String name, List<Object?> positional, Map<Symbol, Object?> named) {
+  Object? filter(String name,
+      [List<Object?> positional = const <Object?>[],
+      Map<Symbol, Object?> named = const <Symbol, Object?>{}]) {
     return environment.callFilter(name, positional, named, this);
   }
 
-  bool test(String name, List<Object?> positional, Map<Symbol, Object?> named) {
+  bool test(String name,
+      [List<Object?> positional = const <Object?>[],
+      Map<Symbol, Object?> named = const <Symbol, Object?>{}]) {
     return environment.callTest(name, positional, named, this);
   }
 }

@@ -34,6 +34,7 @@ final Map<String, Function> filters = <String, Function>{
   'length': count,
   'list': list,
   'lower': doLower,
+  'map': passContext(doMap),
   'random': passEnvironment(doRandom),
   'replace': doReplace,
   'reverse': doReverse,
@@ -50,7 +51,6 @@ final Map<String, Function> filters = <String, Function>{
   // 'format': doFormat,
   // 'groupby': doGroupBy,
   // 'indent': doIndent,
-  // 'map': doMap,
   // 'max': doMax,
   // 'min': doMin,
   // 'reject': doReject,
@@ -278,6 +278,7 @@ int? doInteger(String value, [int base = 10]) {
 ///
 /// The separator between elements is an empty string per
 /// default, you can define it with the optional parameter
+// TODO(difference): join filter
 Object? doJoin(Context context, Iterable<Object?> values,
     [String delimiter = '']) {
   if (context.autoEscape) {
@@ -294,6 +295,22 @@ Object? doLast(Iterable<Object?> values) {
 
 String doLower(String string) {
   return string.toLowerCase();
+}
+
+Iterable<Object?> doMap(Context context, Iterable<Object?> values,
+    {String? attribute, Object? defaultValue, String? filter}) {
+  if (attribute != null) {
+    return values.map<Object?>(makeAttributeGetter(
+        context.environment, attribute,
+        defaultValue: defaultValue));
+  }
+
+  if (filter != null) {
+    return values
+        .map<Object?>((value) => context.filter(filter, <Object?>[value]));
+  }
+
+  return values;
 }
 
 /// Mark the value as safe which means that in an environment
@@ -409,6 +426,7 @@ String doStripTags(String value) {
 /// `start`.
 ///
 /// When the sequence is empty it returns start.
+// TODO(difference): sum filter
 num doSum(Environment environment, Iterable<Object?> values, [num start = 0]) {
   return values.cast<num>().fold<num>(start, (s, n) => s + n);
 }
