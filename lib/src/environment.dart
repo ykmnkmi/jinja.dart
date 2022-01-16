@@ -75,11 +75,12 @@ class Environment {
       this.trimBlocks = defaults.trimBlocks,
       this.newLine = defaults.newLine,
       this.keepTrailingNewLine = defaults.keepTrailingNewLine,
-      this.optimized = true,
+      this.optimized = defaults.optimized,
       this.finalize = defaults.finalize,
-      this.autoEscape = false,
+      this.autoEscape = defaults.autoEscape,
+      this.leeway = defaults.leeway,
       this.loader,
-      this.autoReload = true,
+      this.autoReload = defaults.autoReload,
       Map<String, Object?>? globals,
       Map<String, Function>? filters,
       Map<String, Function>? tests,
@@ -179,6 +180,10 @@ class Environment {
   /// default.
   final bool autoEscape;
 
+  // TODO(doc): truncate leeway
+  // TODO(refactoring): move to policies map
+  final int leeway;
+
   /// The template loader for this environment.
   final Loader? loader;
 
@@ -271,6 +276,7 @@ class Environment {
       bool? optimized,
       Function? finalize,
       bool? autoEscape,
+      int? leeway,
       Loader? loader,
       bool? autoReload,
       Map<String, Object?>? globals,
@@ -296,6 +302,7 @@ class Environment {
         optimized: optimized ?? this.optimized,
         finalize: finalize ?? this.finalize,
         autoEscape: autoEscape ?? this.autoEscape,
+        leeway: leeway ?? this.leeway,
         loader: loader ?? this.loader,
         autoReload: autoReload ?? this.autoReload,
         globals: globals ?? this.globals,
@@ -443,9 +450,9 @@ class Template extends Node {
       bool leftStripBlocks = defaults.lStripBlocks,
       String newLine = defaults.newLine,
       bool keepTrailingNewLine = defaults.keepTrailingNewLine,
-      bool optimized = true,
+      bool optimized = defaults.optimized,
       Function finalize = defaults.finalize,
-      bool autoEscape = false,
+      bool autoEscape = defaults.autoEscape,
       Map<String, Object?>? globals,
       Map<String, Function>? filters,
       Map<String, Function>? environmentFilters,

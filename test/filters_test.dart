@@ -13,8 +13,11 @@ class User {
 void main() {
   group('Filter', () {
     test('filter calling', () {
-      var list = [1, 2, 3];
-      expect(env.callFilter('sum', [list]), equals(6));
+      var positional = [
+        [1, 2, 3]
+      ];
+
+      expect(env.callFilter('sum', positional), equals(6));
     });
 
     test('capitalize', () {
@@ -39,36 +42,32 @@ void main() {
     });
 
     test('dictsort', () {
-      var foo = {'aa': 0, 'b': 1, 'c': 2, 'AB': 3};
+      var data = {
+        'foo': {'aa': 0, 'b': 1, 'c': 2, 'AB': 3}
+      };
+
       var tmpl = env.fromString('{{ foo|dictsort() }}');
-      expect(tmpl.render({'foo': foo}),
-          equals('[[aa, 0], [AB, 3], [b, 1], [c, 2]]'));
+      expect(tmpl.render(data), equals('[[aa, 0], [AB, 3], [b, 1], [c, 2]]'));
       tmpl = env.fromString('{{ foo|dictsort(caseSensetive=true) }}');
-      expect(tmpl.render({'foo': foo}),
-          equals('[[AB, 3], [aa, 0], [b, 1], [c, 2]]'));
+      expect(tmpl.render(data), equals('[[AB, 3], [aa, 0], [b, 1], [c, 2]]'));
       tmpl = env.fromString('{{ foo|dictsort(reverse=true) }}');
-      expect(tmpl.render({'foo': foo}),
-          equals('[[c, 2], [b, 1], [AB, 3], [aa, 0]]'));
+      expect(tmpl.render(data), equals('[[c, 2], [b, 1], [AB, 3], [aa, 0]]'));
     });
 
     test('batch', () {
-      var data = {'foo': range(10)};
+      var data = {'foo': range(7)};
       var tmpl = env.fromString('{{ foo|batch(3) }}');
-      var result = tmpl.render(data);
-      expect(result, equals('[[0, 1, 2], [3, 4, 5], [6, 7, 8], [9]]'));
+      expect(tmpl.render(data), equals('[[0, 1, 2], [3, 4, 5], [6]]'));
       tmpl = env.fromString('{{ foo|batch(3, "X") }}');
-      result = tmpl.render(data);
-      expect(result, equals('[[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, X, X]]'));
+      expect(tmpl.render(data), equals('[[0, 1, 2], [3, 4, 5], [6, X, X]]'));
     });
 
     test('slice', () {
-      var data = {'foo': range(10)};
+      var data = {'foo': range(7)};
       var tmpl = env.fromString('{{ foo|slice(3) }}');
-      var result = tmpl.render(data);
-      expect(result, equals('[[0, 1, 2, 3], [4, 5, 6], [7, 8, 9]]'));
+      expect(tmpl.render(data), equals('[[0, 1, 2], [3, 4], [5, 6]]'));
       tmpl = env.fromString('{{ foo|slice(3, "X") }}');
-      result = tmpl.render(data);
-      expect(result, equals('[[0, 1, 2, 3], [4, 5, 6, X], [7, 8, 9, X]]'));
+      expect(tmpl.render(data), equals('[[0, 1, 2], [3, 4, X], [5, 6, X]]'));
     });
 
     test('escape', () {
@@ -87,12 +86,14 @@ void main() {
     });
 
     test('striptags', () {
-      var foo = '  <p>just a small   \n <a href="#">'
-          'example</a> link</p>\n<p>to a webpage</p> '
-          '<!-- <p>and some commented stuff</p> -->';
-      var tmpl = env.fromString('{{ foo|striptags }}');
-      expect(tmpl.render({'foo': foo}),
-          equals('just a small example link to a webpage'));
+      var data = {
+        'foo': '  <p>just a small   \n <a href="#">'
+            'example</a> link</p>\n<p>to a webpage</p> '
+            '<!-- <p>and some commented stuff</p> -->'
+      };
+
+      var result = env.fromString('{{ foo|striptags }}').render(data);
+      expect(result, equals('just a small example link to a webpage'));
     });
 
     test('filesizeformat', () {
@@ -196,6 +197,8 @@ void main() {
       expect(tmpl.render(), equals('foo'));
     });
 
+    // test('pprint', () {});
+
     test('random', () {
       var expected = '1234567890';
       var random = Random(0);
@@ -220,14 +223,18 @@ void main() {
       expect(tmpl.render({'values': values}), equals('$values'));
     });
 
-    // TODO: add test: truncate
-    // test('truncate', () {});
-
     // TODO: add test: title
     // test('title', () {});
 
-    // TODO: add test: truncate
-    // test('truncate', () {});
+    test('truncate', () {
+      var data = {'data': 'foobar baz bar' * 10, 'smalldata': 'foobar baz bar'};
+      var tmpl = env.fromString('{{ data|truncate(15, true, ">>>") }}');
+      expect(tmpl.render(data), equals('foobar baz b>>>'));
+      tmpl = env.fromString('{{ data|truncate(15, false, ">>>") }}');
+      expect(tmpl.render(data), equals('foobar baz>>>'));
+      tmpl = env.fromString('{{ smalldata|truncate(15) }}');
+      expect(tmpl.render(data), equals('foobar baz bar'));
+    });
 
     // TODO: add test: truncate very short
     // test('truncate very short', () {});
@@ -329,22 +336,21 @@ void main() {
     });
 
     test('replace', () {
-      var env = Environment();
       var tmpl = env.fromString('{{ string|replace("o", "42") }}');
       expect(tmpl.render({'string': '<foo>'}), equals('<f4242>'));
-      env = Environment(autoEscape: true);
-      tmpl = env.fromString('{{ string|replace("o", "42") }}');
+      var env2 = Environment(autoEscape: true);
+      tmpl = env2.fromString('{{ string|replace("o", "42") }}');
       expect(tmpl.render({'string': '<foo>'}), equals('&lt;f4242&gt;'));
-      tmpl = env.fromString('{{ string|replace("<", "42") }}');
+      tmpl = env2.fromString('{{ string|replace("<", "42") }}');
       expect(tmpl.render({'string': '<foo>'}), equals('42foo&gt;'));
-      tmpl = env.fromString('{{ string|replace("o", ">x<") }}');
+      tmpl = env2.fromString('{{ string|replace("o", ">x<") }}');
       expect(tmpl.render({'string': 'foo'}), equals('f&gt;x&lt;&gt;x&lt;'));
     });
 
     test('force escape', () {
+      var data = {'x': Markup.escaped('<div />')};
       var tmpl = env.fromString('{{ x|forceescape }}');
-      var x = Markup.escaped('<div />');
-      expect(tmpl.render({'x': x}), equals('&lt;div /&gt;'));
+      expect(tmpl.render(data), equals('&lt;div /&gt;'));
     });
 
     test('safe', () {
@@ -400,8 +406,8 @@ void main() {
     test('wordwrap', () {
       var env = Environment(newLine: '\n');
       var tmpl = env.fromString('{{ string|wordwrap(20) }}');
-      var result =
-          tmpl.render({'string': 'Hello!\nThis is Jinja saying something.'});
+      var data = {'string': 'Hello!\nThis is Jinja saying something.'};
+      var result = tmpl.render(data);
       expect(result, equals('Hello!\nThis is Jinja saying\nsomething.'));
     });
 
@@ -420,7 +426,11 @@ void main() {
     // TODO: add test: filter undefined in nested if
     // test('filter undefined in nested if', () {});
 
-    // TODO: add test: filter undefined in cond expr
-    // test('filter undefined in cond expr', () {});
+    test('filter undefined in cond expr', () {
+      var t1 = env.fromString('{{ x|f if x is defined else "foo" }}');
+      var t2 = env.fromString('{{ "foo" if x is not defined else x|f }}');
+      expect(t1.render(), equals('foo'));
+      expect(t2.render(), equals('foo'));
+    });
   });
 }

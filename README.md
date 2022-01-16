@@ -103,7 +103,7 @@ and [reflectable][reflectable_example].
   - Blocks
   - Include
 - Import Context Behavior
-- Expressions with Filters ([not all][filters]) and Tests
+- Expressions with [Filters][filters] (not all) and [Tests][tests]
 - List of Global Functions
   - list
   - namespace
@@ -126,4 +126,5 @@ fork and issue a pull request with your fix.
 [conduit_example]: https://github.com/ykmnkmi/jinja_conduit_example
 [reflectable_example]: https://github.com/ykmnkmi/jinja_reflectable_example
 [filters]: https://github.com/ykmnkmi/jinja.dart/blob/master/lib/src/filters.dart
+[tests]: https://github.com/ykmnkmi/jinja.dart/blob/master/lib/src/tests.dart
 [new_issue]: https://github.com/ykmnkmi/dart-jinja/issues/new

@@ -42,8 +42,9 @@ final Map<String, Function> filters = <String, Function>{
   'slice': doSlice,
   'string': doString,
   'striptags': doStripTags,
-  'sum': passEnvironment(doSum),
+  'sum': doSum,
   'trim': doTrim,
+  'truncate': passEnvironment(doTruncate),
   'upper': doUpper,
   'wordcount': doWordCount,
   'wordwrap': passEnvironment(doWordWrap),
@@ -61,7 +62,6 @@ final Map<String, Function> filters = <String, Function>{
   // 'sort': doSort,
   // 'title': doTitle,
   // 'tojson': doToJson,
-  // 'truncate': doTruncate,
   // 'unique': doUnique,
   // 'urlencode': doURLEncode,
   // 'urlize': doURLize,
@@ -427,7 +427,7 @@ String doStripTags(String value) {
 ///
 /// When the sequence is empty it returns start.
 // TODO(difference): sum filter
-num doSum(Environment environment, Iterable<Object?> values, [num start = 0]) {
+num doSum(Iterable<Object?> values, [num start = 0]) {
   return values.cast<num>().fold<num>(start, (s, n) => s + n);
 }
 
@@ -440,6 +440,44 @@ String doTrim(String value, [String? characters]) {
   var left = RegExp('^[$characters]+', multiLine: true);
   var right = RegExp('[$characters]+\$', multiLine: true);
   return value.replaceAll(left, '').replaceAll(right, '');
+}
+
+/// Return a truncated copy of the string.
+///
+/// The length is specified with the first parameter which defaults to `255`.
+/// If the second parameter is `true` the filter will cut the text at length.
+/// Otherwise it will discard the last word. If the text was in fact truncated
+/// it will append an ellipsis sign (`"..."`). If you want a different ellipsis
+/// sign than `"..."` you can specify it using the third parameter. Strings
+/// that only exceed the length by the tolerance margin given in the fourth
+/// parameter will not be truncated.
+String doTruncate(Environment environment, String value,
+    [int length = 255,
+    bool killWords = false,
+    String end = '...',
+    int? leeway]) {
+  leeway ??= environment.leeway;
+
+  assert(length >= end.length, 'expected length >= ${end.length}, got $length');
+  assert(leeway >= 0, 'expected leeway >= 0, got $leeway');
+
+  if (value.length <= length + leeway) {
+    return value;
+  }
+
+  var substring = value.substring(0, length - end.length);
+
+  if (killWords) {
+    return substring + end;
+  }
+
+  var found = substring.lastIndexOf(' ');
+
+  if (found == -1) {
+    return substring + end;
+  }
+
+  return substring.substring(0, found) + end;
 }
 
 /// Convert a value to uppercase.
