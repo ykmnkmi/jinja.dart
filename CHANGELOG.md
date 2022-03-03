@@ -1,7 +1,7 @@
 ## 0.4.0-dev.31
 - remove `Undefined` and `missing`
 - remove slices and negative indexes
-- remove dynamic template imports, only single template path/name,
+- remove dynamic template imports, only single template path/name
 - remove dynamic `Template.render` method
 - `Template.renderMap` renamed to `Template.render`
 - `Loader.listSources` renamed to `Loader.listTemplates`
@@ -9,7 +9,7 @@
 - new statements:
   - `do`
   - `with`
-- add `print` to globals
+- add `print` to globals: `{{ do print(user.name) }}`
 - refactoring
 - internal changes
 - _work in progress_

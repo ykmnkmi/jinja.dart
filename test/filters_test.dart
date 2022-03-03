@@ -236,11 +236,17 @@ void main() {
       expect(tmpl.render(data), equals('foobar baz bar'));
     });
 
-    // TODO: add test: truncate very short
-    // test('truncate very short', () {});
+    test('truncate very short', () {
+      var tmpl = env.fromString('{{ "foo bar baz"|truncate(9) }}');
+      expect(tmpl.render(), equals('foo bar baz'));
+      tmpl = env.fromString('{{ "foo bar baz"|truncate(9, true) }}');
+      expect(tmpl.render(), equals('foo bar baz'));
+    });
 
-    // TODO: add test: truncate end length
-    // htest('truncate end lengthh', () {});
+    test('truncate end lengthh', () {
+      var tmpl = env.fromString('{{ "Joel is a slug"|truncate(7, true) }}');
+      expect(tmpl.render(), equals('Joel...'));
+    });
 
     test('upper', () {
       var tmpl = env.fromString('{{ "foo"|upper }}');

@@ -17,10 +17,7 @@ import 'visitor.dart';
 /// Signature for the object attribute getter.
 typedef FieldGetter = Object? Function(Object? object, String field);
 
-/// Signature for the [Environment.finalize] field.
-typedef Finalizer = Object? Function(Object? value);
-
-// TODO(doc): update
+// TODO: document
 enum PassArgument {
   context,
   environment,
@@ -78,7 +75,6 @@ class Environment {
       this.optimized = defaults.optimized,
       this.finalize = defaults.finalize,
       this.autoEscape = defaults.autoEscape,
-      this.leeway = defaults.leeway,
       this.loader,
       this.autoReload = defaults.autoReload,
       Map<String, Object?>? globals,
@@ -87,16 +83,8 @@ class Environment {
       Map<String, Template>? templates,
       Random? random,
       this.fieldGetter = defaults.fieldGetter})
-      : assert(finalize is Finalizer ||
-            finalize is Object? Function(Context context, Object? value) ||
-            finalize is Object? Function(
-                Environment environment, Object? value)),
-        wrappedFinalize =
-            finalize is Object? Function(Environment environment, Object? value)
-                ? ((context, value) => finalize(context.environment, value))
-                : finalize is Object? Function(Context context, Object? value)
-                    ? finalize
-                    : ((context, value) => finalize(value)),
+      : assert(checkFinalize(finalize)),
+        wrappedFinalize = wrapFinalize(finalize),
         globals = HashMap<String, Object?>.of(defaults.globals),
         filters = HashMap<String, Function>.of(defaults.filters),
         tests = HashMap<String, Function>.of(defaults.tests),
@@ -179,10 +167,6 @@ class Environment {
   /// If set to `true` the XML/HTML autoescaping feature is enabled by
   /// default.
   final bool autoEscape;
-
-  // TODO(doc): truncate leeway
-  // TODO(refactoring): move to policies map
-  final int leeway;
 
   /// The template loader for this environment.
   final Loader? loader;
@@ -276,7 +260,6 @@ class Environment {
       bool? optimized,
       Function? finalize,
       bool? autoEscape,
-      int? leeway,
       Loader? loader,
       bool? autoReload,
       Map<String, Object?>? globals,
@@ -302,7 +285,6 @@ class Environment {
         optimized: optimized ?? this.optimized,
         finalize: finalize ?? this.finalize,
         autoEscape: autoEscape ?? this.autoEscape,
-        leeway: leeway ?? this.leeway,
         loader: loader ?? this.loader,
         autoReload: autoReload ?? this.autoReload,
         globals: globals ?? this.globals,
@@ -416,7 +398,8 @@ class Environment {
     var loader = this.loader;
 
     if (loader == null) {
-      throw StateError('no loader for this environment specified');
+      // or assertion error?
+      throw TemplateRuntimeError('no loader for this environment specified');
     }
 
     if (autoReload) {
@@ -424,6 +407,35 @@ class Environment {
     }
 
     return templates[template] ??= loader.load(this, template);
+  }
+
+  @internal
+  static bool checkFinalize(Function finalize) {
+    return finalize is Object? Function(Context, Object?) ||
+        finalize is Object? Function(Environment, Object?) ||
+        finalize is Object? Function(Object?);
+  }
+
+  @internal
+  static Object? Function(Context, Object?) wrapFinalize(Function finalize) {
+    if (finalize is Object? Function(Context, Object?)) {
+      return finalize;
+    }
+
+    if (finalize is Object? Function(Environment, Object?)) {
+      return (Context context, Object? value) {
+        return finalize(context.environment, value);
+      };
+    }
+
+    if (finalize is Object? Function(Object?)) {
+      return (Context context, Object? value) {
+        return finalize(value);
+      };
+    }
+
+    // TODO: document
+    throw TemplateAssertionError();
   }
 }
 
@@ -519,7 +531,7 @@ class Template extends Node {
   @internal
   Template.parsed(this.environment, this.nodes, {this.path})
       : blocks = <Block>[] {
-    // TODO(refactoring): move modifiers to visitor
+    // TODO: move modifiers to visitor
 
     for (var call in findAll<Call>()) {
       var expression = call.expression;
@@ -540,6 +552,7 @@ class Template extends Node {
       } else if (expression is Name && expression.name == 'namespace') {
         var arguments = <Expression>[...?call.arguments];
         call.arguments = null;
+
         var keywords = call.keywords;
 
         if (keywords != null && keywords.isNotEmpty) {
