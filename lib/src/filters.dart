@@ -300,159 +300,67 @@ String doTruncate(Environment environment, String value,
   return substring.substring(0, found) + end;
 }
 
-// TODO(doc): filters
-final Map<String, Function> filters = <String, Function>{
-  'forceescape': doForceEscape,
-  // 'urlencode': doURLEncode,
-  'replace': passContext(doReplace),
-  'upper': doUpper,
-  'lower': doLower,
-  // 'xmlattr': passContext(doXMLAttr),
-  'capitalize': doCapitalize,
-  // 'title': doTitle,
-  'dictsort': doDictSort,
-  // 'sort': passEnvironment(doSort),
-  // 'unique': passEnvironment(doUnique),
-  // 'min': passEnvironment(doMin),
-  // 'max': passEnvironment(doMax),
-  'd': doDefault,
-  'default': doDefault,
-  'join': passContext(doJoin),
-  'center': doCenter,
-  'first': doFirst,
-  'last': doLast,
-  'random': passEnvironment(doRandom),
-  'filesizeformat': doFileSizeFormat,
-  // 'pprint': doPPrint,
-  // 'urlize': passContext(doUrlize),
-  // 'indent': doIndent,
-  'truncate': passEnvironment(doTruncate),
+/// Wrap a string to the given width.
+///
+/// Existing newlines are treated as paragraphs to be wrapped separately.
+String doWordWrap(Environment environment, String string, int width,
+    {bool breakLongWords = true,
+    String? wrapString,
+    bool breakOnHyphens = true}) {
+  var wrapper = TextWrapper(
+      width: width,
+      expandTabs: false,
+      replaceWhitespace: false,
+      breakLongWords: breakLongWords,
+      breakOnHyphens: breakOnHyphens);
+  var wrap = wrapString ?? environment.newLine;
+  return const LineSplitter()
+      .convert(string)
+      .expand<String>(wrapper.wrap)
+      .join(wrap);
+}
 
-  'abs': doAbs,
-  'attr': passEnvironment(doAttribute),
-  'batch': doBatch,
-  'count': count,
-  'e': doEscape,
-  'escape': doEscape,
-  'float': doFloat,
-  'int': doInteger,
-  'length': count,
-  'list': list,
-  'map': passContext(doMap),
-  'reverse': doReverse,
-  'safe': doMarkSafe,
-  'slice': doSlice,
-  'string': doString,
-  'striptags': doStripTags,
-  'sum': doSum,
-  'trim': doTrim,
-  'wordcount': doWordCount,
-  'wordwrap': passEnvironment(doWordWrap),
+/// Count the words in that string.
+int doWordCount(String string) {
+  var matches = RegExp('\\w+').allMatches(string);
+  return matches.length;
+}
 
-  // 'format': doFormat,
-  // 'groupby': doGroupBy,
-  // 'reject': doReject,
-  // 'rejectattr': doRejectAttr,
-  // 'round': doRound,
-  // 'select': doSelect,
-  // 'selectattr': doSelectAttr,
-  // 'tojson': doToJson,
-};
+/// Convert the value into an integer.
+///
+/// If the conversion doesn’t work it will return null.
+// TODO(difference): int filter
+int? doInteger(String value, [int radix = 10]) {
+  return int.tryParse(value, radix: radix) ?? num.tryParse(value)?.toInt();
+}
+
+/// Convert the value into a floating point number.
+///
+/// If the conversion doesn’t work it will return null.
+// TODO(difference): float filter
+double? doFloat(String value) {
+  return double.tryParse(value);
+}
 
 /// Return the absolute value of the argument.
 num doAbs(num number) {
   return number.abs();
 }
 
-/// Get an attribute of an object.
-///
-/// `foo|attr('bar')` works like `foo.bar` just that always an attribute
-/// is returned and items are not looked up.
-Object? doAttribute(Environment environment, Object? object, String attribute) {
-  return environment.getAttribute(object, attribute);
-}
-
-/// A filter that batches items.
-///
-/// It works pretty much like slice just the other way round. It returns
-/// a list of lists with the given number of items. If you provide
-/// a second parameter this is used to fill up missing items.
-List<List<Object?>> doBatch(Iterable<Object?> items, int lineCount,
-    [Object? fillWith]) {
-  var result = <List<Object?>>[];
-  var temp = <Object?>[];
-
-  for (var item in items) {
-    if (temp.length == lineCount) {
-      result.add(temp);
-      temp = <Object?>[];
-    }
-
-    temp.add(item);
+/// Strip leading and trailing characters, by default whitespace.
+String doTrim(String value, [String? characters]) {
+  if (characters == null) {
+    return value.trim();
   }
 
-  if (temp.isNotEmpty) {
-    if (fillWith != null) {
-      for (var i = 0; i <= lineCount - temp.length; i += 1) {
-        temp.add(fillWith);
-      }
-    }
-
-    result.add(temp);
-  }
-
-  return result;
+  var left = RegExp('^[$characters]+', multiLine: true);
+  var right = RegExp('[$characters]+\$', multiLine: true);
+  return value.replaceAll(left, '').replaceAll(right, '');
 }
 
-/// Replace the characters `&`, `<`, `>`, `'`, and `"`
-/// in the string with HTML-safe sequences.
-///
-/// Use this if you need to display text that might contain such characters in HTML.
-Object? doEscape(Object? value) {
-  return Markup(value);
-}
-
-/// Convert the value into a floating point number.
-///
-/// If the conversion doesn’t work it will return 0.0.
-/// You can override this default using the first parameter.
-double? doFloat(String value, [double float = 0.0]) {
-  return double.tryParse(value) ?? float;
-}
-
-/// Convert the value into an integer.
-// TODO(break): int default value
-int? doInteger(String value, [int base = 10]) {
-  return int.tryParse(value, radix: base) ?? num.tryParse(value)?.toInt();
-}
-
-Iterable<Object?> doMap(Context context, Iterable<Object?> values,
-    {String? attribute, Object? defaultValue, String? filter}) {
-  if (attribute != null) {
-    return values.map<Object?>(makeAttributeGetter(
-        context.environment, attribute,
-        defaultValue: defaultValue));
-  }
-
-  if (filter != null) {
-    return values
-        .map<Object?>((value) => context.filter(filter, <Object?>[value]));
-  }
-
-  return values;
-}
-
-/// Mark the value as safe which means that in an environment
-/// with automatic escaping enabled this variable will not be escaped.
-Markup doMarkSafe(String value) {
-  return Markup.escaped(value);
-}
-
-/// Reverse the object or return an iterator
-/// that iterates over it the other way round.
-Object? doReverse(Object? value) {
-  var values = list(value);
-  return values.reversed;
+/// Strip SGML/XML tags and replace adjacent whitespace by one space.
+String doStripTags(String value) {
+  return stripTags(value);
 }
 
 /// Slice an iterator and return a list of lists containing
@@ -487,14 +395,36 @@ List<List<Object?>> doSlice(Object? value, int slices, [Object? fillWith]) {
   return result;
 }
 
-/// A string representation of this object.
-String doString(Object? value) {
-  return value.toString();
-}
+/// A filter that batches items.
+///
+/// It works pretty much like slice just the other way round. It returns
+/// a list of lists with the given number of items. If you provide
+/// a second parameter this is used to fill up missing items.
+List<List<Object?>> doBatch(Iterable<Object?> items, int lineCount,
+    [Object? fillWith]) {
+  var result = <List<Object?>>[];
+  var temp = <Object?>[];
 
-/// Strip SGML/XML tags and replace adjacent whitespace by one space.
-String doStripTags(String value) {
-  return stripTags(value);
+  for (var item in items) {
+    if (temp.length == lineCount) {
+      result.add(temp);
+      temp = <Object?>[];
+    }
+
+    temp.add(item);
+  }
+
+  if (temp.isNotEmpty) {
+    if (fillWith != null) {
+      for (var i = 0; i <= lineCount - temp.length; i += 1) {
+        temp.add(fillWith);
+      }
+    }
+
+    result.add(temp);
+  }
+
+  return result;
 }
 
 /// Returns the sum of a sequence of numbers plus the value of parameter
@@ -502,43 +432,134 @@ String doStripTags(String value) {
 ///
 /// When the sequence is empty it returns start.
 // TODO(difference): sum filter
-num doSum(Iterable<Object?> values, [num start = 0]) {
-  return values.cast<num>().fold<num>(start, (s, n) => s + n);
+num doSum(Iterable<num> values, [num start = 0]) {
+  return values.fold<num>(start, (s, n) => s + n);
 }
 
-/// Strip leading and trailing characters, by default whitespace.
-String doTrim(String value, [String? characters]) {
-  if (characters == null) {
-    return value.trim();
+/// Convert the value into a list.
+///
+/// If it was a string the returned list will be a list of characters.
+List<Object?> doList(Object? object) {
+  return list(object);
+}
+
+/// Mark the value as safe which means that in an environment
+/// with automatic escaping enabled this variable will not be escaped.
+Markup doMarkSafe(String value) {
+  return Markup.escaped(value);
+}
+
+/// Mark a value as unsafe.
+///
+/// This is the reverse operation for `safe`.
+String doMarkUnsafe(Object? value) {
+  return value.toString();
+}
+
+/// Reverse the object or return an iterator that iterates over it the other
+/// way round.
+Object? doReverse(Object? value) {
+  var values = list(value);
+  return values.reversed;
+}
+
+/// Get an attribute of an object.
+///
+/// `foo|attr('bar')` works like `foo.bar` just that always an attribute
+/// is returned and items are not looked up.
+Object? doAttribute(Environment environment, Object? object, String attribute) {
+  return environment.getAttribute(object, attribute);
+}
+
+/// Applies a filter on a sequence of objects or looks up an attribute.
+/// This is useful when dealing with lists of objects but you are really
+/// only interested in a certain value of it.
+///
+/// The basic usage is mapping on an attribute.
+Iterable<Object?> doMap(Context context, Iterable<Object?> values,
+    {String? attribute, Object? defaultValue, String? filter}) {
+  if (attribute != null) {
+    values = values.map<Object?>(makeAttributeGetter(
+        context.environment, attribute,
+        defaultValue: defaultValue));
   }
 
-  var left = RegExp('^[$characters]+', multiLine: true);
-  var right = RegExp('[$characters]+\$', multiLine: true);
-  return value.replaceAll(left, '').replaceAll(right, '');
+  if (filter != null) {
+    return values
+        .map<Object?>((value) => context.filter(filter, <Object?>[value]));
+  }
+
+  return values;
 }
 
-/// Count the words in that string.
-int doWordCount(String string) {
-  var matches = RegExp('\\w+').allMatches(string);
-  return matches.length;
-}
+// TODO(doc): filters
+final Map<String, Function> filters = <String, Function>{
+  'forceescape': doForceEscape,
+  // 'urlencode': doURLEncode,
+  'replace': passContext(doReplace),
+  'upper': doUpper,
+  'lower': doLower,
+  // 'xmlattr': passContext(doXMLAttr),
+  'capitalize': doCapitalize,
+  // 'title': doTitle,
+  'dictsort': doDictSort,
+  // 'sort': passEnvironment(doSort),
+  // 'unique': passEnvironment(doUnique),
+  // 'min': passEnvironment(doMin),
+  // 'max': passEnvironment(doMax),
+  'd': doDefault,
+  'default': doDefault,
+  'join': passContext(doJoin),
+  'center': doCenter,
+  'first': doFirst,
+  'last': doLast,
+  'random': passEnvironment(doRandom),
+  'filesizeformat': doFileSizeFormat,
+  // 'pprint': doPPrint,
+  // 'urlize': passContext(doUrlize),
+  // 'indent': doIndent,
+  'truncate': passEnvironment(doTruncate),
+  'wordwrap': passEnvironment(doWordWrap),
+  'wordcount': doWordCount,
+  'int': doInteger,
+  'float': doFloat,
+  'abs': doAbs,
+  // 'format': doFormat,
+  'trim': doTrim,
+  'striptags': doStripTags,
+  'slice': doSlice,
+  'batch': doBatch,
+  // 'round': doRound,
+  // 'groupby': passEnvironment(doGroupBy),
+  'sum': doSum,
+  'list': doList,
+  'safe': doMarkSafe,
+  'unsafe': doMarkUnsafe,
+  'reverse': doReverse,
+  'attr': passEnvironment(doAttribute),
+  'map': passContext(doMap),
+  // 'select': passContext(doSelect),
+  // 'reject': passContext(doReject),
+  // 'selectattr': passContext(doSelectAttr),
+  // 'rejectattr': passContext(doRejectAttr),
+  // 'tojson': passContext(doToJson),
 
-/// Wrap a string to the given width.
+  'count': count,
+  'e': doEscape,
+  'escape': doEscape,
+  'length': count,
+  'string': doString,
+};
+
+/// Replace the characters `&`, `<`, `>`, `'`, and `"`
+/// in the string with HTML-safe sequences.
 ///
-/// Existing newlines are treated as paragraphs to be wrapped separately.
-String doWordWrap(Environment environment, String string, int width,
-    {bool breakLongWords = true,
-    String? wrapString,
-    bool breakOnHyphens = true}) {
-  var wrapper = TextWrapper(
-      width: width,
-      expandTabs: false,
-      replaceWhitespace: false,
-      breakLongWords: breakLongWords,
-      breakOnHyphens: breakOnHyphens);
-  var wrap = wrapString ?? environment.newLine;
-  return const LineSplitter()
-      .convert(string)
-      .expand<String>(wrapper.wrap)
-      .join(wrap);
+/// Use this if you need to display text that might contain such characters in HTML.
+Object? doEscape(Object? value) {
+  return Markup(value);
+}
+
+/// A string representation of this object.
+String doString(Object? value) {
+  return value.toString();
 }
