@@ -28,8 +28,6 @@ Filters:
 
 Tests:
 - `defined` and `undefined` tests compares value with `null`
-- boolean is not `number`
-- string and map is not `iterable`
 - complex not supported
 - _work in progress_
 

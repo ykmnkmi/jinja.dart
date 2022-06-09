@@ -17,37 +17,21 @@ bool boolean(Object? value) {
     return value.isNotEmpty;
   }
 
-  if (value is Iterable<Object?>) {
+  if (value is Iterable) {
     return value.isNotEmpty;
   }
 
-  if (value is Map<Object?, Object?>) {
+  if (value is Map) {
     return value.isNotEmpty;
   }
 
   return true;
 }
 
-int count(dynamic iterable) {
-  // if (iterable is Iterable) {
-  //   return iterable.length;
-  // }
-
-  // if (iterable is String) {
-  //   return iterable.length;
-  // }
-
-  // if (iterable is Map) {
-  //   return iterable.length;
-  // }
-
-  // throw TypeError();
-  return iterable.length as int;
-}
-
 String escape(String text) {
-  var start = 0;
   StringBuffer? result;
+
+  var start = 0;
 
   for (var i = 0; i < text.length; i++) {
     String? replacement;
@@ -80,10 +64,9 @@ String escape(String text) {
 
   if (result == null) {
     return text;
-  } else {
-    result.write(text.substring(start));
   }
 
+  result.write(text.substring(start));
   return result.toString();
 }
 
@@ -111,7 +94,23 @@ List<Object?> list(Object? iterable) {
   throw TypeError();
 }
 
-Iterable<int> range(int stopOrStart, [int? stop, int step = 1]) sync* {
+Iterable<Object?> iterate(Object? iterable) {
+  if (iterable is Iterable) {
+    return iterable;
+  }
+
+  if (iterable is String) {
+    return iterable.split('');
+  }
+
+  if (iterable is Map) {
+    return iterable.keys;
+  }
+
+  throw TypeError();
+}
+
+Iterable<int> range(int startOrStop, [int? stop, int step = 1]) sync* {
   if (step == 0) {
     throw StateError('range() argument 3 must not be zero');
   }
@@ -120,10 +119,9 @@ Iterable<int> range(int stopOrStart, [int? stop, int step = 1]) sync* {
 
   if (stop == null) {
     start = 0;
-    stop = stopOrStart;
+    stop = startOrStop;
   } else {
-    start = stopOrStart;
-    stop = stop;
+    start = startOrStop;
   }
 
   if (step < 0) {
@@ -146,7 +144,7 @@ String repr(Object? object, [bool escapeNewlines = false]) {
 void reprTo(Object? object, StringBuffer buffer,
     [bool escapeNewlines = false]) {
   if (object is String) {
-    object = object.replaceAll("'", "\\'");
+    object = object.replaceAll('\'', '\\\'');
 
     if (escapeNewlines) {
       object = object.replaceAllMapped(RegExp('(\r\n|\r|\n)'), (match) {
@@ -154,11 +152,11 @@ void reprTo(Object? object, StringBuffer buffer,
       });
     }
 
-    buffer.write("'$object'");
+    buffer.write('\'$object\'');
     return;
   }
 
-  if (object is List<Object?>) {
+  if (object is List) {
     buffer.write('[');
 
     for (var i = 0; i < object.length; i += 1) {
@@ -173,7 +171,7 @@ void reprTo(Object? object, StringBuffer buffer,
     return;
   }
 
-  if (object is Map<Object?, Object?>) {
+  if (object is Map) {
     var keys = object.keys.toList();
     buffer.write('{');
 

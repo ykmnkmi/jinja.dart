@@ -22,11 +22,11 @@ abstract class Node {
 
   Iterable<T> findAll<T extends Node>() sync* {
     for (var child in childrens) {
-      yield* child.findAll<T>();
-
       if (child is T) {
         yield child;
       }
+
+      yield* child.findAll<T>();
     }
   }
 

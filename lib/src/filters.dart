@@ -41,11 +41,24 @@ Object? Function(Object?) makeAttributeGetter(
   };
 }
 
+/// Replace the characters `&`, `<`, `>`, `'`, and `"`
+/// in the string with HTML-safe sequences.
+///
+/// Use this if you need to display text that might contain such characters in HTML.
+Object? doEscape(Object? value) {
+  return Markup(value);
+}
+
 /// Enforce HTML escaping.
 ///
 /// This will probably double escape variables.
 Markup doForceEscape(Object? value) {
   return Markup(value.toString());
+}
+
+/// A string representation of this object.
+String doString(Object? value) {
+  return value.toString();
 }
 
 /// Return a copy of the value with all occurrences of a substring
@@ -111,9 +124,11 @@ List<Object?> doDictSort(Map<Object?, Object?> dict,
     case 'key':
       pos = 0;
       break;
+
     case 'value':
       pos = 1;
       break;
+
     default:
       throw FilterArgumentError("you can only sort by either 'key' or 'value'");
   }
@@ -427,6 +442,16 @@ List<List<Object?>> doBatch(Iterable<Object?> items, int lineCount,
   return result;
 }
 
+/// Return the number of items in a container.
+int? doLength(Environment environment, dynamic object) {
+  try {
+    // TODO: note: dynamic check
+    return object.length as int;
+  } on NoSuchMethodError {
+    return null;
+  }
+}
+
 /// Returns the sum of a sequence of numbers plus the value of parameter
 /// `start`.
 ///
@@ -494,7 +519,10 @@ Iterable<Object?> doMap(Context context, Iterable<Object?> values,
 
 // TODO(doc): filters
 final Map<String, Function> filters = <String, Function>{
+  'e': doEscape,
+  'escape': doEscape,
   'forceescape': doForceEscape,
+  'string': doString,
   // 'urlencode': doURLEncode,
   'replace': passContext(doReplace),
   'upper': doUpper,
@@ -531,6 +559,8 @@ final Map<String, Function> filters = <String, Function>{
   'batch': doBatch,
   // 'round': doRound,
   // 'groupby': passEnvironment(doGroupBy),
+  'count': passEnvironment(doLength),
+  'length': passEnvironment(doLength),
   'sum': doSum,
   'list': doList,
   'safe': doMarkSafe,
@@ -543,23 +573,4 @@ final Map<String, Function> filters = <String, Function>{
   // 'selectattr': passContext(doSelectAttr),
   // 'rejectattr': passContext(doRejectAttr),
   // 'tojson': passContext(doToJson),
-
-  'count': count,
-  'e': doEscape,
-  'escape': doEscape,
-  'length': count,
-  'string': doString,
 };
-
-/// Replace the characters `&`, `<`, `>`, `'`, and `"`
-/// in the string with HTML-safe sequences.
-///
-/// Use this if you need to display text that might contain such characters in HTML.
-Object? doEscape(Object? value) {
-  return Markup(value);
-}
-
-/// A string representation of this object.
-String doString(Object? value) {
-  return value.toString();
-}

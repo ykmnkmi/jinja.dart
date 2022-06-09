@@ -54,7 +54,7 @@ class Environment {
   @internal
   static final Expando<Parser> parsers = Expando<Parser>();
 
-  /// [PassArgument] values configurations for functions, filters, and tests.
+  /// [PassArgument] modifier for functions, filters and tests.
   @internal
   static final Expando<PassArgument> passArguments = Expando<PassArgument>();
 
@@ -321,18 +321,23 @@ class Environment {
     return template;
   }
 
-  /// Get an item or attribute of an object but prefer the attribute.
+  /// Get an attribute of an object.
   Object? getAttribute(dynamic object, String attrbute) {
     try {
       return fieldGetter(object, attrbute);
     } on NoSuchMethodError {
-      return object[attrbute];
+      return getItem(object, attrbute);
     }
   }
 
-  /// Get an item or attribute of an object but prefer the item.
+  /// Get an item of an object.
   Object? getItem(dynamic object, Object? key) {
-    return object[key];
+    try {
+      // TODO: note: dynamic check
+      return object[key];
+    } on NoSuchMethodError {
+      return null;
+    }
   }
 
   /// Common filter and test caller.
@@ -640,6 +645,10 @@ class Template extends Node {
 
   @override
   String toString() {
-    return path == null ? 'Template()' : 'Template($path)';
+    if (path == null) {
+      return 'Template()';
+    }
+
+    return 'Template($path)';
   }
 }
