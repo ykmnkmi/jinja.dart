@@ -53,11 +53,11 @@ const List<String> ignoreIfEmpty = <String>[
   'linecomment',
 ];
 
-String escape(String pattern) {
+String escapeRe(String pattern) {
   return RegExp.escape(pattern);
 }
 
-RegExp compile(String pattern) {
+RegExp compileRe(String pattern) {
   return RegExp(pattern, dotAll: true, multiLine: true);
 }
 
@@ -119,23 +119,23 @@ class Lexer {
         operatorRe = RegExp(
             '\\+|-|\\/\\/|\\/|\\*\\*|\\*|%|~|\\[|\\]|\\(|\\)|{|}|==|!=|<=|>=|=|<|>|\\.|:|\\||,|;'),
         leftStripUnlessRe =
-            environment.leftStripBlocks ? compile('[^ \\t]') : null,
+            environment.leftStripBlocks ? compileRe('[^ \\t]') : null,
         newLine = environment.newLine,
         keepTrailingNewLine = environment.keepTrailingNewLine {
     var blockSuffixRe = environment.trimBlocks ? r'\n?' : '';
 
-    var commentStartRe = escape(environment.commentStart);
-    var commentEndRe = escape(environment.commentEnd);
-    var commentEnd = compile(
+    var commentStartRe = escapeRe(environment.commentStart);
+    var commentEndRe = escapeRe(environment.commentEnd);
+    var commentEnd = compileRe(
         '(.*?)((?:\\+$commentEndRe|-$commentEndRe\\s*|$commentEndRe$blockSuffixRe))');
 
-    var variableStartRe = escape(environment.variableStart);
-    var variableEndRe = escape(environment.variableEnd);
-    var variableEnd = compile('-$variableEndRe\\s*|$variableEndRe');
+    var variableStartRe = escapeRe(environment.variableStart);
+    var variableEndRe = escapeRe(environment.variableEnd);
+    var variableEnd = compileRe('-$variableEndRe\\s*|$variableEndRe');
 
-    var blockStartRe = escape(environment.blockStart);
-    var blockEndRe = escape(environment.blockEnd);
-    var blockEnd = compile(
+    var blockStartRe = escapeRe(environment.blockStart);
+    var blockEndRe = escapeRe(environment.blockEnd);
+    var blockEnd = compileRe(
         '(?:\\+$blockEndRe|-$blockEndRe\\s*|$blockEndRe$blockSuffixRe)');
 
     var tagRules = <Rule>[
@@ -155,21 +155,21 @@ class Lexer {
         <String>[
           'linecomment_start',
           environment.lineCommentPrefix!,
-          '(?:^|(?<=\\S))[^\\S\r\n]*' + environment.lineCommentPrefix!
+          '(?:^|(?<=\\S))[^\\S\r\n]*${environment.lineCommentPrefix!}'
         ],
       if (environment.lineStatementPrefix != null)
         <String>[
           'linestatement_start',
           environment.lineStatementPrefix!,
-          '^[ \t\v]*' + environment.lineStatementPrefix!
+          '^[ \t\v]*${environment.lineStatementPrefix!}'
         ],
     ];
 
     rootTagRules.sort((a, b) => b[1].length.compareTo(a[1].length));
 
-    var rawStart = compile(
+    var rawStart = compileRe(
         '(?<raw_start>$blockStartRe(-|\\+|)\\s*raw\\s*(?:-$blockEndRe\\s*|$blockEndRe))');
-    var rawEnd = compile('(.*?)((?:$blockStartRe(-|\\+|))\\s*endraw\\s*'
+    var rawEnd = compileRe('(.*?)((?:$blockStartRe(-|\\+|))\\s*endraw\\s*'
         '(?:\\+$blockEndRe|-$blockEndRe\\s*|$blockEndRe$blockSuffixRe))');
 
     var rootParts = <String>[
@@ -178,7 +178,7 @@ class Lexer {
     ];
 
     var rootPartsRe = rootParts.join('|');
-    var data = compile('(.*?)(?:$rootPartsRe)');
+    var data = compileRe('(.*?)(?:$rootPartsRe)');
 
     rules = <String, List<Rule>>{
       'root': <Rule>[
@@ -188,7 +188,7 @@ class Lexer {
           '#group',
         ),
         SingleTokenRule(
-          compile('.+'),
+          compileRe('.+'),
           'data',
         ),
       ],
@@ -199,7 +199,7 @@ class Lexer {
           '#pop',
         ),
         MultiTokenRule(
-          compile('(.)'),
+          compileRe('(.)'),
           <String>['@missing end of comment tag'],
         ),
       ],
@@ -226,14 +226,14 @@ class Lexer {
           '#pop',
         ),
         MultiTokenRule(
-          compile('(.)'),
+          compileRe('(.)'),
           <String>['@missing end of raw directive'],
         ),
       ],
       if (environment.lineCommentPrefix != null)
         'linecomment_start': <Rule>[
           MultiTokenRule(
-            compile('(.*?)()(?=\n|\$)'),
+            compileRe('(.*?)()(?=\n|\$)'),
             <String>['linecomment', 'linecomment_end'],
             '#pop',
           ),
@@ -241,7 +241,7 @@ class Lexer {
       if (environment.lineStatementPrefix != null)
         'linestatement_start': <Rule>[
           SingleTokenRule(
-            compile('\\s*(\n|\$)'),
+            compileRe('\\s*(\n|\$)'),
             'linestatement_end',
             '#pop',
           ),
@@ -288,7 +288,7 @@ class Lexer {
 
     if (state != null && state != 'root') {
       assert(state == 'variable' || state == 'block');
-      stack.add(state + '_start');
+      stack.add('${state}_start');
     }
 
     var stateRules = rules[stack.last]!;

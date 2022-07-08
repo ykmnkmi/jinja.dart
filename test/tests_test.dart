@@ -158,33 +158,31 @@ void main() {
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ "foo" is string }}');
       expect(tmpl.render(), equals('true'));
-      tmpl = env.fromString('{{ none is sequence }}');
+      tmpl = env.fromString('{{ none is list }}');
       expect(tmpl.render(), equals('false'));
-      tmpl = env.fromString('{{ false is sequence }}');
+      tmpl = env.fromString('{{ false is list }}');
       expect(tmpl.render(), equals('false'));
-      tmpl = env.fromString('{{ 42 is sequence }}');
+      tmpl = env.fromString('{{ 42 is list }}');
       expect(tmpl.render(), equals('false'));
-      tmpl = env.fromString('{{ "foo" is sequence }}');
+      tmpl = env.fromString('{{ "foo" is list }}');
+      expect(tmpl.render(), equals('false'));
+      tmpl = env.fromString('{{ [] is list }}');
       expect(tmpl.render(), equals('true'));
-      tmpl = env.fromString('{{ [] is sequence }}');
+      tmpl = env.fromString('{{ [1, 2, 3] is list }}');
       expect(tmpl.render(), equals('true'));
-      tmpl = env.fromString('{{ [1, 2, 3] is sequence }}');
+      tmpl = env.fromString('{{ none is map }}');
+      expect(tmpl.render(), equals('false'));
+      tmpl = env.fromString('{{ false is map }}');
+      expect(tmpl.render(), equals('false'));
+      tmpl = env.fromString('{{ 42 is map }}');
+      expect(tmpl.render(), equals('false'));
+      tmpl = env.fromString('{{ "foo" is map }}');
+      expect(tmpl.render(), equals('false'));
+      tmpl = env.fromString('{{ [] is map }}');
+      expect(tmpl.render(), equals('false'));
+      tmpl = env.fromString('{{ {} is map }}');
       expect(tmpl.render(), equals('true'));
-      tmpl = env.fromString('{{ {} is sequence }}');
-      expect(tmpl.render(), equals('true'));
-      tmpl = env.fromString('{{ none is mapping }}');
-      expect(tmpl.render(), equals('false'));
-      tmpl = env.fromString('{{ false is mapping }}');
-      expect(tmpl.render(), equals('false'));
-      tmpl = env.fromString('{{ 42 is mapping }}');
-      expect(tmpl.render(), equals('false'));
-      tmpl = env.fromString('{{ "foo" is mapping }}');
-      expect(tmpl.render(), equals('false'));
-      tmpl = env.fromString('{{ [] is mapping }}');
-      expect(tmpl.render(), equals('false'));
-      tmpl = env.fromString('{{ {} is mapping }}');
-      expect(tmpl.render(), equals('true'));
-      tmpl = env.fromString('{{ mydict is mapping }}');
+      tmpl = env.fromString('{{ mydict is map }}');
       expect(tmpl.render({'mydict': MyMap()}), equals('true'));
       tmpl = env.fromString('{{ none is iterable }}');
       expect(tmpl.render(), equals('false'));
@@ -354,7 +352,7 @@ void main() {
       expect(tmpl.render(), equals(''));
       expect(
           () => tmpl.render({'x': 1}),
-          throwsA(predicate<TemplateRuntimeError>(
+          throwsA(predicate<TemplateAssertionError>(
               (error) => error.message == 'no test named \'f\'')));
     });
 

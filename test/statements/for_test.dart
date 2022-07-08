@@ -1,7 +1,5 @@
-import 'package:jinja/jinja.dart';
 import 'package:test/test.dart';
 
-import 'package:jinja/src/utils.dart';
 import '../environment.dart';
 
 const recursiveData = <String, List<Object>>{
@@ -211,8 +209,8 @@ void main() {
     // TODO: after macro: add tests: scoping bug
 
     test('unpacking', () {
-      var tmpl = env.fromString(
-          '{% for a, b, c in [[1, 2, 3]] %}{{ a }}|{{ b }}|{{ c }}{% endfor %}');
+      var tmpl = env.fromString('{% for a, b, c in [[1, 2, 3]] %}'
+          '{{ a }}|{{ b }}|{{ c }}{% endfor %}');
       expect(tmpl.render(), equals('1|2|3'));
     });
 

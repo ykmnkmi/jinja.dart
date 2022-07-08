@@ -49,6 +49,8 @@ class FileSystemLoader extends Loader {
         return templateFile;
       }
     }
+
+    return null;
   }
 
   bool isTemplate(String path, [String? from]) {

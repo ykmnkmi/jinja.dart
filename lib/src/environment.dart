@@ -17,7 +17,6 @@ import 'visitor.dart';
 /// Signature for the object attribute getter.
 typedef FieldGetter = Object? Function(Object? object, String field);
 
-// TODO: document
 enum PassArgument {
   context,
   environment,
@@ -332,12 +331,8 @@ class Environment {
 
   /// Get an item of an object.
   Object? getItem(dynamic object, Object? key) {
-    try {
-      // TODO: note: dynamic check
-      return object[key];
-    } on NoSuchMethodError {
-      return null;
-    }
+    // TODO: dynamic invocation
+    return object[key];
   }
 
   /// Common filter and test caller.
@@ -439,7 +434,6 @@ class Environment {
       };
     }
 
-    // TODO: document
     throw TemplateAssertionError();
   }
 }

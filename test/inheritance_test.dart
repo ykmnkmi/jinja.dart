@@ -191,7 +191,7 @@ void main() {
     test('level2 required', () {
       var env = Environment(
         loader: MapLoader({
-          'default': "{% block x required %}{% endblock %}",
+          'default': '{% block x required %}{% endblock %}',
           'level1': '{% extends "default" %}{% block x %}[1]{% endblock %}',
           'level2': '{% extends "default" %}{% block x %}[2]{% endblock %}',
         }),
@@ -227,11 +227,11 @@ void main() {
             '{% endblock %}  {% endblock %}',
         'default3': '{% block x required %}{% if true %}{% endif %}  '
             '{% endblock %}',
-        "level1default":
+        'level1default':
             '{% extends "default" %}{%- block x %}CHILD{% endblock %}',
-        "level1default2":
+        'level1default2':
             '{% extends "default2" %}{%- block x %}CHILD{% endblock %}',
-        "level1default3":
+        'level1default3':
             '{% extends "default3" %}{%- block x %}CHILD{% endblock %}'
       }));
       var matcher = throwsA(predicate<TemplateSyntaxError>((error) =>

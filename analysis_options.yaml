@@ -7,11 +7,10 @@ analyzer:
     strict-casts: true
     strict-inference: true
     strict-raw-types: true
-  strong-mode:
-    implicit-casts: false
-    implicit-dynamic: false
 
 linter:
   rules:
     avoid_print: true
     library_prefixes: false
+    prefer_single_quotes: true
+    # public_member_api_docs: true

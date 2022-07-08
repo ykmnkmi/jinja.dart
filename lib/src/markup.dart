@@ -1,7 +1,7 @@
 import 'utils.dart';
 
 class Markup {
-  const Markup.escape(this.value);
+  const factory Markup.escaped(Object? value) = Escaped;
 
   factory Markup(Object? value) {
     if (value is Markup) {
@@ -11,7 +11,7 @@ class Markup {
     return Markup.escape(value);
   }
 
-  const factory Markup.escaped(Object? value) = Escaped;
+  Markup.escape(this.value);
 
   final Object? value;
 

@@ -178,8 +178,8 @@ Object? doDefault(Object? value, [Object? d = '', bool asBoolean = false]) {
 Object? doJoin(Context context, Iterable<Object?> values,
     [String delimiter = '']) {
   if (context.autoEscape) {
-    values = values.map<String>((value) => escape(value.toString()));
-    return Escaped(values.join(delimiter));
+    values = values.map<Object?>(context.escape);
+    return Markup.escaped(values.join(delimiter));
   }
 
   return values.join(delimiter);
@@ -344,7 +344,7 @@ int doWordCount(String string) {
 /// Convert the value into an integer.
 ///
 /// If the conversion doesn’t work it will return null.
-// TODO(difference): int filter
+// TODO: differen int filter
 int? doInteger(String value, [int radix = 10]) {
   return int.tryParse(value, radix: radix) ?? num.tryParse(value)?.toInt();
 }
@@ -352,7 +352,7 @@ int? doInteger(String value, [int radix = 10]) {
 /// Convert the value into a floating point number.
 ///
 /// If the conversion doesn’t work it will return null.
-// TODO(difference): float filter
+// TODO: differen float filter
 double? doFloat(String value) {
   return double.tryParse(value);
 }
@@ -445,7 +445,7 @@ List<List<Object?>> doBatch(Iterable<Object?> items, int lineCount,
 /// Return the number of items in a container.
 int? doLength(Environment environment, dynamic object) {
   try {
-    // TODO: note: dynamic check
+    // TODO: dynamic invocation
     return object.length as int;
   } on NoSuchMethodError {
     return null;
@@ -456,7 +456,7 @@ int? doLength(Environment environment, dynamic object) {
 /// `start`.
 ///
 /// When the sequence is empty it returns start.
-// TODO(difference): sum filter
+// TODO: differen sum filter
 num doSum(Iterable<num> values, [num start = 0]) {
   return values.fold<num>(start, (s, n) => s + n);
 }
@@ -517,7 +517,6 @@ Iterable<Object?> doMap(Context context, Iterable<Object?> values,
   return values;
 }
 
-// TODO(doc): filters
 final Map<String, Function> filters = <String, Function>{
   'e': doEscape,
   'escape': doEscape,

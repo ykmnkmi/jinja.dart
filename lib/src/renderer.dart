@@ -487,6 +487,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
   void visitFilterBlock(FilterBlock node, StringSinkRenderContext context) {
     var buffer = StringBuffer();
     node.body.accept(this, context.derived(buffer: buffer));
+
     Object? value = '$buffer';
 
     for (var filter in node.filters) {
@@ -582,7 +583,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
   }
 
   @override
-  Object? visitOutput(Output node, StringSinkRenderContext context) {
+  void visitOutput(Output node, StringSinkRenderContext context) {
     visitAll(node.nodes, context);
   }
 

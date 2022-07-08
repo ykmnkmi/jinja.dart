@@ -84,16 +84,16 @@ bool isString(Object? value) {
 }
 
 /// Return `true` if the object is a [Map].
-bool isMapping(Object? value) {
+bool isMap(Object? value) {
   return value is Map;
 }
 
-/// Return `true` if the variable is a number.
+/// Return `true` if the variable is a [num].
 bool isNumber(Object? value) {
   return value is num;
 }
 
-/// Return `true` if the object is a sequence.
+/// Return `true` if the object is a [List].
 bool isList(Object? object) {
   return object is List;
 }
@@ -103,7 +103,7 @@ bool isSameAs(Object? value, Object? other) {
   return identical(value, other);
 }
 
-/// Check if it's possible to iterate over an object.
+/// Return `true` if the object is a [Iterable].
 bool isIterable(Object? object) {
   return object is Iterable;
 }
@@ -134,7 +134,6 @@ bool isIn(Object? value, Object? values) {
   throw TypeError();
 }
 
-// TODO(doc): add
 final Map<String, Function> tests = <String, Function>{
   'odd': isOdd,
   'even': isEven,
@@ -152,14 +151,13 @@ final Map<String, Function> tests = <String, Function>{
   'lower': isLower,
   'upper': isUpper,
   'string': isString,
-  'mapping': isMapping,
+  'map': isMap,
   'number': isNumber,
   'list': isList,
   'sameas': isSameAs,
   'iterable': isIterable,
   'escaped': isEscaped,
   'in': isIn,
-
   '!=': isNotEqual,
   '<': isLessThan,
   '<=': isLessThanOrEqual,

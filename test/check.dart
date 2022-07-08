@@ -2,7 +2,7 @@ import 'package:jinja/jinja.dart';
 import 'package:jinja/reflection.dart';
 import 'package:stack_trace/stack_trace.dart';
 
-const String source = '''{{ name['key'] }}''';
+const String source = '''{{ ["<foo>", "<span>foo</span>"|safe]|join }}''';
 
 void main() {
   try {
