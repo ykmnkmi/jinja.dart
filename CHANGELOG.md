@@ -1,31 +1,44 @@
-## 0.4.0-dev.31
-- remove `Undefined` and `missing`
-- remove slices and negative indexes
-- remove dynamic template imports, only single template path/name
-- remove dynamic `Template.render` method
-- `Template.renderMap` renamed to `Template.render`
-- `Loader.listSources` renamed to `Loader.listTemplates`
-- `FileSystemLoader` moved from `package:jinja/jinja.dart` to `package:jinja/loaders.dart`
-- new statements:
-  - `do`
-  - `with`
-- add `print` to globals: `{{ do print(user.name) }}`
+## 0.4.0-dev.39
+- minimal SDK version: 2.17.0
+- api:
+  - removed:
+    - `Undefined`
+    - `missing`
+    - slices and negative indexes
+    - dynamic template imports, only single template path/name
+    - dynamic `Template.render`
+  - renamed:
+    - `Template.renderMap` to `Template.render`
+    - `Loader.listSources` to `Loader.listTemplates`
+  - moved:
+    - `FileSystemLoader` from `package:jinja/jinja.dart` to `package:jinja/loaders.dart`
+- statements:
+  - new:
+    - `do`
+    - `with`
+- globals:
+  - added:
+    - `print`, `{{ do print(user.name) }}`
+- tests:
+  - renamed:
+    - `mapping` > `map`
 - refactoring
 - internal changes
 - _work in progress_
 
 ## 0.3.4
-- variables can be written with the `_` character
 - internal changes
 
 ## 0.3.3
-- replace `pedantic` with `lints` package
+- packages:
+  - replace:
+    - `pedantic` with `lints`
 
 ## 0.3.2
-- remove forgotten print
+- internal changes
 
 ## 0.3.1
-- add `FileSystemLoader` autoload filtering
+- internal changes
 
 ## 0.3.0
 - migrate to null safety

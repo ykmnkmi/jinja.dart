@@ -582,15 +582,7 @@ class Callable extends Expression {
 
 class Call extends Callable {
   Call(this.expression,
-      {List<Expression>? arguments,
-      List<Keyword>? keywords,
-      Expression? dArguments,
-      Expression? dKeywords})
-      : super(
-            arguments: arguments,
-            keywords: keywords,
-            dArguments: dArguments,
-            dKeywords: dKeywords);
+      {super.arguments, super.keywords, super.dArguments, super.dKeywords});
 
   Expression expression;
 
@@ -631,18 +623,13 @@ class Call extends Callable {
 class Filter extends Callable {
   Filter(this.name,
       {Expression? expression,
-      List<Expression>? arguments,
-      List<Keyword>? keywords,
-      Expression? dArguments,
-      Expression? dKeywords})
+      super.arguments,
+      super.keywords,
+      super.dArguments,
+      super.dKeywords})
       // remove after better null safety promotion
       // ignore: prefer_initializing_formals
-      : hasExpression = expression != null,
-        super(
-            arguments: arguments,
-            keywords: keywords,
-            dArguments: dArguments,
-            dKeywords: dKeywords);
+      : hasExpression = expression != null;
 
   String name;
 
@@ -699,15 +686,7 @@ class Filter extends Callable {
 
 class Test extends Callable {
   Test(this.name,
-      {List<Expression>? arguments,
-      List<Keyword>? keywords,
-      Expression? dArguments,
-      Expression? dKeywords})
-      : super(
-            arguments: arguments,
-            keywords: keywords,
-            dArguments: dArguments,
-            dKeywords: dKeywords);
+      {super.arguments, super.keywords, super.dArguments, super.dKeywords});
 
   String name;
 

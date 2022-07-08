@@ -22,14 +22,12 @@ class TemplateNotFound extends TemplateError {
 
 /// Like [TemplateNotFound] but raised if multiple templates are selected.
 class TemplatesNotFound extends TemplateNotFound {
-  TemplatesNotFound({List<Object?>? names, String? message})
-      : super(message: message);
+  TemplatesNotFound({List<Object?>? names, super.message});
 }
 
 /// Raised to tell the user that there is a problem with the template.
 class TemplateSyntaxError extends TemplateError {
-  const TemplateSyntaxError(String message, {this.line, this.path})
-      : super(message);
+  const TemplateSyntaxError(super.message, {this.line, this.path});
 
   final int? line;
 
@@ -55,6 +53,10 @@ class TemplateSyntaxError extends TemplateError {
       }
     }
 
+    if (message == null) {
+      return result;
+    }
+
     return '$result: $message';
   }
 }
@@ -66,17 +68,17 @@ class TemplateSyntaxError extends TemplateError {
 /// However it's a direct subclass of [TemplateSyntaxError] and has the same
 /// attributes.
 class TemplateAssertionError extends TemplateError {
-  const TemplateAssertionError([String? message]) : super(message);
+  const TemplateAssertionError([super.message]);
 }
 
 /// A generic runtime error in the template engine.
 ///
 /// Under some situations Jinja may raise this exception.
 class TemplateRuntimeError extends TemplateError {
-  const TemplateRuntimeError([String? message]) : super(message);
+  const TemplateRuntimeError([super.message]);
 }
 
 /// This error is raised if a filter was called with inappropriate arguments.
 class FilterArgumentError extends TemplateRuntimeError {
-  const FilterArgumentError([String? message]) : super(message);
+  const FilterArgumentError([super.message]);
 }

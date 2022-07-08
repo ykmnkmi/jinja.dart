@@ -75,8 +75,7 @@ abstract class Rule {
 }
 
 class SingleTokenRule extends Rule {
-  SingleTokenRule(RegExp regExp, this.token, [String? newState])
-      : super(regExp, newState);
+  SingleTokenRule(super.regExp, this.token, [super.newState]);
 
   final String token;
 
@@ -87,13 +86,11 @@ class SingleTokenRule extends Rule {
 }
 
 class MultiTokenRule extends Rule {
-  MultiTokenRule(RegExp regExp, this.tokens, [String? newState])
-      : optionalLStrip = false,
-        super(regExp, newState);
+  MultiTokenRule(super.regExp, this.tokens, [super.newState])
+      : optionalLStrip = false;
 
-  MultiTokenRule.optionalLStrip(RegExp regExp, this.tokens, [String? newState])
-      : optionalLStrip = true,
-        super(regExp, newState);
+  MultiTokenRule.optionalLStrip(super.regExp, this.tokens, [super.newState])
+      : optionalLStrip = true;
 
   final List<String> tokens;
 

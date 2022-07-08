@@ -8,12 +8,9 @@ import 'utils.dart';
 import 'visitor.dart';
 
 class RenderContext extends Context {
-  RenderContext(Environment environment,
-      {Map<String, List<Block>>? blocks,
-      Map<String, Object?>? parent,
-      Map<String, Object?>? data})
-      : blocks = blocks ?? <String, List<Block>>{},
-        super(environment, parent: parent, data: data);
+  RenderContext(super.environment,
+      {Map<String, List<Block>>? blocks, super.parent, super.data})
+      : blocks = blocks ?? <String, List<Block>>{};
 
   final Map<String, List<Block>> blocks;
 
@@ -343,11 +340,8 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
 }
 
 class StringSinkRenderContext extends RenderContext {
-  StringSinkRenderContext(Environment environment, this.sink,
-      {Map<String, List<Block>>? blocks,
-      Map<String, Object?>? parent,
-      Map<String, Object?>? data})
-      : super(environment, blocks: blocks, parent: parent, data: data);
+  StringSinkRenderContext(super.environment, this.sink,
+      {super.blocks, super.parent, super.data});
 
   final StringSink sink;
 
