@@ -79,6 +79,7 @@ class Environment {
       Map<String, Object?>? globals,
       Map<String, Function>? filters,
       Map<String, Function>? tests,
+      List<NodeVisitor>? modifiers,
       Map<String, Template>? templates,
       Random? random,
       this.fieldGetter = defaults.fieldGetter})
@@ -87,6 +88,7 @@ class Environment {
         globals = HashMap<String, Object?>.of(defaults.globals),
         filters = HashMap<String, Function>.of(defaults.filters),
         tests = HashMap<String, Function>.of(defaults.tests),
+        modifiers = List<NodeVisitor>.of(defaults.modifiers),
         templates = HashMap<String, Template>(),
         random = random ?? Random() {
     if (globals != null) {
@@ -99,6 +101,10 @@ class Environment {
 
     if (tests != null) {
       this.tests.addAll(tests);
+    }
+
+    if (modifiers != null) {
+      this.modifiers.insertAll(0, modifiers);
     }
 
     if (templates != null) {
@@ -191,6 +197,9 @@ class Environment {
   /// the environment.
   final Map<String, Function> tests;
 
+  /// A list of template modifiers.
+  final List<NodeVisitor> modifiers;
+
   /// A map of parsed templates loaded by the environment.
   final Map<String, Template> templates;
 
@@ -263,8 +272,7 @@ class Environment {
       bool? autoReload,
       Map<String, Object?>? globals,
       Map<String, Function>? filters,
-      Map<String, Function>? environmentFilters,
-      Map<String, Function>? contextFilters,
+      List<NodeVisitor>? modifiers,
       Map<String, Function>? tests,
       Random? random,
       FieldGetter? fieldGetter}) {
@@ -289,6 +297,7 @@ class Environment {
         globals: globals ?? this.globals,
         filters: filters ?? this.filters,
         tests: tests ?? this.tests,
+        modifiers: modifiers,
         random: random ?? this.random,
         fieldGetter: fieldGetter ?? this.fieldGetter);
   }
@@ -315,6 +324,10 @@ class Environment {
 
     if (optimized) {
       template.accept(const Optimizer(), Context(this));
+    }
+
+    for (var modifier in modifiers) {
+      modifier(template);
     }
 
     return template;
@@ -466,8 +479,6 @@ class Template extends Node {
       bool autoEscape = defaults.autoEscape,
       Map<String, Object?>? globals,
       Map<String, Function>? filters,
-      Map<String, Function>? environmentFilters,
-      Map<String, Function>? contextFilters,
       Map<String, Function>? tests,
       List<NodeVisitor>? modifiers,
       Random? random,
@@ -494,9 +505,8 @@ class Template extends Node {
           autoReload: false,
           globals: globals,
           filters: filters,
-          environmentFilters: environmentFilters,
-          contextFilters: contextFilters,
           tests: tests,
+          modifiers: modifiers,
           random: random,
           fieldGetter: fieldGetter);
     } else {
@@ -520,6 +530,7 @@ class Template extends Node {
           globals: globals,
           filters: filters,
           tests: tests,
+          modifiers: modifiers,
           random: random,
           fieldGetter: fieldGetter);
     }
@@ -530,69 +541,6 @@ class Template extends Node {
   @internal
   Template.parsed(this.environment, this.nodes, {this.path})
       : blocks = <Block>[] {
-    // TODO: move modifiers to visitor
-
-    for (var call in findAll<Call>()) {
-      var expression = call.expression;
-
-      if (expression is Attribute && expression.attribute == 'cycle') {
-        var arguments = call.arguments;
-
-        if (arguments != null) {
-          call.arguments = arguments = <Expression>[Array(arguments)];
-
-          var dArguments = call.dArguments;
-
-          if (dArguments != null) {
-            arguments.add(dArguments);
-            call.dArguments = null;
-          }
-        }
-      } else if (expression is Name && expression.name == 'namespace') {
-        var arguments = <Expression>[...?call.arguments];
-        call.arguments = null;
-
-        var keywords = call.keywords;
-
-        if (keywords != null && keywords.isNotEmpty) {
-          var pairs =
-              List<Pair>.generate(keywords.length, (i) => keywords[i].toPair());
-          arguments.add(Dict(pairs));
-          call.keywords = null;
-        }
-
-        var dArguments = call.dArguments;
-
-        if (dArguments != null) {
-          arguments.add(dArguments);
-          call.dArguments = null;
-        }
-
-        var dKeywordArguments = call.dKeywords;
-
-        if (dKeywordArguments != null) {
-          arguments.add(dKeywordArguments);
-          call.dKeywords = null;
-        }
-
-        if (arguments.isNotEmpty) {
-          call.arguments = <Expression>[Array(arguments)];
-        }
-      }
-    }
-
-    accept(const ExpressionMapper(), (Expression expression) {
-      if (expression is Attribute) {
-        var value = expression.value;
-
-        if (value is Name && (value.name == 'loop' || value.name == 'self')) {
-          return Item.string(expression.attribute, value);
-        }
-      }
-
-      return expression;
-    });
-
     blocks.addAll(findAll<Block>());
 
     // TODO: remove/update

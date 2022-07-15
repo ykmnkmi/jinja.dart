@@ -1,4 +1,4 @@
-## 0.4.0-dev.39
+## 0.4.0-dev.40
 - minimal SDK version: 2.17.0
 - api:
   - removed:

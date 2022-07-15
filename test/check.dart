@@ -2,7 +2,7 @@ import 'package:jinja/jinja.dart';
 import 'package:jinja/reflection.dart';
 import 'package:stack_trace/stack_trace.dart';
 
-const String source = '''{{ ["<foo>", "<span>foo</span>"|safe]|join }}''';
+const String source = '''{% for i in range(3) %}{{ loop.cycle('<1>', '<2>') }}{% endfor %}''';
 
 void main() {
   try {
@@ -15,6 +15,11 @@ void main() {
     print(nodes);
 
     var template = Template.parsed(env, nodes);
+
+    for (var modifier in env.modifiers) {
+      modifier(template);
+    }
+
     print(template.nodes);
     print(template.generate({'name': 'world'}));
     print(template.render({'name': 'world'}));
