@@ -35,6 +35,12 @@ void main() {
       expect(tmpl.render({'seq': range(0)}), equals('<>'));
     });
 
+    test('map tuple', () {
+      final tmpl =
+          env.fromString('{% for k, v in map %}<{{k}}:{{v}}>{% endfor %}');
+      expect(tmpl.render({'map': {'a': 1, 'b': 2}}), equals('<a:1><b:2>'));
+    });
+
     test('context vars', () {
       var slist = [42, 24];
 
