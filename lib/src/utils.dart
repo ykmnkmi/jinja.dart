@@ -87,8 +87,12 @@ List<Object?> list(Object? iterable) {
     return iterable.split('');
   }
 
+  if (iterable is MapEntry) {
+    return [iterable.key, iterable.value];
+  }
+
   if (iterable is Map) {
-    return iterable.keys.toList();
+    return iterable.entries.toList();
   }
 
   throw TypeError();
@@ -103,8 +107,12 @@ Iterable<Object?> iterate(Object? iterable) {
     return iterable.split('');
   }
 
+  if (iterable is MapEntry) {
+    return [iterable.key, iterable.value];
+  }
+
   if (iterable is Map) {
-    return iterable.keys;
+    return iterable.entries;
   }
 
   throw TypeError();
