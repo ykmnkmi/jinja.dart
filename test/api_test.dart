@@ -34,16 +34,21 @@ void main() {
     });
 
     test('context finalize', () {
-      Object? finalize(Context context, dynamic value) =>
-          value * context.resolve('scale');
+      Object? finalize(Context context, dynamic value) {
+        return value * context.resolve('scale');
+      }
+
       var env = Environment(finalize: finalize);
       var tmpl = env.fromString('{{ value }}');
       expect(tmpl.render({'value': 5, 'scale': 3}), equals('15'));
     });
 
     test('env autoescape', () {
-      Object? finalize(Environment environment, Object? value) =>
-          '${environment.variableStart} ${repr(value)} ${environment.variableEnd}';
+      Object? finalize(Environment environment, Object? value) {
+        return '${environment.variableStart} ${repr(value)} '
+            '${environment.variableEnd}';
+      }
+
       var env = Environment(finalize: finalize);
       var tmpl = env.fromString('{{ value }}');
       expect(tmpl.render({'value': 'hello'}), equals("{{ 'hello' }}"));

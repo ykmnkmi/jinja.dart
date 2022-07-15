@@ -1,7 +1,8 @@
-import 'dart:collection' show MapView;
+import 'dart:collection' show HashMap, MapView;
 
 class Namespace extends MapView<String, Object?> {
-  Namespace([Map<String, Object?>? context]) : super(<String, Object?>{}) {
+  Namespace([Map<String, Object?>? context])
+      : super(HashMap<String, Object?>()) {
     if (context != null) {
       addAll(context);
     }
@@ -41,7 +42,7 @@ class NamespaceValue {
 
   @override
   String toString() {
-    return 'NameSpaceValue($name, $item)';
+    return 'NamespaceValue($name, $item)';
   }
 }
 
@@ -160,13 +161,13 @@ class LoopContext extends Iterable<Object?> {
     return recurse(data, depth);
   }
 
-  Object? cycle(Iterable<Object?> values, [Iterable<Object?>? iterable]) {
-    if (values.isEmpty && iterable != null && iterable.isEmpty) {
+  Object? cycle(Iterable<Object?> values, [Iterable<Object?>? packed]) {
+    if (values.isEmpty && packed != null && packed.isEmpty) {
       throw TypeError();
     }
 
-    if (iterable != null) {
-      values = values.followedBy(iterable);
+    if (packed != null) {
+      values = values.followedBy(packed);
     }
 
     return values.elementAt(index0 % values.length);

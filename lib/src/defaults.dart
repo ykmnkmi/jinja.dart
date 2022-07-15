@@ -3,6 +3,7 @@ import 'utils.dart';
 
 export 'filters.dart' show filters;
 export 'tests.dart' show tests;
+export 'modifiers.dart' show modifiers;
 
 const String blockStart = '{%';
 const String blockEnd = '%}';
