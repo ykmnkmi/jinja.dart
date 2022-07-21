@@ -258,6 +258,16 @@ void main() {
       expect(tmpl.render(), equals('{{ FOO }} and {% BAR %}'));
     });
 
+    test('operator and', () {
+      final tmpl = env.fromString('<{% if page.next and page.next.path %}ok{% endif %}>');
+      expect(tmpl.render({'page': {}}), equals('<>'));
+    });
+
+    test('operator or', () {
+      final tmpl = env.fromString('<{% if page.next or empty.test %}ok{% endif %}>');
+      expect(tmpl.render({'page': {'next': '5'}}), equals('<ok>'));
+    });
+
     test('const', () {
       var tmpl = env.fromString('{{ true }}');
       expect(tmpl.render(), equals('true'));

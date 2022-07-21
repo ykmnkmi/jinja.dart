@@ -1111,7 +1111,7 @@ class Binary extends Expression {
   @override
   Object? asConst(Context context) {
     try {
-      return calc(operator, left.asConst(context), right.asConst(context));
+      return calc(context, true);
     } catch (error) {
       throw Impossible();
     }
@@ -1119,7 +1119,7 @@ class Binary extends Expression {
 
   @override
   Object? resolve(Context context) {
-    return calc(operator, left.resolve(context), right.resolve(context));
+    return calc(context, false);
   }
 
   @override
@@ -1135,7 +1135,14 @@ class Binary extends Expression {
     return 'Binary(${operator.name}, $left, $right)';
   }
 
-  static Object? calc(BinaryOperator operator, dynamic left, dynamic right) {
+  static Object? _eval(Expression expr, Context context, bool constExpr) {
+    return constExpr ? expr.asConst(context) : expr.resolve(context);
+  }
+
+  Object? calc(Context context, bool asConst) {
+    dynamic left = _eval(this.left, context, asConst);
+    dynamic right = operator == BinaryOperator.or || operator == BinaryOperator.and
+        ? null : _eval(this.right, context, asConst);
     switch (operator) {
       case BinaryOperator.power:
         return math.pow(left as num, right as num);
@@ -1152,9 +1159,9 @@ class Binary extends Expression {
       case BinaryOperator.plus:
         return left + right;
       case BinaryOperator.or:
-        return boolean(left) ? left : right;
+        return boolean(left) ? left : _eval(this.right, context, asConst);
       case BinaryOperator.and:
-        return boolean(left) ? right : left;
+        return boolean(left) ? _eval(this.right, context, asConst) : left;
     }
   }
 }
