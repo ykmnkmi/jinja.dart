@@ -56,11 +56,11 @@ class LoopContext extends Iterable<Object?> {
   @override
   final int length;
 
+  final int depth0;
+
   final String Function(Object? data, [int depth]) recurse;
 
   int index0;
-
-  int depth0;
 
   @override
   LoopIterator get iterator {
@@ -94,15 +94,11 @@ class LoopContext extends Iterable<Object?> {
   }
 
   Object? get next {
-    if (!last) {
-      return values[index0 + 1];
+    if (last) {
+      return null;
     }
 
-    return null;
-  }
-
-  Object? get nextitem {
-    return next;
+    return values[index0 + 1];
   }
 
   Object? get prev {
@@ -111,10 +107,6 @@ class LoopContext extends Iterable<Object?> {
     }
 
     return values[index0 - 1];
-  }
-
-  Object? get previtem {
-    return prev;
   }
 
   Object? operator [](String key) {
@@ -138,13 +130,11 @@ class LoopContext extends Iterable<Object?> {
       case 'last':
         return last;
       case 'prev':
-        return prev;
       case 'previtem':
-        return previtem;
+        return prev;
       case 'next':
-        return next;
       case 'nextitem':
-        return nextitem;
+        return next;
       case 'call':
         return call;
       case 'cycle':
@@ -178,7 +168,7 @@ class LoopContext extends Iterable<Object?> {
       return true;
     }
 
-    if (item == previtem) {
+    if (item == prev) {
       return false;
     }
 
@@ -187,7 +177,7 @@ class LoopContext extends Iterable<Object?> {
 
   @override
   String toString() {
-    return 'LoopContext()';
+    return 'LoopContext(index: $index)';
   }
 }
 

@@ -1,57 +1,6 @@
 import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/visitor.dart';
 
-void modifier(Node node) {
-  for (var call in node.findAll<Call>()) {
-    var expression = call.expression;
-
-    if (expression is Attribute && expression.attribute == 'cycle') {
-      var arguments = call.arguments;
-
-      if (arguments != null) {
-        call.arguments = arguments = <Expression>[Array(arguments)];
-
-        var dArguments = call.dArguments;
-
-        if (dArguments != null) {
-          arguments.add(dArguments);
-          call.dArguments = null;
-        }
-      }
-    } else if (expression is Name && expression.name == 'namespace') {
-      var arguments = <Expression>[...?call.arguments];
-      call.arguments = null;
-
-      var keywords = call.keywords;
-
-      if (keywords != null && keywords.isNotEmpty) {
-        var pairs =
-            List<Pair>.generate(keywords.length, (i) => keywords[i].toPair());
-        arguments.add(Dict(pairs));
-        call.keywords = null;
-      }
-
-      var dArguments = call.dArguments;
-
-      if (dArguments != null) {
-        arguments.add(dArguments);
-        call.dArguments = null;
-      }
-
-      var dKeywordArguments = call.dKeywords;
-
-      if (dKeywordArguments != null) {
-        arguments.add(dKeywordArguments);
-        call.dKeywords = null;
-      }
-
-      if (arguments.isNotEmpty) {
-        call.arguments = <Expression>[Array(arguments)];
-      }
-    }
-  }
-}
-
 /// Modifies [Template] AST from `loop.cycle(first, second, *list)`
 /// to `loop.cycle([first, second], list)`, to match [LoopContext.cycle] definition.
 void loopCycleModifier(Node node) {
@@ -141,6 +90,7 @@ void attributeToItemModifier(Node node) {
   node.accept(const ExpressionMapper(), mapper);
 }
 
+// TODO: move to RuntimeCompiler
 const List<NodeVisitor> modifiers = <NodeVisitor>[
   loopCycleModifier,
   namespaceModifier,
