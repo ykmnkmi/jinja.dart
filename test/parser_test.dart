@@ -44,7 +44,7 @@ void main() {
     });
 
     test('balancing', () {
-      var tmpl = env.fromString('''{{{'foo':'bar'}.foo}}''');
+      var tmpl = env.fromString('''{{{'foo':'bar'}['foo']}}''');
       expect(tmpl.render(), equals('bar'));
     });
 

@@ -335,11 +335,7 @@ class Environment {
 
   /// Get an attribute of an object.
   Object? getAttribute(dynamic object, String attrbute) {
-    try {
-      return fieldGetter(object, attrbute);
-    } on NoSuchMethodError {
-      return getItem(object, attrbute);
-    }
+    return fieldGetter(object, attrbute);
   }
 
   /// Get an item of an object.

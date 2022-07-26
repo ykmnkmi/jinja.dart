@@ -4,16 +4,8 @@
 [Jinja][jinja] server-side template engine port for Dart 2.
 Variables, expressions, control structures and template inheritance.
 
-## Breaking changes 0.4.0, less dynamic, more Dart'ish
-- remove `Undefined` and `missing`
-- remove slices and negative indexes
-- remove dynamic template imports, only single template path/name,
-- remove dynamic `Template.render` method
-- `Template.renderMap` renamed to `Template.render`
-- `Loader.listSources` renamed to `Loader.listTemplates`
-- `FileSystemLoader` moved from `package:jinja/jinja.dart`
-  to `package:jinja/loaders.dart`
-- _work in progress_
+## 0.4.0 version has breaking changes
+See `CHANGELOG.md`.
 
 ## Documentation
 Mostly same as [Jinja](https://jinja.palletsprojects.com/en/3.0.x/templates/)
@@ -24,12 +16,16 @@ Common:
 - BigInt not supported
 
 Filters:
-- `default` filter compares value with `null`
+- `default` filter compares values with `null`
 
 Tests:
-- `defined` and `undefined` tests compares value with `null`
+- `defined` and `undefined` tests compares values with `null`
 - complex not supported
+
 - _work in progress_
+
+## Dynamic invocation
+_work in progress_
 
 ## Example
 ```dart

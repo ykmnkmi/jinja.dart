@@ -344,15 +344,15 @@ int doWordCount(String string) {
 /// Convert the value into an integer.
 ///
 /// If the conversion doesn’t work it will return null.
-// TODO: differen int filter
+// TODO: different int filter
 int? doInteger(String value, [int radix = 10]) {
-  return int.tryParse(value, radix: radix) ?? num.tryParse(value)?.toInt();
+  return int.tryParse(value, radix: radix);
 }
 
 /// Convert the value into a floating point number.
 ///
 /// If the conversion doesn’t work it will return null.
-// TODO: differen float filter
+// TODO: different float filter
 double? doFloat(String value) {
   return double.tryParse(value);
 }
@@ -456,7 +456,7 @@ int? doLength(Environment environment, dynamic object) {
 /// `start`.
 ///
 /// When the sequence is empty it returns start.
-// TODO: differen sum filter
+// TODO: different sum filter
 num doSum(Iterable<num> values, [num start = 0]) {
   return values.fold<num>(start, (s, n) => s + n);
 }

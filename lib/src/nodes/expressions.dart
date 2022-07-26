@@ -1082,22 +1082,10 @@ class Unary extends Expression {
   }
 }
 
-enum BinaryOperator {
-  power,
-  module,
-  floorDivision,
-  division,
-  multiple,
-  minus,
-  plus,
-  or,
-  and,
-}
-
-class Binary extends Expression {
+abstract class Binary<T extends Enum> extends Expression {
   Binary(this.operator, this.left, this.right);
 
-  BinaryOperator operator;
+  T operator;
 
   Expression left;
 
@@ -1109,9 +1097,34 @@ class Binary extends Expression {
   }
 
   @override
+  void update(ExpressionUpdater updater) {
+    left.update(updater);
+    left = updater(left);
+    right.update(updater);
+    right = updater(right);
+  }
+}
+
+enum ScalarOperator {
+  power,
+  module,
+  floorDivision,
+  division,
+  multiple,
+  minus,
+  plus,
+}
+
+// TODO: dynamic invocation
+class Scalar extends Binary<ScalarOperator> {
+  Scalar(super.operator, super.left, super.right);
+
+  @override
   Object? asConst(Context context) {
     try {
-      return calc(context, true);
+      var left = this.left.asConst(context);
+      var right = this.right.asConst(context);
+      return calc(operator, left, right);
     } catch (error) {
       throw Impossible();
     }
@@ -1119,15 +1132,9 @@ class Binary extends Expression {
 
   @override
   Object? resolve(Context context) {
-    return calc(context, false);
-  }
-
-  @override
-  void update(ExpressionUpdater updater) {
-    left.update(updater);
-    left = updater(left);
-    right.update(updater);
-    right = updater(right);
+    var left = this.left.resolve(context);
+    var right = this.right.resolve(context);
+    return calc(operator, left, right);
   }
 
   @override
@@ -1135,33 +1142,65 @@ class Binary extends Expression {
     return 'Binary(${operator.name}, $left, $right)';
   }
 
-  static Object? _eval(Expression expr, Context context, bool constExpr) {
-    return constExpr ? expr.asConst(context) : expr.resolve(context);
+  static Object? calc(ScalarOperator operator, dynamic left, dynamic right) {
+    switch (operator) {
+      case ScalarOperator.power:
+        return math.pow(left as num, right as num);
+      case ScalarOperator.module:
+        return left % right;
+      case ScalarOperator.floorDivision:
+        return left ~/ right;
+      case ScalarOperator.division:
+        return left / right;
+      case ScalarOperator.multiple:
+        return left * right;
+      case ScalarOperator.minus:
+        return left - right;
+      case ScalarOperator.plus:
+        return left + right;
+    }
+  }
+}
+
+enum LogicalOperator {
+  or,
+  and,
+}
+
+// TODO: dynamic invocation
+class Logical extends Binary<LogicalOperator> {
+  Logical(super.operator, super.left, super.right);
+
+  @override
+  Object? asConst(Context context) {
+    try {
+      dynamic left = this.left.asConst(context);
+
+      switch (operator) {
+        case LogicalOperator.or:
+          return boolean(left) ? left : right.asConst(context);
+        case LogicalOperator.and:
+          return boolean(left) ? right.asConst(context) : left;
+      }
+    } catch (error) {
+      throw Impossible();
+    }
   }
 
-  Object? calc(Context context, bool asConst) {
-    dynamic left = _eval(this.left, context, asConst);
-    dynamic right = operator == BinaryOperator.or || operator == BinaryOperator.and
-        ? null : _eval(this.right, context, asConst);
+  @override
+  Object? resolve(Context context) {
+    dynamic left = this.left.resolve(context);
+
     switch (operator) {
-      case BinaryOperator.power:
-        return math.pow(left as num, right as num);
-      case BinaryOperator.module:
-        return left % right;
-      case BinaryOperator.floorDivision:
-        return left ~/ right;
-      case BinaryOperator.division:
-        return left / right;
-      case BinaryOperator.multiple:
-        return left * right;
-      case BinaryOperator.minus:
-        return left - right;
-      case BinaryOperator.plus:
-        return left + right;
-      case BinaryOperator.or:
-        return boolean(left) ? left : _eval(this.right, context, asConst);
-      case BinaryOperator.and:
-        return boolean(left) ? _eval(this.right, context, asConst) : left;
+      case LogicalOperator.or:
+        return boolean(left) ? left : right.resolve(context);
+      case LogicalOperator.and:
+        return boolean(left) ? right.resolve(context) : left;
     }
+  }
+
+  @override
+  String toString() {
+    return 'Logical(${operator.name}, $left, $right)';
   }
 }

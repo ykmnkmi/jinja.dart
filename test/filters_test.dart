@@ -152,7 +152,7 @@ void main() {
       var tmpl = env.fromString('{{ value|int|default(0) }}');
       expect(tmpl.render({'value': '42'}), equals('42'));
       expect(tmpl.render({'value': 'abc'}), equals('0'));
-      expect(tmpl.render({'value': '32.32'}), equals('32'));
+      expect(tmpl.render({'value': '32.32'}), equals('0'));
     });
 
     test('int base', () {

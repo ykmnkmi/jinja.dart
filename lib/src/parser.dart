@@ -400,7 +400,7 @@ class Parser {
     var expression = parseAnd(reader);
 
     while (reader.skipIf('name', 'or')) {
-      expression = Binary(BinaryOperator.or, expression, parseAnd(reader));
+      expression = Logical(LogicalOperator.or, expression, parseAnd(reader));
     }
 
     return expression;
@@ -410,7 +410,7 @@ class Parser {
     var expression = parseNot(reader);
 
     while (reader.skipIf('name', 'and')) {
-      expression = Binary(BinaryOperator.and, expression, parseNot(reader));
+      expression = Logical(LogicalOperator.and, expression, parseNot(reader));
     }
 
     return expression;
@@ -462,22 +462,22 @@ class Parser {
 
     outer:
     while (true) {
-      BinaryOperator operator;
+      ScalarOperator operator;
 
       switch (reader.current.type) {
         case 'add':
           reader.next();
-          operator = BinaryOperator.plus;
+          operator = ScalarOperator.plus;
           break;
         case 'sub':
           reader.next();
-          operator = BinaryOperator.minus;
+          operator = ScalarOperator.minus;
           break;
         default:
           break outer;
       }
 
-      expression = Binary(operator, expression, parseConcat(reader));
+      expression = Scalar(operator, expression, parseConcat(reader));
     }
 
     return expression;
@@ -503,30 +503,30 @@ class Parser {
 
     outer:
     while (true) {
-      BinaryOperator operator;
+      ScalarOperator operator;
 
       switch (reader.current.type) {
         case 'mul':
           reader.next();
-          operator = BinaryOperator.multiple;
+          operator = ScalarOperator.multiple;
           break;
         case 'div':
           reader.next();
-          operator = BinaryOperator.division;
+          operator = ScalarOperator.division;
           break;
         case 'floordiv':
           reader.next();
-          operator = BinaryOperator.floorDivision;
+          operator = ScalarOperator.floorDivision;
           break;
         case 'mod':
           reader.next();
-          operator = BinaryOperator.module;
+          operator = ScalarOperator.module;
           break;
         default:
           break outer;
       }
 
-      expression = Binary(operator, expression, parsePow(reader));
+      expression = Scalar(operator, expression, parsePow(reader));
     }
 
     return expression;
@@ -537,7 +537,7 @@ class Parser {
 
     while (reader.current.test('pow')) {
       reader.next();
-      expression = Binary(BinaryOperator.power, expression, parseUnary(reader));
+      expression = Scalar(ScalarOperator.power, expression, parseUnary(reader));
     }
 
     return expression;
@@ -639,6 +639,7 @@ class Parser {
       List<String>? extraEndRules,
       bool explicitParentheses = false}) {
     Expression Function(TokenReader) parse;
+
     if (simplified) {
       parse = parsePrimary;
     } else if (withCondition) {
@@ -879,6 +880,7 @@ class Parser {
     var token = reader.expect('name');
     var test = Test(token.value, arguments: <Expression>[expression]);
     expression = test;
+
     var current = reader.current;
 
     const allow = ['name', 'string', 'integer', 'float', 'lbracket', 'lbrace'];

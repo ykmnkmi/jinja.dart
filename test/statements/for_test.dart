@@ -116,7 +116,7 @@ void main() {
 
     test('recursive', () {
       var tmpl = env.fromString('''{% for item in seq recursive -%}
-            [{{ item.a }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
+            [{{ item['a'] }}{% if item['b'] %}<{{ loop(item['b']) }}>{% endif %}]
         {%- endfor %}''');
       expect(
           tmpl.render(recursiveData), equals('[1<[1][2]>][2<[1][2]>][3<[a]>]'));
@@ -124,9 +124,9 @@ void main() {
 
     test('recursive lookaround', () {
       var template = env.fromString('''{% for item in seq recursive -%}
-            [{{ loop.previtem.a if loop.previtem is defined else 'x' }}.{{
-            item.a }}.{{ loop.nextitem.a if loop.nextitem is defined else 'x'
-            }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
+            [{{ loop.previtem['a'] if loop.previtem is defined else 'x' }}.{{
+            item['a'] }}.{{ loop.nextitem['a'] if loop.nextitem is defined else 'x'
+            }}{% if item['b'] %}<{{ loop(item['b']) }}>{% endif %}]
         {%- endfor %}''');
       expect(
           template.render(recursiveData),
@@ -136,7 +136,7 @@ void main() {
 
     test('recursive depth0', () {
       var tmpl = env.fromString('''{% for item in seq recursive -%}
-        [{{ loop.depth0 }}:{{ item.a }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
+        [{{ loop.depth0 }}:{{ item['a'] }}{% if item['b'] %}<{{ loop(item['b']) }}>{% endif %}]
         {%- endfor %}''');
       expect(tmpl.render(recursiveData),
           equals('[0:1<[1:1][1:2]>][0:2<[1:1][1:2]>][0:3<[1:a]>]'));
@@ -144,7 +144,7 @@ void main() {
 
     test('recursive depth', () {
       var tmpl = env.fromString('''{% for item in seq recursive -%}
-        [{{ loop.depth }}:{{ item.a }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
+        [{{ loop.depth }}:{{ item['a'] }}{% if item['b'] %}<{{ loop(item['b']) }}>{% endif %}]
         {%- endfor %}''');
       expect(tmpl.render(recursiveData),
           equals('[1:1<[2:1][2:2]>][1:2<[2:1][2:2]>][1:3<[2:a]>]'));

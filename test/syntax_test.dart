@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'package:jinja/reflection.dart';
 import 'package:test/test.dart';
 
 import 'environment.dart';
@@ -38,9 +39,10 @@ void main() {
       expect(tmpl.render(), equals('ac'));
     });
 
-    test('attr', () {
+    test('attribute', () {
       var foo = {'bar': 42};
-      var tmpl = env.fromString('{{ foo.bar }}|{{ foo["bar"] }}');
+      var env = Environment(fieldGetter: fieldGetter);
+      var tmpl = env.fromString('{{ foo[\'bar\'] }}|{{ foo.entries.first.value }}');
       expect(tmpl.render({'foo': foo}), equals('42|42'));
     });
 
@@ -259,12 +261,12 @@ void main() {
     });
 
     test('operator and', () {
-      final tmpl = env.fromString('<{% if page.next and page.next.path %}ok{% endif %}>');
+      final tmpl = env.fromString('<{% if page[\'next\'] and page[\'next\'].path %}ok{% endif %}>');
       expect(tmpl.render({'page': {}}), equals('<>'));
     });
 
     test('operator or', () {
-      final tmpl = env.fromString('<{% if page.next or empty.test %}ok{% endif %}>');
+      final tmpl = env.fromString('<{% if page[\'next\'] or empty[\'test\'] %}ok{% endif %}>');
       expect(tmpl.render({'page': {'next': '5'}}), equals('<ok>'));
     });
 
