@@ -4,7 +4,7 @@
 [Jinja][jinja] server-side template engine port for Dart 2.
 Variables, expressions, control structures and template inheritance.
 
-## 0.4.0 version has breaking changes
+## 0.4.0 version is breaking
 See `CHANGELOG.md`.
 
 ## Documentation
@@ -12,17 +12,17 @@ Mostly same as [Jinja](https://jinja.palletsprojects.com/en/3.0.x/templates/)
 template documentation. _work in progress_.
 
 ## Differences
+_work in progress_
+
 Common:
-- BigInt not supported
+- `BigInt` is not supported
 
 Filters:
 - `default` filter compares values with `null`
 
 Tests:
 - `defined` and `undefined` tests compares values with `null`
-- complex not supported
-
-- _work in progress_
+- complex is not supported
 
 ## Dynamic invocation
 _work in progress_
@@ -97,7 +97,7 @@ and [reflectable][reflectable_example].
   - Blocks
   - Include
 - Import Context Behavior
-- Expressions with [Filters][filters] (not all) and [Tests][tests]
+- Expressions with [filters][filters] (not all) and [tests][tests]
 - List of Global Functions
   - list
   - namespace
