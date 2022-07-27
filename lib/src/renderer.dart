@@ -80,12 +80,12 @@ class RenderContext extends Context {
     if (target is NamespaceValue) {
       var namespace = resolve(target.name);
 
-      if (namespace is! Namespace) {
-        throw TemplateRuntimeError('non-namespace object');
+      if (namespace is Namespace) {
+        namespace[target.item] = current;
+        return;
       }
 
-      namespace[target.item] = current;
-      return;
+      throw TemplateRuntimeError('non-namespace object');
     }
 
     throw TypeError();
@@ -196,7 +196,7 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
   }
 
   @override
-  Iterable<String> visitExpession(
+  Iterable<String> visitExpression(
       Expression node, RenderContext context) sync* {
     var value = context.finalize(node.resolve(context));
     yield context.escape(value).toString();
@@ -464,7 +464,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
   }
 
   @override
-  void visitExpession(Expression node, StringSinkRenderContext context) {
+  void visitExpression(Expression node, StringSinkRenderContext context) {
     var value = node.resolve(context);
     value = context.finalize(value);
     value = context.escape(value);

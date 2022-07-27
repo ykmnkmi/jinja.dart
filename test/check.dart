@@ -1,17 +1,21 @@
 import 'package:jinja/jinja.dart';
-import 'package:jinja/reflection.dart';
+import 'package:jinja/src/compiler.dart';
 import 'package:stack_trace/stack_trace.dart';
 
-const String source = '''{% set ns = namespace(d, self=37) %}{% set ns.b = 42 %}{{ ns.a }}|{{ ns.self }}|{{ ns.b }}''';
+const String source = '''
+{% set ns = namespace(self=37) %}
+{{ ns.self }}
+{% set ns.self = 38 %}
+{{ ns.self }}''';
 
 void main() {
   try {
-    var env = Environment(autoEscape: true, fieldGetter: fieldGetter);
+    var env = Environment();
     var tokens = env.lex(source);
     print('tokens:');
     tokens.forEach(print);
 
-    var nodes = env.parser.scan(tokens);
+    var nodes = env.scan(tokens);
     // var nodes = env.parse(source);
     print('\noriginal nodes:');
     nodes.forEach(print);
@@ -25,11 +29,13 @@ void main() {
     print('\nmodified nodes:');
     template.nodes.forEach(print);
 
+    Compiler.compile(template, env);
+
     print('\ngenerate:');
-    print(template.generate({'d': {'a': 13}}));
+    print(template.generate());
 
     print('render:');
-    print(template.render({'d': {'a': 13}}));
+    print(template.render());
   } on TemplateError catch (error, trace) {
     print(error.message);
     print(Trace.format(trace, terse: true));

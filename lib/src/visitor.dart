@@ -24,7 +24,7 @@ abstract class Visitor<C, R> {
 
   R visitDo(Do node, C context);
 
-  R visitExpession(Expression node, C context);
+  R visitExpression(Expression node, C context);
 
   R visitExtends(Extends node, C context);
 
@@ -83,7 +83,7 @@ abstract class ThrowingVisitor<C, R> implements Visitor<C, R> {
   }
 
   @override
-  R visitExpession(Expression node, C context) {
+  R visitExpression(Expression node, C context) {
     fail(node, context);
   }
 
@@ -137,7 +137,7 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
       var node = nodes[i];
 
       if (node is Expression) {
-        nodes[i] = visitExpession(node, context);
+        nodes[i] = visitExpression(node, context);
       } else {
         node.accept(this, context);
       }
@@ -146,18 +146,18 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
 
   @override
   void visitAssign(Assign node, ExpressionUpdater context) {
-    node.target = visitExpession(node.target, context);
-    node.value = visitExpession(node.value, context);
+    node.target = visitExpression(node.target, context);
+    node.value = visitExpression(node.value, context);
   }
 
   @override
   void visitAssignBlock(AssignBlock node, ExpressionUpdater context) {
-    node.target = visitExpession(node.target, context);
+    node.target = visitExpression(node.target, context);
 
     var body = node.body;
 
     if (body is Expression) {
-      node.body = visitExpession(body, context);
+      node.body = visitExpression(body, context);
     }
 
     var filters = node.filters;
@@ -169,7 +169,7 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
 
   @override
   void visitAutoEscape(AutoEscape node, ExpressionUpdater context) {
-    node.value = visitExpession(node.value, context);
+    node.value = visitExpression(node.value, context);
   }
 
   @override
@@ -177,7 +177,7 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
     var body = node.body;
 
     if (body is Expression) {
-      node.body = visitExpession(body, context);
+      node.body = visitExpression(body, context);
     } else {
       body.accept(this, context);
     }
@@ -188,11 +188,11 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
 
   @override
   void visitDo(Do node, ExpressionUpdater context) {
-    node.expression = visitExpession(node.expression, context);
+    node.expression = visitExpression(node.expression, context);
   }
 
   @override
-  Expression visitExpession(Expression node, ExpressionUpdater context) {
+  Expression visitExpression(Expression node, ExpressionUpdater context) {
     node.update(context);
     return context(node);
   }
@@ -207,7 +207,7 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
     var body = node.body;
 
     if (body is Expression) {
-      node.body = visitExpession(body, context);
+      node.body = visitExpression(body, context);
     } else {
       body.accept(this, context);
     }
@@ -215,19 +215,19 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
 
   @override
   void visitFor(For node, ExpressionUpdater context) {
-    node.target = visitExpession(node.target, context);
-    node.iterable = visitExpession(node.iterable, context);
+    node.target = visitExpression(node.target, context);
+    node.iterable = visitExpression(node.iterable, context);
 
     var test = node.test;
 
     if (test != null) {
-      node.test = visitExpession(test, context);
+      node.test = visitExpression(test, context);
     }
 
     var body = node.body;
 
     if (body is Expression) {
-      node.body = visitExpession(body, context);
+      node.body = visitExpression(body, context);
     } else {
       body.accept(this, context);
     }
@@ -235,7 +235,7 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
     var orElse = node.orElse;
 
     if (orElse is Expression) {
-      node.orElse = visitExpession(orElse, context);
+      node.orElse = visitExpression(orElse, context);
     } else if (orElse != null) {
       orElse.accept(this, context);
     }
@@ -243,12 +243,12 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
 
   @override
   void visitIf(If node, ExpressionUpdater context) {
-    node.test = visitExpession(node.test, context);
+    node.test = visitExpression(node.test, context);
 
     var body = node.body;
 
     if (body is Expression) {
-      node.body = visitExpession(body, context);
+      node.body = visitExpression(body, context);
     } else {
       body.accept(this, context);
     }
@@ -256,7 +256,7 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
     var orElse = node.orElse;
 
     if (orElse is Expression) {
-      node.orElse = visitExpession(orElse, context);
+      node.orElse = visitExpression(orElse, context);
     } else if (orElse != null) {
       orElse.accept(this, context);
     }
@@ -283,7 +283,7 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
     var body = node.body;
 
     if (body is Expression) {
-      node.body = visitExpession(body, context);
+      node.body = visitExpression(body, context);
     } else {
       body.accept(this, context);
     }

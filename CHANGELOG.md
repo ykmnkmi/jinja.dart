@@ -7,14 +7,18 @@
     - `do`
     - `with`
 - removed:
-  - `Undefined`
-  - `missing`
+  - `Environment`
+    - `copyWith`
+    - `parser`
+  - `Undefined` and `missing`
   - slices and negative indexes
-  - dynamic template imports, only single template path/name
+  - conditional and dynamic template imports
   - dynamic `Template.render`
   - `map.key` field syntax, use `map['key']` instead
 - renamed:
-  - `Template.renderMap` to `Template.render`
+  - `Template`
+    - `Template({Environment? parent})` to `Template({Environment? environment})`
+    - `renderMap` to `render`
   - `Loader.listSources` to `Loader.listTemplates`
   - `mapping` to `map` test
 - moved:

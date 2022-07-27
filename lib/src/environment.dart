@@ -49,10 +49,6 @@ class Environment {
   @internal
   static final Expando<Lexer> lexers = Expando<Lexer>();
 
-  /// Cached [Parser]'s
-  @internal
-  static final Expando<Parser> parsers = Expando<Parser>();
-
   /// [PassArgument] modifier for functions, filters and tests.
   @internal
   static final Expando<PassArgument> passArguments = Expando<PassArgument>();
@@ -231,11 +227,6 @@ class Environment {
     return lexers[this] ??= Lexer(this);
   }
 
-  /// The parser for this environment.
-  Parser get parser {
-    return parsers[this] ??= Parser(this);
-  }
-
   @override
   bool operator ==(Object? other) {
     return other is Environment &&
@@ -249,88 +240,6 @@ class Environment {
         lineCommentPrefix == other.lineCommentPrefix &&
         trimBlocks == other.trimBlocks &&
         leftStripBlocks == other.leftStripBlocks;
-  }
-
-  /// Creates a copy of the environment with specified attributes overridden.
-  Environment copyWith(
-      {String? commentStart,
-      String? commentEnd,
-      String? variableStart,
-      String? variableEnd,
-      String? blockStart,
-      String? blockEnd,
-      String? lineCommentPrefix,
-      String? lineStatementPrefix,
-      bool? leftStripBlocks,
-      bool? trimBlocks,
-      String? newLine,
-      bool? keepTrailingNewLine,
-      bool? optimized,
-      Function? finalize,
-      bool? autoEscape,
-      Loader? loader,
-      bool? autoReload,
-      Map<String, Object?>? globals,
-      Map<String, Function>? filters,
-      List<NodeVisitor>? modifiers,
-      Map<String, Function>? tests,
-      Random? random,
-      FieldGetter? fieldGetter}) {
-    return Environment(
-        commentStart: commentStart ?? this.commentStart,
-        commentEnd: commentEnd ?? this.commentEnd,
-        variableStart: variableStart ?? this.variableStart,
-        variableEnd: variableEnd ?? this.variableEnd,
-        blockStart: blockStart ?? this.blockStart,
-        blockEnd: blockEnd ?? this.blockEnd,
-        lineCommentPrefix: lineCommentPrefix ?? this.lineCommentPrefix,
-        lineStatementPrefix: lineStatementPrefix ?? this.lineStatementPrefix,
-        leftStripBlocks: leftStripBlocks ?? this.leftStripBlocks,
-        trimBlocks: trimBlocks ?? this.trimBlocks,
-        newLine: newLine ?? this.newLine,
-        keepTrailingNewLine: keepTrailingNewLine ?? this.keepTrailingNewLine,
-        optimized: optimized ?? this.optimized,
-        finalize: finalize ?? this.finalize,
-        autoEscape: autoEscape ?? this.autoEscape,
-        loader: loader ?? this.loader,
-        autoReload: autoReload ?? this.autoReload,
-        globals: globals ?? this.globals,
-        filters: filters ?? this.filters,
-        tests: tests ?? this.tests,
-        modifiers: modifiers,
-        random: random ?? this.random,
-        fieldGetter: fieldGetter ?? this.fieldGetter);
-  }
-
-  /// Lex the given sourcecode and return a list of [Token]'s.
-  ///
-  /// This can be useful for extension development and debugging templates.
-  List<Token> lex(String source) {
-    return lexer.tokenize(source);
-  }
-
-  /// Parse the sourcecode and return the abstract syntax tree.
-  ///
-  /// This is useful for debugging or to extract information from templates.
-  List<Node> parse(String source) {
-    var tokens = lex(source);
-    return parser.scan(tokens);
-  }
-
-  /// Load a template from a source string without using [loader].
-  Template fromString(String source, {String? path}) {
-    var nodes = Parser(this, path: path).parse(source);
-    var template = Template.parsed(this, nodes, path: path);
-
-    if (optimized) {
-      template.accept(const Optimizer(), Context(this));
-    }
-
-    for (var modifier in modifiers) {
-      modifier(template);
-    }
-
-    return template;
   }
 
   /// Get an attribute of an object.
@@ -384,6 +293,45 @@ class Environment {
       [Map<Symbol, Object?> named = const <Symbol, Object?>{},
       Context? context]) {
     return callCommon(name, positional, named, false, context) as bool;
+  }
+
+  /// Lex the given sourcecode and return a list of tokens.
+  ///
+  /// This can be useful for extension development and debugging templates.
+  List<Token> lex(String source, {String? path}) {
+    return lexer.tokenize(source, path: path);
+  }
+
+  /// Parse the list of tokens and return the AST nodes.
+  ///
+  /// This can be useful for debugging or to extract information from templates.
+  List<Node> scan(List<Token> tokens, {String? path}) {
+    return Parser(this, path: path).scan(tokens);
+  }
+
+  /// Parse the source code and return the AST nodes.
+  ///
+  /// This can be useful for debugging or to extract information from templates.
+  List<Node> parse(String source, {String? path}) {
+    var tokens = lex(source);
+    return scan(tokens, path: path);
+  }
+
+  /// Load a template from a source string without using [loader].
+  Template fromString(String source, {String? path}) {
+    var nodes = Parser(this, path: path).parse(source);
+    var template = Template.parsed(this, nodes, path: path);
+
+    if (optimized) {
+      template.accept(const Optimizer(), Context(this));
+    }
+
+    for (var modifier in modifiers) {
+      modifier(template);
+    }
+
+    // Compiler.compile(template, this);
+    return template;
   }
 
   /// Returns a list of templates for this environment.
@@ -457,7 +405,7 @@ class Environment {
 class Template extends Node {
   factory Template(String source,
       {String? path,
-      Environment? parent,
+      Environment? environment,
       String blockStart = defaults.blockStart,
       String blockEnd = defaults.blockEnd,
       String variableStatr = defaults.variableStart,
@@ -479,57 +427,29 @@ class Template extends Node {
       List<NodeVisitor>? modifiers,
       Random? random,
       FieldGetter fieldGetter = defaults.fieldGetter}) {
-    Environment environment;
-
-    if (parent != null) {
-      environment = parent.copyWith(
-          commentStart: commentStart,
-          commentEnd: commentEnd,
-          variableStart: variableStatr,
-          variableEnd: variableEnd,
-          blockStart: blockStart,
-          blockEnd: blockEnd,
-          lineCommentPrefix: lineCommentPrefix,
-          lineStatementPrefix: lineStatementPrefix,
-          leftStripBlocks: leftStripBlocks,
-          trimBlocks: trimBlocks,
-          newLine: newLine,
-          keepTrailingNewLine: keepTrailingNewLine,
-          optimized: optimized,
-          finalize: finalize,
-          autoEscape: autoEscape,
-          autoReload: false,
-          globals: globals,
-          filters: filters,
-          tests: tests,
-          modifiers: modifiers,
-          random: random,
-          fieldGetter: fieldGetter);
-    } else {
-      environment = Environment(
-          commentStart: commentStart,
-          commentEnd: commentEnd,
-          variableStart: variableStatr,
-          variableEnd: variableEnd,
-          blockStart: blockStart,
-          blockEnd: blockEnd,
-          lineCommentPrefix: lineCommentPrefix,
-          lineStatementPrefix: lineStatementPrefix,
-          leftStripBlocks: leftStripBlocks,
-          trimBlocks: trimBlocks,
-          newLine: newLine,
-          keepTrailingNewLine: keepTrailingNewLine,
-          optimized: optimized,
-          finalize: finalize,
-          autoEscape: autoEscape,
-          autoReload: false,
-          globals: globals,
-          filters: filters,
-          tests: tests,
-          modifiers: modifiers,
-          random: random,
-          fieldGetter: fieldGetter);
-    }
+    environment ??= Environment(
+        commentStart: commentStart,
+        commentEnd: commentEnd,
+        variableStart: variableStatr,
+        variableEnd: variableEnd,
+        blockStart: blockStart,
+        blockEnd: blockEnd,
+        lineCommentPrefix: lineCommentPrefix,
+        lineStatementPrefix: lineStatementPrefix,
+        leftStripBlocks: leftStripBlocks,
+        trimBlocks: trimBlocks,
+        newLine: newLine,
+        keepTrailingNewLine: keepTrailingNewLine,
+        optimized: optimized,
+        finalize: finalize,
+        autoEscape: autoEscape,
+        autoReload: false,
+        globals: globals,
+        filters: filters,
+        tests: tests,
+        modifiers: modifiers,
+        random: random,
+        fieldGetter: fieldGetter);
 
     return environment.fromString(source, path: path);
   }

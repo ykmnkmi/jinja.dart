@@ -15,7 +15,7 @@ abstract class Expression extends Node {
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitExpession(this, context);
+    return visitor.visitExpression(this, context);
   }
 
   Object? asConst(Context context) {

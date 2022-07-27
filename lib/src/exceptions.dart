@@ -27,11 +27,11 @@ class TemplatesNotFound extends TemplateNotFound {
 
 /// Raised to tell the user that there is a problem with the template.
 class TemplateSyntaxError extends TemplateError {
-  const TemplateSyntaxError(super.message, {this.line, this.path});
-
-  final int? line;
+  const TemplateSyntaxError(super.message, {this.path, this.line});
 
   final String? path;
+
+  final int? line;
 
   @override
   String toString() {

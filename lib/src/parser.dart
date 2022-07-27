@@ -977,7 +977,7 @@ class Parser {
   }
 
   List<Node> parse(String template) {
-    var tokens = environment.lexer.tokenize(template, path: path);
+    var tokens = environment.lex(template, path: path);
     return scan(tokens);
   }
 

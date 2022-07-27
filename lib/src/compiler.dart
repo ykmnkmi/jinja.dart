@@ -1,83 +1,95 @@
-import 'package:jinja/src/context.dart';
 import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/visitor.dart';
 
-abstract class Compiler<T> extends Visitor<Context, T> {}
+class Frame {
+  Frame(this.environment);
 
-class RuntimeCompiler extends Compiler<void> {
+  final Environment environment;
+}
+
+class Compiler extends Visitor<Frame, void> {
+  const Compiler();
+
   @override
-  void visitAssign(Assign node, Context context) {
+  void visitAssign(Assign node, Frame context) {
     throw UnimplementedError();
   }
 
   @override
-  void visitAssignBlock(AssignBlock node, Context context) {
+  void visitAssignBlock(AssignBlock node, Frame context) {
     throw UnimplementedError();
   }
 
   @override
-  void visitAutoEscape(AutoEscape node, Context context) {
+  void visitAutoEscape(AutoEscape node, Frame context) {
     throw UnimplementedError();
   }
 
   @override
-  void visitBlock(Block node, Context context) {
+  void visitBlock(Block node, Frame context) {
     throw UnimplementedError();
   }
 
   @override
-  void visitData(Data node, Context context) {
+  void visitData(Data node, Frame context) {
     throw UnimplementedError();
   }
 
   @override
-  void visitDo(Do node, Context context) {
+  void visitDo(Do node, Frame context) {
     throw UnimplementedError();
   }
 
   @override
-  void visitExpession(Expression node, Context context) {
+  void visitExpression(Expression node, Frame context) {
     throw UnimplementedError();
   }
 
   @override
-  void visitExtends(Extends node, Context context) {
+  void visitExtends(Extends node, Frame context) {
     throw UnimplementedError();
   }
 
   @override
-  void visitFilterBlock(FilterBlock node, Context context) {
+  void visitFilterBlock(FilterBlock node, Frame context) {
     throw UnimplementedError();
   }
 
   @override
-  void visitFor(For node, Context context) {
+  void visitFor(For node, Frame context) {
     throw UnimplementedError();
   }
 
   @override
-  void visitIf(If node, Context context) {
+  void visitIf(If node, Frame context) {
     throw UnimplementedError();
   }
 
   @override
-  void visitInclude(Include node, Context context) {
+  void visitInclude(Include node, Frame context) {
     throw UnimplementedError();
   }
 
   @override
-  void visitOutput(Output node, Context context) {
+  void visitOutput(Output node, Frame context) {
     throw UnimplementedError();
   }
 
   @override
-  void visitTemplate(Template node, Context context) {
-    throw UnimplementedError();
+  void visitTemplate(Template node, Frame context) {
+    visitAll(node.blocks, context);
+    visitAll(node.nodes, context);
   }
 
   @override
-  void visitWith(With node, Context context) {
+  void visitWith(With node, Frame context) {
     throw UnimplementedError();
+  }
+
+  static void compile(Node node, Environment environment) {
+    var visitor = const Compiler();
+    var context = Frame(environment);
+    node.accept(visitor, context);
   }
 }
