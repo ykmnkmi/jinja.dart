@@ -56,31 +56,37 @@ void main() {
 
     test('namespace block', () {
       var env = Environment(trimBlocks: true);
-      var tmpl = env
-          .fromString('{% set ns = namespace() %}{% set ns.bar %}42{% endset %}'
-              '{{ ns.bar }}');
+      var tmpl = env.fromString(
+          '{% set ns = namespace() %}{% set ns.bar %}42{% endset %}{{ ns.bar }}');
       expect(tmpl.render(), equals('42'));
     });
 
     test('init namespace', () {
       var env = Environment(trimBlocks: true);
-      var tmpl = env.fromString(
-          '{% set ns = namespace(d, self=37) %}{% set ns.b = 42 %}{{ ns.a }}|'
-          '{{ ns.self }}|{{ ns.b }}');
-      expect(tmpl.render({'d': {'a': 13}}), equals('13|37|42'));
+      var tmpl = env.fromString('{% set ns = namespace(d, self=37) %}'
+          '{% set ns.b = 42 %}'
+          '{{ ns.a }}|{{ ns.self }}|{{ ns.b }}');
+      expect(
+          tmpl.render({
+            'd': {'a': 13}
+          }),
+          equals('13|37|42'));
     });
 
     test('namespace loop', () {
       var env = Environment(trimBlocks: true);
-      var tmpl = env.fromString(
-          '{% set ns = namespace(found=false) %}{% for x in range(4) %}'
-          '{% if x == v %}{% set ns.found = true %}{% endif %}{% endfor %}'
+      var tmpl = env.fromString('{% set ns = namespace(found=false) %}'
+          '{% for x in range(4) %}'
+          '{% if x == v %}'
+          '{% set ns.found = true %}'
+          '{% endif %}'
+          '{% endfor %}'
           '{{ ns.found }}');
       expect(tmpl.render({'v': 3}), equals('true'));
       expect(tmpl.render({'v': 4}), equals('false'));
     });
 
-    // TODO: after macro: add test: namespace macro
+    // TODO: add test: namespace macro
 
     test('block escapeing filtered', () {
       var env = Environment(autoEscape: true);
@@ -105,11 +111,13 @@ void main() {
 
       var env = Environment(
           filters: {'myfilter': myfilter},
-          fieldGetter: fieldGetter,
+          getAttribute: getAttribute,
           trimBlocks: true);
-      var tmpl = env.fromString(
-          '{% set a = " xxx " %}{% set foo | myfilter(a) | trim | length | string %} '
-          '{% set b = " yy " %} 42 {{ a }}{{ b }}   {% endset %}{{ foo }}');
+      var tmpl = env.fromString('{% set a = " xxx " %}'
+          '{% set foo | myfilter(a) | trim | length | string %}'
+          ' {% set b = " yy " %} 42 {{ a }}{{ b }}   '
+          '{% endset %}'
+          '{{ foo }}');
       expect(tmpl.render(), equals('11'));
     });
   });

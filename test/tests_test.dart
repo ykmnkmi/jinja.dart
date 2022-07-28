@@ -305,7 +305,7 @@ void main() {
       var items = <Object?>[];
 
       bool matching(Object? x, Object? y) {
-        items.add(<Object?>[x, y]);
+        items.add([x, y]);
         return false;
       }
 
@@ -357,13 +357,13 @@ void main() {
     });
 
     test('is filter', () {
-      expect(env.callTest('filter', <Object?>['string']), isTrue);
-      expect(env.callTest('filter', <Object?>['badName']), isFalse);
+      expect(env.callTest('filter', ['string']), isTrue);
+      expect(env.callTest('filter', ['badName']), isFalse);
     });
 
     test('is test', () {
-      expect(env.callTest('test', <Object?>['number']), isTrue);
-      expect(env.callTest('test', <Object?>['badName']), isFalse);
+      expect(env.callTest('test', ['number']), isTrue);
+      expect(env.callTest('test', ['badName']), isFalse);
     });
   });
 }

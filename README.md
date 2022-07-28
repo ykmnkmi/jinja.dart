@@ -12,19 +12,16 @@ Mostly same as [Jinja](https://jinja.palletsprojects.com/en/3.0.x/templates/)
 template documentation. _work in progress_.
 
 ## Differences
+- `BigInt` is not supported
+- complex numbers is not supported
+- `default` filter compare values with `null`
+- `defined` and `undefined` tests compare values with `null`
 _work in progress_
 
-Common:
-- `BigInt` is not supported
-
-Filters:
-- `default` filter compares values with `null`
-
-Tests:
-- `defined` and `undefined` tests compares values with `null`
-- complex is not supported
-
-## Dynamic invocation
+## Dynamically invoked members
+- `[]`, `+`, `-`, `*`, `/`, `~/`, `%` operators
+- `object.length` getter
+- `object.call` getter
 _work in progress_
 
 ## Example
@@ -85,8 +82,8 @@ and [reflectable][reflectable_example].
   - Named Block End-Tags
   - Block Nesting and Scope
 - HTML Escaping
-  - Working with Manual Escaping
-  - Working with Automatic Escaping
+  - Manual
+  - Automatic
 - List of Control Structures
   - For
   - If
@@ -113,7 +110,7 @@ and [reflectable][reflectable_example].
 
 ## Contributing
 If you found a bug, typo or you have better description or comment
-for documents, just create a [new issue][new_issue] or even better
+for documentation, just create a [new issue][new_issue] or even better
 fork and issue a pull request with your fix.
 
 [jinja]: https://www.palletsprojects.com/p/jinja

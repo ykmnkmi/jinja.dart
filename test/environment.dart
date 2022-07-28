@@ -8,4 +8,4 @@ export 'package:jinja/src/nodes.dart';
 export 'package:jinja/src/reader.dart';
 export 'package:jinja/src/utils.dart';
 
-final Environment env = Environment(fieldGetter: fieldGetter);
+final Environment env = Environment(getAttribute: getAttribute);

@@ -445,7 +445,7 @@ List<List<Object?>> doBatch(Iterable<Object?> items, int lineCount,
 /// Return the number of items in a container.
 int? doLength(Environment environment, dynamic object) {
   try {
-    // TODO: dynamic invocation
+    // * dynamic invocation
     return object.length as int;
   } on NoSuchMethodError {
     return null;

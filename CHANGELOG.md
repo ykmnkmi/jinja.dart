@@ -2,26 +2,30 @@
 - minimal SDK version: 2.17.0
 - added:
   - `Template.generate` method
-  - `print` to globals, `{{ do print(user.name) }}`
+  - `print` to globals, `{{ do print(name) }}`
   - statements:
     - `do`
     - `with`
-- removed:
-  - `Environment`
-    - `copyWith`
-    - `parser`
-  - `Undefined` and `missing`
-  - slices and negative indexes
-  - conditional and dynamic template imports
-  - dynamic `Template.render`
-  - `map.key` field syntax, use `map['key']` instead
-- renamed:
+- changed:
+  - `FieldGetter` typedef renamed to `AttributeGetter`
+  - `getField` function renamed to `getAttribute`
+  - `FileSystemLoader` moved to `package:jinja/loaders.dart` library
+  - `package:jinja/get_field.dart` library renamed to `package:jinja/reflection.dart`
+  - `Environment.getField` field renamed to `getAttribute`
   - `Template`
-    - `Template({Environment? parent})` to `Template({Environment? environment})`
-    - `renderMap` to `render`
-  - `Loader.listSources` to `Loader.listTemplates`
-  - `mapping` to `map` test
-- moved:
-  - `FileSystemLoader` from `package:jinja/jinja.dart` to `package:jinja/loaders.dart`
+    - `Template({Environment? parent})` constructor renamed to
+      `Template({Environment? environment})` and doesn't copy the environment
+    - `renderMap` renamed to `render`
+  - `Loader.listSources` renamed to `Loader.listTemplates`
+  - `mapping` test renamed to `map`
+  - `default` filter compare values with `null`
+  - `defined` and `undefined` tests compare values with `null`
+- removed:
+  - `Environment.undefined` method
+  - `Undefined` type and `missing` object
+  - slices and negative indexes
+  - conditional and variable `extends` statement variants
+  - choice, ignore missing and variable `include` statement variants
+  - `Template.render` method
 - internal changes
 - _work in progress_

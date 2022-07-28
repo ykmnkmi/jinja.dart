@@ -4,12 +4,13 @@ import 'package:test/test.dart';
 void main() {
   group('Include', () {
     var env = Environment(
-        loader: MapLoader({
-          'module': '{% macro test() %}[{{ foo }}|{{ bar }}]{% endmacro %}',
-          'header': '[{{ foo }}|{{ 23 }}]',
-          'o_printer': '({{ o }})'
-        }),
-        globals: {'bar': 23});
+      globals: {'bar': 23},
+      loader: MapLoader({
+        'module': '{% macro test() %}[{{ foo }}|{{ bar }}]{% endmacro %}',
+        'header': '[{{ foo }}|{{ 23 }}]',
+        'o_printer': '({{ o }})',
+      }),
+    );
 
     test('context include', () {
       var tmpl = env.fromString('{% include "header" %}');
@@ -20,22 +21,23 @@ void main() {
       expect(tmpl.render({'foo': 42}), equals('[|23]'));
     });
 
-    test('include ignoring missing', () {
+    test('include missing', () {
       var tmpl = env.fromString('{% include "missing" %}');
       expect(() => tmpl.render(), throwsA(isA<TemplateNotFound>()));
     });
 
     test('context include with overrides', () {
       var env = Environment(
-          loader: MapLoader({
-        'main': '{% for item in [1, 2, 3] %}{% include "item" %}{% endfor %}',
-        'item': '{{ item }}'
-      }));
+        loader: MapLoader({
+          'main': '{% for item in [1, 2, 3] %}{% include "item" %}{% endfor %}',
+          'item': '{{ item }}',
+        }),
+      );
       var tmpl = env.getTemplate('main');
       expect(tmpl.render(), equals('123'));
     });
 
-    // TODO: after macro: add test: unoptimized_scopes
-    // TODO: after macro: add test: import_from_with_context
+    // TODO: add test: unoptimized_scopes
+    // TODO: add test: import_from_with_context
   });
 }

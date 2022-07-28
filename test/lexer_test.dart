@@ -21,7 +21,9 @@ void main() {
   });
 
   group('Lexer', () {
-    const seq = {'seq': [0, 1, 2]};
+    const seq = {
+      'seq': [0, 1, 2]
+    };
 
     test('raw', () {
       var tmpl = env.fromString('{% raw %}foo{% endraw %}|'
@@ -156,7 +158,12 @@ void main() {
   });
 
   group('LStripBlocks', () {
-    const kvs = {'kvs': [['a', 1], ['b', 2]]};
+    const kvs = {
+      'kvs': [
+        ['a', 1],
+        ['b', 2]
+      ]
+    };
 
     test('lstrip', () {
       var env = Environment(leftStripBlocks: true, trimBlocks: false);

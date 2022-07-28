@@ -465,7 +465,7 @@ class Lexer {
             }
 
             if (notFound) {
-              // TODO: update error
+              // TODO: update error message
               throw Exception('${rule.regExp} wanted to resolve the token '
                   'dynamically but no group matched');
             }
@@ -475,7 +475,7 @@ class Lexer {
 
           stateRules = rules[stack.last]!;
         } else if (position == position2) {
-          // TODO: update error
+          // TODO: update error message
           throw Exception(
               '${rule.regExp} yielded empty string without stack change');
         }

@@ -1115,7 +1115,6 @@ enum ScalarOperator {
   plus,
 }
 
-// TODO: dynamic invocation
 class Scalar extends Binary<ScalarOperator> {
   Scalar(super.operator, super.left, super.right);
 
@@ -1142,6 +1141,7 @@ class Scalar extends Binary<ScalarOperator> {
     return 'Binary(${operator.name}, $left, $right)';
   }
 
+  // * dynamic invocation
   static Object? calc(ScalarOperator operator, dynamic left, dynamic right) {
     switch (operator) {
       case ScalarOperator.power:
@@ -1167,14 +1167,13 @@ enum LogicalOperator {
   and,
 }
 
-// TODO: dynamic invocation
 class Logical extends Binary<LogicalOperator> {
   Logical(super.operator, super.left, super.right);
 
   @override
   Object? asConst(Context context) {
     try {
-      dynamic left = this.left.asConst(context);
+      var left = this.left.asConst(context);
 
       switch (operator) {
         case LogicalOperator.or:
@@ -1189,7 +1188,7 @@ class Logical extends Binary<LogicalOperator> {
 
   @override
   Object? resolve(Context context) {
-    dynamic left = this.left.resolve(context);
+    var left = this.left.resolve(context);
 
     switch (operator) {
       case LogicalOperator.or:

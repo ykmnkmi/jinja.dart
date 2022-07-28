@@ -48,7 +48,7 @@ void main() {
       expect(tmpl.render(), equals('bar'));
     });
 
-    // TODO: after macro: enable test
+    // TODO: add test: start comment
     // test('start comment', () {
     //   var tmpl = env.fromString('{# foo comment\nand bar comment #}'
     //       '{% macro blub() %}foo{% endmacro %}\n{{ blub() }}');

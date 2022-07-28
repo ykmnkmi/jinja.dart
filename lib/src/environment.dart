@@ -15,7 +15,10 @@ import 'renderer.dart';
 import 'visitor.dart';
 
 /// Signature for the object attribute getter.
-typedef FieldGetter = Object? Function(Object? object, String field);
+typedef AttributeGetter = Object? Function(Object? object, String attribute);
+
+/// Signature for the object item getter.
+typedef ItemGetter = Object? Function(Object? object, Object? item);
 
 enum PassArgument {
   context,
@@ -78,7 +81,8 @@ class Environment {
       List<NodeVisitor>? modifiers,
       Map<String, Template>? templates,
       Random? random,
-      this.fieldGetter = defaults.fieldGetter})
+      AttributeGetter? getAttribute,
+      ItemGetter? getItem})
       : assert(checkFinalize(finalize)),
         wrappedFinalize = wrapFinalize(finalize),
         globals = HashMap<String, Object?>.of(defaults.globals),
@@ -86,7 +90,9 @@ class Environment {
         tests = HashMap<String, Function>.of(defaults.tests),
         modifiers = List<NodeVisitor>.of(defaults.modifiers),
         templates = HashMap<String, Template>(),
-        random = random ?? Random() {
+        random = random ?? Random(),
+        getAttribute = wrapGetAttribute(getAttribute, defaults.getItem),
+        getItem = defaults.getItem {
     if (globals != null) {
       this.globals.addAll(globals);
     }
@@ -202,10 +208,11 @@ class Environment {
   /// [Random] generator used by some filters.
   final Random random;
 
-  /// Function called by [getAttribute] to get object attribute.
-  ///
-  /// Default function throws [NoSuchMethodError].
-  final FieldGetter fieldGetter;
+  /// Get an attribute of an object.
+  final AttributeGetter getAttribute;
+
+  /// Get an item of an object.
+  final ItemGetter getItem;
 
   @override
   int get hashCode {
@@ -240,17 +247,6 @@ class Environment {
         lineCommentPrefix == other.lineCommentPrefix &&
         trimBlocks == other.trimBlocks &&
         leftStripBlocks == other.leftStripBlocks;
-  }
-
-  /// Get an attribute of an object.
-  Object? getAttribute(dynamic object, String attrbute) {
-    return fieldGetter(object, attrbute);
-  }
-
-  /// Get an item of an object.
-  Object? getItem(dynamic object, Object? key) {
-    // TODO: dynamic invocation
-    return object[key];
   }
 
   /// Common filter and test caller.
@@ -330,7 +326,6 @@ class Environment {
       modifier(template);
     }
 
-    // Compiler.compile(template, this);
     return template;
   }
 
@@ -393,6 +388,22 @@ class Environment {
 
     throw TemplateAssertionError();
   }
+
+  @internal
+  static AttributeGetter wrapGetAttribute(
+      AttributeGetter? attributeGetter, ItemGetter itemGetter) {
+    if (attributeGetter == null) {
+      return itemGetter;
+    }
+
+    return (Object? object, String field) {
+      try {
+        return attributeGetter(object, field);
+      } on Error {
+        return itemGetter(object, field);
+      }
+    };
+  }
 }
 
 /// The central `Template` object. This class represents a compiled template
@@ -426,7 +437,8 @@ class Template extends Node {
       Map<String, Function>? tests,
       List<NodeVisitor>? modifiers,
       Random? random,
-      FieldGetter fieldGetter = defaults.fieldGetter}) {
+      AttributeGetter? getAttribute,
+      ItemGetter? getItem}) {
     environment ??= Environment(
         commentStart: commentStart,
         commentEnd: commentEnd,
@@ -449,7 +461,8 @@ class Template extends Node {
         tests: tests,
         modifiers: modifiers,
         random: random,
-        fieldGetter: fieldGetter);
+        getAttribute: getAttribute,
+        getItem: getItem);
 
     return environment.fromString(source, path: path);
   }

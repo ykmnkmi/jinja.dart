@@ -202,7 +202,7 @@ class Parser {
     var node = parsePrimary(reader);
 
     if (node is! Constant) {
-      // TODO: update error
+      // TODO: update error message
       fail('template name or path expected');
     }
 
@@ -328,7 +328,7 @@ class Parser {
 
     if (maybeName.test('name')) {
       if (maybeName.value != name.value) {
-        // TODO: update error
+        // TODO: update error message
         fail('\'${name.value}\' expected, got ${maybeName.value}');
       }
 
@@ -917,22 +917,21 @@ class Parser {
       endTokensStack.add(endTokens);
     }
 
-    // TODO: test conditional imports
     Node check(Node node) {
       if (firstIsExtends == null) {
         firstIsExtends = node is Extends;
       } else if (node is Extends) {
         if (firstIsExtends == false) {
-          // TODO: add error message
+          // TODO: update error message
           fail('message false');
         }
 
         if (firstIsExtends == true) {
-          // TODO: add error message
+          // TODO: update error message
           fail('message true');
         }
       } else if (firstIsExtends == true && node is! Block) {
-        // TODO: add error message
+        // TODO: update error message
         fail('message else');
       }
 

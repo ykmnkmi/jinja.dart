@@ -5,9 +5,9 @@ import 'package:test/test.dart';
 void main() {
   group('Do', () {
     test('do', () {
-      var env = Environment(fieldGetter: fieldGetter);
+      var env = Environment(getAttribute: getAttribute);
       var tmpl = env.fromString('''
-        {%- set items = [] %}
+            {%- set items = [] %}
             {%- for char in "foo" %}
                 {%- do items.add(loop.index0 ~ char) %}
             {%- endfor %}{{ items|join(', ') }}''');

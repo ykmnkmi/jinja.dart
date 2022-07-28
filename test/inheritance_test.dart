@@ -150,7 +150,7 @@ void main() {
       expect(result, equals('[0|0][1|2][2|4][3|6][4|8]'));
     });
 
-    // TODO: after macro: enable test
+    // TODO: add test: scoped block after inheritance
     // test('scoped block after inheritance', () {
     //   var env = Environment(
     //     loader: MapLoader({

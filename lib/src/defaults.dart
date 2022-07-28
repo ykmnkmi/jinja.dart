@@ -33,7 +33,15 @@ Object? finalize(Object? value) {
   return value ?? '';
 }
 
-Object? fieldGetter(Object? object, String field) {
-  var invocation = Invocation.getter(Symbol(field));
-  throw NoSuchMethodError.withInvocation(object, invocation);
+Object? getItem(dynamic object, Object? item) {
+  try {
+    // * dynamic invocation
+    return object[item];
+  } on NoSuchMethodError {
+    if (object == null) {
+      rethrow;
+    }
+
+    return null;
+  }
 }

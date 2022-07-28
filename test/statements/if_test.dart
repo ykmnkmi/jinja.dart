@@ -16,8 +16,15 @@ void main() {
     });
 
     test('elif deep', () {
-      var ifs = [for (var i = 1; i < 1000; i++) '{% elif a == $i %}$i'].join();
-      var tmpl = env.fromString('{% if a == 0 %}0$ifs{% else %}x{% endif %}');
+      var buffer = StringBuffer('{% if a == 0 %}0');
+
+      for (var i = 1; i < 1000; i++) {
+        buffer.write('{% elif a == $i %}$i');
+      }
+
+      buffer.write('{% else %}x{% endif %}');
+
+      var tmpl = env.fromString('$buffer');
       expect(tmpl.render({'a': 0}), equals('0'));
       expect(tmpl.render({'a': 10}), equals('10'));
       expect(tmpl.render({'a': 999}), equals('999'));
