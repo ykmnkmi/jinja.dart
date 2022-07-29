@@ -1,18 +1,19 @@
 import 'dart:collection' show HashMap;
 import 'dart:math' show Random;
 
-import 'package:meta/meta.dart' show internal;
+import 'package:jinja/src/context.dart';
+import 'package:jinja/src/exceptions.dart';
+import 'package:jinja/src/lexer.dart';
+import 'package:jinja/src/loaders.dart';
+import 'package:jinja/src/nodes.dart';
+import 'package:jinja/src/optimizer.dart';
+import 'package:jinja/src/parser.dart';
+import 'package:jinja/src/renderer.dart';
+import 'package:meta/meta.dart' show internal, protected;
 
-import 'context.dart';
-import 'defaults.dart' as defaults;
-import 'exceptions.dart';
-import 'lexer.dart';
-import 'loaders.dart';
-import 'nodes.dart';
-import 'optimizer.dart';
-import 'parser.dart';
-import 'renderer.dart';
-import 'visitor.dart';
+import 'package:jinja/src/defaults.dart' as defaults;
+
+typedef Finalizer = Object Function(Object? value);
 
 /// Signature for the object attribute getter.
 typedef AttributeGetter = Object? Function(Object? object, String attribute);
@@ -56,7 +57,7 @@ class Environment {
   @internal
   static final Expando<PassArgument> passArguments = Expando<PassArgument>();
 
-  /// If `loader` is not `null`, templates will be loaded
+  /// If [loader] is not `null`, templates will be loaded.
   Environment(
       {this.commentStart = defaults.commentStart,
       this.commentEnd = defaults.commentEnd,
@@ -70,7 +71,7 @@ class Environment {
       this.trimBlocks = defaults.trimBlocks,
       this.newLine = defaults.newLine,
       this.keepTrailingNewLine = defaults.keepTrailingNewLine,
-      this.optimized = defaults.optimized,
+      this.optimize = defaults.optimize,
       this.finalize = defaults.finalize,
       this.autoEscape = defaults.autoEscape,
       this.loader,
@@ -83,9 +84,7 @@ class Environment {
       Random? random,
       AttributeGetter? getAttribute,
       ItemGetter? getItem})
-      : assert(checkFinalize(finalize)),
-        wrappedFinalize = wrapFinalize(finalize),
-        globals = HashMap<String, Object?>.of(defaults.globals),
+      : globals = HashMap<String, Object?>.of(defaults.globals),
         filters = HashMap<String, Function>.of(defaults.filters),
         tests = HashMap<String, Function>.of(defaults.tests),
         modifiers = List<NodeVisitor>.of(defaults.modifiers),
@@ -159,17 +158,14 @@ class Environment {
   final bool keepTrailingNewLine;
 
   /// Should the optimizer be enabled?
-  final bool optimized;
+  final bool optimize;
 
-  /// A callable that can be used to process the result of a variable
+  /// A Function that can be used to process the result of a variable
   /// expression before it is output.
   ///
   /// For example one can convert `null` (`none`) implicitly into an empty
   /// string here.
-  final Function finalize;
-
-  @internal
-  final Object? Function(Context context, Object? value) wrappedFinalize;
+  final Finalizer finalize;
 
   /// If set to `true` the XML/HTML autoescaping feature is enabled by
   /// default.
@@ -205,7 +201,7 @@ class Environment {
   /// A map of parsed templates loaded by the environment.
   final Map<String, Template> templates;
 
-  /// [Random] generator used by some filters.
+  /// A random generator used by some filters.
   final Random random;
 
   /// Get an attribute of an object.
@@ -250,7 +246,7 @@ class Environment {
   }
 
   /// Common filter and test caller.
-  @internal
+  @protected
   Object? callCommon(String name, List<Object?> positional,
       Map<Symbol, Object?> named, bool isFilter, Context? context) {
     var type = isFilter ? 'filter' : 'test';
@@ -278,6 +274,7 @@ class Environment {
   }
 
   /// If [name] not found throws [TemplateRuntimeError].
+  @internal
   Object? callFilter(String name, List<Object?> positional,
       [Map<Symbol, Object?> named = const <Symbol, Object?>{},
       Context? context]) {
@@ -285,6 +282,7 @@ class Environment {
   }
 
   /// If [name] not found throws [TemplateRuntimeError].
+  @internal
   bool callTest(String name, List<Object?> positional,
       [Map<Symbol, Object?> named = const <Symbol, Object?>{},
       Context? context]) {
@@ -315,18 +313,17 @@ class Environment {
 
   /// Load a template from a source string without using [loader].
   Template fromString(String source, {String? path}) {
-    var nodes = Parser(this, path: path).parse(source);
-    var template = Template.parsed(this, nodes, path: path);
+    var body = Parser(this, path: path).parse(source);
 
-    if (optimized) {
-      template.accept(const Optimizer(), Context(this));
+    if (optimize) {
+      body.accept(const Optimizer(), Context(this));
     }
 
     for (var modifier in modifiers) {
-      modifier(template);
+      modifier(body);
     }
 
-    return template;
+    return Template.parsed(this, body, path: path);
   }
 
   /// Returns a list of templates for this environment.
@@ -361,35 +358,7 @@ class Environment {
     return templates[template] ??= loader.load(this, template);
   }
 
-  @internal
-  static bool checkFinalize(Function finalize) {
-    return finalize is Object? Function(Context, Object?) ||
-        finalize is Object? Function(Environment, Object?) ||
-        finalize is Object? Function(Object?);
-  }
-
-  @internal
-  static Object? Function(Context, Object?) wrapFinalize(Function finalize) {
-    if (finalize is Object? Function(Context, Object?)) {
-      return finalize;
-    }
-
-    if (finalize is Object? Function(Environment, Object?)) {
-      return (Context context, Object? value) {
-        return finalize(context.environment, value);
-      };
-    }
-
-    if (finalize is Object? Function(Object?)) {
-      return (Context context, Object? value) {
-        return finalize(value);
-      };
-    }
-
-    throw TemplateAssertionError();
-  }
-
-  @internal
+  @protected
   static AttributeGetter wrapGetAttribute(
       AttributeGetter? attributeGetter, ItemGetter itemGetter) {
     if (attributeGetter == null) {
@@ -413,7 +382,7 @@ class Environment {
 /// it also has a constructor that makes it possible to create a template
 /// instance directly using the constructor. It takes the same arguments as
 /// the environment constructor but it's not possible to specify a loader.
-class Template extends Node {
+class Template {
   factory Template(String source,
       {String? path,
       Environment? environment,
@@ -429,8 +398,8 @@ class Template extends Node {
       bool leftStripBlocks = defaults.lStripBlocks,
       String newLine = defaults.newLine,
       bool keepTrailingNewLine = defaults.keepTrailingNewLine,
-      bool optimized = defaults.optimized,
-      Function finalize = defaults.finalize,
+      bool optimize = defaults.optimize,
+      Finalizer finalize = defaults.finalize,
       bool autoEscape = defaults.autoEscape,
       Map<String, Object?>? globals,
       Map<String, Function>? filters,
@@ -452,7 +421,7 @@ class Template extends Node {
         trimBlocks: trimBlocks,
         newLine: newLine,
         keepTrailingNewLine: keepTrailingNewLine,
-        optimized: optimized,
+        optimize: optimize,
         finalize: finalize,
         autoEscape: autoEscape,
         autoReload: false,
@@ -467,50 +436,28 @@ class Template extends Node {
     return environment.fromString(source, path: path);
   }
 
-  @internal
-  Template.parsed(this.environment, this.nodes, {this.path})
-      : blocks = <Block>[] {
-    blocks.addAll(findAll<Block>());
-
-    // TODO: remove/update
-    if (nodes.isNotEmpty && nodes.first is Extends) {
-      nodes.length = 1;
-    }
-  }
+  Template.parsed(this.environment, this.body, {this.path});
 
   /// The environment used to parse and render template.
   final Environment environment;
 
-  /// Modified nodes.
-  final List<Node> nodes;
-
-  /// Modified blocks.
-  final List<Block> blocks;
-
   /// The path to the template if it was loaded.
   final String? path;
 
-  @override
-  List<Node> get childrens {
-    return nodes;
-  }
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitTemplate(this, context);
-  }
+  /// Template body.
+  final Node body;
 
   /// It accepts the same arguments as [render].
   Iterable<String> generate([Map<String, Object?>? data]) {
     var context = RenderContext(environment, data: data);
-    return accept(const IterableRenderer(), context);
+    return body.accept(const IterableRenderer(), context);
   }
 
   /// If no arguments are given the context will be empty.
   String render([Map<String, Object?>? data]) {
     var buffer = StringBuffer();
     var context = StringSinkRenderContext(environment, buffer, data: data);
-    accept(const StringSinkRenderer(), context);
+    body.accept(const StringSinkRenderer(), context);
     return buffer.toString();
   }
 

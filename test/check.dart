@@ -1,5 +1,7 @@
-import 'package:jinja/jinja.dart';
 import 'package:jinja/src/compiler.dart';
+import 'package:jinja/src/environment.dart';
+import 'package:jinja/src/exceptions.dart';
+import 'package:jinja/src/nodes.dart' as AST;
 import 'package:stack_trace/stack_trace.dart';
 
 const String source = '''
@@ -20,16 +22,18 @@ void main() {
     print('\noriginal nodes:');
     nodes.forEach(print);
 
-    var template = Template.parsed(env, nodes);
+    var body = AST.Template(nodes);
 
     for (var modifier in env.modifiers) {
-      modifier(template);
+      modifier(body);
     }
 
     print('\nmodified nodes:');
-    template.nodes.forEach(print);
+    body.nodes.forEach(print);
 
-    Compiler.compile(template, env);
+    Compiler.compile(body, env);
+
+    var template = Template.parsed(env, body);
 
     print('\ngenerate:');
     print(template.generate());

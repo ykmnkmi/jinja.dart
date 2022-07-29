@@ -1,4 +1,4 @@
-import 'utils.dart';
+import 'package:jinja/src/utils.dart';
 
 class Markup {
   const factory Markup.escaped(Object? value) = Escaped;
@@ -27,7 +27,7 @@ class Markup {
 
   @override
   String toString() {
-    return escape(value.toString());
+    return escape('$value');
   }
 }
 
@@ -49,6 +49,6 @@ class Escaped implements Markup {
 
   @override
   String toString() {
-    return value.toString();
+    return '$value';
   }
 }

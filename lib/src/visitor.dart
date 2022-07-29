@@ -1,5 +1,4 @@
-import 'environment.dart';
-import 'nodes.dart';
+import 'package:jinja/src/nodes.dart';
 
 typedef ExpressionUpdater = Expression Function(Expression expression);
 

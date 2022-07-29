@@ -1,24 +1,32 @@
+import 'package:path/path.dart';
+
 import 'environment.dart';
 import 'exceptions.dart';
+
+String formatPath(String path) {
+  return normalize(path).replaceAll(r'\', '/');
+}
 
 /// Base abstract class for all loaders.
 /// Subclass this and override [getSource], [listTemplates] and [load]
 /// to implement a custom loading mechanism.
 abstract class Loader {
+  bool get hasSourceAccess {
+    return true;
+  }
+
   /// Get template source from file.
   ///
   /// Throws [TemplateNotFound] if file not found
   /// or [UnsupportedError] if don't has access to source.
-  String getSource(String template) {
+  String getSource(String path) {
+    path = formatPath(path);
+
     if (!hasSourceAccess) {
       throw UnsupportedError('this loader cannot provide access to the source');
     }
 
-    throw TemplateNotFound(template: template);
-  }
-
-  bool get hasSourceAccess {
-    return true;
+    throw TemplateNotFound(path: path);
   }
 
   /// Iterates over all templates.
@@ -26,7 +34,7 @@ abstract class Loader {
     throw UnsupportedError('this loader cannot iterate over all templates');
   }
 
-  Template load(Environment environment, String template);
+  Template load(Environment environment, String path);
 }
 
 /// Loads a template from a map. It's passed a map of strings bound to
@@ -36,9 +44,11 @@ abstract class Loader {
 ///     var loader = MapLoader({'index.html': 'source here'})
 ///
 class MapLoader extends Loader {
-  MapLoader(this.mapping);
+  MapLoader(Map<String, String> sources)
+      : sources = sources.map<String, String>(
+            (key, value) => MapEntry<String, String>(formatPath(key), value));
 
-  final Map<String, String> mapping;
+  final Map<String, String> sources;
 
   @override
   bool get hasSourceAccess {
@@ -46,22 +56,26 @@ class MapLoader extends Loader {
   }
 
   @override
-  String getSource(String template) {
-    if (mapping.containsKey(template)) {
-      return mapping[template]!;
+  String getSource(String path) {
+    path = formatPath(path);
+
+    if (sources.containsKey(path)) {
+      return sources[path]!;
     }
 
-    throw TemplateNotFound(template: template);
+    throw TemplateNotFound(path: path);
   }
 
   @override
   List<String> listTemplates() {
-    return mapping.keys.toList();
+    return sources.keys.toList();
   }
 
   @override
-  Template load(Environment environment, String template) {
-    var source = getSource(template);
-    return environment.fromString(source, path: template);
+  Template load(Environment environment, String path) {
+    path = formatPath(path);
+
+    var source = getSource(path);
+    return environment.fromString(source, path: path);
   }
 }

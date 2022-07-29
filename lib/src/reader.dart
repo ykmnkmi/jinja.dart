@@ -1,5 +1,5 @@
-import 'exceptions.dart';
-import 'lexer.dart';
+import 'package:jinja/src/exceptions.dart';
+import 'package:jinja/src/lexer.dart';
 
 class TokenReader {
   TokenReader(Iterable<Token> tokens)

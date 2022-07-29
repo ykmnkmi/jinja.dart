@@ -1,7 +1,6 @@
+import 'package:jinja/src/environment.dart';
+import 'package:jinja/src/exceptions.dart';
 import 'package:string_scanner/string_scanner.dart';
-
-import 'environment.dart';
-import 'exceptions.dart';
 
 part 'token.dart';
 

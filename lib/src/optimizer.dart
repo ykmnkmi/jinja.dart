@@ -1,8 +1,7 @@
-import 'context.dart';
-import 'environment.dart';
-import 'nodes.dart';
-import 'utils.dart';
-import 'visitor.dart';
+import 'package:jinja/src/context.dart';
+import 'package:jinja/src/nodes.dart';
+import 'package:jinja/src/utils.dart';
+import 'package:jinja/src/visitor.dart';
 
 class Optimizer implements Visitor<Context, Node> {
   const Optimizer();

@@ -1,5 +1,8 @@
 import 'dart:math' show Random;
 
+import 'package:jinja/src/environment.dart';
+import 'package:jinja/src/markup.dart';
+import 'package:jinja/src/utils.dart';
 import 'package:test/test.dart';
 
 import 'environment.dart';

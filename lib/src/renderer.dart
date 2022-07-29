@@ -1,11 +1,10 @@
-import 'context.dart';
-import 'environment.dart';
-import 'exceptions.dart';
-import 'markup.dart';
-import 'nodes.dart';
-import 'runtime.dart';
-import 'utils.dart';
-import 'visitor.dart';
+import 'package:jinja/src/context.dart';
+import 'package:jinja/src/exceptions.dart';
+import 'package:jinja/src/markup.dart';
+import 'package:jinja/src/nodes.dart';
+import 'package:jinja/src/runtime.dart';
+import 'package:jinja/src/utils.dart';
+import 'package:jinja/src/visitor.dart';
 
 class RenderContext extends Context {
   RenderContext(super.environment,
@@ -50,7 +49,7 @@ class RenderContext extends Context {
   }
 
   Object? finalize(Object? object) {
-    return environment.wrappedFinalize(this, object);
+    return environment.finalize(object);
   }
 
   void assignTargets(Object? target, Object? current) {
@@ -205,7 +204,7 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
   @override
   Iterable<String> visitExtends(Extends node, RenderContext context) sync* {
     var template = context.environment.getTemplate(node.path);
-    yield* template.accept(this, context);
+    yield* template.body.accept(this, context);
   }
 
   @override
@@ -300,12 +299,12 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
     var template = context.environment.getTemplate(node.template);
 
     if (node.withContext) {
-      yield* template.accept(this, context);
+      yield* template.body.accept(this, context);
       return;
     }
 
     context = RenderContext(context.environment);
-    yield* template.accept(this, context);
+    yield* template.body.accept(this, context);
   }
 
   @override
@@ -474,7 +473,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
   @override
   void visitExtends(Extends node, StringSinkRenderContext context) {
     var template = context.environment.getTemplate(node.path);
-    template.accept(this, context);
+    template.body.accept(this, context);
   }
 
   @override
@@ -569,10 +568,10 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
     var template = context.environment.getTemplate(node.template);
 
     if (node.withContext) {
-      template.accept(this, context);
+      template.body.accept(this, context);
     } else {
       context = StringSinkRenderContext(context.environment, context.sink);
-      template.accept(this, context);
+      template.body.accept(this, context);
     }
   }
 

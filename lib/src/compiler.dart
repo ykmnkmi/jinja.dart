@@ -1,5 +1,5 @@
+import 'package:jinja/src/environment.dart' hide Template;
 import 'package:jinja/src/nodes.dart';
-import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/visitor.dart';
 
 class Frame {

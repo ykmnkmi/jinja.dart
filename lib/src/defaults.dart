@@ -17,7 +17,7 @@ const bool trimBlocks = false;
 const bool lStripBlocks = false;
 const String newLine = '\n';
 const bool keepTrailingNewLine = false;
-const bool optimized = true;
+const bool optimize = true;
 const bool autoEscape = false;
 const bool autoReload = true;
 const int leeway = 5;
@@ -29,7 +29,7 @@ const Map<String, Object?> globals = <String, Object?>{
   'range': range,
 };
 
-Object? finalize(Object? value) {
+Object finalize(Object? value) {
   return value ?? '';
 }
 

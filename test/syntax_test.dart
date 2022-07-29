@@ -1,6 +1,10 @@
 import 'dart:collection';
 
 import 'package:jinja/reflection.dart';
+import 'package:jinja/src/environment.dart';
+import 'package:jinja/src/exceptions.dart';
+import 'package:jinja/src/nodes.dart' as AST;
+import 'package:jinja/src/utils.dart';
 import 'package:test/test.dart';
 
 import 'environment.dart';
@@ -291,12 +295,12 @@ void main() {
 
     test('neg filter priority', () {
       var tmpl = env.fromString('{{ -1|foo }}');
-      var node = tmpl.nodes[0];
+      var node = (tmpl.body as AST.Template).nodes[0];
 
-      expect(node, predicate<Filter>((filter) {
+      expect(node, predicate<AST.Filter>((filter) {
         var expression = filter.arguments![0];
-        return expression is Unary &&
-            expression.operator == UnaryOperator.minus;
+        return expression is AST.Unary &&
+            expression.operator == AST.UnaryOperator.minus;
       }));
     });
 

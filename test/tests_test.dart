@@ -1,5 +1,8 @@
 import 'dart:collection';
 
+import 'package:jinja/src/environment.dart';
+import 'package:jinja/src/exceptions.dart';
+import 'package:jinja/src/markup.dart';
 import 'package:test/test.dart';
 
 import 'environment.dart';

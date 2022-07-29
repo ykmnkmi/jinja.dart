@@ -1,10 +1,6 @@
 import 'dart:math' as math;
 
-import 'context.dart';
-import 'runtime.dart';
-import 'tests.dart';
-import 'utils.dart';
-import 'visitor.dart';
+import 'package:jinja/src/visitor.dart';
 
 part 'nodes/expressions.dart';
 part 'nodes/statements.dart';
@@ -97,5 +93,35 @@ class Data extends Node {
   @override
   String toString() {
     return 'Data($literal)';
+  }
+}
+
+class Template extends Node {
+  Template(this.nodes) : blocks = <Block>[] {
+    blocks.addAll(findAll<Block>());
+
+    // TODO: remove/update
+    if (nodes.isNotEmpty && nodes.first is Extends) {
+      nodes.length = 1;
+    }
+  }
+
+  final List<Node> nodes;
+
+  final List<Block> blocks;
+
+  @override
+  List<Node> get childrens {
+    return nodes;
+  }
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitTemplate(this, context);
+  }
+
+  @override
+  String toString() {
+    return 'Template()';
   }
 }

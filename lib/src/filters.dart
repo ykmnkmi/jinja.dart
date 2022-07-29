@@ -3,13 +3,12 @@ library filters;
 import 'dart:convert' show LineSplitter;
 import 'dart:math' as math;
 
+import 'package:jinja/src/context.dart';
+import 'package:jinja/src/environment.dart';
+import 'package:jinja/src/exceptions.dart';
+import 'package:jinja/src/markup.dart';
+import 'package:jinja/src/utils.dart';
 import 'package:textwrap/textwrap.dart' show TextWrapper;
-
-import 'context.dart';
-import 'environment.dart';
-import 'exceptions.dart';
-import 'markup.dart';
-import 'utils.dart';
 
 /// Returns a callable that looks up the given attribute from a
 /// passed object with the rules of the environment.

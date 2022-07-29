@@ -1,31 +1,68 @@
 ## 0.4.0-dev.41
 - minimal SDK version: 2.17.0
 - added:
-  - `Template.generate` method
-  - `print` to globals, `{{ do print(name) }}`
+  - `PassArgument`, `passContext` and `passEnvironment` ...
+  - `print` to globals: `{{ do print(name) }}`
+  - `Environment`
+    - `Environment({lineCommentPrefix, lineStatementPrefix, newLine, autoReload, modifiers, templates})`
+      constructor arguments
+    - `autoReload` field
+    - `lexer` field
+    - `lineCommentPrefix` field
+    - `lineStatementPrefix` field
+    - `loader` field
+    - `modifiers` field
+    - `newLine` field
+    - `lex` method
+    - `listTemplates` method
+    - `parse` method
+    - `scan` method
+  - `Template`
+    - `Template({path, lineCommentPrefix, lineStatementPrefix, newLine, modifiers, templates})`
+      constructor arguments
+    - `generate` method
+  - `formatPath` function to normalize template paths
+  - `FileSystemLoader.findFile` method
+  - exceptions are public now:
+    - `TemplateError`
+    - `TemplateSyntaxError`
+    - `TemplateAssertionError`
+    - `TemplateNotFound`
+    - `TemplatesNotFound`
+    - `TemplateRuntimeError`
+    - `FilterArgumentError`
   - statements:
     - `do`
     - `with`
 - changed:
   - `FieldGetter` typedef renamed to `AttributeGetter`
-  - `getField` function renamed to `getAttribute`
-  - `FileSystemLoader` moved to `package:jinja/loaders.dart` library
-  - `package:jinja/get_field.dart` library renamed to `package:jinja/reflection.dart`
-  - `Environment.getField` field renamed to `getAttribute`
-  - `Template`
-    - `Template({Environment? parent})` constructor renamed to
-      `Template({Environment? environment})` and doesn't copy the environment
-    - `renderMap` renamed to `render`
-  - `Loader.listSources` renamed to `Loader.listTemplates`
   - `mapping` test renamed to `map`
   - `default` filter compare values with `null`
   - `defined` and `undefined` tests compare values with `null`
+  - `Environment`
+    - `Environment({getField})` constructor argument renamed to `getAttribute`
+    - `getField` field renamed to `getAttribute`
+  - `Template`
+    - `Template({parent})` constructor argument renamed to `environment`
+      and doesn't copy the environment
+    - `renderMap` method renamed to `render`
+  - `Loader.listSources` method renamed to `listTemplates`
+  - `MapLoader.mapping` field renamed to  `sources`
+  - `FileSystemLoader`
+    - `FileSystemLoader({path})` constructor argument is nullable now
+    - moved to `package:jinja/loaders.dart` library
+  - `package:jinja/get_field.dart` library renamed to `package:jinja/reflection.dart`
+  - `getField` function renamed to `getAttribute`
 - removed:
-  - `Environment.undefined` method
   - `Undefined` type and `missing` object
+  - `Environment.undefined` method
+  - `Template.render` method
+  - `FileSystemLoader`:
+    - `FileSystemLoader({bool autoReload})` constructor argument
+    - `autoReload` field
+    - `directory` field
   - slices and negative indexes
   - conditional and variable `extends` statement variants
   - choice, ignore missing and variable `include` statement variants
-  - `Template.render` method
 - internal changes
 - _work in progress_

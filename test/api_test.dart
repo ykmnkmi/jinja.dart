@@ -33,26 +33,28 @@ void main() {
       expect(tmpl.render({'value': 123}), equals('<int>'));
     });
 
-    test('context finalize', () {
-      Object? finalize(Context context, dynamic value) {
-        return value * context.resolve('scale');
-      }
+    // not suppored
+    // test('context finalize', () {
+    //   Object? finalize(Context context, dynamic value) {
+    //     return value * context.resolve('scale');
+    //   }
 
-      var env = Environment(finalize: finalize);
-      var tmpl = env.fromString('{{ value }}');
-      expect(tmpl.render({'value': 5, 'scale': 3}), equals('15'));
-    });
+    //   var env = Environment(finalize: finalize);
+    //   var tmpl = env.fromString('{{ value }}');
+    //   expect(tmpl.render({'value': 5, 'scale': 3}), equals('15'));
+    // });
 
-    test('env autoescape', () {
-      Object? finalize(Environment environment, Object? value) {
-        return '${environment.variableStart} ${repr(value)} '
-            '${environment.variableEnd}';
-      }
+    // not supported
+    // test('env autoescape', () {
+    //   Object? finalize(Environment environment, Object? value) {
+    //     return '${environment.variableStart} ${repr(value)} '
+    //         '${environment.variableEnd}';
+    //   }
 
-      var env = Environment(finalize: finalize);
-      var tmpl = env.fromString('{{ value }}');
-      expect(tmpl.render({'value': 'hello'}), equals("{{ 'hello' }}"));
-    });
+    //   var env = Environment(finalize: finalize);
+    //   var tmpl = env.fromString('{{ value }}');
+    //   expect(tmpl.render({'value': 'hello'}), equals("{{ 'hello' }}"));
+    // });
 
     test('cycler', () {
       var items = [1, 2, 3];

@@ -1,5 +1,5 @@
-import 'environment.dart';
-import 'markup.dart';
+import 'package:jinja/src/environment.dart';
+import 'package:jinja/src/markup.dart';
 
 typedef ContextCallback<C extends Context> = void Function(C context);
 

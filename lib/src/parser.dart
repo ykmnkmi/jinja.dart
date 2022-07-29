@@ -1,8 +1,8 @@
-import 'environment.dart';
-import 'exceptions.dart';
-import 'lexer.dart';
-import 'nodes.dart';
-import 'reader.dart';
+import 'package:jinja/src/environment.dart' hide Template;
+import 'package:jinja/src/exceptions.dart';
+import 'package:jinja/src/lexer.dart';
+import 'package:jinja/src/nodes.dart';
+import 'package:jinja/src/reader.dart';
 
 class Parser {
   Parser(this.environment, {this.path})
@@ -975,9 +975,10 @@ class Parser {
     return nodes;
   }
 
-  List<Node> parse(String template) {
+  Template parse(String template) {
     var tokens = environment.lex(template, path: path);
-    return scan(tokens);
+    var nodes = scan(tokens);
+    return Template(nodes);
   }
 
   @override
