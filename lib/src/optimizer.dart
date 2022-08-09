@@ -1,4 +1,5 @@
 import 'package:jinja/src/context.dart';
+import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:jinja/src/visitor.dart';
@@ -135,13 +136,9 @@ class Optimizer implements Visitor<Context, Node> {
   }
 
   @override
-  Template visitTemplate(Template node, Context context) {
-    if (node.nodes.isNotEmpty && node.nodes.first is Extends) {
-      visitAll(node.blocks, context);
-    } else {
-      visitAll(node.nodes, context);
-    }
-
+  Node visitTemplate(Template node, Context context) {
+    node.body.accept(this, context);
+    visitAll(node.blocks, context);
     return node;
   }
 

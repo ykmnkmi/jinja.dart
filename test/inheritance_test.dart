@@ -1,38 +1,36 @@
+import 'dart:convert';
+
 import 'package:jinja/jinja.dart';
 import 'package:test/test.dart';
 
 import 'package:jinja/src/utils.dart';
 
-const String layout = '''|{% block block1 %}block 1 from layout{% endblock %}
-|{% block block2 %}block 2 from layout{% endblock %}
+const String layout = '''
+|{% block block1 %}1{% endblock %}
+|{% block block2 %}2{% endblock %}
 |{% block block3 %}
-{% block block4 %}nested block 4 from layout{% endblock %}
+{% block block4 %}nested 4{% endblock %}
 {% endblock %}|''';
 
-const String level1 = '''{% extends "layout" %}
-{% block block1 %}block 1 from level1{% endblock %}''';
+const String level1 = '''
+{% extends "layout" %}
+{% block block1 %}1 level-1{% endblock %}''';
 
-const String level2 = '''{% extends "level1" %}
-{% block block2 %}{% block block5 %}nested block 5 from level2{%
+const String level2 = '''
+{% extends "level1" %}
+{% block block2 %}{% block block5 %}nested 5 level-2{%
 endblock %}{% endblock %}''';
 
-const String level3 = '''{% extends "level2" %}
-{% block block5 %}block 5 from level3{% endblock %}
-{% block block4 %}block 4 from level3{% endblock %}''';
+const String level3 = '''
+{% extends "level2" %}
+{% block block5 %}5 level-3{% endblock %}
+{% block block4 %}4 level-3{% endblock %}''';
 
-const String level4 = '''{% extends "level3" %}
-{% block block3 %}block 3 from level4{% endblock %}''';
+const String level4 = '''
+{% extends "level3" %}
+{% block block3 %}3 level-4{% endblock %}''';
 
-const String working = '''{% extends "layout" %}
-{% block block1 %}
-  {% if false %}
-    {% block block2 %}
-      this should workd
-    {% endblock %}
-  {% endif %}
-{% endblock %}''';
-
-const String doublee = '''{% extends "layout" %}
+const String working = '''
 {% extends "layout" %}
 {% block block1 %}
   {% if false %}
@@ -42,58 +40,67 @@ const String doublee = '''{% extends "layout" %}
   {% endif %}
 {% endblock %}''';
 
-const Map<String, String> mapping = <String, String>{
-  'layout': layout,
-  'level1': level1,
-  'level2': level2,
-  'level3': level3,
-  'level4': level4,
-  'working': working,
-  'doublee': doublee,
-};
+const String doublee = '''
+{% extends "layout" %}
+{% extends "layout" %}
+{% block block1 %}
+  {% if false %}
+    {% block block2 %}
+      this should workd
+    {% endblock %}
+  {% endif %}
+{% endblock %}''';
 
 void main() {
   group('Inheritance', () {
-    var env = Environment(loader: MapLoader(mapping), trimBlocks: true);
+    var env = Environment(
+      trimBlocks: true,
+      loader: MapLoader({
+        'layout': layout,
+        'level1': level1,
+        'level2': level2,
+        'level3': level3,
+        'level4': level4,
+        'working': working,
+        'doublee': doublee,
+      }),
+    );
 
     test('layout', () {
-      var match = '|block 1 from layout|block 2 from layout|'
-          'nested block 4 from layout|';
-      expect(env.getTemplate('layout').render(), equals(match));
+      var tmpl = env.getTemplate('layout');
+      expect(tmpl.render(), equals('|1|2|nested 4|'));
     });
 
     test('level1', () {
-      var match = '|block 1 from level1|block 2 from layout|'
-          'nested block 4 from layout|';
-      expect(env.getTemplate('level1').render(), equals(match));
+      var tmpl = env.getTemplate('level1');
+      expect(tmpl.render(), equals('|1 level-1|2|nested 4|'));
     });
 
     test('level2', () {
-      var match = '|block 1 from level1|nested block 5 from level2|'
-          'nested block 4 from layout|';
-      expect(env.getTemplate('level2').render(), equals(match));
+      var tmpl = env.getTemplate('level2');
+      expect(tmpl.render(), equals('|1 level-1|nested 5 level-2|nested 4|'));
     });
 
     test('level3', () {
-      var match =
-          '|block 1 from level1|block 5 from level3|block 4 from level3|';
-      expect(env.getTemplate('level3').render(), equals(match));
+      var tmpl = env.getTemplate('level3');
+      expect(tmpl.render(), equals('|1 level-1|5 level-3|4 level-3|'));
     });
 
     test('level4', () {
-      var match =
-          '|block 1 from level1|block 5 from level3|block 3 from level4|';
-      expect(env.getTemplate('level4').render(), equals(match));
+      var tmpl = env.getTemplate('level4');
+      expect(tmpl.render(), equals('|1 level-1|5 level-3|3 level-4|'));
     });
 
     test('super', () {
       var env = Environment(
         loader: MapLoader({
-          'a': '{% block intro %}INTRO{% endblock %}|BEFORE|{% block data %}'
-              'INNER{% endblock %}|AFTER',
-          'b': '{% extends "a" %}{% block data %}({{ super() }}){% endblock %}',
-          'c': '{% extends "b" %}{% block intro %}--{{ super() }}--'
-              '{% endblock %}\n{% block data %}[{{ super() }}]{% endblock %}',
+          'a': '{% block intro %}INTRO{% endblock %}|'
+              'BEFORE|{% block data %}INNER{% endblock %}|AFTER',
+          'b': '{% extends "a" %}{% block data %}({{ '
+              'super() }}){% endblock %}',
+          'c': '{% extends "b" %}{% block intro %}--{{ '
+              'super() }}--{% endblock %}\n{% block data '
+              '%}[{{ super() }}]{% endblock %}',
         }),
       );
 
@@ -102,37 +109,71 @@ void main() {
     });
 
     test('working', () {
-      expect(env.getTemplate('working').render(), isNotNull);
+      expect(() => env.getTemplate('working'), returnsNormally);
     });
 
     test('reusing blocks', () {
-      var tmpl = env.fromString('{{ self.foo() }}|{% block foo %}42'
-          '{% endblock %}|{{ self.foo() }}');
+      var tmpl = env.fromString(
+          '{{ self.foo() }}|{% block foo %}42{% endblock %}|{{ self.foo() }}');
       expect(tmpl.render(), equals('42|42|42'));
     });
 
     test('preserve blocks', () {
       var env = Environment(
         loader: MapLoader({
-          'a': '{% if false %}{% block x %}A{% endblock %}{% endif %}'
-              '{{ self.x() }}',
+          'a': '{% if false %}{% block x %}A{% endblock %}'
+              '{% endif %}{{ self.x() }}',
           'b': '{% extends "a" %}{% block x %}B{{ super() }}{% endblock %}',
         }),
       );
 
-      expect(env.getTemplate('b').render(), equals('BA'));
+      var tmpl = env.getTemplate('b');
+      expect(tmpl.render(), equals('BA'));
     });
+
+    // not supported
+    // test('dynamic inheritance', () {
+    //   var env = Environment(
+    //     loader: MapLoader({
+    //       'default1': 'DEFAULT1{% block x %}{% endblock %}',
+    //       'default2': 'DEFAULT2{% block x %}{% endblock %}',
+    //       'child': '{% extends default %}{% block x %}CHILD{% endblock %}',
+    //     }),
+    //   );
+
+    //   var tmpl = env.getTemplate('child');
+    //   expect(tmpl.render({'default': 'default1'}), equals('DEFAULT1CHILD'));
+    //   expect(tmpl.render({'default': 'default2'}), equals('DEFAULT2CHILD'));
+    // });
+
+    // not supported
+    // test('multi inheritance', () {
+    //   var env = Environment(
+    //     loader: MapLoader({
+    //       'default1': 'DEFAULT1{% block x %}{% endblock %}',
+    //       'default2': 'DEFAULT2{% block x %}{% endblock %}',
+    //       'child': '{% if default %}{% extends default %}{% else %}'
+    //           '{% extends "default1" %}{% endif %}'
+    //           '{% block x %}CHILD{% endblock %}',
+    //     }),
+    //   );
+
+    //   var tmpl = env.getTemplate('child');
+    //   expect(tmpl.render(), equals('DEFAULT1CHILD'));
+    //   expect(tmpl.render({'default': 'default1'}), equals('DEFAULT1CHILD'));
+    //   expect(tmpl.render({'default': 'default2'}), equals('DEFAULT2CHILD'));
+    // });
 
     test('scoped block', () {
       var env = Environment(
         loader: MapLoader({
           'default.html': '{% for item in seq %}[{% block item scoped %}'
-              '{% endblock %}]{% endfor %}',
+              '{% endblock %}]{% endfor %}'
         }),
       );
 
-      var tmpl = env.fromString('{% extends "default.html" %}{% block item %}'
-          '{{ item }}{% endblock %}');
+      var tmpl = env.fromString(
+          '{% extends "default.html" %}{% block item %}{{ item }}{% endblock %}');
       expect(tmpl.render({'seq': range(5)}), equals('[0][1][2][3][4]'));
     });
 
@@ -144,17 +185,19 @@ void main() {
         }),
       );
 
-      var tmpl = env.fromString('{% extends "default.html" %}'
-          '{% block item %}{{ super() }}|{{ item * 2 }}{% endblock %}');
-      var result = tmpl.render({'seq': range(5)});
-      expect(result, equals('[0|0][1|2][2|4][3|6][4|8]'));
+      var tmpl = env.fromString('{% extends "default.html" %}{% block item %}'
+          '{{ super() }}|{{ item * 2 }}{% endblock %}');
+      expect(
+          tmpl.render({'seq': range(5)}), equals('[0|0][1|2][2|4][3|6][4|8]'));
     });
 
-    // TODO: add test: scoped block after inheritance
+    // TODO: add test(import, from, macro): scoped block after inheritance
     // test('scoped block after inheritance', () {
     //   var env = Environment(
     //     loader: MapLoader({
-    //       'layout.html': '{% block useless %}{% endblock %}',
+    //       'layout.html': '''
+    //         {% block useless %}{% endblock %}
+    //         ''',
     //       'index.html': '''
     //         {%- extends 'layout.html' %}
     //         {% from 'helpers.html' import foo with context %}
@@ -164,17 +207,17 @@ void main() {
     //                     {{ foo(x) }}
     //                 {% endblock %}
     //             {% endfor %}
-    //         {% endblock %}''',
-    //       'helpers.html': '{% macro foo(x) %}{{ the_foo + x }}{% endmacro %}',
+    //         {% endblock %}
+    //         ''',
+    //       'helpers.html': '''
+    //         {% macro foo(x) %}{{ the_foo + x }}{% endmacro %}
+    //         ''',
     //     }),
     //   );
 
-    //   var iterable = environment
-    //       .getTemplate('index.html')
-    //       .render({'the_foo': 42})
-    //       .split(RegExp('\\s+'))
-    //       .where((part) => part.isNotEmpty);
-    //   expect(iterable, orderedEquals(<String>['43', '44', '45']));
+    //   var parts = const LineSplitter()
+    //       .convert(env.getTemplate('index.html').render({'the_foo': 42}));
+    //   expect(parts, orderedEquals(['43', '44', '45']));
     // });
 
     test('level1 required', () {
@@ -215,29 +258,33 @@ void main() {
           () => env.getTemplate('level1').render(),
           throwsA(predicate<TemplateRuntimeError>(
               (error) => error.message == 'required block \'x\' not found')));
+
       expect(env.getTemplate('level2').render(), equals('[2]'));
       expect(env.getTemplate('level3').render(), equals('[2]'));
     });
 
     test('invalid required', () {
       var env = Environment(
-          loader: MapLoader({
-        'default': '{% block x required %}data {# #}{% endblock %}',
-        'default2': '{% block x required %}{% block y %}'
-            '{% endblock %}  {% endblock %}',
-        'default3': '{% block x required %}{% if true %}{% endif %}  '
-            '{% endblock %}',
-        'level1default':
-            '{% extends "default" %}{%- block x %}CHILD{% endblock %}',
-        'level1default2':
-            '{% extends "default2" %}{%- block x %}CHILD{% endblock %}',
-        'level1default3':
-            '{% extends "default3" %}{%- block x %}CHILD{% endblock %}'
-      }));
+        loader: MapLoader({
+          'default': '{% block x required %}data {# #}{% endblock %}',
+          'default2': '{% block x required %}{% block y %}'
+              '{% endblock %}  {% endblock %}',
+          'default3': '{% block x required %}{% if true %}{% endif %}  '
+              '{% endblock %}',
+          'level1default1':
+              '{% extends "default" %}{%- block x %}CHILD{% endblock %}',
+          'level1default2':
+              '{% extends "default2" %}{%- block x %}CHILD{% endblock %}',
+          'level1default3':
+              '{% extends "default3" %}{%- block x %}CHILD{% endblock %}'
+        }),
+      );
+
       var matcher = throwsA(predicate<TemplateSyntaxError>((error) =>
           error.message ==
           'required blocks can only contain comments or whitespace'));
-      expect(() => env.getTemplate('level1default').render(), matcher);
+
+      expect(() => env.getTemplate('level1default1').render(), matcher);
       expect(() => env.getTemplate('level1default2').render(), matcher);
       expect(() => env.getTemplate('level1default3').render(), matcher);
     });

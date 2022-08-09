@@ -1,14 +1,15 @@
-import 'package:jinja/src/environment.dart' hide Template;
+import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/exceptions.dart';
 import 'package:jinja/src/lexer.dart';
 import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/reader.dart';
+import 'package:textwrap/textwrap.dart';
 
 class Parser {
   Parser(this.environment, {this.path})
       : endTokensStack = <List<String>>[],
         tagStack = <String>[],
-        blocks = <String>{};
+        blocks = <Block>[];
 
   final Environment environment;
 
@@ -18,7 +19,9 @@ class Parser {
 
   final List<String> tagStack;
 
-  final Set<String> blocks;
+  final List<Block> blocks;
+
+  Extends? extendsNode;
 
   Never fail(String message, [int? line]) {
     throw TemplateSyntaxError(message, line: line, path: path);
@@ -40,26 +43,32 @@ class Parser {
           .join(' or ');
     }
 
-    var message = name == null
-        ? <String>['Unexpected end of template.']
-        : <String>['Encountered unknown tag \'$name\'.'];
+    var messages = <String>[];
+
+    if (name == null) {
+      messages.add('Unexpected end of template.');
+    } else {
+      messages.add('Encountered unknown tag \'$name\'.');
+    }
 
     if (currentlyLooking != null) {
       if (name != null && expected.contains(name)) {
-        message.add(
-            'You probably made a nesting mistake. Jinja is expecting this tag, but currently looking for $currentlyLooking.');
+        messages
+          ..add('You probably made a nesting mistake.')
+          ..add(
+              'Jinja is expecting this tag, but currently looking for $currentlyLooking.');
       } else {
-        message.add(
+        messages.add(
             'Jinja was looking for the following tags: $currentlyLooking.');
       }
     }
 
     if (tagStack.isNotEmpty) {
-      message.add(
+      messages.add(
           'The innermost block that needs to be closed is \'${tagStack.last}\'.');
     }
 
-    fail(message.join(' '), line);
+    fail(messages.join(' '), line);
   }
 
   Never failUnknownTag(String name, [int? line]) {
@@ -111,12 +120,11 @@ class Parser {
     if (withNamespace && reader.look().test('dot')) {
       var namespace = reader.expect('name');
       reader.next(); // skip dot
-      var attribute = reader.expect('name');
 
+      var attribute = reader.expect('name');
       target = NamespaceRef(namespace.value, attribute.value);
     } else if (nameOnly) {
       var name = reader.expect('name');
-
       target = Name(name.value, context: AssignContext.store);
     } else {
       if (withTuple) {
@@ -144,6 +152,7 @@ class Parser {
     }
 
     tagStack.add(token.value);
+
     var popTag = true;
 
     try {
@@ -184,6 +193,7 @@ class Parser {
       [bool dropNeedle = false]) {
     reader.skipIf('colon');
     reader.expect('block_end');
+
     var nodes = subParse(reader, endTokens: endTokens);
 
     if (reader.current.test('eof')) {
@@ -198,19 +208,25 @@ class Parser {
   }
 
   Extends parseExtends(TokenReader reader) {
-    reader.expect('name', 'extends');
-    var node = parsePrimary(reader);
+    var token = reader.expect('name', 'extends');
+    var primary = parsePrimary(reader);
 
-    if (node is! Constant) {
-      // TODO: update error message
-      fail('template name or path expected');
+    if (primary is! Constant) {
+      fail('template name or path literal expected', reader.current.line);
     }
 
-    return Extends(node.value as String);
+    if (extendsNode != null) {
+      fail('extended multiple times', token.line);
+    }
+
+    var node = Extends(primary.value as String);
+    extendsNode = node;
+    return node;
   }
 
   For parseFor(TokenReader reader) {
     reader.expect('name', 'for');
+
     var target = parseAssignTarget(reader, extraEndRules: <String>['name:in']);
 
     if (target is Name && target.name == 'loop') {
@@ -218,6 +234,7 @@ class Parser {
     }
 
     reader.expect('name', 'in');
+
     var iterable = parseTuple(reader, withCondition: false);
     Expression? test;
 
@@ -242,10 +259,10 @@ class Parser {
 
   If parseIf(TokenReader reader) {
     reader.expect('name', 'if');
-    var test = parseExpression(reader, false);
-    var nodes = parseStatements(
-        reader, <String>['name:elif', 'name:else', 'name:endif']);
 
+    const endIfElseEndIf = <String>['name:elif', 'name:else', 'name:endif'];
+    var test = parseExpression(reader, false);
+    var nodes = parseStatements(reader, endIfElseEndIf);
     var root = If(test, Output.orSingle(nodes));
     var node = root;
 
@@ -254,8 +271,7 @@ class Parser {
 
       if (tag.test('name', 'elif')) {
         var test = parseTuple(reader, withCondition: false);
-        var nodes = parseStatements(
-            reader, <String>['name:elif', 'name:else', 'name:endif']);
+        var nodes = parseStatements(reader, endIfElseEndIf);
         var next = If(test, Output.orSingle(nodes));
         node.orElse = next;
         node = next;
@@ -263,7 +279,8 @@ class Parser {
       }
 
       if (tag.test('name', 'else')) {
-        var nodes = parseStatements(reader, <String>['name:endif'], true);
+        const endIf = <String>['name:endif'];
+        var nodes = parseStatements(reader, endIf, true);
         node.orElse = Output.orSingle(nodes);
       }
 
@@ -275,13 +292,16 @@ class Parser {
 
   FilterBlock parseFilterBlock(TokenReader reader) {
     reader.expect('name', 'filter');
+
+    const endFilter = <String>['name:endfilter'];
     var filters = parseFilters(reader, true);
-    var nodes = parseStatements(reader, <String>['name:endfilter'], true);
+    var nodes = parseStatements(reader, endFilter, true);
     return FilterBlock(filters, Output.orSingle(nodes));
   }
 
   With parseWith(TokenReader reader) {
     reader.expect('name', 'with');
+
     var targets = <Expression>[];
     var values = <Expression>[];
 
@@ -297,7 +317,8 @@ class Parser {
       values.add(parseExpression(reader));
     }
 
-    var nodes = parseStatements(reader, <String>['name:endwith'], true);
+    const endWith = <String>['name:endwith'];
+    var nodes = parseStatements(reader, endWith, true);
     return With(targets, values, Output.orSingle(nodes));
   }
 
@@ -305,7 +326,7 @@ class Parser {
     var token = reader.expect('name', 'block');
     var name = reader.expect('name');
 
-    if (blocks.contains(name.value)) {
+    if (blocks.any((block) => block.name == name.value)) {
       fail('block \'${name.value}\' defined twice', reader.current.line);
     }
 
@@ -315,31 +336,33 @@ class Parser {
       fail('use an underscore instead', reader.current.line);
     }
 
+    const endBlock = <String>['name:endblock'];
     var required = reader.skipIf('name', 'required');
-    var nodes = parseStatements(reader, <String>['name:endblock'], true);
+    var nodes = parseStatements(reader, endBlock, true);
 
     if (required && nodes.any((node) => node is! Data || !node.isLeaf)) {
-      throw TemplateSyntaxError(
-          'required blocks can only contain comments or whitespace',
-          line: token.line);
+      fail('required blocks can only contain comments or whitespace',
+          token.line);
     }
 
     var maybeName = reader.current;
 
     if (maybeName.test('name')) {
       if (maybeName.value != name.value) {
-        // TODO: update error message
         fail('\'${name.value}\' expected, got ${maybeName.value}');
       }
 
       reader.next();
     }
 
-    return Block(name.value, scoped, required, Output.orSingle(nodes));
+    var block = Block(name.value, scoped, required, Output.orSingle(nodes));
+    blocks.add(block);
+    return block;
   }
 
   Include parseInclude(TokenReader reader) {
     reader.expect('name', 'include');
+
     var name = reader.expect('string');
     var node = Include(name.value);
     return parseImportContext<Include>(reader, node, true);
@@ -352,6 +375,7 @@ class Parser {
 
   Statement parseAssign(TokenReader reader) {
     reader.expect('name', 'set');
+
     var target = parseAssignTarget(reader, withNamespace: true);
 
     if (reader.skipIf('assign')) {
@@ -366,6 +390,7 @@ class Parser {
 
   AutoEscape parseAutoEscape(TokenReader reader) {
     reader.expect('name', 'autoescape');
+
     var escape = parseExpression(reader);
     var body = parseStatements(reader, <String>['name:endautoescape'], true);
     return AutoEscape(escape, Output.orSingle(body));
@@ -686,6 +711,7 @@ class Parser {
 
   Expression parseList(TokenReader reader) {
     reader.expect('lbracket');
+
     var values = <Expression>[];
 
     while (!reader.current.test('rbracket')) {
@@ -706,6 +732,7 @@ class Parser {
 
   Expression parseDict(TokenReader reader) {
     reader.expect('lbrace');
+
     var pairs = <Pair>[];
 
     while (!reader.current.test('rbrace')) {
@@ -764,12 +791,16 @@ class Parser {
 
       if (attributeToken.test('name')) {
         return Attribute(attributeToken.value, expression);
-      } else if (!attributeToken.test('integer')) {
+      }
+
+      if (!attributeToken.test('integer')) {
         fail('expected name or number', attributeToken.line);
       }
 
       return Item(Constant(int.parse(attributeToken.value)), expression);
-    } else if (token.test('lbracket')) {
+    }
+
+    if (token.test('lbracket')) {
       var key = parseExpression(reader);
       reader.expect('rbracket');
       return Item(key, expression);
@@ -782,8 +813,8 @@ class Parser {
     var token = reader.expect('lparen');
     var arguments = callable.arguments ??= <Expression>[];
     var keywords = callable.keywords ??= <Keyword>[];
-    Expression? dArguments, dKeywords;
     var requireComma = false;
+    Expression? dArguments, dKeywords;
 
     void ensure(bool ensure) {
       if (!ensure) {
@@ -811,8 +842,10 @@ class Parser {
       } else {
         if (reader.current.test('name') && reader.look().test('assign')) {
           ensure(dKeywords == null);
+
           var key = reader.current.value;
           reader.skip(2);
+
           var value = parseExpression(reader);
           keywords.add(Keyword(key, value));
         } else {
@@ -870,6 +903,7 @@ class Parser {
 
   Expression parseTest(TokenReader reader, Expression expression) {
     reader.expect('name', 'is');
+
     var negated = false;
 
     if (reader.current.test('name', 'not')) {
@@ -911,31 +945,9 @@ class Parser {
 
   List<Node> subParse(TokenReader reader, {List<String>? endTokens}) {
     var nodes = <Node>[];
-    bool? firstIsExtends;
 
     if (endTokens != null) {
       endTokensStack.add(endTokens);
-    }
-
-    Node check(Node node) {
-      if (firstIsExtends == null) {
-        firstIsExtends = node is Extends;
-      } else if (node is Extends) {
-        if (firstIsExtends == false) {
-          // TODO: update error message
-          fail('message false');
-        }
-
-        if (firstIsExtends == true) {
-          // TODO: update error message
-          fail('message true');
-        }
-      } else if (firstIsExtends == true && node is! Block) {
-        // TODO: update error message
-        fail('message else');
-      }
-
-      return node;
     }
 
     try {
@@ -949,7 +961,7 @@ class Parser {
             break;
           case 'variable_start':
             reader.next();
-            nodes.add(check(parseTuple(reader)));
+            nodes.add(parseTuple(reader));
             reader.expect('variable_end');
             break;
           case 'block_start':
@@ -959,10 +971,17 @@ class Parser {
               return nodes;
             }
 
-            nodes.add(check(parseStatement(reader)));
+            var node = parseStatement(reader);
+
+            if (extendsNode != null && node is! Block) {
+              fill('');
+            }
+
+            nodes.add(node);
             reader.expect('block_end');
             break;
           default:
+            // unreachable
             throw AssertionError('unsuported token type: ${token.type}');
         }
       }
@@ -975,10 +994,17 @@ class Parser {
     return nodes;
   }
 
-  Template parse(String template) {
+  Node parse(String template) {
     var tokens = environment.lex(template, path: path);
     var nodes = scan(tokens);
-    return Template(nodes);
+    var node = extendsNode;
+    var body = node ?? Output.orSingle(nodes);
+
+    if (blocks.isEmpty) {
+      return body;
+    }
+
+    return Template.parsed(environment, body, path: path, blocks: blocks);
   }
 
   @override

@@ -1,3 +1,4 @@
+import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/nodes.dart';
 
 typedef ExpressionUpdater = Expression Function(Expression expression);
@@ -271,7 +272,8 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
 
   @override
   void visitTemplate(Template node, ExpressionUpdater context) {
-    visitAll(node.nodes, context);
+    node.body.accept(this, context);
+    visitAll(node.blocks, context);
   }
 
   @override

@@ -594,17 +594,23 @@ class Call extends Callable {
   @override
   Object? asConst(Context context) {
     var function = expression.asConst(context);
-    return applyConst(context, (positional, named) {
+
+    Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
       return context(function, positional, named);
-    });
+    }
+
+    return applyConst(context, callback);
   }
 
   @override
   Object? resolve(Context context) {
     var function = expression.resolve(context);
-    return apply(context, (positional, named) {
+
+    Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
       return context(function, positional, named);
-    });
+    }
+
+    return apply<Object?>(context, callback);
   }
 
   @override

@@ -1,7 +1,7 @@
 import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/visitor.dart';
 
-/// Modifies [Template] AST from `loop.cycle(first, second, *list)`
+/// Modifies [TemplateNode] AST from `loop.cycle(first, second, *list)`
 /// to `loop.cycle([first, second], list)`, to match [LoopContext.cycle] definition.
 void loopCycleModifier(Node node) {
   for (var call in node.findAll<Call>()) {
@@ -32,7 +32,7 @@ void loopCycleModifier(Node node) {
   }
 }
 
-/// Modifies [Template] AST from `namespace(map1, ..., key1=value1, ...)`
+/// Modifies [TemplateNode] AST from `namespace(map1, ..., key1=value1, ...)`
 /// to `namespace([map1, ..., {'key1': value1, ...}])`, to match [namespace] definition.
 void namespaceModifier(Node node) {
   for (var call in node.findAll<Call>()) {

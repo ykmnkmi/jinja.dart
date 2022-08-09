@@ -13,4 +13,4 @@ linter:
     avoid_print: true
     library_prefixes: false
     prefer_single_quotes: true
-    public_member_api_docs: true
+    # public_member_api_docs: true

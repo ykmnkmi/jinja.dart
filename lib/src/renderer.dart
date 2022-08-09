@@ -1,4 +1,5 @@
 import 'package:jinja/src/context.dart';
+import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/exceptions.dart';
 import 'package:jinja/src/markup.dart';
 import 'package:jinja/src/nodes.dart';
@@ -91,6 +92,7 @@ class RenderContext extends Context {
   }
 }
 
+// TODO: sync* expressions
 class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
   const IterableRenderer();
 
@@ -323,7 +325,7 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
     }
 
     context.set('self', self);
-    yield* visitAll(node.nodes, context);
+    yield* node.body.accept(this, context);
   }
 
   @override
@@ -594,15 +596,22 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
     }
 
     context.set('self', self);
-    visitAll(node.nodes, context);
+    node.body.accept(this, context);
   }
 
   @override
   void visitWith(With node, StringSinkRenderContext context) {
-    var targets = List<Object?>.generate(
-        node.targets.length, (i) => node.targets[i].resolve(context));
-    var values = List<Object?>.generate(
-        node.values.length, (i) => node.values[i].resolve(context));
+    Object? target(int index) {
+      return node.targets[index].resolve(context);
+    }
+
+    var targets = List<Object?>.generate(node.targets.length, target);
+
+    Object? value(int index) {
+      return node.values[index].resolve(context);
+    }
+
+    var values = List<Object?>.generate(node.values.length, value);
     var data = context.save(getDataForTargets(targets, values));
     node.body.accept(this, context);
     context.restore(data);

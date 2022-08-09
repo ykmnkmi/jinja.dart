@@ -2,6 +2,7 @@ import 'dart:collection' show HashMap;
 import 'dart:math' show Random;
 
 import 'package:jinja/src/context.dart';
+import 'package:jinja/src/defaults.dart' as defaults;
 import 'package:jinja/src/exceptions.dart';
 import 'package:jinja/src/lexer.dart';
 import 'package:jinja/src/loaders.dart';
@@ -9,10 +10,11 @@ import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/optimizer.dart';
 import 'package:jinja/src/parser.dart';
 import 'package:jinja/src/renderer.dart';
-import 'package:meta/meta.dart' show internal, protected;
+import 'package:jinja/src/visitor.dart';
+import 'package:meta/meta.dart';
 
-import 'package:jinja/src/defaults.dart' as defaults;
-
+/// Signature for callable that can be used to process the result
+/// of a variable expression before it is output.
 typedef Finalizer = Object Function(Object? value);
 
 /// Signature for the object attribute getter.
@@ -315,12 +317,12 @@ class Environment {
   Template fromString(String source, {String? path}) {
     var body = Parser(this, path: path).parse(source);
 
-    if (optimize) {
-      body.accept(const Optimizer(), Context(this));
-    }
-
     for (var modifier in modifiers) {
       modifier(body);
+    }
+
+    if (optimize) {
+      body.accept(const Optimizer(), Context(this));
     }
 
     return Template.parsed(this, body, path: path);
@@ -382,7 +384,7 @@ class Environment {
 /// it also has a constructor that makes it possible to create a template
 /// instance directly using the constructor. It takes the same arguments as
 /// the environment constructor but it's not possible to specify a loader.
-class Template {
+class Template extends Node {
   factory Template(String source,
       {String? path,
       Environment? environment,
@@ -436,7 +438,24 @@ class Template {
     return environment.fromString(source, path: path);
   }
 
-  Template.parsed(this.environment, this.body, {this.path});
+  factory Template.fromNodes(Environment environment, List<Node> nodes,
+      {String? path}) {
+    Node body;
+
+    if (nodes.isEmpty) {
+      body = Data();
+    } else if (nodes.first is Extends) {
+      body = nodes.first;
+    } else {
+      body = Output.orSingle(nodes);
+    }
+
+    var blocks = nodes.whereType<Block>().toList();
+    return Template.parsed(environment, body, path: path, blocks: blocks);
+  }
+
+  Template.parsed(this.environment, this.body, {this.path, List<Block>? blocks})
+      : blocks = blocks ?? <Block>[];
 
   /// The environment used to parse and render template.
   final Environment environment;
@@ -444,20 +463,33 @@ class Template {
   /// The path to the template if it was loaded.
   final String? path;
 
-  /// Template body.
+  /// Template body node.
   final Node body;
+
+  /// Template blocks.
+  final List<Block> blocks;
+
+  @override
+  List<Node> get childrens {
+    return <Node>[body];
+  }
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitTemplate(this, context);
+  }
 
   /// It accepts the same arguments as [render].
   Iterable<String> generate([Map<String, Object?>? data]) {
     var context = RenderContext(environment, data: data);
-    return body.accept(const IterableRenderer(), context);
+    return accept(const IterableRenderer(), context);
   }
 
   /// If no arguments are given the context will be empty.
   String render([Map<String, Object?>? data]) {
     var buffer = StringBuffer();
     var context = StringSinkRenderContext(environment, buffer, data: data);
-    body.accept(const StringSinkRenderer(), context);
+    accept(const StringSinkRenderer(), context);
     return buffer.toString();
   }
 
