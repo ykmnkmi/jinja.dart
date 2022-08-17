@@ -3,34 +3,38 @@ import 'package:jinja/reflection.dart';
 import 'package:jinja/src/context.dart';
 import 'package:test/test.dart';
 
-Object? testFuncWithContext(Context context, {String namedArg1 = 'default'}) {
+Object? testFuncWithContext(Context context, {String namedArgument = 'default'}) {
   var bar = context.get('bar');
-  return namedArg1+bar.toString();
+  return namedArgument+bar.toString();
 }
 
-Object? testFuncWithoutContext({String namedArg1 = 'default'}) {
-  return namedArg1;
+Object? testFuncWithoutContext({String namedArgument = 'default'}) {
+  return namedArgument;
+}
+
+Object? testFuncWithEnvironment(Environment env, String positionalArgument, {String namedArgument = 'default'}) {
+  return "[$positionalArgument] {$namedArgument} env.commentStart = ${env.commentStart}";
 }
 
 void main() {
   group('No Context', () {
-    test('Named Argument', () {
+    test('named argument', () {
       var env = Environment(globals: {'test_func': testFuncWithoutContext});
-      var out = env.fromString("{{ test_func(namedArg1='testing') }}");
+      var out = env.fromString("{{ test_func(namedArgument='testing') }}");
       expect(out.render(), 'testing');
     });
   });
   group('With Context', () {
-    test('Named Argument', () {
+    test('named argument', () {
       var data = {'bar': 42};
       var env = Environment(
         getAttribute: getAttribute,
         globals: {'test_func': passContext(testFuncWithContext)},
       );
-      var out = env.fromString("{{ test_func(namedArg1='testing') }}");
+      var out = env.fromString("{{ test_func(namedArgument='testing') }}");
       expect(out.render(data), 'testing42');
     });
-    test('Named Argument Missing', () {
+    test('named argument missing', () {
       var data = {'bar': 42};
       var env = Environment(
         getAttribute: getAttribute,
@@ -38,6 +42,18 @@ void main() {
       );
       var out = env.fromString("{{ test_func() }}");
       expect(out.render(data), 'default42');
+    });
+  });
+  group('With Environment', ()
+  {
+    test('positional argument', () {
+      var data = {'bar': 42};
+      var env = Environment(
+        getAttribute: getAttribute,
+        globals: {'test_func': passEnvironment(testFuncWithEnvironment)},
+      );
+      var out = env.fromString("{{ test_func('positional argument value') }}");
+      expect(out.render(data), '[positional argument value] {default} env.commentStart = {#');
     });
   });
 }
