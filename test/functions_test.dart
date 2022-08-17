@@ -55,5 +55,14 @@ void main() {
       var out = env.fromString("{{ test_func('positional argument value') }}");
       expect(out.render(data), '[positional argument value] {default} env.commentStart = {#');
     });
+    test('named argument', () {
+      var data = {'bar': 42};
+      var env = Environment(
+        getAttribute: getAttribute,
+        globals: {'test_func': passEnvironment(testFuncWithEnvironment)},
+      );
+      var out = env.fromString("{{ test_func('positional argument value', namedArgument='named argument') }}");
+      expect(out.render(data), '[positional argument value] {named argument} env.commentStart = {#');
+    });
   });
 }
