@@ -20,6 +20,15 @@ class Context {
       [List<Object?>? positional, Map<Symbol, Object?>? named]) {
     var function = object.call as Function;
     positional ??= <Object?>[];
+
+    var  pass = Environment.passArguments[function];
+
+    if (pass == PassArgument.context) {
+      positional.insert(0, this);
+    } else if (pass == PassArgument.environment) {
+      positional.insert(0, environment);
+    }
+
     return Function.apply(function, positional, named);
   }
 
