@@ -21,7 +21,7 @@ class Context {
     var function = object.call as Function;
     positional ??= <Object?>[];
 
-    var  pass = Environment.passArguments[function];
+    var pass = Environment.passArguments[function];
 
     if (pass == PassArgument.context) {
       positional.insert(0, this);

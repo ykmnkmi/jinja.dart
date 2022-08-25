@@ -2,11 +2,7 @@ import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/exceptions.dart';
 import 'package:stack_trace/stack_trace.dart';
 
-const String source = '''
-{% set ns = namespace(self=37) %}
-{{ ns.self }}
-{% set ns.self = 38 %}
-{{ ns.self }}''';
+const String source = '''{{ 'a11' | int | default 0 }}''';
 
 void main() {
   try {

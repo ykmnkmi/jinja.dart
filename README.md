@@ -16,13 +16,13 @@ template documentation. _work in progress_.
 - complex numbers is not supported
 - `default` filter compare values with `null`
 - `defined` and `undefined` tests compare values with `null`
-_work in progress_
+- _work in progress_
 
 ## Dynamically invoked members
 - `[]`, `+`, `-`, `*`, `/`, `~/`, `%` operators
 - `object.length` getter
 - `object.call` getter
-_work in progress_
+- _work in progress_
 
 ## Example
 ```dart
@@ -31,7 +31,7 @@ import 'package:jinja/jinja.dart';
 // ...
 
 var environment = Environment(blockStart: '...', blockEnd: '...');
-var template = env.fromString('...source...');
+var template = environment.fromString('...source...');
 
 sink.write(template.render({'key': value}));
 ```

@@ -16,21 +16,36 @@ import 'package:textwrap/textwrap.dart' show TextWrapper;
 /// Dots are allowed to access attributes of attributes.
 /// Integer parts in paths are looked up as integers.
 Object? Function(Object?) makeAttributeGetter(
-    Environment environment, String attributeOrAttributes,
+    Environment environment, Object? attribute,
     {Object? Function(Object?)? postProcess, Object? defaultValue}) {
-  var attributes = attributeOrAttributes.split('.');
-  return (Object? item) {
-    for (var part in attributes) {
-      item = environment.getAttribute(item, part);
+  Object? Function(Object? object) getter;
 
-      if (item == null) {
-        if (defaultValue != null) {
-          item = defaultValue;
+  if (attribute == null) {
+    getter = identity;
+  } else if (attribute is String) {
+    var parts = attribute.split('.');
+
+    getter = (Object? object) {
+      for (var part in parts) {
+        object = environment.getAttribute(object, part);
+
+        if (object == null) {
+          if (defaultValue != null) {
+            object = defaultValue;
+          }
+
+          break;
         }
-
-        break;
       }
-    }
+    };
+  } else {
+    getter = (Object? object) {
+      return environment.getItem(object, attribute);
+    };
+  }
+
+  return (Object? item) {
+    item = getter(item);
 
     if (postProcess != null) {
       item = postProcess(item);
@@ -67,31 +82,27 @@ String doString(Object? value) {
 /// the second is the replacement string.
 /// If the optional third argument [count] is given, only the first
 /// `count` occurrences are replaced.
-Object? doReplace(Context context, Object? string, Object? from, Object? to,
-    [int? count]) {
-  var string_ = string.toString();
-  var from_ = from.toString();
-  var to_ = to.toString();
-
+Object? doReplace(Context context, String string, String from, String to,
+    {int? count}) {
   if (count == null) {
-    string_ = string_.replaceAll(from_, to_);
+    string = string.replaceAll(from, to);
   } else {
-    var start = string_.indexOf(from_);
+    var start = string.indexOf(from);
     var n = 0;
 
-    while (n < count && start != -1 && start < string_.length) {
-      var start = string_.indexOf(from_);
-      string_ = string_.replaceRange(start, start + from_.length, to_);
-      start = string_.indexOf(from_, start + to_.length);
+    while (n < count && start != -1 && start < string.length) {
+      var start = string.indexOf(from);
+      string = string.replaceRange(start, start + from.length, to);
+      start = string.indexOf(from, start + to.length);
       n += 1;
     }
   }
 
   if (context.autoEscape) {
-    return context.escape(string_);
+    return context.escape(string);
   }
 
-  return string_;
+  return string;
 }
 
 /// Convert a value to uppercase.
@@ -161,9 +172,10 @@ List<Object?> doDictSort(Map<Object?, Object?> dict,
 
 /// If the value is null it will return the passed default value,
 /// otherwise the value of the variable.
-Object? doDefault(Object? value, [Object? d = '', bool asBoolean = false]) {
+Object? doDefault(Object? value,
+    [Object? defaultValue = '', bool asBoolean = false]) {
   if (value == null || asBoolean && !boolean(value)) {
-    return d;
+    return defaultValue;
   }
 
   return value;
@@ -288,10 +300,10 @@ String doFileSizeFormat(Object? value, [bool binary = false]) {
 /// that only exceed the length by the tolerance margin given in the fourth
 /// parameter will not be truncated.
 String doTruncate(Environment environment, String value,
-    [int length = 255,
+    {int length = 255,
     bool killWords = false,
     String end = '...',
-    int leeway = 5]) {
+    int leeway = 5}) {
   assert(length >= end.length, 'expected length >= ${end.length}, got $length');
   assert(leeway >= 0, 'expected leeway >= 0, got $leeway');
 
@@ -343,17 +355,15 @@ int doWordCount(String string) {
 /// Convert the value into an integer.
 ///
 /// If the conversion doesn’t work it will return null.
-// TODO: different int filter
-int? doInteger(String value, [int radix = 10]) {
-  return int.tryParse(value, radix: radix);
+int? doInteger(String value, {int radix = 10, int? defaultValue}) {
+  return int.tryParse(value, radix: radix) ?? defaultValue;
 }
 
 /// Convert the value into a floating point number.
 ///
 /// If the conversion doesn’t work it will return null.
-// TODO: different float filter
-double? doFloat(String value) {
-  return double.tryParse(value);
+double? doFloat(String value, {double? defaultValue}) {
+  return double.tryParse(value) ?? defaultValue;
 }
 
 /// Return the absolute value of the argument.
@@ -362,7 +372,7 @@ num doAbs(num number) {
 }
 
 /// Strip leading and trailing characters, by default whitespace.
-String doTrim(String value, [String? characters]) {
+String doTrim(String value, {String? characters}) {
   if (characters == null) {
     return value.trim();
   }
@@ -382,7 +392,7 @@ String doStripTags(String value) {
 ///
 /// Useful if you want to create a div containing
 /// three ul tags that represent columns.
-List<List<Object?>> doSlice(Object? value, int slices, [Object? fillWith]) {
+List<List<Object?>> doSlice(Object? value, int slices, {Object? fillWith}) {
   var result = <List<Object?>>[];
   var values = list(value);
   var length = values.length;
@@ -415,7 +425,7 @@ List<List<Object?>> doSlice(Object? value, int slices, [Object? fillWith]) {
 /// a list of lists with the given number of items. If you provide
 /// a second parameter this is used to fill up missing items.
 List<List<Object?>> doBatch(Iterable<Object?> items, int lineCount,
-    [Object? fillWith]) {
+    {Object? fillWith}) {
   var result = <List<Object?>>[];
   var temp = <Object?>[];
 
@@ -455,8 +465,7 @@ int? doLength(Environment environment, dynamic object) {
 /// `start`.
 ///
 /// When the sequence is empty it returns start.
-// TODO: different sum filter
-num doSum(Iterable<num> values, [num start = 0]) {
+num doSum(Iterable<num> values, {num start = 0}) {
   return values.fold<num>(start, (s, n) => s + n);
 }
 
@@ -489,31 +498,16 @@ Object? doReverse(Object? value) {
 
 /// Get an attribute of an object.
 ///
-/// `foo|attr('bar')` works like `foo.bar` just that always an attribute
-/// is returned and items are not looked up.
+/// `foo | attr('bar')` works like `foo.bar`.
 Object? doAttribute(Environment environment, Object? object, String attribute) {
   return environment.getAttribute(object, attribute);
 }
 
-/// Applies a filter on a sequence of objects or looks up an attribute.
-/// This is useful when dealing with lists of objects but you are really
-/// only interested in a certain value of it.
+/// Get an item of an object.
 ///
-/// The basic usage is mapping on an attribute.
-Iterable<Object?> doMap(Context context, Iterable<Object?> values,
-    {String? attribute, Object? defaultValue, String? filter}) {
-  if (attribute != null) {
-    values = values.map<Object?>(makeAttributeGetter(
-        context.environment, attribute,
-        defaultValue: defaultValue));
-  }
-
-  if (filter != null) {
-    return values
-        .map<Object?>((value) => context.filter(filter, <Object?>[value]));
-  }
-
-  return values;
+/// `foo | item('bar')` works like `foo['bar']`.
+Object? doItem(Environment environment, Object? object, Object? item) {
+  return environment.getItem(object, item);
 }
 
 final Map<String, Function> filters = <String, Function>{
@@ -565,7 +559,7 @@ final Map<String, Function> filters = <String, Function>{
   'unsafe': doMarkUnsafe,
   'reverse': doReverse,
   'attr': passEnvironment(doAttribute),
-  'map': passContext(doMap),
+  'item': passEnvironment(doItem),
   // 'select': passContext(doSelect),
   // 'reject': passContext(doReject),
   // 'selectattr': passContext(doSelectAttr),

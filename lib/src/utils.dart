@@ -1,5 +1,9 @@
 import 'package:textwrap/utils.dart';
 
+Object? identity(Object? object) {
+  return object;
+}
+
 bool boolean(Object? value) {
   if (value == null) {
     return false;

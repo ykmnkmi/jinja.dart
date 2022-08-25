@@ -34,6 +34,17 @@
   - statements:
     - `do`
     - `with`
+  - filters:
+    - `dictsort`
+    - `replace`
+    - `reverse`
+    - `safe`
+    - `slice`
+    - `striptags`
+    - `truncate`
+    - `wordcount`
+    - `wordwrap`
+    - `item`
 - changed:
   - `FieldGetter` typedef renamed to `AttributeGetter`
   - `mapping` test renamed to `map`
