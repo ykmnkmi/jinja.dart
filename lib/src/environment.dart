@@ -60,33 +60,33 @@ class Environment {
   static final Expando<PassArgument> passArguments = Expando<PassArgument>();
 
   /// If [loader] is not `null`, templates will be loaded.
-  Environment(
-      {this.commentStart = defaults.commentStart,
-      this.commentEnd = defaults.commentEnd,
-      this.variableStart = defaults.variableStart,
-      this.variableEnd = defaults.variableEnd,
-      this.blockStart = defaults.blockStart,
-      this.blockEnd = defaults.blockEnd,
-      this.lineCommentPrefix = defaults.lineCommentPrefix,
-      this.lineStatementPrefix = defaults.lineStatementPrefix,
-      this.leftStripBlocks = defaults.lStripBlocks,
-      this.trimBlocks = defaults.trimBlocks,
-      this.newLine = defaults.newLine,
-      this.keepTrailingNewLine = defaults.keepTrailingNewLine,
-      this.optimize = defaults.optimize,
-      this.finalize = defaults.finalize,
-      this.autoEscape = defaults.autoEscape,
-      this.loader,
-      this.autoReload = defaults.autoReload,
-      Map<String, Object?>? globals,
-      Map<String, Function>? filters,
-      Map<String, Function>? tests,
-      List<NodeVisitor>? modifiers,
-      Map<String, Template>? templates,
-      Random? random,
-      AttributeGetter? getAttribute,
-      ItemGetter? getItem})
-      : globals = HashMap<String, Object?>.of(defaults.globals),
+  Environment({
+    this.commentStart = defaults.commentStart,
+    this.commentEnd = defaults.commentEnd,
+    this.variableStart = defaults.variableStart,
+    this.variableEnd = defaults.variableEnd,
+    this.blockStart = defaults.blockStart,
+    this.blockEnd = defaults.blockEnd,
+    this.lineCommentPrefix = defaults.lineCommentPrefix,
+    this.lineStatementPrefix = defaults.lineStatementPrefix,
+    this.leftStripBlocks = defaults.lStripBlocks,
+    this.trimBlocks = defaults.trimBlocks,
+    this.newLine = defaults.newLine,
+    this.keepTrailingNewLine = defaults.keepTrailingNewLine,
+    this.optimize = defaults.optimize,
+    this.finalize = defaults.finalize,
+    this.autoEscape = defaults.autoEscape,
+    this.loader,
+    this.autoReload = defaults.autoReload,
+    Map<String, Object?>? globals,
+    Map<String, Function>? filters,
+    Map<String, Function>? tests,
+    List<NodeVisitor>? modifiers,
+    Map<String, Template>? templates,
+    Random? random,
+    AttributeGetter? getAttribute,
+    ItemGetter? getItem,
+  })  : globals = HashMap<String, Object?>.of(defaults.globals),
         filters = HashMap<String, Function>.of(defaults.filters),
         tests = HashMap<String, Function>.of(defaults.tests),
         modifiers = List<NodeVisitor>.of(defaults.modifiers),
@@ -215,16 +215,17 @@ class Environment {
   @override
   int get hashCode {
     return Object.hash(
-        blockStart,
-        blockEnd,
-        variableStart,
-        variableEnd,
-        commentStart,
-        commentEnd,
-        lineStatementPrefix,
-        lineCommentPrefix,
-        trimBlocks,
-        leftStripBlocks);
+      blockStart,
+      blockEnd,
+      variableStart,
+      variableEnd,
+      commentStart,
+      commentEnd,
+      lineStatementPrefix,
+      lineCommentPrefix,
+      trimBlocks,
+      leftStripBlocks,
+    );
   }
 
   /// The lexer for this environment.
@@ -249,8 +250,13 @@ class Environment {
 
   /// Common filter and test caller.
   @protected
-  Object? callCommon(String name, List<Object?> positional,
-      Map<Symbol, Object?> named, bool isFilter, Context? context) {
+  Object? callCommon(
+    String name,
+    List<Object?> positional,
+    Map<Symbol, Object?> named,
+    bool isFilter,
+    Context? context,
+  ) {
     var type = isFilter ? 'filter' : 'test';
     var map = isFilter ? filters : tests;
     var function = map[name];
@@ -263,8 +269,7 @@ class Environment {
 
     if (pass == PassArgument.context) {
       if (context == null) {
-        throw TemplateRuntimeError(
-            'attempted to invoke context $type without context');
+        throw TemplateRuntimeError('attempted to invoke $type without context');
       }
 
       positional.insert(0, context);
@@ -277,17 +282,23 @@ class Environment {
 
   /// If [name] not found throws [TemplateRuntimeError].
   @internal
-  Object? callFilter(String name, List<Object?> positional,
-      [Map<Symbol, Object?> named = const <Symbol, Object?>{},
-      Context? context]) {
+  Object? callFilter(
+    String name,
+    List<Object?> positional, [
+    Map<Symbol, Object?> named = const <Symbol, Object?>{},
+    Context? context,
+  ]) {
     return callCommon(name, positional, named, true, context);
   }
 
   /// If [name] not found throws [TemplateRuntimeError].
   @internal
-  bool callTest(String name, List<Object?> positional,
-      [Map<Symbol, Object?> named = const <Symbol, Object?>{},
-      Context? context]) {
+  bool callTest(
+    String name,
+    List<Object?> positional, [
+    Map<Symbol, Object?> named = const <Symbol, Object?>{},
+    Context? context,
+  ]) {
     return callCommon(name, positional, named, false, context) as bool;
   }
 
@@ -362,7 +373,9 @@ class Environment {
 
   @protected
   static AttributeGetter wrapGetAttribute(
-      AttributeGetter? attributeGetter, ItemGetter itemGetter) {
+    AttributeGetter? attributeGetter,
+    ItemGetter itemGetter,
+  ) {
     if (attributeGetter == null) {
       return itemGetter;
     }
@@ -370,7 +383,7 @@ class Environment {
     return (Object? object, String field) {
       try {
         return attributeGetter(object, field);
-      } on Error {
+      } catch (error) {
         return itemGetter(object, field);
       }
     };
@@ -385,61 +398,67 @@ class Environment {
 /// instance directly using the constructor. It takes the same arguments as
 /// the environment constructor but it's not possible to specify a loader.
 class Template extends Node {
-  factory Template(String source,
-      {String? path,
-      Environment? environment,
-      String blockStart = defaults.blockStart,
-      String blockEnd = defaults.blockEnd,
-      String variableStatr = defaults.variableStart,
-      String variableEnd = defaults.variableEnd,
-      String commentStart = defaults.commentStart,
-      String commentEnd = defaults.commentEnd,
-      String? lineCommentPrefix = defaults.lineCommentPrefix,
-      String? lineStatementPrefix = defaults.lineStatementPrefix,
-      bool trimBlocks = defaults.trimBlocks,
-      bool leftStripBlocks = defaults.lStripBlocks,
-      String newLine = defaults.newLine,
-      bool keepTrailingNewLine = defaults.keepTrailingNewLine,
-      bool optimize = defaults.optimize,
-      Finalizer finalize = defaults.finalize,
-      bool autoEscape = defaults.autoEscape,
-      Map<String, Object?>? globals,
-      Map<String, Function>? filters,
-      Map<String, Function>? tests,
-      List<NodeVisitor>? modifiers,
-      Random? random,
-      AttributeGetter? getAttribute,
-      ItemGetter? getItem}) {
+  factory Template(
+    String source, {
+    String? path,
+    Environment? environment,
+    String blockStart = defaults.blockStart,
+    String blockEnd = defaults.blockEnd,
+    String variableStatr = defaults.variableStart,
+    String variableEnd = defaults.variableEnd,
+    String commentStart = defaults.commentStart,
+    String commentEnd = defaults.commentEnd,
+    String? lineCommentPrefix = defaults.lineCommentPrefix,
+    String? lineStatementPrefix = defaults.lineStatementPrefix,
+    bool trimBlocks = defaults.trimBlocks,
+    bool leftStripBlocks = defaults.lStripBlocks,
+    String newLine = defaults.newLine,
+    bool keepTrailingNewLine = defaults.keepTrailingNewLine,
+    bool optimize = defaults.optimize,
+    Finalizer finalize = defaults.finalize,
+    bool autoEscape = defaults.autoEscape,
+    Map<String, Object?>? globals,
+    Map<String, Function>? filters,
+    Map<String, Function>? tests,
+    List<NodeVisitor>? modifiers,
+    Random? random,
+    AttributeGetter? getAttribute,
+    ItemGetter? getItem,
+  }) {
     environment ??= Environment(
-        commentStart: commentStart,
-        commentEnd: commentEnd,
-        variableStart: variableStatr,
-        variableEnd: variableEnd,
-        blockStart: blockStart,
-        blockEnd: blockEnd,
-        lineCommentPrefix: lineCommentPrefix,
-        lineStatementPrefix: lineStatementPrefix,
-        leftStripBlocks: leftStripBlocks,
-        trimBlocks: trimBlocks,
-        newLine: newLine,
-        keepTrailingNewLine: keepTrailingNewLine,
-        optimize: optimize,
-        finalize: finalize,
-        autoEscape: autoEscape,
-        autoReload: false,
-        globals: globals,
-        filters: filters,
-        tests: tests,
-        modifiers: modifiers,
-        random: random,
-        getAttribute: getAttribute,
-        getItem: getItem);
+      commentStart: commentStart,
+      commentEnd: commentEnd,
+      variableStart: variableStatr,
+      variableEnd: variableEnd,
+      blockStart: blockStart,
+      blockEnd: blockEnd,
+      lineCommentPrefix: lineCommentPrefix,
+      lineStatementPrefix: lineStatementPrefix,
+      leftStripBlocks: leftStripBlocks,
+      trimBlocks: trimBlocks,
+      newLine: newLine,
+      keepTrailingNewLine: keepTrailingNewLine,
+      optimize: optimize,
+      finalize: finalize,
+      autoEscape: autoEscape,
+      autoReload: false,
+      globals: globals,
+      filters: filters,
+      tests: tests,
+      modifiers: modifiers,
+      random: random,
+      getAttribute: getAttribute,
+      getItem: getItem,
+    );
 
     return environment.fromString(source, path: path);
   }
 
-  factory Template.fromNodes(Environment environment, List<Node> nodes,
-      {String? path}) {
+  factory Template.fromNodes(
+    Environment environment,
+    List<Node> nodes, {
+    String? path,
+  }) {
     Node body;
 
     if (nodes.isEmpty) {
@@ -450,11 +469,31 @@ class Template extends Node {
       body = Output.orSingle(nodes);
     }
 
-    // TODO: find all blocks
-    var blocks = nodes.whereType<Block>().toList();
-    return Template.parsed(environment, body, path: path, blocks: blocks);
+    var blocks = <Block>[];
+
+    for (var node in nodes) {
+      blocks.addAll(node.findAll<Block>());
+    }
+
+    var template = Template.parsed(
+      environment,
+      body,
+      path: path,
+      blocks: blocks,
+    );
+
+    for (var modifier in environment.modifiers) {
+      modifier(template);
+    }
+
+    if (environment.optimize) {
+      template.accept(const Optimizer(), Context(environment));
+    }
+
+    return template;
   }
 
+  @internal
   Template.parsed(this.environment, this.body, {this.path, List<Block>? blocks})
       : blocks = blocks ?? <Block>[];
 

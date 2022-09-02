@@ -16,8 +16,12 @@ class Context {
 
   bool autoEscape;
 
-  Object? call(dynamic object,
-      [List<Object?>? positional, Map<Symbol, Object?>? named]) {
+  Object? call(
+    dynamic object, [
+    List<Object?>? positional,
+    Map<Symbol, Object?>? named,
+  ]) {
+    // * dynamic invocation
     var function = object.call as Function;
     positional ??= <Object?>[];
 
@@ -92,15 +96,19 @@ class Context {
     return environment.getAttribute(value, key);
   }
 
-  Object? filter(String name,
-      [List<Object?> positional = const <Object?>[],
-      Map<Symbol, Object?> named = const <Symbol, Object?>{}]) {
+  Object? filter(
+    String name, [
+    List<Object?> positional = const <Object?>[],
+    Map<Symbol, Object?> named = const <Symbol, Object?>{},
+  ]) {
     return environment.callFilter(name, positional, named, this);
   }
 
-  bool test(String name,
-      [List<Object?> positional = const <Object?>[],
-      Map<Symbol, Object?> named = const <Symbol, Object?>{}]) {
+  bool test(
+    String name, [
+    List<Object?> positional = const <Object?>[],
+    Map<Symbol, Object?> named = const <Symbol, Object?>{},
+  ]) {
     return environment.callTest(name, positional, named, this);
   }
 }

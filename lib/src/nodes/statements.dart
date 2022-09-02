@@ -25,9 +25,14 @@ class Extends extends Statement {
 }
 
 class For extends Statement {
-  For(this.target, this.iterable, this.body,
-      {this.orElse, this.test, this.recursive = false})
-      : hasLoop = false {
+  For(
+    this.target,
+    this.iterable,
+    this.body, {
+    this.orElse,
+    this.test,
+    this.recursive = false,
+  }) : hasLoop = false {
     void visitor(Node node) {
       if (node is Name && node.name == 'loop') {
         hasLoop = true;

@@ -1,5 +1,3 @@
-library filters;
-
 import 'dart:convert' show LineSplitter;
 import 'dart:math' as math;
 
@@ -10,24 +8,33 @@ import 'package:jinja/src/markup.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:textwrap/textwrap.dart' show TextWrapper;
 
-/// Returns a callable that looks up the given attribute from a
+/// Returns a callable that looks up the given item from a
 /// passed object with the rules of the environment.
 ///
 /// Dots are allowed to access attributes of attributes.
 /// Integer parts in paths are looked up as integers.
 Object? Function(Object?) makeAttributeGetter(
-    Environment environment, Object? attribute,
-    {Object? Function(Object?)? postProcess, Object? defaultValue}) {
-  Object? Function(Object? object) getter;
+  Environment environment,
+  Object attribute, {
+  Object? defaultValue,
+  Object? Function(Object?)? postProcess,
+}) {
+  Object? Function(Object? object) get;
 
-  if (attribute == null) {
-    getter = identity;
-  } else if (attribute is String) {
-    var parts = attribute.split('.');
+  if (attribute is String) {
+    Object map(String part) {
+      return int.tryParse(part) ?? part;
+    }
 
-    getter = (Object? object) {
+    var parts = attribute.split('.').map<Object>(map);
+
+    Object? getter(Object? object) {
       for (var part in parts) {
-        object = environment.getAttribute(object, part);
+        if (part is String) {
+          object = environment.getAttribute(object, part);
+        } else {
+          object = environment.getItem(object, part);
+        }
 
         if (object == null) {
           if (defaultValue != null) {
@@ -37,21 +44,27 @@ Object? Function(Object?) makeAttributeGetter(
           break;
         }
       }
-    };
-  } else {
-    getter = (Object? object) {
-      return environment.getItem(object, attribute);
-    };
-  }
 
-  return (Object? item) {
-    item = getter(item);
-
-    if (postProcess != null) {
-      item = postProcess(item);
+      return object;
     }
 
-    return item;
+    get = getter;
+  } else {
+    Object? getter(Object? object) {
+      return environment.getItem(object, attribute);
+    }
+
+    get = getter;
+  }
+
+  return (Object? object) {
+    object = get(object);
+
+    if (postProcess != null) {
+      object = postProcess(object);
+    }
+
+    return object;
   };
 }
 
@@ -67,12 +80,12 @@ Object? doEscape(Object? value) {
 ///
 /// This will probably double escape variables.
 Markup doForceEscape(Object? value) {
-  return Markup(value.toString());
+  return Markup('$value');
 }
 
 /// A string representation of this object.
 String doString(Object? value) {
-  return value.toString();
+  return '$value';
 }
 
 /// Return a copy of the value with all occurrences of a substring
@@ -82,8 +95,13 @@ String doString(Object? value) {
 /// the second is the replacement string.
 /// If the optional third argument [count] is given, only the first
 /// `count` occurrences are replaced.
-Object? doReplace(Context context, String string, String from, String to,
-    {int? count}) {
+Object? doReplace(
+  Context context,
+  String string,
+  String from,
+  String to, [
+  int? count,
+]) {
   if (count == null) {
     string = string.replaceAll(from, to);
   } else {
@@ -126,17 +144,21 @@ String doCapitalize(String string) {
 }
 
 /// Sort a dict and yield `[key, value]` pairs.
-List<Object?> doDictSort(Map<Object?, Object?> dict,
-    {bool caseSensetive = false, String by = 'key', bool reverse = false}) {
-  int pos;
+List<Object?> doDictSort(
+  Map<Object?, Object?> dict, {
+  bool caseSensetive = false,
+  String by = 'key',
+  bool reverse = false,
+}) {
+  int position;
 
   switch (by) {
     case 'key':
-      pos = 0;
+      position = 0;
       break;
 
     case 'value':
-      pos = 1;
+      position = 1;
       break;
 
     default:
@@ -144,36 +166,50 @@ List<Object?> doDictSort(Map<Object?, Object?> dict,
   }
 
   var order = reverse ? -1 : 1;
-  var entities = dict.entries
-      .map<List<Object?>>((entry) => <Object?>[entry.key, entry.value])
-      .toList();
 
-  Comparable<Object?> Function(List<Object?> values) getter;
+  List<Object?> map(MapEntry<Object?, Object?> entry) {
+    return <Object?>[entry.key, entry.value];
+  }
+
+  var entities = dict.entries.map<List<Object?>>(map).toList();
+
+  Comparable<Object?> Function(List<Object?> values) get;
 
   if (caseSensetive) {
-    getter = (List<Object?> values) {
-      return values[pos] as Comparable<Object?>;
-    };
+    Comparable<Object?> getter(List<Object?> values) {
+      return values[position] as Comparable<Object?>;
+    }
+
+    get = getter;
   } else {
-    getter = (List<Object?> values) {
-      var value = values[pos];
+    Comparable<Object?> getter(List<Object?> values) {
+      var value = values[position];
 
       if (value is String) {
         return value.toLowerCase();
       }
 
       return value as Comparable<Object?>;
-    };
+    }
+
+    get = getter;
   }
 
-  entities.sort((a, b) => getter(a).compareTo(getter(b)) * order);
+  int sort(List<Object?> left, List<Object?> right) {
+    return get(left).compareTo(get(right)) * order;
+  }
+
+  entities.sort(sort);
   return entities;
 }
 
 /// If the value is null it will return the passed default value,
 /// otherwise the value of the variable.
-Object? doDefault(Object? value,
-    [Object? defaultValue = '', bool asBoolean = false]) {
+Object? doDefault(
+  Object? value, [
+  Object? defaultValue = '',
+  bool asBoolean = false,
+]) {
   if (value == null || asBoolean && !boolean(value)) {
     return defaultValue;
   }
@@ -186,11 +222,13 @@ Object? doDefault(Object? value,
 ///
 /// The separator between elements is an empty string per
 /// default, you can define it with the optional parameter
-Object? doJoin(Context context, Iterable<Object?> values,
-    [String delimiter = '']) {
+Object? doJoin(
+  Context context,
+  Iterable<Object?> values, [
+  String delimiter = '',
+]) {
   if (context.autoEscape) {
-    values = values.map<Object?>(context.escape);
-    return Markup.escaped(values.join(delimiter));
+    return Markup.escaped(values.map<Object?>(context.escape).join(delimiter));
   }
 
   return values.join(delimiter);
@@ -279,7 +317,7 @@ String doFileSizeFormat(Object? value, [bool binary = false]) {
   var k = binary ? 0 : 1;
   num unit = 0.0;
 
-  for (var i = 0; i < 8; i += 1) {
+  for (var i = 0; i < suffixes.length; i += 1) {
     unit = math.pow(base, i + 2);
 
     if (bytes < unit) {
@@ -299,11 +337,14 @@ String doFileSizeFormat(Object? value, [bool binary = false]) {
 /// sign than `"..."` you can specify it using the third parameter. Strings
 /// that only exceed the length by the tolerance margin given in the fourth
 /// parameter will not be truncated.
-String doTruncate(Environment environment, String value,
-    {int length = 255,
-    bool killWords = false,
-    String end = '...',
-    int leeway = 5}) {
+String doTruncate(
+  Environment environment,
+  String value, [
+  int length = 255,
+  bool killWords = false,
+  String end = '...',
+  int leeway = 5,
+]) {
   assert(length >= end.length, 'expected length >= ${end.length}, got $length');
   assert(leeway >= 0, 'expected leeway >= 0, got $leeway');
 
@@ -329,16 +370,22 @@ String doTruncate(Environment environment, String value,
 /// Wrap a string to the given width.
 ///
 /// Existing newlines are treated as paragraphs to be wrapped separately.
-String doWordWrap(Environment environment, String string, int width,
-    {bool breakLongWords = true,
-    String? wrapString,
-    bool breakOnHyphens = true}) {
+String doWordWrap(
+  Environment environment,
+  String string,
+  int width, {
+  bool breakLongWords = true,
+  String? wrapString,
+  bool breakOnHyphens = true,
+}) {
   var wrapper = TextWrapper(
-      width: width,
-      expandTabs: false,
-      replaceWhitespace: false,
-      breakLongWords: breakLongWords,
-      breakOnHyphens: breakOnHyphens);
+    width: width,
+    expandTabs: false,
+    replaceWhitespace: false,
+    breakLongWords: breakLongWords,
+    breakOnHyphens: breakOnHyphens,
+  );
+
   var wrap = wrapString ?? environment.newLine;
   return const LineSplitter()
       .convert(string)
@@ -355,14 +402,14 @@ int doWordCount(String string) {
 /// Convert the value into an integer.
 ///
 /// If the conversion doesn’t work it will return null.
-int? doInteger(String value, {int radix = 10, int? defaultValue}) {
+int doInteger(String value, [int defaultValue = 0, int radix = 10]) {
   return int.tryParse(value, radix: radix) ?? defaultValue;
 }
 
 /// Convert the value into a floating point number.
 ///
 /// If the conversion doesn’t work it will return null.
-double? doFloat(String value, {double? defaultValue}) {
+double doFloat(String value, [double defaultValue = 0.0]) {
   return double.tryParse(value) ?? defaultValue;
 }
 
@@ -372,7 +419,7 @@ num doAbs(num number) {
 }
 
 /// Strip leading and trailing characters, by default whitespace.
-String doTrim(String value, {String? characters}) {
+String doTrim(String value, [String? characters]) {
   if (characters == null) {
     return value.trim();
   }
@@ -392,7 +439,7 @@ String doStripTags(String value) {
 ///
 /// Useful if you want to create a div containing
 /// three ul tags that represent columns.
-List<List<Object?>> doSlice(Object? value, int slices, {Object? fillWith}) {
+List<List<Object?>> doSlice(Object? value, int slices, [Object? fillWith]) {
   var result = <List<Object?>>[];
   var values = list(value);
   var length = values.length;
@@ -407,7 +454,12 @@ List<List<Object?>> doSlice(Object? value, int slices, {Object? fillWith}) {
     }
 
     var end = offset + (i + 1) * perSlice;
-    var tmp = List<Object?>.generate(end - start, (i) => values[start + i]);
+
+    Object? generator(int i) {
+      return values[start + i];
+    }
+
+    var tmp = List<Object?>.generate(end - start, generator);
 
     if (fillWith != null && i >= withExtra) {
       tmp.add(fillWith);
@@ -424,8 +476,11 @@ List<List<Object?>> doSlice(Object? value, int slices, {Object? fillWith}) {
 /// It works pretty much like slice just the other way round. It returns
 /// a list of lists with the given number of items. If you provide
 /// a second parameter this is used to fill up missing items.
-List<List<Object?>> doBatch(Iterable<Object?> items, int lineCount,
-    {Object? fillWith}) {
+List<List<Object?>> doBatch(
+  Iterable<Object?> items,
+  int lineCount, [
+  Object? fillWith,
+]) {
   var result = <List<Object?>>[];
   var temp = <Object?>[];
 
@@ -440,9 +495,7 @@ List<List<Object?>> doBatch(Iterable<Object?> items, int lineCount,
 
   if (temp.isNotEmpty) {
     if (fillWith != null) {
-      for (var i = 0; i <= lineCount - temp.length; i += 1) {
-        temp.add(fillWith);
-      }
+      temp += List<Object?>.filled(lineCount - temp.length, fillWith);
     }
 
     result.add(temp);
@@ -465,7 +518,7 @@ int? doLength(Environment environment, dynamic object) {
 /// `start`.
 ///
 /// When the sequence is empty it returns start.
-num doSum(Iterable<num> values, {num start = 0}) {
+num doSum(Iterable<num> values, [num start = 0]) {
   return values.fold<num>(start, (s, n) => s + n);
 }
 
@@ -494,6 +547,39 @@ String doMarkUnsafe(Object? value) {
 Object? doReverse(Object? value) {
   var values = list(value);
   return values.reversed;
+}
+
+/// Applies a filter on a sequence of objects or looks up an attribute.
+/// This is useful when dealing with lists of objects but you are really
+/// only interested in a certain value of it.
+///
+/// The basic usage is mapping on an attribute.
+Iterable<Object?> doMap(
+  Context context,
+  Iterable<Object?> values, {
+  Object? attribute,
+  Object? defaultValue,
+  String? filter,
+}) {
+  if (attribute != null) {
+    var getter = makeAttributeGetter(
+      context.environment,
+      attribute,
+      defaultValue: defaultValue,
+    );
+
+    values = values.map<Object?>(getter);
+  }
+
+  if (filter != null) {
+    Object? map(Object? value) {
+      return context.filter(filter, <Object?>[value]);
+    }
+
+    return values.map<Object?>(map);
+  }
+
+  return values;
 }
 
 /// Get an attribute of an object.
@@ -560,6 +646,7 @@ final Map<String, Function> filters = <String, Function>{
   'reverse': doReverse,
   'attr': passEnvironment(doAttribute),
   'item': passEnvironment(doItem),
+  'map': passContext(doMap),
   // 'select': passContext(doSelect),
   // 'reject': passContext(doReject),
   // 'selectattr': passContext(doSelectAttr),

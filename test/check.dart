@@ -2,7 +2,7 @@ import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/exceptions.dart';
 import 'package:stack_trace/stack_trace.dart';
 
-const String source = '''{{ 'a11' | int | default 0 }}''';
+const String source = '{{ values | map(item="name") | join(", ") }}';
 
 void main() {
   try {
@@ -15,22 +15,23 @@ void main() {
     print('\noriginal nodes:');
     nodes.forEach(print);
 
-    for (var node in nodes) {
-      for (var modifier in environment.modifiers) {
-        modifier(node);
-      }
-    }
-
-    print('\nmodified nodes:');
-    nodes.forEach(print);
-
     var template = Template.fromNodes(environment, nodes);
 
+    print('\nmodified nodes:');
+    print(template.body);
+
+    var data = {
+      'values': [
+        {'name': 'Jhon'},
+        {'name': 'Jhane'}
+      ]
+    };
+
     print('\ngenerate:');
-    print(template.generate());
+    print(template.generate(data));
 
     print('render:');
-    print(template.render());
+    print(template.render(data));
   } on TemplateError catch (error, trace) {
     print(error.message);
     print(Trace.format(trace, terse: true));

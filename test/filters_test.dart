@@ -8,9 +8,9 @@ import 'package:test/test.dart';
 import 'environment.dart';
 
 class User {
-  User(this.username);
+  User(this.name);
 
-  String username;
+  String name;
 }
 
 void main() {
@@ -128,14 +128,14 @@ void main() {
     });
 
     test('float', () {
-      var tmpl = env.fromString('{{ value|float|default(0.0) }}');
+      var tmpl = env.fromString('{{ value|float }}');
       expect(tmpl.render({'value': '42'}), equals('42.0'));
       expect(tmpl.render({'value': 'abc'}), equals('0.0'));
       expect(tmpl.render({'value': '32.32'}), equals('32.32'));
     });
 
     test('float default', () {
-      var tmpl = env.fromString('{{ value|float|default(1.0) }}');
+      var tmpl = env.fromString('{{ value|float(1.0) }}');
       expect(tmpl.render({'value': 'abc'}), equals('1.0'));
     });
 
@@ -152,41 +152,44 @@ void main() {
     // test('indent width string', () {});
 
     test('int', () {
-      var tmpl = env.fromString('{{ value|int|default(0) }}');
+      var tmpl = env.fromString('{{ value|int }}');
       expect(tmpl.render({'value': '42'}), equals('42'));
       expect(tmpl.render({'value': 'abc'}), equals('0'));
       expect(tmpl.render({'value': '32.32'}), equals('0'));
     });
 
     test('int base', () {
-      var tmpl = env.fromString('{{ value|int(8)|default(0) }}');
+      var tmpl = env.fromString('{{ value|int(0, 8) }}');
       expect(tmpl.render({'value': '11'}), equals('9'));
-      tmpl = env.fromString('{{ value|int(16)|default(0) }}');
+      tmpl = env.fromString('{{ value|int(0, 16) }}');
       expect(tmpl.render({'value': '33Z'}), equals('0'));
     });
 
     test('int default', () {
-      var tmpl = env.fromString('{{ value|int|default(1) }}');
+      var tmpl = env.fromString('{{ value|int(1) }}');
       expect(tmpl.render({'value': 'abc'}), equals('1'));
     });
 
     test('join', () {
       var tmpl = env.fromString('{{ [1, 2, 3]|join("|") }}');
       expect(tmpl.render(), equals('1|2|3'));
+
       var env2 = Environment(autoEscape: true);
       tmpl = env2.fromString('{{ ["<foo>", "<span>foo</span>"|safe]|join }}');
       expect(tmpl.render(), equals('&lt;foo&gt;<span>foo</span>'));
     });
 
     test('join attribute', () {
-      var tmpl =
-          env.fromString('{{ users|map(attribute="username")|join(", ") }}');
-      var users = [User('foo'), User('bar')];
-      expect(tmpl.render({'users': users}), equals('foo, bar'));
+      var data = {
+        'users': [User('foo'), User('bar')]
+      };
+
+      var tmpl = env.fromString('{{ users|map(attribute="name")|join(", ") }}');
+      expect(tmpl.render(data), equals('foo, bar'));
     });
 
     test('last', () {
-      var tmpl = env.fromString('''{{ foo|last }}''');
+      var tmpl = env.fromString('{{ foo|last }}');
       expect(tmpl.render({'foo': range(10)}), equals('9'));
     });
 
@@ -196,7 +199,7 @@ void main() {
     });
 
     test('lower', () {
-      var tmpl = env.fromString('''{{ "FOO"|lower }}''');
+      var tmpl = env.fromString('{{ "FOO"|lower }}');
       expect(tmpl.render(), equals('foo'));
     });
 
@@ -221,9 +224,12 @@ void main() {
     });
 
     test('string', () {
-      var values = [1, 2, 3, 4, 5];
+      var data = {
+        'values': [1, 2, 3, 4, 5]
+      };
+
       var tmpl = env.fromString('{{ values|string }}');
-      expect(tmpl.render({'values': values}), equals('$values'));
+      expect(tmpl.render(data), equals('${[1, 2, 3, 4, 5]}'));
     });
 
     // TODO: add test: title
@@ -274,9 +280,8 @@ void main() {
     });
 
     test('block', () {
-      var tmpl =
-          env.fromString('{% filter lower|escape %}<HEHE>{% endfilter %}');
-      expect(tmpl.render(), equals('&lt;hehe&gt;'));
+      var tmpl = env.fromString('{% filter lower|escape %}<HE>{% endfilter %}');
+      expect(tmpl.render(), equals('&lt;he&gt;'));
     });
 
     test('chaining', () {
@@ -340,13 +345,14 @@ void main() {
 
     test('filtertag', () {
       var tmpl = env.fromString(
-          '{% filter upper|replace(\'FOO\', \'foo\') %}foobar{% endfilter %}');
+          '{% filter upper|replace("FOO", "foo") %}foobar{% endfilter %}');
       expect(tmpl.render(), equals('fooBAR'));
     });
 
     test('replace', () {
       var tmpl = env.fromString('{{ string|replace("o", "42") }}');
       expect(tmpl.render({'string': '<foo>'}), equals('<f4242>'));
+
       var env2 = Environment(autoEscape: true);
       tmpl = env2.fromString('{{ string|replace("o", "42") }}');
       expect(tmpl.render({'string': '<foo>'}), equals('&lt;f4242&gt;'));

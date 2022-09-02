@@ -662,15 +662,17 @@ class Call extends Callable {
 }
 
 class Filter extends Callable {
-  Filter(this.name,
-      {Expression? expression,
-      super.arguments,
-      super.keywords,
-      super.dArguments,
-      super.dKeywords})
-      // remove after better null safety promotion
-      // ignore: prefer_initializing_formals
-      : hasExpression = expression != null;
+  Filter(
+    this.name, {
+    Expression? expression,
+    super.arguments,
+    super.keywords,
+    super.dArguments,
+    super.dKeywords,
+  })
+  // remove after better null safety promotion
+  // ignore: prefer_initializing_formals
+  : hasExpression = expression != null;
 
   String name;
 
@@ -726,8 +728,13 @@ class Filter extends Callable {
 }
 
 class Test extends Callable {
-  Test(this.name,
-      {super.arguments, super.keywords, super.dArguments, super.dKeywords});
+  Test(
+    this.name, {
+    super.arguments,
+    super.keywords,
+    super.dArguments,
+    super.dKeywords,
+  });
 
   String name;
 
