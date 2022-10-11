@@ -502,7 +502,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
     var orElse = node.orElse;
 
     if (iterable == null) {
-      throw TypeError();
+      throw ArgumentError.notNull('${node.iterable}');
     }
 
     String render(Object? iterable, [int depth = 0]) {
