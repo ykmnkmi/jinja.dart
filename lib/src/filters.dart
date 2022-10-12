@@ -3,7 +3,6 @@ import 'dart:math' as math;
 
 import 'package:jinja/src/context.dart';
 import 'package:jinja/src/environment.dart';
-import 'package:jinja/src/exceptions.dart';
 import 'package:jinja/src/markup.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:textwrap/textwrap.dart' show TextWrapper;
@@ -162,7 +161,8 @@ List<Object?> doDictSort(
       break;
 
     default:
-      throw FilterArgumentError("you can only sort by either 'key' or 'value'");
+      throw ArgumentError.value(
+          by, 'by', "you can only sort by either 'key' or 'value'");
   }
 
   var order = reverse ? -1 : 1;
@@ -213,7 +213,6 @@ Object? doDefault(
   if (value == null || asBoolean && !boolean(value)) {
     return defaultValue;
   }
-
   return value;
 }
 
@@ -278,14 +277,14 @@ Object? doRandom(Environment environment, Object? value) {
 /// parameter is set to True the binary prefixes are used (Mebi, Gibi).
 String doFileSizeFormat(Object? value, [bool binary = false]) {
   const suffixes = <List<String>>[
-    [' KiB', ' kB'],
-    [' MiB', ' MB'],
-    [' GiB', ' GB'],
-    [' TiB', ' TB'],
-    [' PiB', ' PB'],
-    [' EiB', ' EB'],
-    [' ZiB', ' ZB'],
-    [' YiB', ' YB'],
+    <String>[' KiB', ' kB'],
+    <String>[' MiB', ' MB'],
+    <String>[' GiB', ' GB'],
+    <String>[' TiB', ' TB'],
+    <String>[' PiB', ' PB'],
+    <String>[' EiB', ' EB'],
+    <String>[' ZiB', ' ZB'],
+    <String>[' YiB', ' YB'],
   ];
 
   var base = binary ? 1024 : 1000;
@@ -305,6 +304,7 @@ String doFileSizeFormat(Object? value, [bool binary = false]) {
 
   if (bytes < base) {
     const suffix = ' Bytes';
+
     var size = bytes.toStringAsFixed(1);
 
     if (size.endsWith('.0')) {
@@ -315,6 +315,7 @@ String doFileSizeFormat(Object? value, [bool binary = false]) {
   }
 
   var k = binary ? 0 : 1;
+
   num unit = 0.0;
 
   for (var i = 0; i < suffixes.length; i += 1) {

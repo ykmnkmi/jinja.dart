@@ -1,4 +1,4 @@
-## 0.4.0-dev.41
+## 0.4.0-dev.51
 - minimal SDK version: 2.17.0
 - added:
   - `PassArgument`, `passContext` and `passEnvironment` ...
@@ -30,7 +30,6 @@
     - `TemplateNotFound`
     - `TemplatesNotFound`
     - `TemplateRuntimeError`
-    - `FilterArgumentError`
   - statements:
     - `do`
     - `with`

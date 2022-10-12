@@ -92,7 +92,7 @@ List<Object?> list(Object? iterable) {
   }
 
   if (iterable is MapEntry) {
-    return [iterable.key, iterable.value];
+    return <Object?>[iterable.key, iterable.value];
   }
 
   if (iterable is Map) {
