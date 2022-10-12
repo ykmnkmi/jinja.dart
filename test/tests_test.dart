@@ -355,7 +355,7 @@ void main() {
       expect(tmpl.render(), equals(''));
       expect(
           () => tmpl.render({'x': 1}),
-          throwsA(predicate<TemplateRuntimeError>(
+          throwsA(predicate<TemplateAssertionError>(
               (error) => error.message == 'no test named \'f\'')));
     });
 

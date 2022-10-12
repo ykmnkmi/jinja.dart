@@ -127,11 +127,14 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
       return;
     }
 
+    // TODO: replace with Filter { BlockExpression ( AssignBlock ) }
     for (var filter in filters) {
-      value = filter.apply(context, (positional, named) {
+      Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
         positional.insert(0, value);
         return context.filter(filter.name, positional, named);
-      });
+      }
+
+      value = filter.apply(context, callback);
     }
 
     if (context.autoEscape) {
@@ -159,8 +162,7 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
     } else {
       if (node.required) {
         if (blocks.length == 1) {
-          var name = node.name;
-          throw TemplateRuntimeError('required block \'$name\' not found');
+          throw TemplateRuntimeError("required block '${node.name}' not found");
         }
       }
 
@@ -174,6 +176,7 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
             return parentBlock.body.accept(this, context).join();
           }
 
+          // TODO: add error mesage
           throw TemplateRuntimeError();
         }
 
@@ -320,7 +323,11 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
 
     for (var block in node.blocks) {
       var blocks = context.blocks[block.name] ??= <Block>[];
-      self[block.name] = () => block.accept(this, context).join();
+
+      self[block.name] = () {
+        return block.accept(this, context).join();
+      };
+
       blocks.add(block);
     }
 
@@ -330,10 +337,9 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
 
   @override
   Iterable<String> visitWith(With node, RenderContext context) sync* {
-    var targets = List<Object?>.generate(
-        node.targets.length, (i) => node.targets[i].resolve(context));
-    var values = List<Object?>.generate(
-        node.values.length, (i) => node.values[i].resolve(context));
+    var targets =
+        generate(node.targets, (i) => node.targets[i].resolve(context));
+    var values = generate(node.values, (i) => node.values[i].resolve(context));
     var data = context.save(getDataForTargets(targets, values));
     yield* node.body.accept(this, context);
     context.restore(data);
@@ -395,11 +401,14 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
       return;
     }
 
+    // TODO: replace with Filter { BlockExpression ( AssignBlock ) }
     for (var filter in filters) {
-      value = filter.apply(context, (positional, named) {
+      Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
         positional.insert(0, value);
         return context.filter(filter.name, positional, named);
-      });
+      }
+
+      value = filter.apply(context, callback);
     }
 
     if (context.autoEscape) {
@@ -426,8 +435,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
     } else {
       if (node.required) {
         if (blocks.length == 1) {
-          var name = node.name;
-          throw TemplateRuntimeError('required block \'$name\' not found');
+          throw TemplateRuntimeError("required block '${node.name}' not found");
         }
       }
 
@@ -442,6 +450,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
             return '';
           }
 
+          // TODO: add error message
           throw TemplateRuntimeError();
         }
 
@@ -483,13 +492,15 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
     var buffer = StringBuffer();
     node.body.accept(this, context.derived(buffer: buffer));
 
-    Object? value = '$buffer';
+    Object? value = buffer.toString();
 
     for (var filter in node.filters) {
-      value = filter.apply(context, (positional, named) {
+      Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
         positional.insert(0, value);
         return context.filter(filter.name, positional, named);
-      });
+      }
+
+      value = filter.apply(context, callback);
     }
 
     context.write(value);
@@ -605,13 +616,13 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
       return node.targets[index].resolve(context);
     }
 
-    var targets = List<Object?>.generate(node.targets.length, target);
+    var targets = generate(node.targets, target);
 
     Object? value(int index) {
       return node.values[index].resolve(context);
     }
 
-    var values = List<Object?>.generate(node.values.length, value);
+    var values = generate(node.values, value);
     var data = context.save(getDataForTargets(targets, values));
     node.body.accept(this, context);
     context.restore(data);
@@ -641,5 +652,5 @@ Map<String, Object?> getDataForTargets(Object? targets, Object? current) {
     };
   }
 
-  throw TypeError();
+  throw ArgumentError.value(targets, 'targets', 'must be String or List<String>');
 }

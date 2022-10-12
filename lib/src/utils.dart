@@ -124,7 +124,7 @@ Iterable<Object?> iterate(Object? iterable) {
 
 Iterable<int> range(int startOrStop, [int? stop, int step = 1]) sync* {
   if (step == 0) {
-    throw StateError('range() argument 3 must not be zero');
+    throw ArgumentError.value(step, 'step', 'must not be zero');
   }
 
   int start;
@@ -147,6 +147,11 @@ Iterable<int> range(int startOrStop, [int? stop, int step = 1]) sync* {
   }
 }
 
+List<R> generate<T, R>(List<T> list, R Function(int) generator,
+    {bool growable = true}) {
+  return List<R>.generate(list.length, generator, growable: growable);
+}
+
 String repr(Object? object, [bool escapeNewlines = false]) {
   var buffer = StringBuffer();
   reprTo(object, buffer, escapeNewlines);
@@ -156,7 +161,7 @@ String repr(Object? object, [bool escapeNewlines = false]) {
 void reprTo(Object? object, StringBuffer buffer,
     [bool escapeNewlines = false]) {
   if (object is String) {
-    object = object.replaceAll('\'', '\\\'');
+    object = object.replaceAll("'", "\\'");
 
     if (escapeNewlines) {
       object = object.replaceAllMapped(RegExp('(\r\n|\r|\n)'), (match) {
@@ -164,7 +169,7 @@ void reprTo(Object? object, StringBuffer buffer,
       });
     }
 
-    buffer.write('\'$object\'');
+    buffer.write("'$object'");
     return;
   }
 
