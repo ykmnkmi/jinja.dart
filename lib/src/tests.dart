@@ -134,6 +134,52 @@ bool isIn(Object? value, Object? values) {
   throw TypeError();
 }
 
+/// Same as `a != b`.
+bool isNotEqual(Object? value, Object? other) {
+  return value != other;
+}
+
+/// Same as `a < b`.
+bool isLessThan(Object? value, Object? other) {
+  return (value as Comparable<Object?>).compareTo(other) < 0;
+}
+
+/// Same as `a <= b`.
+bool isLessThanOrEqual(Object? value, Object? other) {
+  return (value as Comparable<Object?>).compareTo(other) <= 0;
+}
+
+/// Same as `a == b`.
+bool isEqual(Object? value, Object? other) {
+  return value == other;
+}
+
+/// Same as `a > b`.
+bool isGreaterThan(Object? value, Object? other) {
+  return (value as Comparable<Object?>).compareTo(other) > 0;
+}
+
+/// Same as `a >= b`.
+bool isGreaterThanOrEqual(Object? value, Object? other) {
+  return (value as Comparable<Object?>).compareTo(other) >= 0;
+}
+
+/// Return whether the object is callable (i.e., some kind of function).
+/// Note that classes are callable, as are instances of classes with
+/// a `call()` method.
+bool isCallable(dynamic object) {
+  if (object is Function) {
+    return true;
+  }
+
+  try {
+    // * dynamic invocation
+    return object.call is Function;
+  } on NoSuchMethodError {
+    return false;
+  }
+}
+
 final Map<String, Function> tests = <String, Function>{
   'odd': isOdd,
   'even': isEven,
@@ -175,49 +221,3 @@ final Map<String, Function> tests = <String, Function>{
   'lt': isLessThan,
   'ne': isNotEqual,
 };
-
-/// Return whether the object is callable (i.e., some kind of function).
-/// Note that classes are callable, as are instances of classes with
-/// a `call()` method.
-bool isCallable(dynamic object) {
-  if (object is Function) {
-    return true;
-  }
-
-  try {
-    // * dynamic invocation
-    return object.call is Function;
-  } on NoSuchMethodError {
-    return false;
-  }
-}
-
-/// Same as `a == b`.
-bool isEqual(Object? value, Object? other) {
-  return value == other;
-}
-
-/// Same as `a > b`.
-bool isGreaterThan(Object? value, Object? other) {
-  return (value as Comparable<Object?>).compareTo(other) > 0;
-}
-
-/// Same as `a >= b`.
-bool isGreaterThanOrEqual(Object? value, Object? other) {
-  return (value as Comparable<Object?>).compareTo(other) >= 0;
-}
-
-/// Same as `a < b`.
-bool isLessThan(Object? value, Object? other) {
-  return (value as Comparable<Object?>).compareTo(other) < 0;
-}
-
-/// Same as `a <= b`.
-bool isLessThanOrEqual(Object? value, Object? other) {
-  return (value as Comparable<Object?>).compareTo(other) <= 0;
-}
-
-/// Same as `a != b`.
-bool isNotEqual(Object? value, Object? other) {
-  return value != other;
-}

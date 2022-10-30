@@ -27,8 +27,11 @@ class Parser {
     throw TemplateSyntaxError(message, line: line, path: path);
   }
 
-  Never failUnknownTagEof(String? name, List<List<String>> endTokensStack,
-      [int? line]) {
+  Never failUnknownTagEof(
+    String? name,
+    List<List<String>> endTokensStack, [
+    int? line,
+  ]) {
     var expected = <String>[];
     String? currentlyLooking;
 
@@ -87,6 +90,7 @@ class Parser {
       case 'block_end':
       case 'rparen':
         return true;
+
       default:
         if (extraEndRules != null && extraEndRules.isNotEmpty) {
           return reader.current.testAny(extraEndRules);
@@ -96,9 +100,14 @@ class Parser {
     }
   }
 
-  T parseImportContext<T extends ImportContext>(TokenReader reader, T node,
-      [bool defaultValue = true]) {
-    if (reader.current.testAny(<String>['name:with', 'name:without']) &&
+  T parseImportContext<T extends ImportContext>(
+    TokenReader reader,
+    T node, [
+    bool defaultValue = true,
+  ]) {
+    var keywords = <String>['name:with', 'name:without'];
+
+    if (reader.current.testAny(keywords) &&
         reader.look().test('name', 'context')) {
       node.withContext = reader.current.value == 'with';
       reader.skip(2);
@@ -109,11 +118,13 @@ class Parser {
     return node;
   }
 
-  Expression parseAssignTarget(TokenReader reader,
-      {List<String>? extraEndRules,
-      bool nameOnly = false,
-      bool withNamespace = false,
-      bool withTuple = true}) {
+  Expression parseAssignTarget(
+    TokenReader reader, {
+    List<String>? extraEndRules,
+    bool nameOnly = false,
+    bool withNamespace = false,
+    bool withTuple = true,
+  }) {
     var line = reader.current.line;
     Expression target;
 
@@ -128,8 +139,11 @@ class Parser {
       target = Name(name.value, context: AssignContext.store);
     } else {
       if (withTuple) {
-        target =
-            parseTuple(reader, simplified: true, extraEndRules: extraEndRules);
+        target = parseTuple(
+          reader,
+          simplified: true,
+          extraEndRules: extraEndRules,
+        );
       } else {
         target = parsePrimary(reader);
       }
@@ -189,8 +203,11 @@ class Parser {
     }
   }
 
-  List<Node> parseStatements(TokenReader reader, List<String> endTokens,
-      [bool dropNeedle = false]) {
+  List<Node> parseStatements(
+    TokenReader reader,
+    List<String> endTokens, [
+    bool dropNeedle = false,
+  ]) {
     reader.skipIf('colon');
     reader.expect('block_end');
 
@@ -242,8 +259,9 @@ class Parser {
       test = parseExpression(reader);
     }
 
+    const endForElse = <String>['name:endfor', 'name:else'];
     var recursive = reader.skipIf('name', 'recursive');
-    var nodes = parseStatements(reader, <String>['name:endfor', 'name:else']);
+    var nodes = parseStatements(reader, endForElse);
     var body = Output.orSingle(nodes);
 
     Node? orElse;
@@ -383,16 +401,18 @@ class Parser {
       return Assign(target, expression);
     }
 
+    const endSet = <String>['name:endset'];
     var filters = parseFilters(reader);
-    var nodes = parseStatements(reader, <String>['name:endset'], true);
+    var nodes = parseStatements(reader, endSet, true);
     return AssignBlock(target, Output.orSingle(nodes), filters);
   }
 
   AutoEscape parseAutoEscape(TokenReader reader) {
     reader.expect('name', 'autoescape');
 
+    const endAutoEscape = <String>['name:endautoescape'];
     var escape = parseExpression(reader);
-    var body = parseStatements(reader, <String>['name:endautoescape'], true);
+    var body = parseStatements(reader, endAutoEscape, true);
     return AutoEscape(escape, Output.orSingle(body));
   }
 
@@ -451,6 +471,7 @@ class Parser {
   }
 
   Expression parseCompare(TokenReader reader) {
+    const operators = <String>['eq', 'ne', 'lt', 'lteq', 'gt', 'gteq'];
     var expression = parseMath1(reader);
     var operands = <Operand>[];
 
@@ -458,7 +479,7 @@ class Parser {
     while (true) {
       CompareOperator operator;
 
-      if (reader.current.testAny(['eq', 'ne', 'lt', 'lteq', 'gt', 'gteq'])) {
+      if (reader.current.testAny(operators)) {
         var token = reader.current;
         reader.next();
         operator = Operand.operatorFrom(token.type)!;
@@ -494,10 +515,12 @@ class Parser {
           reader.next();
           operator = ScalarOperator.plus;
           break;
+
         case 'sub':
           reader.next();
           operator = ScalarOperator.minus;
           break;
+
         default:
           break outer;
       }
@@ -535,18 +558,22 @@ class Parser {
           reader.next();
           operator = ScalarOperator.multiple;
           break;
+
         case 'div':
           reader.next();
           operator = ScalarOperator.division;
           break;
+
         case 'floordiv':
           reader.next();
           operator = ScalarOperator.floorDivision;
           break;
+
         case 'mod':
           reader.next();
           operator = ScalarOperator.module;
           break;
+
         default:
           break outer;
       }
@@ -577,11 +604,13 @@ class Parser {
         expression = parseUnary(reader, withFilter: false);
         expression = Unary(UnaryOperator.plus, expression);
         break;
+
       case 'sub':
         reader.next();
         expression = parseUnary(reader, withFilter: false);
         expression = Unary(UnaryOperator.minus, expression);
         break;
+
       default:
         expression = parsePrimary(reader);
     }
@@ -606,21 +635,25 @@ class Parser {
           case 'false':
             expression = Constant(false);
             break;
+
           case 'True':
           case 'true':
             expression = Constant(true);
             break;
+
           case 'None':
           case 'none':
           case 'null':
             expression = Constant(null);
             break;
+
           default:
             expression = Name(current.value);
         }
 
         reader.next();
         break;
+
       case 'string':
         var buffer = StringBuffer(current.value);
         reader.next();
@@ -635,22 +668,27 @@ class Parser {
             .replaceAll(r'\\r', '\r')
             .replaceAll(r'\\n', '\n'));
         break;
+
       case 'integer':
       case 'float':
         expression = Constant(num.parse(current.value));
         reader.next();
         break;
+
       case 'lparen':
         reader.next();
         expression = parseTuple(reader, explicitParentheses: true);
         reader.expect('rparen');
         break;
+
       case 'lbracket':
         expression = parseList(reader);
         break;
+
       case 'lbrace':
         expression = parseDict(reader);
         break;
+
       default:
         fail('unexpected ${describeToken(current)}', current.line);
     }
@@ -658,11 +696,13 @@ class Parser {
     return expression;
   }
 
-  Expression parseTuple(TokenReader reader,
-      {bool simplified = false,
-      bool withCondition = true,
-      List<String>? extraEndRules,
-      bool explicitParentheses = false}) {
+  Expression parseTuple(
+    TokenReader reader, {
+    bool simplified = false,
+    bool withCondition = true,
+    List<String>? extraEndRules,
+    bool explicitParentheses = false,
+  }) {
     Expression Function(TokenReader) parse;
 
     if (simplified) {

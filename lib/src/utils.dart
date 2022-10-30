@@ -33,9 +33,8 @@ bool boolean(Object? value) {
 }
 
 String escape(String text) {
-  StringBuffer? result;
-
   var start = 0;
+  StringBuffer? result;
 
   for (var i = 0; i < text.length; i++) {
     String? replacement;
@@ -147,8 +146,11 @@ Iterable<int> range(int startOrStop, [int? stop, int step = 1]) sync* {
   }
 }
 
-List<R> generate<T, R>(List<T> list, R Function(int) generator,
-    {bool growable = true}) {
+List<R> generate<T, R>(
+  List<T> list,
+  R Function(int) generator, {
+  bool growable = true,
+}) {
   return List<R>.generate(list.length, generator, growable: growable);
 }
 
@@ -158,15 +160,20 @@ String repr(Object? object, [bool escapeNewlines = false]) {
   return buffer.toString();
 }
 
-void reprTo(Object? object, StringBuffer buffer,
-    [bool escapeNewlines = false]) {
+void reprTo(
+  Object? object,
+  StringBuffer buffer, [
+  bool escapeNewlines = false,
+]) {
   if (object is String) {
     object = object.replaceAll("'", "\\'");
 
     if (escapeNewlines) {
-      object = object.replaceAllMapped(RegExp('(\r\n|\r|\n)'), (match) {
+      String replace(Match match) {
         return match.group(1) ?? '';
-      });
+      }
+
+      object = object.replaceAllMapped(RegExp('(\r\n|\r|\n)'), replace);
     }
 
     buffer.write("'$object'");

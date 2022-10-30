@@ -1,9 +1,10 @@
-import 'runtime.dart';
-import 'utils.dart';
+import 'package:jinja/src/context.dart';
+import 'package:jinja/src/namespace.dart';
+import 'package:jinja/src/utils.dart';
 
-export 'filters.dart' show filters;
-export 'tests.dart' show tests;
-export 'modifiers.dart' show modifiers;
+export 'package:jinja/src/filters.dart' show filters;
+export 'package:jinja/src/tests.dart' show tests;
+export 'package:jinja/src/modifiers.dart' show modifiers;
 
 const String blockStart = '{%';
 const String blockEnd = '%}';
@@ -29,7 +30,7 @@ const Map<String, Object?> globals = <String, Object?>{
   'range': range,
 };
 
-Object finalize(Object? value) {
+Object finalize(Context context, Object? value) {
   return value ?? '';
 }
 

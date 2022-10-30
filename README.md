@@ -13,9 +13,10 @@ template documentation. _work in progress_.
 
 ## Differences
 - `BigInt` is not supported
-- complex numbers is not supported
-- `default` filter compare values with `null`
-- `defined` and `undefined` tests compare values with `null`
+- Complex numbers are not supported
+- The `default` filter compares values against `null`
+- The `defined` and `undefined` tests compares values against `null`
+- The `Environment` `finalizer` takes only one `value` argument
 - _work in progress_
 
 ## Dynamically invoked members
@@ -54,7 +55,7 @@ and [reflectable][reflectable_example].
   - Call
   - Import
 - Loaders
-  - PackageLoader
+  - PackageLoader (VM)
   - ...
 - Extensions
   - i18n

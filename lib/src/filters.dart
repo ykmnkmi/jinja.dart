@@ -213,6 +213,7 @@ Object? doDefault(
   if (value == null || asBoolean && !boolean(value)) {
     return defaultValue;
   }
+
   return value;
 }
 
@@ -304,7 +305,6 @@ String doFileSizeFormat(Object? value, [bool binary = false]) {
 
   if (bytes < base) {
     const suffix = ' Bytes';
-
     var size = bytes.toStringAsFixed(1);
 
     if (size.endsWith('.0')) {
@@ -315,7 +315,6 @@ String doFileSizeFormat(Object? value, [bool binary = false]) {
   }
 
   var k = binary ? 0 : 1;
-
   num unit = 0.0;
 
   for (var i = 0; i < suffixes.length; i += 1) {

@@ -1,5 +1,6 @@
-import 'package:jinja/jinja.dart';
 import 'package:jinja/reflection.dart';
+import 'package:jinja/runtime.dart';
+import 'package:jinja/src/environment.dart';
 import 'package:test/test.dart';
 
 const emptyMap = <Object?, Object?>{};

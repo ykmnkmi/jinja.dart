@@ -1,9 +1,6 @@
 import 'package:jinja/jinja.dart';
+import 'package:jinja/runtime.dart';
 import 'package:test/test.dart';
-
-import 'package:jinja/src/context.dart';
-import 'package:jinja/src/runtime.dart';
-import 'package:jinja/src/utils.dart';
 
 void main() {
   group('ExtendedAPI', () {
@@ -33,28 +30,26 @@ void main() {
       expect(tmpl.render({'value': 123}), equals('<int>'));
     });
 
-    // not suppored
-    // test('context finalize', () {
-    //   Object? finalize(Context context, dynamic value) {
-    //     return value * context.resolve('scale');
-    //   }
+    test('context finalize', () {
+      Object finalize(Context context, dynamic value) {
+        return value * context.resolve('scale') as Object;
+      }
 
-    //   var env = Environment(finalize: finalize);
-    //   var tmpl = env.fromString('{{ value }}');
-    //   expect(tmpl.render({'value': 5, 'scale': 3}), equals('15'));
-    // });
+      var env = Environment(finalize: finalize);
+      var tmpl = env.fromString('{{ value }}');
+      expect(tmpl.render({'value': 5, 'scale': 3}), equals('15'));
+    });
 
-    // not supported
-    // test('env autoescape', () {
-    //   Object? finalize(Environment environment, Object? value) {
-    //     return '${environment.variableStart} ${repr(value)} '
-    //         '${environment.variableEnd}';
-    //   }
+    test('env autoescape', () {
+      Object finalize(Environment environment, Object? value) {
+        return '${environment.variableStart} ${repr(value)} '
+            '${environment.variableEnd}';
+      }
 
-    //   var env = Environment(finalize: finalize);
-    //   var tmpl = env.fromString('{{ value }}');
-    //   expect(tmpl.render({'value': 'hello'}), equals("{{ 'hello' }}"));
-    // });
+      var env = Environment(finalize: finalize);
+      var tmpl = env.fromString('{{ value }}');
+      expect(tmpl.render({'value': 'hello'}), equals("{{ 'hello' }}"));
+    });
 
     test('cycler', () {
       var items = [1, 2, 3];

@@ -1,7 +1,6 @@
+import 'package:jinja/src/environment.dart';
+import 'package:jinja/src/exceptions.dart';
 import 'package:path/path.dart';
-
-import 'environment.dart';
-import 'exceptions.dart';
 
 String formatPath(String path) {
   return normalize(path).replaceAll(r'\', '/');

@@ -1,5 +1,5 @@
-## 0.4.0-dev.51
-- minimal SDK version: 2.17.0
+## 0.4.0-dev.53
+- minimal SDK version: 2.18.0
 - added:
   - `PassArgument`, `passContext` and `passEnvironment` ...
   - `print` to globals: `{{ do print(name) }}`
@@ -44,6 +44,7 @@
     - `wordcount`
     - `wordwrap`
     - `item`
+  - `filters`, `tests` and `runtime` library
 - changed:
   - `FieldGetter` typedef renamed to `AttributeGetter`
   - `mapping` test renamed to `map`

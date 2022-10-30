@@ -1,24 +1,34 @@
 import 'package:jinja/src/context.dart';
 import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/exceptions.dart';
+import 'package:jinja/src/loop.dart';
 import 'package:jinja/src/markup.dart';
+import 'package:jinja/src/namespace.dart';
 import 'package:jinja/src/nodes.dart';
-import 'package:jinja/src/runtime.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:jinja/src/visitor.dart';
 
 class RenderContext extends Context {
-  RenderContext(super.environment,
-      {Map<String, List<Block>>? blocks, super.parent, super.data})
-      : blocks = blocks ?? <String, List<Block>>{};
+  RenderContext(
+    super.environment, {
+    Map<String, List<Block>>? blocks,
+    super.parent,
+    super.data,
+  }) : blocks = blocks ?? <String, List<Block>>{};
 
   final Map<String, List<Block>> blocks;
 
   @override
-  RenderContext derived(
-      {Map<String, List<Block>>? blocks, Map<String, Object?>? data}) {
-    return RenderContext(environment,
-        blocks: blocks ?? this.blocks, parent: context, data: data);
+  RenderContext derived({
+    Map<String, List<Block>>? blocks,
+    Map<String, Object?>? data,
+  }) {
+    return RenderContext(
+      environment,
+      blocks: blocks ?? this.blocks,
+      parent: context,
+      data: data,
+    );
   }
 
   Map<String, Object?> save(Map<String, Object?> map) {
@@ -50,7 +60,7 @@ class RenderContext extends Context {
   }
 
   Object? finalize(Object? object) {
-    return environment.finalize(object);
+    return environment.finalize(this, object);
   }
 
   void assignTargets(Object? target, Object? current) {
@@ -112,7 +122,9 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
 
   @override
   Iterable<String> visitAssignBlock(
-      AssignBlock node, RenderContext context) sync* {
+    AssignBlock node,
+    RenderContext context,
+  ) sync* {
     var target = node.target.resolve(context);
     Object? value = node.body.accept(this, context.derived()).join();
 
@@ -146,7 +158,9 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
 
   @override
   Iterable<String> visitAutoEscape(
-      AutoEscape node, RenderContext context) sync* {
+    AutoEscape node,
+    RenderContext context,
+  ) sync* {
     var current = context.autoEscape;
     context.autoEscape = boolean(node.value.resolve(context));
     yield* node.body.accept(this, context);
@@ -201,7 +215,9 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
 
   @override
   Iterable<String> visitExpression(
-      Expression node, RenderContext context) sync* {
+    Expression node,
+    RenderContext context,
+  ) sync* {
     var value = context.finalize(node.resolve(context));
     yield context.escape(value).toString();
   }
@@ -214,14 +230,19 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
 
   @override
   Iterable<String> visitFilterBlock(
-      FilterBlock node, RenderContext context) sync* {
+    FilterBlock node,
+    RenderContext context,
+  ) sync* {
     Object? value = node.body.accept(this, context.derived()).join();
 
     for (var filter in node.filters) {
-      value = filter.apply(context, (positional, named) {
+      // TODO: replace with Filter { BlockExpression ( AssignBlock ) }
+      Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
         positional.insert(0, value);
         return context.filter(filter.name, positional, named);
-      });
+      }
+
+      value = filter.apply(context, callback);
     }
 
     yield context.escape(value).toString();
@@ -324,10 +345,11 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
     for (var block in node.blocks) {
       var blocks = context.blocks[block.name] ??= <Block>[];
 
-      self[block.name] = () {
+      String render() {
         return block.accept(this, context).join();
-      };
+      }
 
+      self[block.name] = render;
       blocks.add(block);
     }
 
@@ -337,9 +359,16 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
 
   @override
   Iterable<String> visitWith(With node, RenderContext context) sync* {
-    var targets =
-        generate(node.targets, (i) => node.targets[i].resolve(context));
-    var values = generate(node.values, (i) => node.values[i].resolve(context));
+    Object? target(int index) {
+      return node.targets[index].resolve(context);
+    }
+
+    Object? value(int index) {
+      return node.values[index].resolve(context);
+    }
+
+    var targets = generate(node.targets, target);
+    var values = generate(node.values, value);
     var data = context.save(getDataForTargets(targets, values));
     yield* node.body.accept(this, context);
     context.restore(data);
@@ -347,18 +376,29 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
 }
 
 class StringSinkRenderContext extends RenderContext {
-  StringSinkRenderContext(super.environment, this.sink,
-      {super.blocks, super.parent, super.data});
+  StringSinkRenderContext(
+    super.environment,
+    this.sink, {
+    super.blocks,
+    super.parent,
+    super.data,
+  });
 
   final StringSink sink;
 
   @override
-  StringSinkRenderContext derived(
-      {StringBuffer? buffer,
-      Map<String, List<Block>>? blocks,
-      Map<String, Object?>? data}) {
-    return StringSinkRenderContext(environment, buffer ?? sink,
-        blocks: blocks ?? this.blocks, parent: context, data: data);
+  StringSinkRenderContext derived({
+    StringBuffer? buffer,
+    Map<String, List<Block>>? blocks,
+    Map<String, Object?>? data,
+  }) {
+    return StringSinkRenderContext(
+      environment,
+      buffer ?? sink,
+      blocks: blocks ?? this.blocks,
+      parent: context,
+      data: data,
+    );
   }
 
   void write(Object? object) {
@@ -600,10 +640,13 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
     for (var block in node.blocks) {
       var blocks = context.blocks[block.name] ??= <Block>[];
       blocks.add(block);
-      self[block.name] = () {
+
+      String render() {
         block.accept(this, context);
         return '';
-      };
+      }
+
+      self[block.name] = render;
     }
 
     context.set('self', self);
@@ -616,12 +659,11 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
       return node.targets[index].resolve(context);
     }
 
-    var targets = generate(node.targets, target);
-
     Object? value(int index) {
       return node.values[index].resolve(context);
     }
 
+    var targets = generate(node.targets, target);
     var values = generate(node.values, value);
     var data = context.save(getDataForTargets(targets, values));
     node.body.accept(this, context);
@@ -639,8 +681,8 @@ Map<String, Object?> getDataForTargets(Object? targets, Object? current) {
     var values = list(current);
 
     if (values.length < names.length) {
-      throw StateError(
-          'not enough values to unpack (expected ${names.length}, got ${values.length})');
+      throw StateError('not enough values to unpack (expected ${names.length},'
+          ' got ${values.length})');
     }
 
     if (values.length > names.length) {
@@ -652,5 +694,9 @@ Map<String, Object?> getDataForTargets(Object? targets, Object? current) {
     };
   }
 
-  throw ArgumentError.value(targets, 'targets', 'must be String or List<String>');
+  throw ArgumentError.value(
+    targets,
+    'targets',
+    'must be String or List<String>',
+  );
 }

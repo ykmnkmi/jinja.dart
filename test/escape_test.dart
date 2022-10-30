@@ -1,4 +1,4 @@
-import 'package:jinja/src/utils.dart';
+import 'package:jinja/runtime.dart';
 import 'package:test/test.dart' hide escape;
 
 void main() {

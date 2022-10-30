@@ -56,6 +56,7 @@ class Name extends Expression implements Assignable {
     switch (this.context) {
       case AssignContext.load:
         return context.resolve(name);
+
       case AssignContext.store:
       case AssignContext.parameter:
         return name;
@@ -253,13 +254,17 @@ class Pair extends Expression {
   @override
   MapEntry<Object?, Object?> asConst(Context context) {
     return MapEntry<Object?, Object?>(
-        key.asConst(context), value.asConst(context));
+      key.asConst(context),
+      value.asConst(context),
+    );
   }
 
   @override
   MapEntry<Object?, Object?> resolve(Context context) {
     return MapEntry<Object?, Object?>(
-        key.resolve(context), value.resolve(context));
+      key.resolve(context),
+      value.resolve(context),
+    );
   }
 
   @override
@@ -616,8 +621,13 @@ class Callable extends Expression {
 }
 
 class Call extends Callable {
-  Call(this.expression,
-      {super.arguments, super.keywords, super.dArguments, super.dKeywords});
+  Call(
+    this.expression, {
+    super.arguments,
+    super.keywords,
+    super.dArguments,
+    super.dKeywords,
+  });
 
   Expression expression;
 
@@ -987,20 +997,28 @@ class Operand extends Expression {
     switch (operator) {
       case 'eq':
         return CompareOperator.equal;
+
       case 'ne':
         return CompareOperator.notEqual;
+
       case 'lt':
         return CompareOperator.lessThan;
+
       case 'lteq':
         return CompareOperator.lessThanOrEqual;
+
       case 'gt':
         return CompareOperator.greaterThan;
+
       case 'gteq':
         return CompareOperator.greaterThanOrEqual;
+
       case 'in':
         return CompareOperator.contains;
+
       case 'notin':
         return CompareOperator.notContains;
+
       default:
         return null;
     }
@@ -1064,18 +1082,25 @@ class Compare extends Expression {
     switch (operator) {
       case CompareOperator.equal:
         return isEqual(left, right);
+
       case CompareOperator.notEqual:
         return isNotEqual(left, right);
+
       case CompareOperator.lessThan:
         return isLessThan(left, right);
+
       case CompareOperator.lessThanOrEqual:
         return isLessThanOrEqual(left, right);
+
       case CompareOperator.greaterThan:
         return isGreaterThan(left, right);
+
       case CompareOperator.greaterThanOrEqual:
         return isGreaterThanOrEqual(left, right);
+
       case CompareOperator.contains:
         return isIn(left, right);
+
       case CompareOperator.notContains:
         return !isIn(left, right);
     }
@@ -1202,16 +1227,22 @@ class Scalar extends Binary<ScalarOperator> {
     switch (operator) {
       case ScalarOperator.power:
         return math.pow(left as num, right as num);
+
       case ScalarOperator.module:
         return left % right;
+
       case ScalarOperator.floorDivision:
         return left ~/ right;
+
       case ScalarOperator.division:
         return left / right;
+
       case ScalarOperator.multiple:
         return left * right;
+
       case ScalarOperator.minus:
         return left - right;
+
       case ScalarOperator.plus:
         return left + right;
     }
@@ -1234,6 +1265,7 @@ class Logical extends Binary<LogicalOperator> {
       switch (operator) {
         case LogicalOperator.or:
           return boolean(left) ? left : right.asConst(context);
+
         case LogicalOperator.and:
           return boolean(left) ? right.asConst(context) : left;
       }
@@ -1249,6 +1281,7 @@ class Logical extends Binary<LogicalOperator> {
     switch (operator) {
       case LogicalOperator.or:
         return boolean(left) ? left : right.resolve(context);
+
       case LogicalOperator.and:
         return boolean(left) ? right.resolve(context) : left;
     }

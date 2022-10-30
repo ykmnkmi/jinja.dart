@@ -24,8 +24,8 @@ class TokenReader {
   }
 
   Token look() {
-    final old = next();
-    final result = current;
+    var old = next();
+    var result = current;
     push(result);
     current = old;
     return result;

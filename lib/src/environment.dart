@@ -15,7 +15,7 @@ import 'package:meta/meta.dart';
 
 /// Signature for callable that can be used to process the result
 /// of a variable expression before it is output.
-typedef Finalizer = Object Function(Object? value);
+typedef Finalizer = Object Function(Context context, Object? value);
 
 /// Signature for the object attribute getter.
 typedef AttributeGetter = Object? Function(Object? object, String attribute);
@@ -74,7 +74,7 @@ class Environment {
     this.newLine = defaults.newLine,
     this.keepTrailingNewLine = defaults.keepTrailingNewLine,
     this.optimize = defaults.optimize,
-    this.finalize = defaults.finalize,
+    Function finalize = defaults.finalize,
     this.autoEscape = defaults.autoEscape,
     this.loader,
     this.autoReload = defaults.autoReload,
@@ -86,7 +86,8 @@ class Environment {
     Random? random,
     AttributeGetter? getAttribute,
     ItemGetter? getItem,
-  })  : globals = HashMap<String, Object?>.of(defaults.globals),
+  })  : finalize = wrapFinalizer(finalize),
+        globals = HashMap<String, Object?>.of(defaults.globals),
         filters = HashMap<String, Function>.of(defaults.filters),
         tests = HashMap<String, Function>.of(defaults.tests),
         modifiers = List<NodeVisitor>.of(defaults.modifiers),
@@ -369,6 +370,28 @@ class Environment {
     }
 
     return templates[template] ??= loader.load(this, template);
+  }
+
+  @protected
+  static Finalizer wrapFinalizer(Function function) {
+    if (function is Finalizer) {
+      return function;
+    }
+
+    if (function is Object Function(Environment environment, Object? value)) {
+      return (Context context, Object? value) {
+        return function(context.environment, value);
+      };
+    }
+
+    if (function is Object Function(Object? value)) {
+      return (Context context, Object? value) {
+        return function(value);
+      };
+    }
+
+    // TODO: add error message
+    throw ArgumentError.value(function, 'finalize');
   }
 
   @protected
