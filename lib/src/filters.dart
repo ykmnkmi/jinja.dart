@@ -56,7 +56,7 @@ Object? Function(Object?) makeAttributeGetter(
     get = getter;
   }
 
-  return (Object? object) {
+  Object? getter(Object? object) {
     object = get(object);
 
     if (postProcess != null) {
@@ -64,7 +64,9 @@ Object? Function(Object?) makeAttributeGetter(
     }
 
     return object;
-  };
+  }
+
+  return getter;
 }
 
 /// Replace the characters `&`, `<`, `>`, `'`, and `"`
@@ -79,12 +81,12 @@ Object? doEscape(Object? value) {
 ///
 /// This will probably double escape variables.
 Markup doForceEscape(Object? value) {
-  return Markup('$value');
+  return Markup(value.toString());
 }
 
 /// A string representation of this object.
 String doString(Object? value) {
-  return '$value';
+  return value.toString();
 }
 
 /// Return a copy of the value with all occurrences of a substring
@@ -155,11 +157,9 @@ List<Object?> doDictSort(
     case 'key':
       position = 0;
       break;
-
     case 'value':
       position = 1;
       break;
-
     default:
       throw ArgumentError.value(
           by, 'by', "you can only sort by either 'key' or 'value'");
@@ -222,13 +222,14 @@ Object? doDefault(
 ///
 /// The separator between elements is an empty string per
 /// default, you can define it with the optional parameter
-Object? doJoin(
+Object doJoin(
   Context context,
   Iterable<Object?> values, [
   String delimiter = '',
 ]) {
   if (context.autoEscape) {
-    return Markup.escaped(values.map<Object?>(context.escape).join(delimiter));
+    values = values.map<String>(escapeSafe);
+    return Markup.escaped(values.join(escape(delimiter)));
   }
 
   return values.join(delimiter);
@@ -507,7 +508,8 @@ List<List<Object?>> doBatch(
 /// Return the number of items in a container.
 int? doLength(Environment environment, dynamic object) {
   try {
-    // * dynamic invocation
+    // TODO: dynamic invocation
+    // ignore: avoid_dynamic_calls
     return object.length as int;
   } on NoSuchMethodError {
     return null;
@@ -554,12 +556,15 @@ Object? doReverse(Object? value) {
 /// only interested in a certain value of it.
 ///
 /// The basic usage is mapping on an attribute.
+// TODO: add modifier
 Iterable<Object?> doMap(
   Context context,
   Iterable<Object?> values, {
+  String? filter,
   Object? attribute,
   Object? defaultValue,
-  String? filter,
+  List<Object?> positional = const <Object?>[],
+  Map<Symbol, Object?> named = const <Symbol, Object?>{},
 }) {
   if (attribute != null) {
     var getter = makeAttributeGetter(
@@ -573,7 +578,7 @@ Iterable<Object?> doMap(
 
   if (filter != null) {
     Object? map(Object? value) {
-      return context.filter(filter, <Object?>[value]);
+      return context.filter(filter, <Object?>[value, ...positional], named);
     }
 
     return values.map<Object?>(map);

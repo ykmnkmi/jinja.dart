@@ -416,14 +416,14 @@ class Lexer {
               balancingStack.add('}');
             } else if (data == ')' || data == ']' || data == '}') {
               if (balancingStack.isEmpty) {
-                throw TemplateSyntaxError('unexpected \'$data\'');
+                throw TemplateSyntaxError("unexpected '$data'");
               }
 
               var expected = balancingStack.removeLast();
 
               if (data != expected) {
                 throw TemplateSyntaxError(
-                    'unexpected \'$data\', expected \'$expected\'');
+                    "unexpected '$data', expected '$expected'");
               }
             }
           }

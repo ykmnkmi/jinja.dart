@@ -133,7 +133,7 @@ abstract class BaseToken implements Token {
       return '$type:$line';
     }
 
-    return '$type:$line:$length \'${value.replaceAll('\'', '\\\'').replaceAll('\n', r'\n')}\'';
+    return "$type:$line:$length '${value.replaceAll("'", "\\'").replaceAll('\n', r'\n')}'";
   }
 }
 

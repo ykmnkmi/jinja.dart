@@ -1,5 +1,6 @@
 .dart_tool/
 .idea/
+.vscode/
 .DS_store
 .notes
 .packages

@@ -23,7 +23,7 @@ void main() {
 
   print(env.getTemplate('users.html').render({
     'users': [
-      {'fullname': 'Jhon Doe', 'email': 'jhondoe@dev.py'},
+      {'fullname': 'John Doe', 'email': 'johndoe@dev.py'},
       {'fullname': 'Jane Doe', 'email': 'janedoe@dev.py'},
     ]
   }));

@@ -42,7 +42,7 @@ class Parser {
     if (endTokensStack.isNotEmpty) {
       currentlyLooking = endTokensStack.last
           .map<String>(describeExpression)
-          .map<String>((token) => '\'$token\'')
+          .map<String>((token) => "'$token'")
           .join(' or ');
     }
 
@@ -51,7 +51,7 @@ class Parser {
     if (name == null) {
       messages.add('Unexpected end of template.');
     } else {
-      messages.add('Encountered unknown tag \'$name\'.');
+      messages.add("Encountered unknown tag '$name'.");
     }
 
     if (currentlyLooking != null) {
@@ -68,7 +68,7 @@ class Parser {
 
     if (tagStack.isNotEmpty) {
       messages.add(
-          'The innermost block that needs to be closed is \'${tagStack.last}\'.');
+          "The innermost block that needs to be closed is '${tagStack.last}'.");
     }
 
     fail(messages.join(' '), line);
@@ -90,7 +90,6 @@ class Parser {
       case 'block_end':
       case 'rparen':
         return true;
-
       default:
         if (extraEndRules != null && extraEndRules.isNotEmpty) {
           return reader.current.testAny(extraEndRules);
@@ -151,7 +150,7 @@ class Parser {
       if (target is Assignable) {
         target.context = AssignContext.store;
       } else {
-        fail('can\'t assign to ${target.runtimeType}', line);
+        fail("can't assign to ${target.runtimeType}", line);
       }
     }
 
@@ -247,7 +246,7 @@ class Parser {
     var target = parseAssignTarget(reader, extraEndRules: <String>['name:in']);
 
     if (target is Name && target.name == 'loop') {
-      fail('can\'t assign to special loop variable in for-loop target');
+      fail("can't assign to special loop variable in for-loop target");
     }
 
     reader.expect('name', 'in');
@@ -345,7 +344,7 @@ class Parser {
     var name = reader.expect('name');
 
     if (blocks.any((block) => block.name == name.value)) {
-      fail('block \'${name.value}\' defined twice', reader.current.line);
+      fail("block '${name.value}' defined twice", reader.current.line);
     }
 
     var scoped = reader.skipIf('name', 'scoped');
@@ -367,7 +366,7 @@ class Parser {
 
     if (maybeName.test('name')) {
       if (maybeName.value != name.value) {
-        fail('\'${name.value}\' expected, got ${maybeName.value}');
+        fail("'${name.value}' expected, got ${maybeName.value}");
       }
 
       reader.next();
@@ -515,12 +514,10 @@ class Parser {
           reader.next();
           operator = ScalarOperator.plus;
           break;
-
         case 'sub':
           reader.next();
           operator = ScalarOperator.minus;
           break;
-
         default:
           break outer;
       }
@@ -558,22 +555,18 @@ class Parser {
           reader.next();
           operator = ScalarOperator.multiple;
           break;
-
         case 'div':
           reader.next();
           operator = ScalarOperator.division;
           break;
-
         case 'floordiv':
           reader.next();
           operator = ScalarOperator.floorDivision;
           break;
-
         case 'mod':
           reader.next();
           operator = ScalarOperator.module;
           break;
-
         default:
           break outer;
       }
@@ -604,13 +597,11 @@ class Parser {
         expression = parseUnary(reader, withFilter: false);
         expression = Unary(UnaryOperator.plus, expression);
         break;
-
       case 'sub':
         reader.next();
         expression = parseUnary(reader, withFilter: false);
         expression = Unary(UnaryOperator.minus, expression);
         break;
-
       default:
         expression = parsePrimary(reader);
     }
@@ -635,18 +626,15 @@ class Parser {
           case 'false':
             expression = Constant(false);
             break;
-
           case 'True':
           case 'true':
             expression = Constant(true);
             break;
-
           case 'None':
           case 'none':
           case 'null':
             expression = Constant(null);
             break;
-
           default:
             expression = Name(current.value);
         }

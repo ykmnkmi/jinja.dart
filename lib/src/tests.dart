@@ -173,7 +173,8 @@ bool isCallable(dynamic object) {
   }
 
   try {
-    // * dynamic invocation
+    // TODO: dynamic invocation
+    // ignore: avoid_dynamic_calls
     return object.call is Function;
   } on NoSuchMethodError {
     return false;

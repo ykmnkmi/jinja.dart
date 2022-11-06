@@ -85,7 +85,7 @@ class Environment {
     Map<String, Template>? templates,
     Random? random,
     AttributeGetter? getAttribute,
-    ItemGetter? getItem,
+    this.getItem = defaults.getItem,
   })  : finalize = wrapFinalizer(finalize),
         globals = HashMap<String, Object?>.of(defaults.globals),
         filters = HashMap<String, Function>.of(defaults.filters),
@@ -93,8 +93,7 @@ class Environment {
         modifiers = List<NodeVisitor>.of(defaults.modifiers),
         templates = HashMap<String, Template>(),
         random = random ?? Random(),
-        getAttribute = wrapGetAttribute(getAttribute, defaults.getItem),
-        getItem = defaults.getItem {
+        getAttribute = wrapGetAttribute(getAttribute, getItem) {
     if (globals != null) {
       this.globals.addAll(globals);
     }
@@ -263,7 +262,7 @@ class Environment {
     var function = map[name];
 
     if (function == null) {
-      throw TemplateRuntimeError('no $type named \'$name\'');
+      throw TemplateRuntimeError("no $type named '$name'");
     }
 
     var pass = passArguments[function];
@@ -273,9 +272,9 @@ class Environment {
         throw TemplateRuntimeError('attempted to invoke $type without context');
       }
 
-      positional.insert(0, context);
+      positional = <Object?>[context, ...positional];
     } else if (pass == PassArgument.environment) {
-      positional.insert(0, this);
+      positional = <Object?>[this, ...positional];
     }
 
     return Function.apply(function, positional, named);
@@ -379,15 +378,19 @@ class Environment {
     }
 
     if (function is Object Function(Environment environment, Object? value)) {
-      return (Context context, Object? value) {
+      Object finalize(Context context, Object? value) {
         return function(context.environment, value);
-      };
+      }
+
+      return finalize;
     }
 
     if (function is Object Function(Object? value)) {
-      return (Context context, Object? value) {
+      Object finalize(Context context, Object? value) {
         return function(value);
-      };
+      }
+
+      return finalize;
     }
 
     // TODO: add error message
@@ -403,13 +406,15 @@ class Environment {
       return itemGetter;
     }
 
-    return (Object? object, String field) {
+    Object? getAttribute(Object? object, String field) {
       try {
         return attributeGetter(object, field);
       } catch (error) {
         return itemGetter(object, field);
       }
-    };
+    }
+
+    return getAttribute;
   }
 }
 
@@ -446,7 +451,7 @@ class Template extends Node {
     List<NodeVisitor>? modifiers,
     Random? random,
     AttributeGetter? getAttribute,
-    ItemGetter? getItem,
+    ItemGetter getItem = defaults.getItem,
   }) {
     environment ??= Environment(
       commentStart: commentStart,
@@ -543,7 +548,7 @@ class Template extends Node {
   }
 
   /// It accepts the same arguments as [render].
-  Iterable<String> generate([Map<String, Object?>? data]) {
+  Iterable<Object> generate([Map<String, Object?>? data]) {
     var context = RenderContext(environment, data: data);
     return accept(const IterableRenderer(), context);
   }

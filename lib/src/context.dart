@@ -21,7 +21,8 @@ class Context {
     List<Object?>? positional,
     Map<Symbol, Object?>? named,
   ]) {
-    // * dynamic invocation
+    // TODO: dynamic invocation
+    // ignore: avoid_dynamic_calls
     var function = object.call as Function;
     positional ??= <Object?>[];
 
@@ -40,17 +41,9 @@ class Context {
     return Context(environment, parent: context);
   }
 
-  Object? escape(Object? value) {
-    if (value == null) {
-      return null;
-    }
-
-    if (value is Markup) {
-      return value;
-    }
-
+  Object escape(Object value) {
     if (autoEscape) {
-      return Markup.escape(value);
+      return Markup(value);
     }
 
     return value;

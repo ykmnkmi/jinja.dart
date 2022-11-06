@@ -3,8 +3,8 @@ import 'package:jinja/src/namespace.dart';
 import 'package:jinja/src/utils.dart';
 
 export 'package:jinja/src/filters.dart' show filters;
-export 'package:jinja/src/tests.dart' show tests;
 export 'package:jinja/src/modifiers.dart' show modifiers;
+export 'package:jinja/src/tests.dart' show tests;
 
 const String blockStart = '{%';
 const String blockEnd = '%}';
@@ -36,7 +36,8 @@ Object finalize(Context context, Object? value) {
 
 Object? getItem(dynamic object, Object? item) {
   try {
-    // * dynamic invocation
+    // TODO: dynamic invocation
+    // ignore: avoid_dynamic_calls
     return object[item];
   } on NoSuchMethodError {
     if (object == null) {

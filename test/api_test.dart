@@ -32,6 +32,7 @@ void main() {
 
     test('context finalize', () {
       Object finalize(Context context, dynamic value) {
+        // ignore: avoid_dynamic_calls
         return value * context.resolve('scale') as Object;
       }
 

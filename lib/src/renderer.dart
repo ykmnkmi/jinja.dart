@@ -59,7 +59,7 @@ class RenderContext extends Context {
     return false;
   }
 
-  Object? finalize(Object? object) {
+  Object finalize(Object? object) {
     return environment.finalize(this, object);
   }
 
@@ -102,26 +102,25 @@ class RenderContext extends Context {
   }
 }
 
-// TODO: sync* expressions
-class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
+class IterableRenderer extends Visitor<RenderContext, Iterable<Object>> {
   const IterableRenderer();
 
   @override
-  Iterable<String> visitAll(List<Node> nodes, RenderContext context) sync* {
+  Iterable<Object> visitAll(List<Node> nodes, RenderContext context) sync* {
     for (var node in nodes) {
       yield* node.accept(this, context);
     }
   }
 
   @override
-  Iterable<String> visitAssign(Assign node, RenderContext context) sync* {
+  Iterable<Object> visitAssign(Assign node, RenderContext context) sync* {
     var target = node.target.resolve(context);
     var values = node.value.resolve(context);
     context.assignTargets(target, values);
   }
 
   @override
-  Iterable<String> visitAssignBlock(
+  Iterable<Object> visitAssignBlock(
     AssignBlock node,
     RenderContext context,
   ) sync* {
@@ -157,7 +156,7 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
   }
 
   @override
-  Iterable<String> visitAutoEscape(
+  Iterable<Object> visitAutoEscape(
     AutoEscape node,
     RenderContext context,
   ) sync* {
@@ -168,7 +167,7 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
   }
 
   @override
-  Iterable<String> visitBlock(Block node, RenderContext context) sync* {
+  Iterable<Object> visitBlock(Block node, RenderContext context) sync* {
     var blocks = context.blocks[node.name];
 
     if (blocks == null || blocks.isEmpty) {
@@ -204,32 +203,33 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
   }
 
   @override
-  Iterable<String> visitData(Data node, RenderContext context) sync* {
+  Iterable<Object> visitData(Data node, RenderContext context) sync* {
     yield node.data;
   }
 
   @override
-  Iterable<String> visitDo(Do node, RenderContext context) sync* {
+  Iterable<Object> visitDo(Do node, RenderContext context) sync* {
     node.expression.resolve(context);
   }
 
   @override
-  Iterable<String> visitExpression(
+  Iterable<Object> visitExpression(
     Expression node,
     RenderContext context,
   ) sync* {
-    var value = context.finalize(node.resolve(context));
-    yield context.escape(value).toString();
+    var resolved = node.resolve(context);
+    var finalized = context.finalize(resolved);
+    yield context.escape(finalized);
   }
 
   @override
-  Iterable<String> visitExtends(Extends node, RenderContext context) sync* {
+  Iterable<Object> visitExtends(Extends node, RenderContext context) sync* {
     var template = context.environment.getTemplate(node.path);
     yield* template.body.accept(this, context);
   }
 
   @override
-  Iterable<String> visitFilterBlock(
+  Iterable<Object> visitFilterBlock(
     FilterBlock node,
     RenderContext context,
   ) sync* {
@@ -245,11 +245,12 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
       value = filter.apply(context, callback);
     }
 
-    yield context.escape(value).toString();
+    var finalized = context.finalize(value);
+    yield context.escape(finalized);
   }
 
   @override
-  Iterable<String> visitFor(For node, RenderContext context) sync* {
+  Iterable<Object> visitFor(For node, RenderContext context) sync* {
     var targets = node.target.resolve(context);
     var iterable = node.iterable.resolve(context);
     var orElse = node.orElse;
@@ -307,7 +308,7 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
   }
 
   @override
-  Iterable<String> visitIf(If node, RenderContext context) sync* {
+  Iterable<Object> visitIf(If node, RenderContext context) sync* {
     if (boolean(node.test.resolve(context))) {
       yield* node.body.accept(this, context);
       return;
@@ -321,7 +322,7 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
   }
 
   @override
-  Iterable<String> visitInclude(Include node, RenderContext context) sync* {
+  Iterable<Object> visitInclude(Include node, RenderContext context) sync* {
     var template = context.environment.getTemplate(node.template);
 
     if (node.withContext) {
@@ -334,12 +335,12 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
   }
 
   @override
-  Iterable<String> visitOutput(Output node, RenderContext context) sync* {
+  Iterable<Object> visitOutput(Output node, RenderContext context) sync* {
     yield* visitAll(node.nodes, context);
   }
 
   @override
-  Iterable<String> visitTemplate(Template node, RenderContext context) sync* {
+  Iterable<Object> visitTemplate(Template node, RenderContext context) sync* {
     var self = Namespace();
 
     for (var block in node.blocks) {
@@ -358,7 +359,7 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<String>> {
   }
 
   @override
-  Iterable<String> visitWith(With node, RenderContext context) sync* {
+  Iterable<Object> visitWith(With node, RenderContext context) sync* {
     Object? target(int index) {
       return node.targets[index].resolve(context);
     }
@@ -427,7 +428,8 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
   void visitAssignBlock(AssignBlock node, StringSinkRenderContext context) {
     var target = node.target.resolve(context);
     var buffer = StringBuffer();
-    node.body.accept(this, context.derived(buffer: buffer));
+    var derived = context.derived(buffer: buffer);
+    node.body.accept(this, derived);
 
     Object? value = buffer.toString();
     var filters = node.filters;
@@ -437,7 +439,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
         value = Markup.escaped(value);
       }
 
-      context.assignTargets(target, context.escape(value));
+      context.assignTargets(target, value);
       return;
     }
 
@@ -455,7 +457,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
       value = Markup.escaped(value);
     }
 
-    context.assignTargets(target, context.escape(value));
+    context.assignTargets(target, value);
   }
 
   @override
@@ -515,10 +517,10 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
 
   @override
   void visitExpression(Expression node, StringSinkRenderContext context) {
-    var value = node.resolve(context);
-    value = context.finalize(value);
-    value = context.escape(value);
-    context.write(value);
+    var resolved = node.resolve(context);
+    var finalized = context.finalize(resolved);
+    var escaped = context.escape(finalized);
+    context.write(escaped);
   }
 
   @override

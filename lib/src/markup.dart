@@ -1,8 +1,4 @@
-import 'package:jinja/src/utils.dart';
-
 class Markup {
-  const factory Markup.escaped(Object? value) = Escaped;
-
   factory Markup(Object? value) {
     if (value is Markup) {
       return value;
@@ -12,6 +8,8 @@ class Markup {
   }
 
   Markup.escape(this.value);
+
+  const factory Markup.escaped(Object? value) = Escaped;
 
   final Object? value;
 
@@ -27,7 +25,7 @@ class Markup {
 
   @override
   String toString() {
-    return escape('$value');
+    return escape(value.toString());
   }
 }
 
@@ -49,6 +47,56 @@ class Escaped implements Markup {
 
   @override
   String toString() {
-    return '$value';
+    return value.toString();
   }
+}
+
+String escape(Object? object) {
+  var string = object.toString();
+  var start = 0;
+  StringBuffer? result;
+
+  for (var i = 0; i < string.length; i++) {
+    String? replacement;
+
+    switch (string[i]) {
+      case '&':
+        replacement = '&amp;';
+        break;
+      case '"':
+        replacement = '&#34;';
+        break;
+      case "'":
+        replacement = '&#39;';
+        break;
+      case '<':
+        replacement = '&lt;';
+        break;
+      case '>':
+        replacement = '&gt;';
+        break;
+    }
+
+    if (replacement != null) {
+      result ??= StringBuffer();
+      result.write(string.substring(start, i));
+      result.write(replacement);
+      start = i + 1;
+    }
+  }
+
+  if (result == null) {
+    return string;
+  }
+
+  result.write(string.substring(start));
+  return result.toString();
+}
+
+String escapeSafe(Object? object) {
+  if (object is Markup) {
+    return object.value.toString();
+  }
+
+  return escape(object);
 }

@@ -36,7 +36,11 @@ class Foo extends MapMixin<Object?, Object?> {
 void main() {
   group('Syntax', () {
     test('call', () {
-      Object? foo(dynamic a, {dynamic b}) => a + b;
+      Object? foo(dynamic a, {dynamic b}) {
+        // ignore: avoid_dynamic_calls
+        return a + b;
+      }
+
       var env = Environment(globals: {'foo': foo});
       var tmpl = env.fromString('{{ foo(*["a"], **{"b": "c"}) }}');
       expect(tmpl.render(), equals('ac'));
@@ -271,13 +275,13 @@ void main() {
 
     test('operator and', () {
       var tmpl = env.fromString(
-          '<{% if page[\'next\'] and page[\'next\'].path %}ok{% endif %}>');
+          "<{% if page['next'] and page['next'].path %}ok{% endif %}>");
       expect(tmpl.render({'page': {}}), equals('<>'));
     });
 
     test('operator or', () {
       var tmpl = env.fromString(
-          '<{% if page[\'next\'] or empty[\'test\'] %}ok{% endif %}>');
+          "<{% if page['next'] or empty['test'] %}ok{% endif %}>");
       var page = {'next': '5'};
       expect(tmpl.render({'page': page}), equals('<ok>'));
     });

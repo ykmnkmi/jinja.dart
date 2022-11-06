@@ -10,7 +10,16 @@ analyzer:
 
 linter:
   rules:
+    always_declare_return_types: true
+    always_put_control_body_on_new_line: true
+    avoid_dynamic_calls: true
+    avoid_escaping_inner_quotes: true
+    avoid_final_parameters: true
     avoid_print: true
+    avoid_void_async: true
+    combinators_ordering: true
+    directives_ordering: true
     library_prefixes: false
     prefer_single_quotes: true
+    # ...
     # public_member_api_docs: true

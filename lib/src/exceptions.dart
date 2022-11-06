@@ -7,7 +7,7 @@ abstract class TemplateError implements Exception {
   @override
   String toString() {
     if (message == null) {
-      return '$runtimeType';
+      return runtimeType.toString();
     }
 
     return '$runtimeType: $message';
@@ -62,7 +62,7 @@ class TemplateSyntaxError extends TemplateError {
 }
 
 /// Like a template syntax error, but covers cases where something in the
-/// template caused an error at compile time that wasn't necessarily caused
+/// template caused an error at parsing time that wasn't necessarily caused
 /// by a syntax error.
 ///
 /// However it's a direct subclass of [TemplateSyntaxError] and has the same

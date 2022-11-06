@@ -14,7 +14,7 @@ void main() {
           variableEnd: '?>',
           commentStart: '<!--',
           commentEnd: '-->');
-      var tmpl = env.fromString('<!-- I\'m a comment -->'
+      var tmpl = env.fromString("<!-- I'm a comment -->"
           '<? for item in seq -?>\n    <?= item ?>\n<?- endfor ?>');
       expect(tmpl.render({'seq': range(5)}), equals('01234'));
     });
@@ -27,7 +27,7 @@ void main() {
           variableEnd: '%>',
           commentStart: '<%#',
           commentEnd: '%>');
-      var tmpl = env.fromString('<%# I\'m a comment %>'
+      var tmpl = env.fromString("<%# I'm a comment %>"
           '<% for item in seq -%>\n    <%= item %><%- endfor %>');
       expect(tmpl.render({'seq': range(5)}), equals('01234'));
     });
@@ -40,7 +40,7 @@ void main() {
           variableEnd: '}',
           commentStart: '<!--#',
           commentEnd: '-->');
-      var tmpl = env.fromString('<!--# I\'m a comment -->'
+      var tmpl = env.fromString("<!--# I'm a comment -->"
           '<!-- for item in seq --->    \${item}<!--- endfor -->');
       expect(tmpl.render({'seq': range(5)}), equals('01234'));
     });
@@ -90,7 +90,7 @@ void main() {
           lineCommentPrefix: '#',
           lineStatementPrefix: '##');
       var tmpl =
-          env.fromString('/* ignore me.\n   I\'m a multiline comment */\n'
+          env.fromString("/* ignore me.\n   I'm a multiline comment */\n"
               '## for item in seq:\n* \${item}          '
               '# this is just extra stuff\n## endfor\n');
       expect(tmpl.render({'seq': seq}).trim(), equals('* 1\n* 2'));
@@ -101,7 +101,7 @@ void main() {
           commentEnd: '*/',
           lineCommentPrefix: '##',
           lineStatementPrefix: '#');
-      tmpl = env.fromString('/* ignore me.\n   I\'m a multiline comment */\n'
+      tmpl = env.fromString("/* ignore me.\n   I'm a multiline comment */\n"
           '# for item in seq:\n* \${item}          '
           '## this is just extra stuff\n    '
           '## extra stuff i just want to ignore\n# endfor');
@@ -118,27 +118,27 @@ void main() {
 
       assertError(
           '{% for item in seq %}...{% endif %}',
-          'Encountered unknown tag \'endif\'. Jinja was looking '
-              'for the following tags: \'endfor\' or \'else\'. The '
-              'innermost block that needs to be closed is \'for\'.');
+          "Encountered unknown tag 'endif'. Jinja was looking "
+              "for the following tags: 'endfor' or 'else'. The "
+              "innermost block that needs to be closed is 'for'.");
       assertError(
           '{% if foo %}{% for item in seq %}...{% endfor %}{% endfor %}',
-          'Encountered unknown tag \'endfor\'. Jinja was looking for '
-              'the following tags: \'elif\' or \'else\' or \'endif\'. The '
-              'innermost block that needs to be closed is \'if\'.');
+          "Encountered unknown tag 'endfor'. Jinja was looking for "
+              "the following tags: 'elif' or 'else' or 'endif'. The "
+              "innermost block that needs to be closed is 'if'.");
       assertError(
           '{% if foo %}',
           'Unexpected end of template. Jinja was looking for the '
-              'following tags: \'elif\' or \'else\' or \'endif\'. The '
-              'innermost block that needs to be closed is \'if\'.');
+              "following tags: 'elif' or 'else' or 'endif'. The "
+              "innermost block that needs to be closed is 'if'.");
       assertError(
           '{% for item in seq %}',
           'Unexpected end of template. Jinja was looking for the '
-              'following tags: \'endfor\' or \'else\'. The innermost block '
-              'that needs to be closed is \'for\'.');
+              "following tags: 'endfor' or 'else'. The innermost block "
+              "that needs to be closed is 'for'.");
       assertError('{% block foo-bar-baz %}', 'use an underscore instead');
       assertError(
-          '{% unknown_tag %}', 'Encountered unknown tag \'unknown_tag\'.');
+          '{% unknown_tag %}', "Encountered unknown tag 'unknown_tag'.");
     });
   });
 }
