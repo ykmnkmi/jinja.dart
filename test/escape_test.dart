@@ -8,17 +8,17 @@ void main() {
     });
 
     test('ascii', () {
-      expect(escape(r'''abcd&><'"efgh'''),
+      expect(escape('''abcd&><'"efgh'''),
           equals('abcd&amp;&gt;&lt;&#39;&#34;efgh'));
-      expect(escape(r'''&><'"efgh'''), equals('&amp;&gt;&lt;&#39;&#34;efgh'));
-      expect(escape(r'''abcd&><'"'''), equals('abcd&amp;&gt;&lt;&#39;&#34;'));
+      expect(escape('''&><'"efgh'''), equals('&amp;&gt;&lt;&#39;&#34;efgh'));
+      expect(escape('''abcd&><'"'''), equals('abcd&amp;&gt;&lt;&#39;&#34;'));
     });
 
     test('2 byte', () {
-      expect(escape(r'''こんにちは&><'"こんばんは'''),
+      expect(escape('''こんにちは&><'"こんばんは'''),
           equals('こんにちは&amp;&gt;&lt;&#39;&#34;こんばんは'));
-      expect(escape(r'''&><'"こんばんは'''), equals('&amp;&gt;&lt;&#39;&#34;こんばんは'));
-      expect(escape(r'''こんにちは&><'"'''), equals('こんにちは&amp;&gt;&lt;&#39;&#34;'));
+      expect(escape('''&><'"こんばんは'''), equals('&amp;&gt;&lt;&#39;&#34;こんばんは'));
+      expect(escape('''こんにちは&><'"'''), equals('こんにちは&amp;&gt;&lt;&#39;&#34;'));
     });
 
     test('4 byte', () {

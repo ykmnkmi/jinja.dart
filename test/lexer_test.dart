@@ -633,7 +633,7 @@ ${item} ## the rest of the stuff
       var env = Environment(
           blockStart: '<?',
           blockEnd: '?>',
-          variableStart: r'<?=',
+          variableStart: '<?=',
           variableEnd: '?>',
           commentStart: '<!--',
           commentEnd: '-->',
