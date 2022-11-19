@@ -280,8 +280,8 @@ void main() {
     });
 
     test('operator or', () {
-      var tmpl = env.fromString(
-          "<{% if page['next'] or empty['test'] %}ok{% endif %}>");
+      var tmpl = env
+          .fromString("<{% if page['next'] or empty['test'] %}ok{% endif %}>");
       var page = {'next': '5'};
       expect(tmpl.render({'page': page}), equals('<ok>'));
     });
@@ -303,7 +303,7 @@ void main() {
       var tmpl = env.fromString('{{ -1|foo }}');
 
       expect(tmpl.body, predicate<Filter>((filter) {
-        var expression = filter.arguments![0];
+        var expression = filter.arguments[0];
         return expression is Unary &&
             expression.operator == UnaryOperator.minus;
       }));

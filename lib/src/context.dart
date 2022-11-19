@@ -29,9 +29,9 @@ class Context {
     var pass = Environment.passArguments[function];
 
     if (pass == PassArgument.context) {
-      positional.insert(0, this);
+      positional = <Object?>[this, ...positional];
     } else if (pass == PassArgument.environment) {
-      positional.insert(0, environment);
+      positional = <Object?>[environment, ...positional];
     }
 
     return Function.apply(function, positional, named);

@@ -77,3 +77,8 @@ class TemplateAssertionError extends TemplateError {
 class TemplateRuntimeError extends TemplateError {
   const TemplateRuntimeError([super.message]);
 }
+
+/// This error is raised if a filter was called with inappropriate arguments.
+class FilterArgumentError extends TemplateRuntimeError {
+  const FilterArgumentError([super.message]);
+}

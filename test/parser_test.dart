@@ -89,10 +89,9 @@ void main() {
           commentEnd: '*/',
           lineCommentPrefix: '#',
           lineStatementPrefix: '##');
-      var tmpl =
-          env.fromString("/* ignore me.\n   I'm a multiline comment */\n"
-              '## for item in seq:\n* \${item}          '
-              '# this is just extra stuff\n## endfor\n');
+      var tmpl = env.fromString("/* ignore me.\n   I'm a multiline comment */\n"
+          '## for item in seq:\n* \${item}          '
+          '# this is just extra stuff\n## endfor\n');
       expect(tmpl.render({'seq': seq}).trim(), equals('* 1\n* 2'));
       env = Environment(
           variableStart: '\${',

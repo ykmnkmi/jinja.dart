@@ -419,11 +419,17 @@ class Keyword extends Expression {
 typedef Callback<T> = T Function(List<Object?>, Map<Symbol, Object?>);
 
 class Callable extends Expression {
-  Callable({this.arguments, this.keywords, this.dArguments, this.dKeywords});
+  Callable({
+    List<Expression>? arguments,
+    List<Keyword>? keywords,
+    this.dArguments,
+    this.dKeywords,
+  })  : arguments = arguments ?? <Expression>[],
+        keywords = keywords ?? <Keyword>[];
 
-  List<Expression>? arguments;
+  List<Expression> arguments;
 
-  List<Keyword>? keywords;
+  List<Keyword> keywords;
 
   Expression? dArguments;
 
@@ -432,18 +438,17 @@ class Callable extends Expression {
   @override
   List<Node> get childrens {
     return <Node>[
-      ...?arguments,
-      ...?keywords,
+      ...arguments,
+      ...keywords,
       if (dArguments != null) dArguments!,
       if (dKeywords != null) dKeywords!
     ];
   }
 
-  Object? applyConst(Context context, Callback<Object?> callback) {
-    var arguments = this.arguments;
+  Object? applyAsConst(Context context, Callback<Object?> callback) {
     List<Object?> positional;
 
-    if (arguments == null) {
+    if (arguments.isEmpty) {
       positional = <Object?>[];
     } else {
       Object? generator(int index) {
@@ -454,12 +459,9 @@ class Callable extends Expression {
     }
 
     var named = <Symbol, Object?>{};
-    var keywords = this.keywords;
 
-    if (keywords != null) {
-      for (var argument in keywords) {
-        named[Symbol(argument.key)] = argument.asConst(context);
-      }
+    for (var argument in keywords) {
+      named[Symbol(argument.key)] = argument.asConst(context);
     }
 
     var dArguments = this.dArguments;
@@ -488,10 +490,9 @@ class Callable extends Expression {
   }
 
   T apply<T extends Object?>(Context context, Callback<T> callback) {
-    var arguments = this.arguments;
     List<Object?> positional;
 
-    if (arguments == null) {
+    if (arguments.isEmpty) {
       positional = <Object?>[];
     } else {
       Object? generator(int index) {
@@ -502,12 +503,9 @@ class Callable extends Expression {
     }
 
     var named = <Symbol, Object?>{};
-    var keywords = this.keywords;
 
-    if (keywords != null) {
-      for (var argument in keywords) {
-        named[Symbol(argument.key)] = argument.resolve(context);
-      }
+    for (var keyword in keywords) {
+      named[Symbol(keyword.key)] = keyword.resolve(context);
     }
 
     var dArguments = this.dArguments;
@@ -537,9 +535,8 @@ class Callable extends Expression {
 
   String format({bool comma = false}) {
     var result = '';
-    var arguments = this.arguments;
 
-    if (arguments != null && arguments.isNotEmpty) {
+    if (arguments.isNotEmpty) {
       if (comma) {
         result = '$result, ';
       } else {
@@ -549,9 +546,7 @@ class Callable extends Expression {
       result = '$result${arguments.join(', ')}';
     }
 
-    var keywords = this.keywords;
-
-    if (keywords != null && keywords.isNotEmpty) {
+    if (keywords.isNotEmpty) {
       if (comma) {
         result = '$result, ';
       } else {
@@ -584,21 +579,13 @@ class Callable extends Expression {
 
   @override
   void update(ExpressionUpdater updater) {
-    var arguments = this.arguments;
-
-    if (arguments != null) {
-      for (var i = 0; i < arguments.length; i += 1) {
-        arguments[i] = updater(arguments[i]);
-        arguments[i].update(updater);
-      }
+    for (var i = 0; i < arguments.length; i += 1) {
+      arguments[i] = updater(arguments[i]);
+      arguments[i].update(updater);
     }
 
-    var keywords = this.keywords;
-
-    if (keywords != null) {
-      for (var i = 0; i < keywords.length; i += 1) {
-        keywords[i].update(updater);
-      }
+    for (var i = 0; i < keywords.length; i += 1) {
+      keywords[i].update(updater);
     }
 
     var dArguments = this.dArguments;
@@ -643,7 +630,7 @@ class Call extends Callable {
       return context(function, positional, named);
     }
 
-    return applyConst(context, callback);
+    return applyAsConst(context, callback);
   }
 
   @override
@@ -688,33 +675,17 @@ class Filter extends Callable {
   bool hasExpression;
 
   set expression(Expression? expression) {
-    var arguments = this.arguments;
-
-    if (arguments == null) {
-      if (expression == null) {
-        hasExpression = false;
-        return;
-      }
-
-      hasExpression = true;
-      this.arguments = <Expression>[expression];
-      return;
-    }
-
     if (hasExpression) {
       if (expression == null) {
         hasExpression = false;
-        arguments.removeAt(0);
+        arguments = arguments.sublist(1);
         return;
       }
 
       arguments[0] = expression;
-      return;
-    }
-
-    if (expression != null) {
+    } else if (expression != null) {
       hasExpression = true;
-      arguments.insert(0, expression);
+      arguments = <Expression>[expression, ...arguments];
     }
   }
 
@@ -754,7 +725,7 @@ class Test extends Callable {
         return context.test(name, positional, named);
       }
 
-      return applyConst(context, callback);
+      return applyAsConst(context, callback);
     }
 
     throw Impossible();
@@ -914,7 +885,8 @@ class Concat extends Expression {
     return values;
   }
 
-  @override // TODO: try reduce operands if imposible
+  // TODO: try reduce operands if imposible
+  @override
   Object? asConst(Context context) {
     Object? toElement(Expression expression) {
       return expression.asConst(context);
@@ -1028,7 +1000,8 @@ class Compare extends Expression {
     return <Node>[value, ...operands];
   }
 
-  @override // TODO: try reduce operands if imposible
+  // TODO: try reduce operands if imposible
+  @override
   Object? asConst(Context context) {
     var temp = value.asConst(context);
 

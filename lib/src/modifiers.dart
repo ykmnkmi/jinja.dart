@@ -1,8 +1,49 @@
 import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/visitor.dart';
 
+/// Modifies Template AST from `map('filter', *args, **kwargs)`
+/// to `map(null, attribute=..., default, positional=args, named=kwargs)`
+/// to match [doMap] definition.
+void mapModifier(Node node) {
+  for (var filter in node.findAll<Filter>()) {
+    if (filter.name == 'map') {
+      var arguments = filter.arguments;
+      filter.arguments = <Expression>[arguments[0]];
+
+      var keywords = filter.keywords;
+      filter.keywords = <Keyword>[];
+
+      var positional = <Expression>[];
+      var named = <Pair>[];
+
+      if (arguments.length == 1) {
+        filter.keywords.add(Keyword('filter', Constant(null)));
+      } else {
+        filter.keywords.add(Keyword('filter', arguments[1]));
+        positional.addAll(arguments.skip(2));
+      }
+
+      for (var keyword in keywords) {
+        switch (keyword.key) {
+          case 'attribute':
+          case 'defaultValue':
+            filter.keywords.add(keyword);
+            break;
+          default:
+            named.add(Pair(Constant(keyword.key), keyword.value));
+        }
+      }
+
+      filter.keywords
+        ..add(Keyword('positional', Array(positional)))
+        ..add(Keyword('named', Dict(named)));
+    }
+  }
+}
+
 /// Modifies Template AST from `namespace(map1, ..., key1=value1, ...)`
-/// to `namespace([map1, ..., {'key1': value1, ...}])`, to match [namespace] definition.
+/// to `namespace([map1, ..., {'key1': value1, ...}])`, to match [namespace]
+/// definition.
 void namespaceModifier(Node node) {
   for (var call in node.findAll<Call>()) {
     var expression = call.expression;
@@ -11,15 +52,15 @@ void namespaceModifier(Node node) {
       continue;
     }
 
-    var arguments = <Expression>[...?call.arguments];
-    call.arguments = null;
+    var arguments = <Expression>[...call.arguments];
+    call.arguments = <Expression>[];
 
     var keywords = call.keywords;
 
-    if (keywords != null && keywords.isNotEmpty) {
+    if (keywords.isNotEmpty) {
       var pairs = keywords.map((keyword) => keyword.toPair()).toList();
       arguments.add(Dict(pairs));
-      call.keywords = null;
+      call.keywords = <Keyword>[];
     }
 
     var dArguments = call.dArguments;
@@ -114,6 +155,7 @@ void loopModifier(Node node) {
 
 // TODO: move to RuntimeCompiler
 const List<NodeVisitor> modifiers = <NodeVisitor>[
+  mapModifier,
   namespaceModifier,
   selfModifier,
   loopModifier,

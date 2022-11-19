@@ -839,8 +839,8 @@ class Parser {
 
   void parseSignature(TokenReader reader, Callable callable) {
     var token = reader.expect('lparen');
-    var arguments = callable.arguments ??= <Expression>[];
-    var keywords = callable.keywords ??= <Keyword>[];
+    var arguments = callable.arguments;
+    var keywords = callable.keywords;
     var requireComma = false;
     Expression? dArguments, dKeywords;
 
@@ -956,7 +956,7 @@ class Parser {
       }
 
       var argument = parsePostfix(reader, parsePrimary(reader));
-      test.arguments!.add(argument);
+      test.arguments.add(argument);
     }
 
     if (negated) {

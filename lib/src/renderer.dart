@@ -141,7 +141,7 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<Object>> {
     // TODO: replace with Filter { BlockExpression ( AssignBlock ) }
     for (var filter in filters) {
       Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
-        positional.insert(0, value);
+        positional = <Object?>[value, ...positional];
         return context.filter(filter.name, positional, named);
       }
 
@@ -238,7 +238,7 @@ class IterableRenderer extends Visitor<RenderContext, Iterable<Object>> {
     for (var filter in node.filters) {
       // TODO: replace with Filter { BlockExpression ( AssignBlock ) }
       Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
-        positional.insert(0, value);
+        positional = <Object?>[value, ...positional];
         return context.filter(filter.name, positional, named);
       }
 
@@ -446,7 +446,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
     // TODO: replace with Filter { BlockExpression ( AssignBlock ) }
     for (var filter in filters) {
       Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
-        positional.insert(0, value);
+        positional = <Object?>[value, ...positional];
         return context.filter(filter.name, positional, named);
       }
 
@@ -538,7 +538,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
 
     for (var filter in node.filters) {
       Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
-        positional.insert(0, value);
+        positional = <Object?>[value, ...positional];
         return context.filter(filter.name, positional, named);
       }
 

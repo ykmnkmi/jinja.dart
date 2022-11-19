@@ -1,11 +1,12 @@
 import 'package:jinja/jinja.dart';
+import 'package:jinja/reflection.dart';
 import 'package:stack_trace/stack_trace.dart';
 
-const String source = "{{ [1, 2, 3, x] | map('default', 0) }}";
+const String source = '{{ words|map(attribute="length") }}';
 
 void main() {
   try {
-    var environment = Environment();
+    var environment = Environment(getAttribute: getAttribute);
     var tokens = environment.lex(source);
     print('tokens:');
     tokens.forEach(print);
@@ -19,17 +20,13 @@ void main() {
     print('\nmodified body:');
     print(template.body);
 
-    var data = {
-      'values': [
-        {'name': 'Jhon'},
-        {'name': 'Jhane'}
-      ]
-    };
+    var words = ['foo', 'bar'];
+    var data = {'words': words};
 
-    print('\ngenerate:');
-    print(template.generate(data));
+    // print('\ngenerate:');
+    // print(template.generate(data).join());
 
-    print('render:');
+    print('\nrender:');
     print(template.render(data));
   } catch (error, trace) {
     print(error);

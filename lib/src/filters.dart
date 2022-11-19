@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:jinja/src/context.dart';
 import 'package:jinja/src/environment.dart';
+import 'package:jinja/src/exceptions.dart';
 import 'package:jinja/src/markup.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:textwrap/textwrap.dart' show TextWrapper;
@@ -21,6 +22,7 @@ Object? Function(Object?) makeAttributeGetter(
   Object? Function(Object? object) get;
 
   if (attribute is String) {
+    // TODO: move to parser or make as modifier
     Object map(String part) {
       return int.tryParse(part) ?? part;
     }
@@ -506,7 +508,7 @@ List<List<Object?>> doBatch(
 }
 
 /// Return the number of items in a container.
-int? doLength(Environment environment, dynamic object) {
+int? doLength(dynamic object) {
   try {
     // TODO: dynamic invocation
     // ignore: avoid_dynamic_calls
@@ -520,8 +522,8 @@ int? doLength(Environment environment, dynamic object) {
 /// `start`.
 ///
 /// When the sequence is empty it returns start.
-num doSum(Iterable<num> values, [num start = 0]) {
-  return values.fold<num>(start, (s, n) => s + n);
+num doSum(Iterable<Object?> values, [num start = 0]) {
+  return values.cast<num>().fold<num>(start, (s, n) => s + n);
 }
 
 /// Convert the value into a list.
@@ -556,7 +558,6 @@ Object? doReverse(Object? value) {
 /// only interested in a certain value of it.
 ///
 /// The basic usage is mapping on an attribute.
-// TODO: add modifier
 Iterable<Object?> doMap(
   Context context,
   Iterable<Object?> values, {
@@ -564,27 +565,40 @@ Iterable<Object?> doMap(
   Object? attribute,
   Object? defaultValue,
   List<Object?> positional = const <Object?>[],
-  Map<Symbol, Object?> named = const <Symbol, Object?>{},
+  Map<Object?, Object?> named = const <Object?, Object?>{},
 }) {
   if (attribute != null) {
+    if (named.isNotEmpty) {
+      var name = named.keys.first;
+      throw FilterArgumentError('unexpected keyword argument $name.');
+    }
+
     var getter = makeAttributeGetter(
       context.environment,
       attribute,
       defaultValue: defaultValue,
     );
 
-    values = values.map<Object?>(getter);
+    return values.map<Object?>(getter);
   }
 
-  if (filter != null) {
-    Object? map(Object? value) {
-      return context.filter(filter, <Object?>[value, ...positional], named);
-    }
-
-    return values.map<Object?>(map);
+  if (filter == null) {
+    throw FilterArgumentError('map requires a filter argument.');
   }
 
-  return values;
+  var symbols = <Symbol, Object?>{};
+
+  void action(String key, Object? value) {
+    symbols[Symbol(key)] = value;
+  }
+
+  named.cast<String, Object?>().forEach(action);
+
+  Object? map(Object? value) {
+    return context.filter(filter, <Object?>[value, ...positional], symbols);
+  }
+
+  return values.map<Object?>(map);
 }
 
 /// Get an attribute of an object.
@@ -642,8 +656,8 @@ final Map<String, Function> filters = <String, Function>{
   'batch': doBatch,
   // 'round': doRound,
   // 'groupby': passEnvironment(doGroupBy),
-  'count': passEnvironment(doLength),
-  'length': passEnvironment(doLength),
+  'count': doLength,
+  'length': doLength,
   'sum': doSum,
   'list': doList,
   'safe': doMarkSafe,

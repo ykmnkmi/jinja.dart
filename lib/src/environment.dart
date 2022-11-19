@@ -107,7 +107,7 @@ class Environment {
     }
 
     if (modifiers != null) {
-      this.modifiers.insertAll(0, modifiers);
+      this.modifiers.addAll(modifiers);
     }
 
     if (templates != null) {
@@ -249,6 +249,7 @@ class Environment {
   }
 
   /// Common filter and test caller.
+  // TODO(context filter): move argument checks to parser or new modifier
   @protected
   Object? callCommon(
     String name,
