@@ -1,10 +1,6 @@
 import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/exceptions.dart';
-import 'package:path/path.dart';
-
-String formatPath(String path) {
-  return normalize(path).replaceAll(r'\', '/');
-}
+import 'package:jinja/src/utils.dart';
 
 /// Base abstract class for all loaders.
 /// Subclass this and override [getSource], [listTemplates] and [load]

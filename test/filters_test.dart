@@ -15,10 +15,8 @@ class User {
 void main() {
   group('Filter', () {
     test('filter calling', () {
-      var positional = [
-        [1, 2, 3]
-      ];
-
+      var nums = [1, 2, 3];
+      var positional = [nums];
       expect(env.callFilter('sum', positional), equals(6));
     });
 
@@ -37,17 +35,15 @@ void main() {
       expect(tmpl.render(), equals('no'));
       tmpl = env.fromString('{{ false|default("no") }}');
       expect(tmpl.render(), equals('false'));
-      tmpl = env.fromString('{{ false|default("no", true) }}');
-      expect(tmpl.render(), equals('no'));
+      // tmpl = env.fromString('{{ false|default("no", true) }}');
+      // expect(tmpl.render(), equals('no'));
       tmpl = env.fromString('{{ given|default("no") }}');
       expect(tmpl.render({'given': 'yes'}), equals('yes'));
     });
 
     test('dictsort', () {
-      var data = {
-        'foo': {'aa': 0, 'b': 1, 'c': 2, 'AB': 3}
-      };
-
+      var foo = {'aa': 0, 'b': 1, 'c': 2, 'AB': 3};
+      var data = {'foo': foo};
       var tmpl = env.fromString('{{ foo|dictsort() }}');
       expect(tmpl.render(data), equals('[[aa, 0], [AB, 3], [b, 1], [c, 2]]'));
       tmpl = env.fromString('{{ foo|dictsort(caseSensetive=true) }}');
@@ -88,12 +84,10 @@ void main() {
     });
 
     test('striptags', () {
-      var data = {
-        'foo': '  <p>just a small   \n <a href="#">'
-            'example</a> link</p>\n<p>to a webpage</p> '
-            '<!-- <p>and some commented stuff</p> -->'
-      };
-
+      var foo = '  <p>just a small   \n <a href="#">'
+          'example</a> link</p>\n<p>to a webpage</p> '
+          '<!-- <p>and some commented stuff</p> -->';
+      var data = {'foo': foo};
       var result = env.fromString('{{ foo|striptags }}').render(data);
       expect(result, equals('just a small example link to a webpage'));
     });
@@ -119,6 +113,25 @@ void main() {
       expect(tmpl.render(), equals('953.7 MiB'));
       tmpl = env.fromString('{{ 1000000000000|filesizeformat(true) }}');
       expect(tmpl.render(), equals('931.3 GiB'));
+    });
+
+    test('filesizeformat issue', () {
+      var tmpl = env.fromString('{{ 300|filesizeformat }}');
+      expect(tmpl.render(), equals('300 Bytes'));
+      tmpl = env.fromString('{{ 3000|filesizeformat }}');
+      expect(tmpl.render(), equals('3.0 kB'));
+      tmpl = env.fromString('{{ 3000000|filesizeformat }}');
+      expect(tmpl.render(), equals('3.0 MB'));
+      tmpl = env.fromString('{{ 3000000000|filesizeformat }}');
+      expect(tmpl.render(), equals('3.0 GB'));
+      tmpl = env.fromString('{{ 3000000000000|filesizeformat }}');
+      expect(tmpl.render(), equals('3.0 TB'));
+      tmpl = env.fromString('{{ 300|filesizeformat(true) }}');
+      expect(tmpl.render(), equals('300 Bytes'));
+      tmpl = env.fromString('{{ 3000|filesizeformat(true) }}');
+      expect(tmpl.render(), equals('2.9 KiB'));
+      tmpl = env.fromString('{{ 3000000|filesizeformat(true) }}');
+      expect(tmpl.render(), equals('2.9 MiB'));
     });
 
     test('first', () {
@@ -158,14 +171,14 @@ void main() {
     });
 
     test('int base', () {
-      var tmpl = env.fromString('{{ value|int(0, 8) }}');
+      var tmpl = env.fromString('{{ value|int(base=8) }}');
       expect(tmpl.render({'value': '11'}), equals('9'));
-      tmpl = env.fromString('{{ value|int(0, 16) }}');
+      tmpl = env.fromString('{{ value|int(base=16) }}');
       expect(tmpl.render({'value': '33Z'}), equals('0'));
     });
 
     test('int default', () {
-      var tmpl = env.fromString('{{ value|int(1) }}');
+      var tmpl = env.fromString('{{ value|int(default=1) }}');
       expect(tmpl.render({'value': 'abc'}), equals('1'));
     });
 
@@ -179,10 +192,8 @@ void main() {
     });
 
     test('join attribute', () {
-      var data = {
-        'users': [User('foo'), User('bar')]
-      };
-
+      var list = [User('foo'), User('bar')];
+      var data = {'users': list};
       var tmpl = env.fromString('{{ users|map(attribute="name")|join(", ") }}');
       expect(tmpl.render(data), equals('foo, bar'));
     });
@@ -202,6 +213,13 @@ void main() {
       expect(tmpl.render(), equals('foo'));
     });
 
+    // TODO: add test: items
+    // test('items', () {});
+
+    // TODO: add test: items unefined
+    // test('items unefined', () {});
+
+    // TODO: add test: pprint
     // test('pprint', () {});
 
     test('random', () {
@@ -223,10 +241,8 @@ void main() {
     });
 
     test('string', () {
-      var data = {
-        'values': [1, 2, 3, 4, 5]
-      };
-
+      var list = [1, 2, 3, 4, 5];
+      var data = {'values': list};
       var tmpl = env.fromString('{{ values|string }}');
       expect(tmpl.render(data), equals('${[1, 2, 3, 4, 5]}'));
     });
@@ -236,23 +252,26 @@ void main() {
 
     test('truncate', () {
       var data = {'data': 'foobar baz bar' * 10, 'smalldata': 'foobar baz bar'};
-      var tmpl = env.fromString('{{ data|truncate(15, true, ">>>") }}');
+      var tmpl = env.fromString(
+          '{{ data|truncate(length=15, killWords=true, end=">>>") }}');
       expect(tmpl.render(data), equals('foobar baz b>>>'));
-      tmpl = env.fromString('{{ data|truncate(15, false, ">>>") }}');
+      tmpl = env.fromString('{{ data|truncate(length=15, end=">>>") }}');
       expect(tmpl.render(data), equals('foobar baz>>>'));
-      tmpl = env.fromString('{{ smalldata|truncate(15) }}');
+      tmpl = env.fromString('{{ smalldata|truncate(length=15) }}');
       expect(tmpl.render(data), equals('foobar baz bar'));
     });
 
     test('truncate very short', () {
-      var tmpl = env.fromString('{{ "foo bar baz"|truncate(9) }}');
+      var tmpl = env.fromString('{{ "foo bar baz"|truncate(length=9) }}');
       expect(tmpl.render(), equals('foo bar baz'));
-      tmpl = env.fromString('{{ "foo bar baz"|truncate(9, true) }}');
-      expect(tmpl.render(), equals('foo bar baz'));
+      tmpl =
+          env.fromString('{{ "foo bar"|truncate(length=6, killWords=true) }}');
+      expect(tmpl.render(), equals('foo bar'));
     });
 
-    test('truncate end lengthh', () {
-      var tmpl = env.fromString('{{ "Joel is a slug"|truncate(7, true) }}');
+    test('truncate end length', () {
+      var tmpl = env.fromString(
+          '{{ "Joel is a slug"|truncate(length=7, killWords=true) }}');
       expect(tmpl.render(), equals('Joel...'));
     });
 
@@ -342,6 +361,9 @@ void main() {
     // TODO: add test: groupby default
     // test('groupby default', () {});
 
+    // TODO: add test: groupby case
+    // test('groupby case', () {});
+
     test('filtertag', () {
       var tmpl = env.fromString(
           '{% filter upper|replace("FOO", "foo") %}foobar{% endfilter %}');
@@ -375,8 +397,8 @@ void main() {
       expect(tmpl.render(), equals('&lt;div&gt;foo&lt;/div&gt;'));
     });
 
-    // TODO: add test: url encode
-    // test('url encode', () {});
+    // TODO: add test: urlencode
+    // test('urlencode', () {});
 
     // TODO: add test: simple map
     // test('simple map', () {});
@@ -402,6 +424,12 @@ void main() {
     // TODO: add test: simple reject
     // test('simple reject', () {});
 
+    // TODO: add test: bool reject
+    // test('bool reject', () {});
+
+    // TODO: add test: simple select attr
+    // test('simple select attr', () {});
+
     // TODO: add test: simple reject attr
     // test('simple reject attr', () {});
 
@@ -413,9 +441,6 @@ void main() {
 
     // TODO: add test: json dump
     // test('json dump', () {});
-
-    // TODO: add test: map default
-    // test('map default', () {});
 
     test('wordwrap', () {
       var env = Environment(newLine: '\n');
@@ -445,6 +470,12 @@ void main() {
       var t2 = env.fromString('{{ "foo" if x is not defined else x|f }}');
       expect(t1.render(), equals('foo'));
       expect(t2.render(), equals('foo'));
+
+      var matcher = throwsA(predicate((error) =>
+          error is TemplateRuntimeError &&
+          error.message == "no filter named 'f'"));
+      expect(() => t1.render({'x': 42}), matcher);
+      expect(() => t2.render({'x': 42}), matcher);
     });
   });
 }

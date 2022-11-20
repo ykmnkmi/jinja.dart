@@ -20,8 +20,7 @@
   - `Template`
     - `Template({path, lineCommentPrefix, lineStatementPrefix, newLine, modifiers, templates})`
       constructor arguments
-    - `generate` method
-  - `formatPath` function to normalize template paths
+    - `renderTo` method
   - `FileSystemLoader.findFile` method
   - exceptions are public now:
     - `TemplateError`
@@ -44,11 +43,12 @@
     - `wordcount`
     - `wordwrap`
     - `item`
+    - `map`
   - `filters`, `tests` and `runtime` library
 - changed:
   - `FieldGetter` typedef renamed to `AttributeGetter`
   - `mapping` test renamed to `map`
-  - `default` filter compare values with `null`
+  - `default` filter compare values with `null`, no boolean argument
   - `defined` and `undefined` tests compare values with `null`
   - `Environment`
     - `Environment({getField})` constructor argument renamed to `getAttribute`

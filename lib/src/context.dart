@@ -18,23 +18,20 @@ class Context {
 
   Object? call(
     dynamic object, [
-    List<Object?>? positional,
-    Map<Symbol, Object?>? named,
+    List<Object?> positional = const <Object?>[],
+    Map<Symbol, Object?> named = const <Symbol, Object?>{},
   ]) {
-    // TODO: dynamic invocation
-    // ignore: avoid_dynamic_calls
-    var function = object.call as Function;
-    positional ??= <Object?>[];
+    Function function;
 
-    var pass = Environment.passArguments[function];
-
-    if (pass == PassArgument.context) {
-      positional = <Object?>[this, ...positional];
-    } else if (pass == PassArgument.environment) {
-      positional = <Object?>[environment, ...positional];
+    if (object is Function) {
+      function = object;
+    } else {
+      // TODO: dynamic invocation
+      // ignore: avoid_dynamic_calls
+      function = object.call as Function;
     }
 
-    return Function.apply(function, positional, named);
+    return environment.callCommon(function, positional, named, this);
   }
 
   Context derived() {

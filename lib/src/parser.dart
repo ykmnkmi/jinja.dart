@@ -875,6 +875,11 @@ class Parser {
           reader.skip(2);
 
           var value = parseExpression(reader);
+
+          if (key == 'default') {
+            key = 'defaultValue';
+          }
+
           keywords.add(Keyword(key, value));
         } else {
           ensure(dArguments == null && dKeywords == null && keywords.isEmpty);

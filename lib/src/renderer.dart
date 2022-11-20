@@ -73,11 +73,11 @@ class RenderContext extends Context {
       var values = list(current);
 
       if (values.length < target.length) {
-        throw StateError('not enough values to unpack');
+        throw StateError('not enough values to unpack.');
       }
 
       if (values.length > target.length) {
-        throw StateError('too many values to unpack');
+        throw StateError('too many values to unpack.');
       }
 
       for (var i = 0; i < target.length; i++) {
@@ -95,284 +95,10 @@ class RenderContext extends Context {
         return;
       }
 
-      throw TemplateRuntimeError('non-namespace object');
+      throw TemplateRuntimeError('non-namespace object.');
     }
 
     throw TypeError();
-  }
-}
-
-class IterableRenderer extends Visitor<RenderContext, Iterable<Object>> {
-  const IterableRenderer();
-
-  @override
-  Iterable<Object> visitAll(List<Node> nodes, RenderContext context) sync* {
-    for (var node in nodes) {
-      yield* node.accept(this, context);
-    }
-  }
-
-  @override
-  Iterable<Object> visitAssign(Assign node, RenderContext context) sync* {
-    var target = node.target.resolve(context);
-    var values = node.value.resolve(context);
-    context.assignTargets(target, values);
-  }
-
-  @override
-  Iterable<Object> visitAssignBlock(
-    AssignBlock node,
-    RenderContext context,
-  ) sync* {
-    var target = node.target.resolve(context);
-    Object? value = node.body.accept(this, context.derived()).join();
-
-    var filters = node.filters;
-
-    if (filters == null || filters.isEmpty) {
-      if (context.autoEscape) {
-        value = Markup.escaped(value);
-      }
-
-      context.assignTargets(target, value);
-      return;
-    }
-
-    // TODO: replace with Filter { BlockExpression ( AssignBlock ) }
-    for (var filter in filters) {
-      Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
-        positional = <Object?>[value, ...positional];
-        return context.filter(filter.name, positional, named);
-      }
-
-      value = filter.apply(context, callback);
-    }
-
-    if (context.autoEscape) {
-      value = Markup.escaped(value);
-    }
-
-    context.assignTargets(target, value);
-  }
-
-  @override
-  Iterable<Object> visitAutoEscape(
-    AutoEscape node,
-    RenderContext context,
-  ) sync* {
-    var current = context.autoEscape;
-    context.autoEscape = boolean(node.value.resolve(context));
-    yield* node.body.accept(this, context);
-    context.autoEscape = current;
-  }
-
-  @override
-  Iterable<Object> visitBlock(Block node, RenderContext context) sync* {
-    var blocks = context.blocks[node.name];
-
-    if (blocks == null || blocks.isEmpty) {
-      node.body.accept(this, context);
-    } else {
-      if (node.required) {
-        if (blocks.length == 1) {
-          throw TemplateRuntimeError("required block '${node.name}' not found");
-        }
-      }
-
-      var first = blocks[0];
-      var index = 0;
-
-      if (first.hasSuper) {
-        String parent() {
-          if (index < blocks.length - 1) {
-            var parentBlock = blocks[index += 1];
-            return parentBlock.body.accept(this, context).join();
-          }
-
-          // TODO: add error mesage
-          throw TemplateRuntimeError();
-        }
-
-        context.set('super', parent);
-        yield* first.body.accept(this, context);
-        context.remove('super');
-      } else {
-        yield* first.body.accept(this, context);
-      }
-    }
-  }
-
-  @override
-  Iterable<Object> visitData(Data node, RenderContext context) sync* {
-    yield node.data;
-  }
-
-  @override
-  Iterable<Object> visitDo(Do node, RenderContext context) sync* {
-    node.expression.resolve(context);
-  }
-
-  @override
-  Iterable<Object> visitExpression(
-    Expression node,
-    RenderContext context,
-  ) sync* {
-    var resolved = node.resolve(context);
-    var finalized = context.finalize(resolved);
-    yield context.escape(finalized);
-  }
-
-  @override
-  Iterable<Object> visitExtends(Extends node, RenderContext context) sync* {
-    var template = context.environment.getTemplate(node.path);
-    yield* template.body.accept(this, context);
-  }
-
-  @override
-  Iterable<Object> visitFilterBlock(
-    FilterBlock node,
-    RenderContext context,
-  ) sync* {
-    Object? value = node.body.accept(this, context.derived()).join();
-
-    for (var filter in node.filters) {
-      // TODO: replace with Filter { BlockExpression ( AssignBlock ) }
-      Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
-        positional = <Object?>[value, ...positional];
-        return context.filter(filter.name, positional, named);
-      }
-
-      value = filter.apply(context, callback);
-    }
-
-    var finalized = context.finalize(value);
-    yield context.escape(finalized);
-  }
-
-  @override
-  Iterable<Object> visitFor(For node, RenderContext context) sync* {
-    var targets = node.target.resolve(context);
-    var iterable = node.iterable.resolve(context);
-    var orElse = node.orElse;
-
-    if (iterable == null) {
-      throw TypeError();
-    }
-
-    String render(Object? iterable, [int depth = 0]) {
-      var values = list(iterable);
-
-      if (values.isEmpty) {
-        if (orElse != null) {
-          return orElse.accept(this, context).join();
-        }
-
-        return '';
-      }
-
-      if (node.test != null) {
-        var test = node.test!;
-        var filtered = <Object?>[];
-
-        for (var value in values) {
-          var data = getDataForTargets(targets, value);
-          data = context.save(data);
-
-          if (boolean(test.resolve(context))) {
-            filtered.add(value);
-          }
-
-          context.restore(data);
-        }
-
-        values = filtered;
-      }
-
-      var loop = LoopContext(values, depth, render);
-      var parent = context.get('loop');
-      context.set('loop', loop);
-
-      var buffer = StringBuffer();
-
-      for (var value in loop) {
-        var data = getDataForTargets(targets, value);
-        var forContext = context.derived(data: data);
-        buffer.writeAll(node.body.accept(this, forContext));
-      }
-
-      context.set('loop', parent);
-      return buffer.toString();
-    }
-
-    yield render(iterable);
-  }
-
-  @override
-  Iterable<Object> visitIf(If node, RenderContext context) sync* {
-    if (boolean(node.test.resolve(context))) {
-      yield* node.body.accept(this, context);
-      return;
-    }
-
-    var orElse = node.orElse;
-
-    if (orElse != null) {
-      yield* orElse.accept(this, context);
-    }
-  }
-
-  @override
-  Iterable<Object> visitInclude(Include node, RenderContext context) sync* {
-    var template = context.environment.getTemplate(node.template);
-
-    if (node.withContext) {
-      yield* template.body.accept(this, context);
-      return;
-    }
-
-    context = RenderContext(context.environment);
-    yield* template.body.accept(this, context);
-  }
-
-  @override
-  Iterable<Object> visitOutput(Output node, RenderContext context) sync* {
-    yield* visitAll(node.nodes, context);
-  }
-
-  @override
-  Iterable<Object> visitTemplate(Template node, RenderContext context) sync* {
-    var self = Namespace();
-
-    for (var block in node.blocks) {
-      var blocks = context.blocks[block.name] ??= <Block>[];
-
-      String render() {
-        return block.accept(this, context).join();
-      }
-
-      self[block.name] = render;
-      blocks.add(block);
-    }
-
-    context.set('self', self);
-    yield* node.body.accept(this, context);
-  }
-
-  @override
-  Iterable<Object> visitWith(With node, RenderContext context) sync* {
-    Object? target(int index) {
-      return node.targets[index].resolve(context);
-    }
-
-    Object? value(int index) {
-      return node.values[index].resolve(context);
-    }
-
-    var targets = generate(node.targets, target);
-    var values = generate(node.values, value);
-    var data = context.save(getDataForTargets(targets, values));
-    yield* node.body.accept(this, context);
-    context.restore(data);
   }
 }
 
@@ -389,13 +115,13 @@ class StringSinkRenderContext extends RenderContext {
 
   @override
   StringSinkRenderContext derived({
-    StringBuffer? buffer,
+    StringSink? sink,
     Map<String, List<Block>>? blocks,
     Map<String, Object?>? data,
   }) {
     return StringSinkRenderContext(
       environment,
-      buffer ?? sink,
+      sink ?? this.sink,
       blocks: blocks ?? this.blocks,
       parent: context,
       data: data,
@@ -428,7 +154,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
   void visitAssignBlock(AssignBlock node, StringSinkRenderContext context) {
     var target = node.target.resolve(context);
     var buffer = StringBuffer();
-    var derived = context.derived(buffer: buffer);
+    var derived = context.derived(sink: buffer);
     node.body.accept(this, derived);
 
     Object? value = buffer.toString();
@@ -532,7 +258,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
   @override
   void visitFilterBlock(FilterBlock node, StringSinkRenderContext context) {
     var buffer = StringBuffer();
-    node.body.accept(this, context.derived(buffer: buffer));
+    node.body.accept(this, context.derived(sink: buffer));
 
     Object? value = buffer.toString();
 
@@ -684,11 +410,11 @@ Map<String, Object?> getDataForTargets(Object? targets, Object? current) {
 
     if (values.length < names.length) {
       throw StateError('not enough values to unpack (expected ${names.length},'
-          ' got ${values.length})');
+          ' got ${values.length}).');
     }
 
     if (values.length > names.length) {
-      throw StateError('too many values to unpack (expected ${names.length})');
+      throw StateError('too many values to unpack (expected ${names.length}).');
     }
 
     return <String, Object?>{

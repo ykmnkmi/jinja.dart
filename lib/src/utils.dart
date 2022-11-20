@@ -1,8 +1,5 @@
+import 'package:path/path.dart';
 import 'package:textwrap/utils.dart';
-
-Object? identity(Object? object) {
-  return object;
-}
 
 bool boolean(Object? value) {
   if (value == null) {
@@ -36,6 +33,42 @@ String format(Object? object) {
   return repr(object);
 }
 
+String formatPath(String path) {
+  return normalize(path).replaceAll(r'\', '/');
+}
+
+List<R> generate<T, R>(
+  List<T> list,
+  R Function(int) generator, {
+  bool growable = true,
+}) {
+  return List<R>.generate(list.length, generator, growable: growable);
+}
+
+Object? identity(Object? object) {
+  return object;
+}
+
+Iterable<Object?> iterate(Object? iterable) {
+  if (iterable is Iterable) {
+    return iterable;
+  }
+
+  if (iterable is String) {
+    return iterable.split('');
+  }
+
+  if (iterable is MapEntry) {
+    return [iterable.key, iterable.value];
+  }
+
+  if (iterable is Map) {
+    return iterable.entries;
+  }
+
+  throw TypeError();
+}
+
 List<Object?> list(Object? iterable) {
   if (iterable is List) {
     return iterable;
@@ -55,26 +88,6 @@ List<Object?> list(Object? iterable) {
 
   if (iterable is Map) {
     return iterable.entries.toList();
-  }
-
-  throw TypeError();
-}
-
-Iterable<Object?> iterate(Object? iterable) {
-  if (iterable is Iterable) {
-    return iterable;
-  }
-
-  if (iterable is String) {
-    return iterable.split('');
-  }
-
-  if (iterable is MapEntry) {
-    return [iterable.key, iterable.value];
-  }
-
-  if (iterable is Map) {
-    return iterable.entries;
   }
 
   throw TypeError();
@@ -103,14 +116,6 @@ Iterable<int> range(int startOrStop, [int? stop, int step = 1]) sync* {
       yield i;
     }
   }
-}
-
-List<R> generate<T, R>(
-  List<T> list,
-  R Function(int) generator, {
-  bool growable = true,
-}) {
-  return List<R>.generate(list.length, generator, growable: growable);
 }
 
 String repr(Object? object, [bool escapeNewlines = false]) {

@@ -5,7 +5,7 @@ import 'package:jinja/src/context.dart';
 import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/exceptions.dart';
 import 'package:jinja/src/markup.dart';
-import 'package:jinja/src/utils.dart';
+import 'package:jinja/src/utils.dart' as utils;
 import 'package:textwrap/textwrap.dart' show TextWrapper;
 
 /// Returns a callable that looks up the given item from a
@@ -207,16 +207,8 @@ List<Object?> doDictSort(
 
 /// If the value is null it will return the passed default value,
 /// otherwise the value of the variable.
-Object? doDefault(
-  Object? value, [
-  Object? defaultValue = '',
-  bool asBoolean = false,
-]) {
-  if (value == null || asBoolean && !boolean(value)) {
-    return defaultValue;
-  }
-
-  return value;
+Object? doDefault(Object? value, [Object? defaultValue = '']) {
+  return value ?? defaultValue;
 }
 
 /// Return a string which is the concatenation of the strings in the
@@ -264,7 +256,7 @@ Object? doRandom(Environment environment, Object? value) {
     return null;
   }
 
-  var values = list(value);
+  var values = utils.list(value);
   var index = environment.random.nextInt(values.length);
   var result = values[index];
 
@@ -342,12 +334,12 @@ String doFileSizeFormat(Object? value, [bool binary = false]) {
 /// parameter will not be truncated.
 String doTruncate(
   Environment environment,
-  String value, [
+  String value, {
   int length = 255,
   bool killWords = false,
   String end = '...',
   int leeway = 5,
-]) {
+}) {
   assert(length >= end.length, 'expected length >= ${end.length}, got $length');
   assert(leeway >= 0, 'expected leeway >= 0, got $leeway');
 
@@ -405,8 +397,8 @@ int doWordCount(String string) {
 /// Convert the value into an integer.
 ///
 /// If the conversion doesn’t work it will return null.
-int doInteger(String value, [int defaultValue = 0, int radix = 10]) {
-  return int.tryParse(value, radix: radix) ?? defaultValue;
+int doInteger(String value, {int defaultValue = 0, int base = 10}) {
+  return int.tryParse(value, radix: base) ?? defaultValue;
 }
 
 /// Convert the value into a floating point number.
@@ -434,7 +426,7 @@ String doTrim(String value, [String? characters]) {
 
 /// Strip SGML/XML tags and replace adjacent whitespace by one space.
 String doStripTags(String value) {
-  return stripTags(value);
+  return utils.stripTags(value);
 }
 
 /// Slice an iterator and return a list of lists containing
@@ -444,7 +436,7 @@ String doStripTags(String value) {
 /// three ul tags that represent columns.
 List<List<Object?>> doSlice(Object? value, int slices, [Object? fillWith]) {
   var result = <List<Object?>>[];
-  var values = list(value);
+  var values = utils.list(value);
   var length = values.length;
   var perSlice = length ~/ slices;
   var withExtra = length % slices;
@@ -530,7 +522,7 @@ num doSum(Iterable<Object?> values, [num start = 0]) {
 ///
 /// If it was a string the returned list will be a list of characters.
 List<Object?> doList(Object? object) {
-  return list(object);
+  return utils.list(object);
 }
 
 /// Mark the value as safe which means that in an environment
@@ -549,7 +541,7 @@ String doMarkUnsafe(Object? value) {
 /// Reverse the object or return an iterator that iterates over it the other
 /// way round.
 Object? doReverse(Object? value) {
-  var values = list(value);
+  var values = utils.list(value);
   return values.reversed;
 }
 

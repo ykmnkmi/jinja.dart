@@ -250,27 +250,19 @@ class Environment {
 
   /// Common filter and test caller.
   // TODO(context filter): move argument checks to parser or new modifier
-  @protected
+  @internal
   Object? callCommon(
-    String name,
+    Function function,
     List<Object?> positional,
     Map<Symbol, Object?> named,
-    bool isFilter,
     Context? context,
   ) {
-    var type = isFilter ? 'filter' : 'test';
-    var map = isFilter ? filters : tests;
-    var function = map[name];
-
-    if (function == null) {
-      throw TemplateRuntimeError("no $type named '$name'");
-    }
-
     var pass = passArguments[function];
 
     if (pass == PassArgument.context) {
       if (context == null) {
-        throw TemplateRuntimeError('attempted to invoke $type without context');
+        throw TemplateRuntimeError(
+            'attempted to invoke context function without context.');
       }
 
       positional = <Object?>[context, ...positional];
@@ -289,7 +281,13 @@ class Environment {
     Map<Symbol, Object?> named = const <Symbol, Object?>{},
     Context? context,
   ]) {
-    return callCommon(name, positional, named, true, context);
+    var function = filters[name];
+
+    if (function == null) {
+      throw TemplateRuntimeError("no filter named '$name'");
+    }
+
+    return callCommon(function, positional, named, context);
   }
 
   /// If [name] not found throws [TemplateRuntimeError].
@@ -300,7 +298,13 @@ class Environment {
     Map<Symbol, Object?> named = const <Symbol, Object?>{},
     Context? context,
   ]) {
-    return callCommon(name, positional, named, false, context) as bool;
+    var function = tests[name];
+
+    if (function == null) {
+      throw TemplateRuntimeError("no test named '$name'");
+    }
+
+    return callCommon(function, positional, named, context) as bool;
   }
 
   /// Lex the given sourcecode and return a list of tokens.
@@ -410,7 +414,7 @@ class Environment {
     Object? getAttribute(Object? object, String field) {
       try {
         return attributeGetter(object, field);
-      } catch (error) {
+      } on NoSuchMethodError {
         return itemGetter(object, field);
       }
     }
@@ -548,12 +552,6 @@ class Template extends Node {
     return visitor.visitTemplate(this, context);
   }
 
-  /// It accepts the same arguments as [render].
-  Iterable<Object> generate([Map<String, Object?>? data]) {
-    var context = RenderContext(environment, data: data);
-    return accept(const IterableRenderer(), context);
-  }
-
   /// If no arguments are given the context will be empty.
   String render([Map<String, Object?>? data]) {
     var buffer = StringBuffer();
@@ -562,12 +560,14 @@ class Template extends Node {
     return buffer.toString();
   }
 
+  /// If no arguments are given the context will be empty.
+  void renderTo(StringSink sink, [Map<String, Object?>? data]) {
+    var context = StringSinkRenderContext(environment, sink, data: data);
+    accept(const StringSinkRenderer(), context);
+  }
+
   @override
   String toString() {
-    if (path == null) {
-      return 'Template()';
-    }
-
-    return 'Template($path)';
+    return path == null ? 'Template()' : 'Template($path)';
   }
 }

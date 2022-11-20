@@ -12,11 +12,12 @@ Mostly same as [Jinja](https://jinja.palletsprojects.com/en/3.0.x/templates/)
 template documentation. _work in progress_.
 
 ## Differences
-- `BigInt` is not supported
-- Complex numbers are not supported
-- The `default` filter compares values against `null`
-- The `defined` and `undefined` tests compares values against `null`
-- The `Environment` `finalizer` takes only one `value` argument
+- If the filter has one optional argument, it will be positional, otherwise they will be named.
+- `BigInt` and complex numbers are not supported.
+- The `default` filter compares values with `null`, no `boolean` parameter.
+- The `defined` and `undefined` tests compares values with `null`.
+- If  `Environment({getAttribute})` is not passed, `getItem` will be used.
+  This allows you to use `{{ map.key }}` expression without internal checks.
 - _work in progress_
 
 ## Dynamically invoked members
@@ -33,8 +34,9 @@ import 'package:jinja/jinja.dart';
 
 var environment = Environment(blockStart: '...', blockEnd: '...');
 var template = environment.fromString('...source...');
-
-sink.write(template.render({'key': value}));
+print(template.render({'key': value}));
+// or write directly to StringSink, IOSink, HttpResponse and other implementers
+template.renderTo(stringSink, {'key': value});
 ```
 
 See also examples with [conduit][conduit_example]
@@ -48,8 +50,6 @@ and [reflectable][reflectable_example].
     - selectAutoescape
   - addExtension
   - compileExpression
-- Template
-  - stream
 - List of Control Structures
   - Macros
   - Call

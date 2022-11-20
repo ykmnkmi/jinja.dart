@@ -23,9 +23,6 @@ void main() {
     var words = ['foo', 'bar'];
     var data = {'words': words};
 
-    // print('\ngenerate:');
-    // print(template.generate(data).join());
-
     print('\nrender:');
     print(template.render(data));
   } catch (error, trace) {
