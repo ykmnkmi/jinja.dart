@@ -33,16 +33,12 @@ class For extends Statement {
     this.test,
     this.recursive = false,
   }) : hasLoop = false {
-    void visitor(Node node) {
-      if (node is Name && node.name == 'loop') {
+    for (var nameNode in findAll<Name>()) {
+      if (nameNode.name == 'loop') {
         hasLoop = true;
-        return;
+        break;
       }
-
-      node.visitChildrens(visitor);
     }
-
-    visitChildrens(visitor);
   }
 
   Expression target;
@@ -180,16 +176,12 @@ class With extends Statement {
 
 class Block extends Statement {
   Block(this.name, this.scoped, this.required, this.body) : hasSuper = false {
-    void visitor(Node node) {
-      if (node is Name && node.name == 'super') {
+    for (var nameNode in findAll<Name>()) {
+      if (nameNode.name == 'super') {
         hasSuper = true;
-        return;
+        break;
       }
-
-      node.visitChildrens(visitor);
     }
-
-    visitChildrens(visitor);
   }
 
   String name;

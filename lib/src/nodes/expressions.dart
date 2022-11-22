@@ -467,7 +467,13 @@ class Callable extends Expression {
     var dArguments = this.dArguments;
 
     if (dArguments != null) {
-      positional.addAll(dArguments.asConst(context) as Iterable<Object?>);
+      var arguments = dArguments.asConst(context);
+
+      if (arguments is! Iterable) {
+        throw TypeError();
+      }
+
+      positional.addAll(arguments);
     }
 
     var dKeywords = this.dKeywords;
@@ -803,11 +809,17 @@ class ItemString extends Expression implements Item {
 
   @override
   set key(Expression key) {
-    if (key is Constant) {
-      keyString = key.value as String;
-    } else {
-      throw ArgumentError.value(key);
+    if (key is! Constant) {
+      throw TypeError();
     }
+
+    var value = key.value;
+
+    if (value is! String) {
+      throw TypeError();
+    }
+
+    keyString = value;
   }
 
   @override
@@ -903,7 +915,7 @@ class Concat extends Expression {
       buffer.write(expression.resolve(context));
     }
 
-    return '$buffer';
+    return buffer.toString();
   }
 
   @override
