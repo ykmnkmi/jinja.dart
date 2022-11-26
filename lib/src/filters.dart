@@ -8,6 +8,29 @@ import 'package:jinja/src/markup.dart';
 import 'package:jinja/src/utils.dart' as utils;
 import 'package:textwrap/textwrap.dart' show TextWrapper;
 
+enum PassArgument {
+  context,
+  environment,
+}
+
+/// Pass the [Context] as the first argument to the applied function when
+/// called while rendering a template.
+///
+/// Can be used on functions, filters, and tests.
+Function passContext(Function function) {
+  Environment.passArguments[function] = PassArgument.context;
+  return function;
+}
+
+/// Pass the [Environment] as the first argument to the applied function when
+/// called while rendering a template.
+///
+/// Can be used on functions, filters, and tests.
+Function passEnvironment(Function function) {
+  Environment.passArguments[function] = PassArgument.environment;
+  return function;
+}
+
 /// Returns a callable that looks up the given item from a
 /// passed object with the rules of the environment.
 ///
@@ -163,8 +186,7 @@ List<Object?> doDictSort(
       position = 1;
       break;
     default:
-      throw ArgumentError.value(
-          by, 'by', "you can only sort by either 'key' or 'value'");
+      throw FilterArgumentError("You can only sort by either 'key' or 'value'");
   }
 
   var order = reverse ? -1 : 1;
@@ -291,6 +313,7 @@ String doFileSizeFormat(Object? value, [bool binary = false]) {
   } else if (value is String) {
     bytes = double.parse(value);
   } else {
+    // or FilterArgumentError?
     throw TypeError();
   }
 
@@ -562,7 +585,7 @@ Iterable<Object?> doMap(
   if (attribute != null) {
     if (named.isNotEmpty) {
       var name = named.keys.first;
-      throw FilterArgumentError('unexpected keyword argument $name.');
+      throw FilterArgumentError('Unexpected keyword argument $name');
     }
 
     var getter = makeAttributeGetter(
@@ -575,7 +598,7 @@ Iterable<Object?> doMap(
   }
 
   if (filter == null) {
-    throw FilterArgumentError('map requires a filter argument.');
+    throw FilterArgumentError('Map requires a filter argument');
   }
 
   var symbols = <Symbol, Object?>{};

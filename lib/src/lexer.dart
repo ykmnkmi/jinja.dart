@@ -52,10 +52,12 @@ const List<String> ignoreIfEmpty = <String>[
   'linecomment',
 ];
 
+/// Shorthand for [RegExp.escape].
 String escapeRe(String pattern) {
   return RegExp.escape(pattern);
 }
 
+/// Shorthand for [RegExp].
 RegExp compileRe(String pattern) {
   return RegExp(pattern, dotAll: true, multiLine: true);
 }
@@ -66,22 +68,12 @@ abstract class Rule {
   final RegExp regExp;
 
   final String? newState;
-
-  @override
-  String toString() {
-    return 'Rule($newState)';
-  }
 }
 
 class SingleTokenRule extends Rule {
   SingleTokenRule(super.regExp, this.token, [super.newState]);
 
   final String token;
-
-  @override
-  String toString() {
-    return 'SingleTokenRule($token, $newState)';
-  }
 }
 
 class MultiTokenRule extends Rule {
@@ -94,11 +86,6 @@ class MultiTokenRule extends Rule {
   final List<String> tokens;
 
   final bool optionalLStrip;
-
-  @override
-  String toString() {
-    return 'MultiTokenRule($tokens, $optionalLStrip, $newState)';
-  }
 }
 
 class Lexer {
@@ -143,21 +130,23 @@ class Lexer {
       SingleTokenRule(operatorRe, 'operator'),
     ];
 
+    var lineCommentPrefix = environment.lineCommentPrefix;
+
     var rootTagRules = <List<String>>[
       <String>['comment_start', environment.commentStart, commentStartRe],
       <String>['variable_start', environment.variableStart, variableStartRe],
       <String>['block_start', environment.blockStart, blockStartRe],
-      if (environment.lineCommentPrefix != null)
+      if (lineCommentPrefix != null)
         <String>[
           'linecomment_start',
-          environment.lineCommentPrefix!,
-          '(?:^|(?<=\\S))[^\\S\r\n]*${environment.lineCommentPrefix!}'
+          lineCommentPrefix,
+          '(?:^|(?<=\\S))[^\\S\r\n]*$lineCommentPrefix',
         ],
       if (environment.lineStatementPrefix != null)
         <String>[
           'linestatement_start',
           environment.lineStatementPrefix!,
-          '^[ \t\v]*${environment.lineStatementPrefix!}'
+          '^[ \t\v]*${environment.lineStatementPrefix!}',
         ],
     ];
 
@@ -226,7 +215,7 @@ class Lexer {
           <String>['@missing end of raw directive'],
         ),
       ],
-      if (environment.lineCommentPrefix != null)
+      if (lineCommentPrefix != null)
         'linecomment_start': <Rule>[
           MultiTokenRule(
             compileRe('(.*?)()(?=\n|\$)'),
@@ -352,7 +341,7 @@ class Lexer {
             var token = rule.tokens[i];
 
             if (token.startsWith('@')) {
-              // TODO: update error message
+              // TODO: update error
               throw Exception(token.substring(1));
             } else if (token == '#group') {
               var notFound = true;
@@ -416,14 +405,14 @@ class Lexer {
               balancingStack.add('}');
             } else if (data == ')' || data == ']' || data == '}') {
               if (balancingStack.isEmpty) {
-                throw TemplateSyntaxError("unexpected '$data'");
+                throw TemplateSyntaxError("Unexpected '$data'");
               }
 
               var expected = balancingStack.removeLast();
 
               if (data != expected) {
                 throw TemplateSyntaxError(
-                    "unexpected '$data', expected '$expected'");
+                    "Unexpected '$data', expected '$expected'");
               }
             }
           }
@@ -442,7 +431,8 @@ class Lexer {
             }
           }
         } else {
-          throw UnsupportedError('${rule.runtimeType}');
+          // TODO: update error
+          throw Exception();
         }
 
         var position2 = match.end;
@@ -464,9 +454,8 @@ class Lexer {
             }
 
             if (notFound) {
-              // TODO: update error message
-              throw Exception('${rule.regExp} wanted to resolve the token '
-                  'dynamically but no group matched');
+              // TODO: update error
+              throw Exception();
             }
           } else {
             stack.add(rule.newState!);
@@ -474,9 +463,8 @@ class Lexer {
 
           stateRules = rules[stack.last]!;
         } else if (position == position2) {
-          // TODO: update error message
-          throw Exception(
-              '${rule.regExp} yielded empty string without stack change');
+          // TODO: update error
+          throw Exception();
         }
 
         position = position2;
@@ -487,10 +475,11 @@ class Lexer {
       if (notBreak) {
         if (scanner.isDone) {
           return tokens;
-        } else {
-          throw TemplateSyntaxError(
-              'unexpected char ${scanner.rest[0]} at ${scanner.position}.');
         }
+
+        var char = scanner.rest[0];
+        var position = scanner.position;
+        throw TemplateSyntaxError('Unexpected char $char at $position');
       }
     }
   }
@@ -503,6 +492,7 @@ class Lexer {
     }
 
     source = lines.join('\n');
+
     var scanner = StringScanner(source, sourceUrl: path);
     var tokens = <Token>[];
 
@@ -530,11 +520,6 @@ class Lexer {
 
     tokens.add(Token.simple(source.length, 'eof'));
     return tokens;
-  }
-
-  @override
-  String toString() {
-    return 'Tokenizer()';
   }
 
   static List<String> split(Pattern pattern, String text) {

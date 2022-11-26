@@ -4,6 +4,7 @@ import 'dart:math' show Random;
 import 'package:jinja/src/context.dart';
 import 'package:jinja/src/defaults.dart' as defaults;
 import 'package:jinja/src/exceptions.dart';
+import 'package:jinja/src/filters.dart';
 import 'package:jinja/src/lexer.dart';
 import 'package:jinja/src/loaders.dart';
 import 'package:jinja/src/nodes.dart';
@@ -13,9 +14,18 @@ import 'package:jinja/src/renderer.dart';
 import 'package:jinja/src/visitor.dart';
 import 'package:meta/meta.dart';
 
+/// {@template finalizer}
 /// Signature for callable that can be used to process the result
 /// of a variable expression before it is output.
-typedef Finalizer = Object Function(Context context, Object? value);
+/// {@endtemplate}
+typedef Finalizer = Object Function(Object? value);
+
+/// {@macro finalizer}
+typedef ContextFinalizer = Object Function(Context context, Object? value);
+
+/// {@macro finalizer}
+typedef EnvironmentFinalizer = Object Function(
+    Environment environment, Object? value);
 
 /// Signature for the object attribute getter.
 typedef AttributeGetter = Object? Function(Object? object, String attribute);
@@ -23,43 +33,22 @@ typedef AttributeGetter = Object? Function(Object? object, String attribute);
 /// Signature for the object item getter.
 typedef ItemGetter = Object? Function(Object? object, Object? item);
 
-enum PassArgument {
-  context,
-  environment,
-}
-
-/// Pass the [Context] as the first argument to the applied function when
-/// called while rendering a template.
-///
-/// Can be used on functions, filters, and tests.
-Function passContext(Function function) {
-  Environment.passArguments[function] = PassArgument.context;
-  return function;
-}
-
-/// Pass the [Environment] as the first argument to the applied function when
-/// called while rendering a template.
-///
-/// Can be used on functions, filters, and tests.
-Function passEnvironment(Function function) {
-  Environment.passArguments[function] = PassArgument.environment;
-  return function;
-}
-
+/// {@template environment}
 /// The core component of Jinja 2 is the Environment. It contains
 /// important shared variables like configuration, filters, tests and others.
 /// Instances of this class may be modified if they are not shared and if no
 /// template was loaded so far.
+/// {@endtemplate}
 class Environment {
   /// Cached [Lexer]'s
   @internal
   static final Expando<Lexer> lexers = Expando<Lexer>();
 
-  /// [PassArgument] modifier for functions, filters and tests.
+  /// [PassArgument] modifier for filters and tests.
   @internal
   static final Expando<PassArgument> passArguments = Expando<PassArgument>();
 
-  /// If [loader] is not `null`, templates will be loaded.
+  /// {@macro environment}
   Environment({
     this.commentStart = defaults.commentStart,
     this.commentEnd = defaults.commentEnd,
@@ -167,7 +156,7 @@ class Environment {
   ///
   /// For example one can convert `null` (`none`) implicitly into an empty
   /// string here.
-  final Finalizer finalize;
+  final ContextFinalizer finalize;
 
   /// If set to `true` the XML/HTML autoescaping feature is enabled by
   /// default.
@@ -249,7 +238,7 @@ class Environment {
   }
 
   /// Common filter and test caller.
-  // TODO(context filter): move argument checks to parser or new modifier
+  // TODO: move argument checks to parser or new modifier
   @internal
   Object? callCommon(
     Function function,
@@ -261,8 +250,8 @@ class Environment {
 
     if (pass == PassArgument.context) {
       if (context == null) {
-        throw TemplateRuntimeError(
-            'attempted to invoke context function without context.');
+        throw StateError(
+            'Attempted to invoke context function without context');
       }
 
       positional = <Object?>[context, ...positional];
@@ -273,7 +262,7 @@ class Environment {
     return Function.apply(function, positional, named);
   }
 
-  /// If [name] not found throws [TemplateRuntimeError].
+  /// If [name] filter not found [StateError] thrown.
   @internal
   Object? callFilter(
     String name,
@@ -284,7 +273,7 @@ class Environment {
     var function = filters[name];
 
     if (function == null) {
-      throw TemplateRuntimeError("no filter named '$name'");
+      throw StateError("No filter named '$name'");
     }
 
     return callCommon(function, positional, named, context);
@@ -301,7 +290,7 @@ class Environment {
     var function = tests[name];
 
     if (function == null) {
-      throw TemplateRuntimeError("no test named '$name'");
+      throw TemplateRuntimeError("No test named '$name'");
     }
 
     return callCommon(function, positional, named, context) as bool;
@@ -352,21 +341,20 @@ class Environment {
     var loader = this.loader;
 
     if (loader == null) {
-      throw StateError('no loader for this environment specified');
+      throw StateError('No loader for this environment specified');
     }
 
     return loader.listTemplates();
   }
 
-  /// Load a template by name with [loader] and return a
-  /// [Template]. If the template does not exist a [TemplateNotFound]
-  /// exception is thrown.
+  /// Load a template by name with [loader] and return a [Template].
+  ///
+  /// If the template does not exist a [TemplateNotFound] exception is thrown.
   Template getTemplate(String template) {
     var loader = this.loader;
 
     if (loader == null) {
-      // or assertion error?
-      throw TemplateRuntimeError('no loader for this environment specified');
+      throw StateError('No loader for this environment specified');
     }
 
     if (autoReload) {
@@ -377,8 +365,8 @@ class Environment {
   }
 
   @protected
-  static Finalizer wrapFinalizer(Function function) {
-    if (function is Finalizer) {
+  static ContextFinalizer wrapFinalizer(Function function) {
+    if (function is ContextFinalizer) {
       return function;
     }
 
@@ -448,7 +436,7 @@ class Template extends Node {
     String newLine = defaults.newLine,
     bool keepTrailingNewLine = defaults.keepTrailingNewLine,
     bool optimize = defaults.optimize,
-    Finalizer finalize = defaults.finalize,
+    ContextFinalizer finalize = defaults.finalize,
     bool autoEscape = defaults.autoEscape,
     Map<String, Object?>? globals,
     Map<String, Function>? filters,
@@ -502,11 +490,7 @@ class Template extends Node {
       body = Output.orSingle(nodes);
     }
 
-    var blocks = <Block>[];
-
-    for (var node in nodes) {
-      blocks.addAll(node.findAll<Block>());
-    }
+    var blocks = <Block>[for (var node in nodes) ...node.findAll<Block>()];
 
     var template = Template.parsed(
       environment,
@@ -564,10 +548,5 @@ class Template extends Node {
   void renderTo(StringSink sink, [Map<String, Object?>? data]) {
     var context = StringSinkRenderContext(environment, sink, data: data);
     accept(const StringSinkRenderer(), context);
-  }
-
-  @override
-  String toString() {
-    return path == null ? 'Template()' : 'Template($path)';
   }
 }

@@ -114,18 +114,14 @@ void loopModifier(Node node) {
         if (value is Name &&
             value.name == 'loop' &&
             argument.attribute == 'cycle') {
-          var arguments = expression.arguments;
+          var arguments = <Expression>[Array(expression.arguments)];
+          expression.arguments = arguments;
 
-          if (arguments != null) {
-            arguments = <Expression>[Array(arguments)];
-            expression.arguments = arguments;
+          var dArguments = expression.dArguments;
 
-            var dArguments = expression.dArguments;
-
-            if (dArguments != null) {
-              arguments.add(dArguments);
-              expression.dArguments = null;
-            }
+          if (dArguments != null) {
+            arguments.add(dArguments);
+            expression.dArguments = null;
           }
         }
       }

@@ -1014,8 +1014,7 @@ class Parser {
             reader.expect('block_end');
             break;
           default:
-            // unreachable
-            throw AssertionError('unsuported token type: ${token.type}');
+            assert(false, 'Unreachable');
         }
       }
     } finally {
@@ -1038,10 +1037,5 @@ class Parser {
     }
 
     return Template.parsed(environment, body, path: path, blocks: blocks);
-  }
-
-  @override
-  String toString() {
-    return 'Parser()';
   }
 }

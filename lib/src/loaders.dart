@@ -1,6 +1,5 @@
 import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/exceptions.dart';
-import 'package:jinja/src/utils.dart';
 
 /// Base abstract class for all loaders.
 /// Subclass this and override [getSource], [listTemplates] and [load]
@@ -15,10 +14,8 @@ abstract class Loader {
   /// Throws [TemplateNotFound] if file not found
   /// or [UnsupportedError] if don't has access to source.
   String getSource(String path) {
-    path = formatPath(path);
-
     if (!hasSourceAccess) {
-      throw UnsupportedError('this loader cannot provide access to the source');
+      throw UnsupportedError('This loader cannot provide access to the source');
     }
 
     throw TemplateNotFound(path: path);
@@ -26,7 +23,7 @@ abstract class Loader {
 
   /// Iterates over all templates.
   List<String> listTemplates() {
-    throw UnsupportedError('this loader cannot iterate over all templates');
+    throw UnsupportedError('This loader cannot iterate over all templates');
   }
 
   Template load(Environment environment, String path);
@@ -39,9 +36,7 @@ abstract class Loader {
 ///     var loader = MapLoader({'index.html': 'source here'})
 ///
 class MapLoader extends Loader {
-  MapLoader(Map<String, String> sources)
-      : sources = sources.map<String, String>(
-            (key, value) => MapEntry<String, String>(formatPath(key), value));
+  MapLoader(this.sources);
 
   final Map<String, String> sources;
 
@@ -52,8 +47,6 @@ class MapLoader extends Loader {
 
   @override
   String getSource(String path) {
-    path = formatPath(path);
-
     if (sources.containsKey(path)) {
       return sources[path]!;
     }
@@ -68,8 +61,6 @@ class MapLoader extends Loader {
 
   @override
   Template load(Environment environment, String path) {
-    path = formatPath(path);
-
     var source = getSource(path);
     return environment.fromString(source, path: path);
   }

@@ -1,3 +1,4 @@
+import 'package:jinja/filters.dart';
 import 'package:jinja/jinja.dart';
 import 'package:jinja/reflection.dart';
 import 'package:jinja/runtime.dart';

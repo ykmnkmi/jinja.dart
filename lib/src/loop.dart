@@ -105,6 +105,7 @@ class LoopContext extends Iterable<Object?> {
 
   Object? cycle(Iterable<Object?> values, [Iterable<Object?>? packed]) {
     if (values.isEmpty && packed != null && packed.isEmpty) {
+      // TODO: update error
       throw TypeError();
     }
 
@@ -125,11 +126,6 @@ class LoopContext extends Iterable<Object?> {
     }
 
     return true;
-  }
-
-  @override
-  String toString() {
-    return 'LoopContext(index: $index)';
   }
 }
 

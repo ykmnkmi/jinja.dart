@@ -1,4 +1,5 @@
 import 'package:jinja/src/environment.dart';
+import 'package:jinja/src/filters.dart';
 import 'package:jinja/src/markup.dart';
 
 /// Return `true` if the variable is odd.
@@ -120,6 +121,7 @@ bool isIn(Object? value, Object? values) {
       return values.contains(value);
     }
 
+    // TODO: update error
     throw TypeError();
   }
 
@@ -131,6 +133,7 @@ bool isIn(Object? value, Object? values) {
     return values.containsKey(value);
   }
 
+  // TODO: update error
   throw TypeError();
 }
 

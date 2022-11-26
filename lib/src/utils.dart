@@ -1,4 +1,3 @@
-import 'package:path/path.dart';
 import 'package:textwrap/utils.dart';
 
 bool boolean(Object? value) {
@@ -33,10 +32,6 @@ String format(Object? object) {
   return repr(object);
 }
 
-String formatPath(String path) {
-  return normalize(path).replaceAll(r'\', '/');
-}
-
 List<R> generate<T, R>(
   List<T> list,
   R Function(int) generator, {
@@ -66,6 +61,7 @@ Iterable<Object?> iterate(Object? iterable) {
     return iterable.entries;
   }
 
+  // TODO: update error
   throw TypeError();
 }
 
@@ -90,11 +86,13 @@ List<Object?> list(Object? iterable) {
     return iterable.entries.toList();
   }
 
+  // TODO: update error
   throw TypeError();
 }
 
 Iterable<int> range(int startOrStop, [int? stop, int step = 1]) sync* {
   if (step == 0) {
+    // TODO: update error
     throw ArgumentError.value(step, 'step', 'must not be zero');
   }
 

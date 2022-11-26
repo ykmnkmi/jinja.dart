@@ -473,7 +473,7 @@ void main() {
 
       var matcher = throwsA(predicate((error) =>
           error is TemplateRuntimeError &&
-          error.message == "no filter named 'f'"));
+          error.message == "No filter named 'f'"));
       expect(() => t1.render({'x': 42}), matcher);
       expect(() => t2.render({'x': 42}), matcher);
     });

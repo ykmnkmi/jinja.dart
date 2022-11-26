@@ -1,5 +1,71 @@
 part of 'lexer.dart';
 
+const Map<String, String> tokenDescriptions = <String, String>{
+  'add': '+',
+  'sub': '-',
+  'div': '/',
+  'floordiv': '//',
+  'mul': '*',
+  'mod': '%',
+  'pow': '**',
+  'tilde': '~',
+  'lbracket': '[',
+  'rbracket': ']',
+  'lparen': '(',
+  'rparen': ')',
+  'lbrace': '{',
+  'rbrace': '}',
+  'eq': '==',
+  'ne': '!=',
+  'gt': '>',
+  'gteq': '>=',
+  'lt': '<',
+  'lteq': '<=',
+  'assign': '=',
+  'dot': '.',
+  'colon': ':',
+  'pipe': '|',
+  'comma': ',',
+  'semicolon': ';',
+  'comment_start': 'start of comment',
+  'comment_end': 'end of comment',
+  'comment': 'comment',
+  'linecomment': 'comment',
+  'block_start': 'start of statement block',
+  'block_end': 'end of statement block',
+  'variable_start': 'start of print statement',
+  'variable_end': 'end of print statement',
+  'linestatement_start': 'start of line statement',
+  'linestatement_end': 'end of line statement',
+  'data': 'template data / text',
+  'eof': 'end of template',
+};
+
+String describeTokenType(String type) {
+  return tokenDescriptions[type] ?? type;
+}
+
+String describeToken(Token token) {
+  if (token.type == 'name') {
+    return token.value;
+  }
+
+  return describeTokenType(token.type);
+}
+
+String describeExpression(String expression) {
+  if (expression.contains(':')) {
+    var parts = expression.split(':');
+    assert(parts.length == 2);
+
+    if (parts.first == 'name') {
+      return parts.last;
+    }
+  }
+
+  return describeTokenType(expression);
+}
+
 abstract class Token {
   static const Map<String, String> common = <String, String>{
     'add': '+',
@@ -66,15 +132,6 @@ abstract class Token {
   bool test(String type, [String? value]);
 
   bool testAny(Iterable<String> expressions);
-
-  @override
-  String toString() {
-    if (value.isEmpty) {
-      return '#$type:$line';
-    }
-
-    return '#$type:$line $value';
-  }
 }
 
 abstract class BaseToken implements Token {
@@ -126,15 +183,6 @@ abstract class BaseToken implements Token {
 
     return false;
   }
-
-  @override
-  String toString() {
-    if (value.isEmpty) {
-      return '$type:$line';
-    }
-
-    return "$type:$line:$length '${value.replaceAll("'", "\\'").replaceAll('\n', r'\n')}'";
-  }
 }
 
 class SimpleToken extends BaseToken {
@@ -163,70 +211,4 @@ class ValueToken extends BaseToken {
 
   @override
   final String value;
-}
-
-String describeExpression(String expression) {
-  if (expression.contains(':')) {
-    var parts = expression.split(':');
-    assert(parts.length == 2);
-
-    if (parts.first == 'name') {
-      return parts.last;
-    }
-  }
-
-  return describeTokenType(expression);
-}
-
-String describeToken(Token token) {
-  if (token.type == 'name') {
-    return token.value;
-  }
-
-  return describeTokenType(token.type);
-}
-
-const Map<String, String> tokenDescriptions = <String, String>{
-  'add': '+',
-  'sub': '-',
-  'div': '/',
-  'floordiv': '//',
-  'mul': '*',
-  'mod': '%',
-  'pow': '**',
-  'tilde': '~',
-  'lbracket': '[',
-  'rbracket': ']',
-  'lparen': '(',
-  'rparen': ')',
-  'lbrace': '{',
-  'rbrace': '}',
-  'eq': '==',
-  'ne': '!=',
-  'gt': '>',
-  'gteq': '>=',
-  'lt': '<',
-  'lteq': '<=',
-  'assign': '=',
-  'dot': '.',
-  'colon': ':',
-  'pipe': '|',
-  'comma': ',',
-  'semicolon': ';',
-  'comment_start': 'start of comment',
-  'comment_end': 'end of comment',
-  'comment': 'comment',
-  'linecomment': 'comment',
-  'block_start': 'start of statement block',
-  'block_end': 'end of statement block',
-  'variable_start': 'start of print statement',
-  'variable_end': 'end of print statement',
-  'linestatement_start': 'start of line statement',
-  'linestatement_end': 'end of line statement',
-  'data': 'template data / text',
-  'eof': 'end of template',
-};
-
-String describeTokenType(String type) {
-  return tokenDescriptions[type] ?? type;
 }

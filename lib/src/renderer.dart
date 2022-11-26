@@ -73,11 +73,13 @@ class RenderContext extends Context {
       var values = list(current);
 
       if (values.length < target.length) {
-        throw StateError('not enough values to unpack.');
+        // TODO: update error
+        throw StateError('Not enough values to unpack');
       }
 
       if (values.length > target.length) {
-        throw StateError('too many values to unpack.');
+        // TODO: update error
+        throw StateError('Too many values to unpack.');
       }
 
       for (var i = 0; i < target.length; i++) {
@@ -95,9 +97,10 @@ class RenderContext extends Context {
         return;
       }
 
-      throw TemplateRuntimeError('non-namespace object.');
+      throw TemplateRuntimeError('Non-namespace object');
     }
 
+    // TODO: update error
     throw TypeError();
   }
 }
@@ -203,7 +206,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
     } else {
       if (node.required) {
         if (blocks.length == 1) {
-          throw TemplateRuntimeError("required block '${node.name}' not found");
+          throw TemplateRuntimeError("Required block '${node.name}' not found");
         }
       }
 
@@ -281,6 +284,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
     var orElse = node.orElse;
 
     if (iterable == null) {
+      // TODO: update error
       throw ArgumentError.notNull('${node.iterable}');
     }
 
@@ -409,12 +413,14 @@ Map<String, Object?> getDataForTargets(Object? targets, Object? current) {
     var values = list(current);
 
     if (values.length < names.length) {
-      throw StateError('not enough values to unpack (expected ${names.length},'
-          ' got ${values.length}).');
+      // TODO: update error
+      throw StateError('Not enough values to unpack (expected ${names.length}, '
+          'got ${values.length})');
     }
 
     if (values.length > names.length) {
-      throw StateError('too many values to unpack (expected ${names.length}).');
+      // TODO: update error
+      throw StateError('Too many values to unpack (expected ${names.length})');
     }
 
     return <String, Object?>{
@@ -422,6 +428,7 @@ Map<String, Object?> getDataForTargets(Object? targets, Object? current) {
     };
   }
 
+  // TODO: update error
   throw ArgumentError.value(
     targets,
     'targets',

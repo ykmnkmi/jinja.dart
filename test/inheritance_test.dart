@@ -254,7 +254,7 @@ void main() {
       expect(
           () => env.getTemplate('level1').render(),
           throwsA(predicate<TemplateRuntimeError>(
-              (error) => error.message == "required block 'x' not found")));
+              (error) => error.message == "Required block 'x' not found")));
 
       expect(env.getTemplate('level2').render(), equals('[2]'));
       expect(env.getTemplate('level3').render(), equals('[2]'));
@@ -279,7 +279,7 @@ void main() {
 
       var matcher = throwsA(predicate<TemplateSyntaxError>((error) =>
           error.message ==
-          'required blocks can only contain comments or whitespace'));
+          'Required blocks can only contain comments or whitespace'));
 
       expect(() => env.getTemplate('level1default1').render(), matcher);
       expect(() => env.getTemplate('level1default2').render(), matcher);
