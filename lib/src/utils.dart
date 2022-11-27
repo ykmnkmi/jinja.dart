@@ -1,10 +1,32 @@
+import 'package:jinja/src/markup.dart';
 import 'package:textwrap/utils.dart';
 
-bool boolean(Object? value) {
-  if (value == null) {
-    return false;
-  }
+/// Jinja [Environment] function types.
+///
+/// See [passContext] and [passEnvironment].
+enum FunctionType {
+  /// Function with [Context] argument.
+  ///
+  /// See [passContext].
+  context,
 
+  /// Function with [Environment] argument.
+  ///
+  /// See [passEnvironment].
+  environment;
+
+  /// Type cache for functions, filters and tests.
+  static final Expando<FunctionType> types = Expando<FunctionType>();
+}
+
+/// Convert value to [bool]
+/// - [bool] returns as is
+/// - [num] returns `true` if `value` is not equal to `0.0`
+/// - [String] returns `true` if `value` is not empty
+/// - [Iterable] returns `true` if `value` is not empty
+/// - [Map] returns `true` if `value` is not empty
+/// - otherwise returns `true` if `value` is not `null`.
+bool boolean(Object? value) {
   if (value is bool) {
     return value;
   }
@@ -25,75 +47,66 @@ bool boolean(Object? value) {
     return value.isNotEmpty;
   }
 
-  return true;
+  return value != null;
 }
 
-String format(Object? object) {
-  return repr(object);
-}
-
+/// Shorthand for [List.generate].
 List<R> generate<T, R>(
   List<T> list,
-  R Function(int) generator, {
-  bool growable = true,
-}) {
-  return List<R>.generate(list.length, generator, growable: growable);
+  R Function(int) generator,
+) {
+  return List<R>.generate(list.length, generator);
 }
 
-Object? identity(Object? object) {
-  return object;
+/// Identity function.
+Object? identity(Object? value) {
+  return value;
 }
 
-Iterable<Object?> iterate(Object? iterable) {
-  if (iterable is Iterable) {
-    return iterable;
+/// Convert value to [Iterable]
+/// - [Iterable] returns as is
+/// - [String] returns chars split by `''`
+/// - [MapEntry] returns `[key, value]` list
+/// - [Map] returns [Map.entries]
+/// - otherwise throws [TypeError].
+Iterable<Object?> iterate(Object? value) {
+  if (value is Iterable) {
+    return value;
   }
 
-  if (iterable is String) {
-    return iterable.split('');
+  if (value is String) {
+    return value.split('');
   }
 
-  if (iterable is MapEntry) {
-    return [iterable.key, iterable.value];
+  if (value is MapEntry) {
+    return <Object?>[value.key, value.value];
   }
 
-  if (iterable is Map) {
-    return iterable.entries;
+  if (value is Map) {
+    return value.entries;
   }
 
   // TODO: update error
   throw TypeError();
 }
 
-List<Object?> list(Object? iterable) {
-  if (iterable is List) {
-    return iterable;
+/// Convert value to [List].
+///
+/// Calls [iterate] and returns [List] as is or wraps returned iterable with
+/// [List.of].
+List<Object?> list(Object? value) {
+  if (value is List) {
+    return value;
   }
 
-  if (iterable is Iterable) {
-    return iterable.toList();
-  }
-
-  if (iterable is String) {
-    return iterable.split('');
-  }
-
-  if (iterable is MapEntry) {
-    return <Object?>[iterable.key, iterable.value];
-  }
-
-  if (iterable is Map) {
-    return iterable.entries.toList();
-  }
-
-  // TODO: update error
-  throw TypeError();
+  return List<Object?>.of(iterate(value));
 }
 
+/// Creates an [Iterable] of [int]s that iterates from `start` to `stop` by `step`.
 Iterable<int> range(int startOrStop, [int? stop, int step = 1]) sync* {
   if (step == 0) {
     // TODO: update error
-    throw ArgumentError.value(step, 'step', 'must not be zero');
+    throw ArgumentError.value(step, 'step');
   }
 
   int start;
@@ -116,74 +129,13 @@ Iterable<int> range(int startOrStop, [int? stop, int step = 1]) sync* {
   }
 }
 
-String repr(Object? object, [bool escapeNewlines = false]) {
-  var buffer = StringBuffer();
-  reprTo(object, buffer, escapeNewlines);
-  return buffer.toString();
-}
-
-void reprTo(
-  Object? object,
-  StringBuffer buffer, [
-  bool escapeNewlines = false,
-]) {
-  if (object is String) {
-    object = object.replaceAll("'", "\\'");
-
-    if (escapeNewlines) {
-      String replace(Match match) {
-        return match.group(1) ?? '';
-      }
-
-      object = object.replaceAllMapped(RegExp('(\r\n|\r|\n)'), replace);
-    }
-
-    buffer.write("'$object'");
-    return;
-  }
-
-  if (object is List) {
-    buffer.write('[');
-
-    for (var i = 0; i < object.length; i += 1) {
-      if (i > 0) {
-        buffer.write(', ');
-      }
-
-      reprTo(object[i], buffer);
-    }
-
-    buffer.write(']');
-    return;
-  }
-
-  if (object is Map) {
-    var keys = object.keys.toList();
-    buffer.write('{');
-
-    for (var i = 0; i < keys.length; i += 1) {
-      if (i > 0) {
-        buffer.write(', ');
-      }
-
-      reprTo(keys[i], buffer);
-      buffer.write(': ');
-      reprTo(object[keys[i]], buffer);
-    }
-
-    buffer.write('}');
-    return;
-  }
-
-  buffer.write(object);
-}
-
+/// Remove tags and normalize whitespace to single spaces.
 String stripTags(String value) {
   if (value.isEmpty) {
     return '';
   }
 
-  return RegExp('\\s+')
+  return unescape(RegExp(r'\s+')
       .split(value.replaceAll(RegExp('(<!--.*?-->|<[^>]*>)'), ''))
-      .join(' ');
+      .join(' '));
 }

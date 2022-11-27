@@ -2,7 +2,7 @@ import 'package:jinja/jinja.dart';
 import 'package:jinja/reflection.dart';
 import 'package:stack_trace/stack_trace.dart';
 
-const String source = '{% set foo.bar = 1 %}';
+const String source = '''{{ '<">&'|escape }}''';
 
 void main() {
   try {
@@ -10,11 +10,17 @@ void main() {
     environment.filters;
     var tokens = environment.lex(source);
     print('tokens:');
-    tokens.forEach(print);
+
+    for (var token in tokens) {
+      print('${token.type}: ${token.value}');
+    }
 
     var nodes = environment.scan(tokens);
     print('\noriginal nodes:');
-    nodes.forEach(print);
+
+    for (var node in nodes) {
+      print(node);
+    }
 
     var template = Template.fromNodes(environment, nodes);
 

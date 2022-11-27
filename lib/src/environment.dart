@@ -4,13 +4,13 @@ import 'dart:math' show Random;
 import 'package:jinja/src/context.dart';
 import 'package:jinja/src/defaults.dart' as defaults;
 import 'package:jinja/src/exceptions.dart';
-import 'package:jinja/src/filters.dart';
 import 'package:jinja/src/lexer.dart';
 import 'package:jinja/src/loaders.dart';
 import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/optimizer.dart';
 import 'package:jinja/src/parser.dart';
 import 'package:jinja/src/renderer.dart';
+import 'package:jinja/src/utils.dart';
 import 'package:jinja/src/visitor.dart';
 import 'package:meta/meta.dart';
 
@@ -33,6 +33,24 @@ typedef AttributeGetter = Object? Function(Object? object, String attribute);
 /// Signature for the object item getter.
 typedef ItemGetter = Object? Function(Object? object, Object? item);
 
+/// Pass the [Context] as the first argument to the applied function when
+/// called while rendering a template.
+///
+/// Can be used on functions, filters, and tests.
+Function passContext(Function function) {
+  FunctionType.types[function] = FunctionType.context;
+  return function;
+}
+
+/// Pass the [Environment] as the first argument to the applied function when
+/// called while rendering a template.
+///
+/// Can be used on functions, filters, and tests.
+Function passEnvironment(Function function) {
+  FunctionType.types[function] = FunctionType.environment;
+  return function;
+}
+
 /// {@template environment}
 /// The core component of Jinja 2 is the Environment. It contains
 /// important shared variables like configuration, filters, tests and others.
@@ -43,10 +61,6 @@ class Environment {
   /// Cached [Lexer]'s
   @internal
   static final Expando<Lexer> lexers = Expando<Lexer>();
-
-  /// [PassArgument] modifier for filters and tests.
-  @internal
-  static final Expando<PassArgument> passArguments = Expando<PassArgument>();
 
   /// {@macro environment}
   Environment({
@@ -246,16 +260,16 @@ class Environment {
     Map<Symbol, Object?> named,
     Context? context,
   ) {
-    var pass = passArguments[function];
+    var pass = FunctionType.types[function];
 
-    if (pass == PassArgument.context) {
+    if (pass == FunctionType.context) {
       if (context == null) {
-        throw StateError(
+        throw TemplateRuntimeError(
             'Attempted to invoke context function without context');
       }
 
       positional = <Object?>[context, ...positional];
-    } else if (pass == PassArgument.environment) {
+    } else if (pass == FunctionType.environment) {
       positional = <Object?>[this, ...positional];
     }
 
@@ -273,7 +287,7 @@ class Environment {
     var function = filters[name];
 
     if (function == null) {
-      throw StateError("No filter named '$name'");
+      throw TemplateRuntimeError("No filter named '$name'");
     }
 
     return callCommon(function, positional, named, context);
@@ -333,20 +347,6 @@ class Environment {
     return Template.parsed(this, body, path: path);
   }
 
-  /// Returns a list of templates for this environment.
-  ///
-  /// This requires that the loader supports the loader's
-  /// [Loader.listTemplates] method.
-  List<String> listTemplates() {
-    var loader = this.loader;
-
-    if (loader == null) {
-      throw StateError('No loader for this environment specified');
-    }
-
-    return loader.listTemplates();
-  }
-
   /// Load a template by name with [loader] and return a [Template].
   ///
   /// If the template does not exist a [TemplateNotFound] exception is thrown.
@@ -362,6 +362,20 @@ class Environment {
     }
 
     return templates[template] ??= loader.load(this, template);
+  }
+
+  /// Returns a list of templates for this environment.
+  ///
+  /// This requires that the loader supports the loader's
+  /// [Loader.listTemplates] method.
+  List<String> listTemplates() {
+    var loader = this.loader;
+
+    if (loader == null) {
+      throw StateError('No loader for this environment specified');
+    }
+
+    return loader.listTemplates();
   }
 
   @protected

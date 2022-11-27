@@ -43,7 +43,7 @@ void main() {
 
     test('env autoescape', () {
       Object finalize(Environment environment, Object? value) {
-        return '${environment.variableStart} ${repr(value)} '
+        return "${environment.variableStart} '$value' "
             '${environment.variableEnd}';
       }
 

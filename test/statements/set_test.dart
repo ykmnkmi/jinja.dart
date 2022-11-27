@@ -35,7 +35,7 @@ void main() {
       expect(
           () => tmpl.render({'foo': emptyMap}),
           throwsA(predicate<TemplateRuntimeError>(
-              (error) => error.message == 'non-namespace object')));
+              (error) => error.message == 'Non-namespace object')));
     });
 
     test('namespace redefined', () {
@@ -45,7 +45,7 @@ void main() {
       expect(
           () => tmpl.render({'namespace': () => emptyMap}),
           throwsA(predicate<TemplateRuntimeError>(
-              (error) => error.message == 'non-namespace object')));
+              (error) => error.message == 'Non-namespace object')));
     });
 
     test('namespace', () {

@@ -150,7 +150,7 @@ class Parser {
       if (target is Assignable) {
         target.context = AssignContext.store;
       } else {
-        fail("can't assign to ${target.runtimeType}", line);
+        fail("Can't assign to ${target.runtimeType}", line);
       }
     }
 
@@ -161,7 +161,7 @@ class Parser {
     var token = reader.current;
 
     if (!token.test('name')) {
-      fail('tag name expected', token.line);
+      fail('Tag name expected', token.line);
     }
 
     tagStack.add(token.value);
@@ -228,11 +228,11 @@ class Parser {
     var primary = parsePrimary(reader);
 
     if (primary is! Constant) {
-      fail('template name or path literal expected', reader.current.line);
+      fail('Template name or path literal expected', reader.current.line);
     }
 
     if (extendsNode != null) {
-      fail('extended multiple times', token.line);
+      fail('Extended multiple times', token.line);
     }
 
     var node = Extends(primary.value as String);
@@ -246,7 +246,7 @@ class Parser {
     var target = parseAssignTarget(reader, extraEndRules: <String>['name:in']);
 
     if (target is Name && target.name == 'loop') {
-      fail("can't assign to special loop variable in for-loop target");
+      fail("Can't assign to special loop variable in for-loop target");
     }
 
     reader.expect('name', 'in');
@@ -344,13 +344,13 @@ class Parser {
     var name = reader.expect('name');
 
     if (blocks.any((block) => block.name == name.value)) {
-      fail("block '${name.value}' defined twice", reader.current.line);
+      fail("Block '${name.value}' defined twice", reader.current.line);
     }
 
     var scoped = reader.skipIf('name', 'scoped');
 
     if (reader.current.test('sub')) {
-      fail('use an underscore instead', reader.current.line);
+      fail('Use an underscore instead', reader.current.line);
     }
 
     const endBlock = <String>['name:endblock'];
@@ -358,7 +358,7 @@ class Parser {
     var nodes = parseStatements(reader, endBlock, true);
 
     if (required && nodes.any((node) => node is! Data || !node.isLeaf)) {
-      fail('required blocks can only contain comments or whitespace',
+      fail('Required blocks can only contain comments or whitespace',
           token.line);
     }
 
@@ -678,7 +678,7 @@ class Parser {
         break;
 
       default:
-        fail('unexpected ${describeToken(current)}', current.line);
+        fail('Unexpected ${describeToken(current)}', current.line);
     }
 
     return expression;
@@ -729,7 +729,7 @@ class Parser {
 
       if (!explicitParentheses) {
         var current = reader.current;
-        fail('expected an expression, got ${describeToken(current)}',
+        fail('Expected an expression, got ${describeToken(current)}',
             current.line);
       }
     }
@@ -822,7 +822,7 @@ class Parser {
       }
 
       if (!attributeToken.test('integer')) {
-        fail('expected name or number', attributeToken.line);
+        fail('Expected name or number', attributeToken.line);
       }
 
       return Item(Constant(int.parse(attributeToken.value)), expression);
@@ -834,7 +834,7 @@ class Parser {
       return Item(key, expression);
     }
 
-    fail('expected subscript expression', token.line);
+    fail('Expected subscript expression', token.line);
   }
 
   void parseSignature(TokenReader reader, Callable callable) {
@@ -846,7 +846,7 @@ class Parser {
 
     void ensure(bool ensure) {
       if (!ensure) {
-        fail('invalid syntax for function call expression', token.line);
+        fail('Invalid syntax for function call expression', token.line);
       }
     }
 

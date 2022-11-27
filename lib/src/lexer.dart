@@ -91,7 +91,7 @@ class MultiTokenRule extends Rule {
 class Lexer {
   Lexer(Environment environment)
       : newLineRe = RegExp('(\r\n|\r|\n)'),
-        whitespaceRe = RegExp('\\s+'),
+        whitespaceRe = RegExp(r'\s+'),
         nameRe = RegExp('[a-zA-Z\$_][a-zA-Z0-9\$_]*'),
         stringRe = RegExp(
             '(\'([^\'\\\\]*(?:\\\\.[^\'\\\\]*)*)\'|"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)")',
@@ -105,7 +105,7 @@ class Lexer {
             environment.leftStripBlocks ? compileRe('[^ \\t]') : null,
         newLine = environment.newLine,
         keepTrailingNewLine = environment.keepTrailingNewLine {
-    var blockSuffixRe = environment.trimBlocks ? r'\n?' : '';
+    var blockSuffixRe = environment.trimBlocks ? '\\n?' : '';
 
     var commentStartRe = escapeRe(environment.commentStart);
     var commentEndRe = escapeRe(environment.commentEnd);

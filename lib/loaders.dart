@@ -1,3 +1,5 @@
+library jinja.loaders;
+
 import 'dart:convert';
 import 'dart:io';
 

@@ -346,7 +346,7 @@ void main() {
       expect(
           () => env.fromString('{{ x is f }}'),
           throwsA(predicate<TemplateAssertionError>(
-              (error) => error.message == "no test named 'f'")));
+              (error) => error.message == "No test named 'f'")));
     });
 
     test('name undefined in if', () {
@@ -355,7 +355,7 @@ void main() {
       expect(
           () => tmpl.render({'x': 1}),
           throwsA(predicate<TemplateRuntimeError>(
-              (error) => error.message == "no test named 'f'")));
+              (error) => error.message == "No test named 'f'")));
     });
 
     test('is filter', () {

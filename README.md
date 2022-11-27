@@ -12,7 +12,6 @@ Mostly same as [Jinja](https://jinja.palletsprojects.com/en/3.0.x/templates/)
 template documentation. _work in progress_.
 
 ## Differences
-- If the filter has one optional argument, it will be positional, otherwise they will be named.
 - `BigInt` and complex numbers are not supported.
 - The `default` filter compares values with `null`, no `boolean` parameter.
 - The `defined` and `undefined` tests compares values with `null`.
@@ -39,8 +38,8 @@ print(template.render({'key': value}));
 template.renderTo(stringSink, {'key': value});
 ```
 
-See also examples with [conduit][conduit_example]
-and [reflectable][reflectable_example].
+See also examples with [conduit][conduit_example] and
+[reflectable][reflectable_example].
 
 ## Status:
 ### TODO:

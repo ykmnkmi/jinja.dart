@@ -1,3 +1,5 @@
+library jinja.runtime;
+
 export 'package:jinja/src/context.dart';
 export 'package:jinja/src/exceptions.dart';
 export 'package:jinja/src/loop.dart';

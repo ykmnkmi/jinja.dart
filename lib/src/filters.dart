@@ -8,29 +8,6 @@ import 'package:jinja/src/markup.dart';
 import 'package:jinja/src/utils.dart' as utils;
 import 'package:textwrap/textwrap.dart' show TextWrapper;
 
-enum PassArgument {
-  context,
-  environment,
-}
-
-/// Pass the [Context] as the first argument to the applied function when
-/// called while rendering a template.
-///
-/// Can be used on functions, filters, and tests.
-Function passContext(Function function) {
-  Environment.passArguments[function] = PassArgument.context;
-  return function;
-}
-
-/// Pass the [Environment] as the first argument to the applied function when
-/// called while rendering a template.
-///
-/// Can be used on functions, filters, and tests.
-Function passEnvironment(Function function) {
-  Environment.passArguments[function] = PassArgument.environment;
-  return function;
-}
-
 /// Returns a callable that looks up the given item from a
 /// passed object with the rules of the environment.
 ///
@@ -413,7 +390,7 @@ String doWordWrap(
 
 /// Count the words in that string.
 int doWordCount(String string) {
-  var matches = RegExp('\\w+').allMatches(string);
+  var matches = RegExp(r'\w+').allMatches(string);
   return matches.length;
 }
 

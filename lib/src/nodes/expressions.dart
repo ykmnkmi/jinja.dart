@@ -109,7 +109,7 @@ class Constant extends Literal {
 
   @override
   String toString() {
-    return 'Constant(${repr(value, true)})';
+    return 'Constant($value)';
   }
 }
 

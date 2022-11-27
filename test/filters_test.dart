@@ -70,7 +70,7 @@ void main() {
 
     test('escape', () {
       var tmpl = env.fromString('''{{ '<">&'|escape }}''');
-      expect(tmpl.render(), equals('&lt;&#34;&gt;&amp;'));
+      expect(tmpl.render(), equals('&lt;&quot;&gt;&amp;'));
     });
 
     test('trim', () {
@@ -472,8 +472,7 @@ void main() {
       expect(t2.render(), equals('foo'));
 
       var matcher = throwsA(predicate((error) =>
-          error is TemplateRuntimeError &&
-          error.message == "No filter named 'f'"));
+          error is TemplateRuntimeError && error.message == "No filter named 'f'"));
       expect(() => t1.render({'x': 42}), matcher);
       expect(() => t2.render({'x': 42}), matcher);
     });

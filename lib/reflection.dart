@@ -1,3 +1,5 @@
+library jinja.reflection;
+
 import 'dart:mirrors' show MirrorSystem, reflect;
 
 /// Reflection based object attribute getter.
