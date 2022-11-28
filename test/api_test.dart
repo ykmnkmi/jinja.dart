@@ -1,5 +1,6 @@
 import 'package:jinja/jinja.dart';
-import 'package:jinja/runtime.dart';
+import 'package:jinja/src/context.dart';
+import 'package:jinja/src/loop.dart';
 import 'package:test/test.dart';
 
 void main() {
