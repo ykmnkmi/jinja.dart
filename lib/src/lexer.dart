@@ -89,6 +89,13 @@ class MultiTokenRule extends Rule {
 }
 
 class Lexer {
+  /// Cached [Lexer]'s
+  static final Expando<Lexer> lexers = Expando<Lexer>();
+
+  factory Lexer.cached(Environment environment) {
+    return lexers[environment] ??= Lexer(environment);
+  }
+
   Lexer(Environment environment)
       : newLineRe = RegExp('(\r\n|\r|\n)'),
         whitespaceRe = RegExp(r'\s+'),

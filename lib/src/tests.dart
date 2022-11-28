@@ -1,6 +1,5 @@
 import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/markup.dart';
-import 'package:jinja/src/utils.dart';
 
 /// Return `true` if the variable is odd.
 bool isOdd(int value) {
@@ -202,6 +201,7 @@ final Map<String, Function> tests = <String, Function>{
   'upper': isUpper,
   'string': isString,
   'map': isMap,
+  'mapping': isMap,
   'number': isNumber,
   'list': isList,
   'sameas': isSameAs,

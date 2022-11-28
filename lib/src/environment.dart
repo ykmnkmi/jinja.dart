@@ -14,16 +14,12 @@ import 'package:jinja/src/utils.dart';
 import 'package:jinja/src/visitor.dart';
 import 'package:meta/meta.dart';
 
-/// {@template finalizer}
 /// Signature for callable that can be used to process the result
 /// of a variable expression before it is output.
-/// {@endtemplate}
 typedef Finalizer = Object Function(Object? value);
 
-/// {@macro finalizer}
 typedef ContextFinalizer = Object Function(Context context, Object? value);
 
-/// {@macro finalizer}
 typedef EnvironmentFinalizer = Object Function(
     Environment environment, Object? value);
 
@@ -38,7 +34,7 @@ typedef ItemGetter = Object? Function(Object? object, Object? item);
 ///
 /// Can be used on functions, filters, and tests.
 Function passContext(Function function) {
-  FunctionType.types[function] = FunctionType.context;
+  PassArgument.types[function] = PassArgument.context;
   return function;
 }
 
@@ -47,7 +43,7 @@ Function passContext(Function function) {
 ///
 /// Can be used on functions, filters, and tests.
 Function passEnvironment(Function function) {
-  FunctionType.types[function] = FunctionType.environment;
+  PassArgument.types[function] = PassArgument.environment;
   return function;
 }
 
@@ -58,10 +54,6 @@ Function passEnvironment(Function function) {
 /// template was loaded so far.
 /// {@endtemplate}
 class Environment {
-  /// Cached [Lexer]'s
-  @internal
-  static final Expando<Lexer> lexers = Expando<Lexer>();
-
   /// {@macro environment}
   Environment({
     this.commentStart = defaults.commentStart,
@@ -233,7 +225,7 @@ class Environment {
 
   /// The lexer for this environment.
   Lexer get lexer {
-    return lexers[this] ??= Lexer(this);
+    return Lexer.cached(this);
   }
 
   @override
@@ -260,16 +252,16 @@ class Environment {
     Map<Symbol, Object?> named,
     Context? context,
   ) {
-    var pass = FunctionType.types[function];
+    var pass = PassArgument.types[function];
 
-    if (pass == FunctionType.context) {
+    if (pass == PassArgument.context) {
       if (context == null) {
         throw TemplateRuntimeError(
             'Attempted to invoke context function without context');
       }
 
       positional = <Object?>[context, ...positional];
-    } else if (pass == FunctionType.environment) {
+    } else if (pass == PassArgument.environment) {
       positional = <Object?>[this, ...positional];
     }
 

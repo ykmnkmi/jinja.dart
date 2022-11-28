@@ -96,8 +96,12 @@ void main() {
         }
 
         var tokens = Lexer(env).tokenize('{{ $test }}');
-        expect(
-            tokens[1], equals(predicate<Token>((token) => token.test(expekt))));
+
+        bool predication(Token token) {
+          return token.test(expekt);
+        }
+
+        expect(tokens[1], equals(predicate<Token>(predication)));
       });
     });
 
@@ -162,12 +166,10 @@ void main() {
   });
 
   group('LStripBlocks', () {
-    const kvs = {
-      'kvs': [
-        ['a', 1],
-        ['b', 2]
-      ]
-    };
+    const kvs = [
+      ['a', 1],
+      ['b', 2]
+    ];
 
     test('lstrip', () {
       var env = Environment(leftStripBlocks: true, trimBlocks: false);
@@ -318,7 +320,7 @@ ${item} ## the rest of the stuff
       var tmpl = env.fromString('  {% if kvs %}(\n'
           '   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}\n'
           '  ){% endif %}');
-      expect(tmpl.render(kvs), equals('(\na=1 b=2 \n  )'));
+      expect(tmpl.render({'kvs': kvs}), equals('(\na=1 b=2 \n  )'));
     });
 
     test('lstrip trim blocks outside with new line', () {
@@ -326,7 +328,7 @@ ${item} ## the rest of the stuff
       var tmpl = env.fromString('  {% if kvs %}(\n'
           '   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}\n'
           '  ){% endif %}');
-      expect(tmpl.render(kvs), equals('(\na=1 b=2   )'));
+      expect(tmpl.render({'kvs': kvs}), equals('(\na=1 b=2   )'));
     });
 
     test('lstrip blocks inside with new line', () {
@@ -334,7 +336,7 @@ ${item} ## the rest of the stuff
       var tmpl = env.fromString('  ({% if kvs %}\n'
           '   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}\n'
           '  {% endif %})');
-      expect(tmpl.render(kvs), equals('  (\na=1 b=2 \n)'));
+      expect(tmpl.render({'kvs': kvs}), equals('  (\na=1 b=2 \n)'));
     });
 
     test('lstrip trim blocks inside with new line', () {
@@ -342,7 +344,7 @@ ${item} ## the rest of the stuff
       var tmpl = env.fromString('  ({% if kvs %}\n'
           '   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}\n'
           '  {% endif %})');
-      expect(tmpl.render(kvs), equals('  (a=1 b=2 )'));
+      expect(tmpl.render({'kvs': kvs}), equals('  (a=1 b=2 )'));
     });
 
     test('lstrip blocks without new line', () {
@@ -350,7 +352,7 @@ ${item} ## the rest of the stuff
       var tmpl = env.fromString('  {% if kvs %}'
           '   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}'
           '  {% endif %}');
-      expect(tmpl.render(kvs), equals('   a=1 b=2   '));
+      expect(tmpl.render({'kvs': kvs}), equals('   a=1 b=2   '));
     });
 
     test('lstrip trim blocks without new line', () {
@@ -358,7 +360,7 @@ ${item} ## the rest of the stuff
       var tmpl = env.fromString('  {% if kvs %}'
           '   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}'
           '  {% endif %}');
-      expect(tmpl.render(kvs), equals('   a=1 b=2   '));
+      expect(tmpl.render({'kvs': kvs}), equals('   a=1 b=2   '));
     });
 
     test('lstrip blocks consume after without new line', () {
@@ -366,7 +368,7 @@ ${item} ## the rest of the stuff
       var tmpl = env.fromString('  {% if kvs -%}'
           '   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor -%}'
           '  {% endif -%}');
-      expect(tmpl.render(kvs), equals('a=1 b=2 '));
+      expect(tmpl.render({'kvs': kvs}), equals('a=1 b=2 '));
     });
 
     test('lstrip trim blocks consume before without new line', () {
@@ -374,7 +376,7 @@ ${item} ## the rest of the stuff
       var tmpl = env.fromString('  {%- if kvs %}'
           '   {%- for k, v in kvs %}{{ k }}={{ v }} {% endfor -%}'
           '  {%- endif %}');
-      expect(tmpl.render(kvs), equals('a=1 b=2 '));
+      expect(tmpl.render({'kvs': kvs}), equals('a=1 b=2 '));
     });
 
     test('lstrip trim blocks comment', () {

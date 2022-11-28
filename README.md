@@ -16,7 +16,7 @@ template documentation. _work in progress_.
 - The `default` filter compares values with `null`, no `boolean` parameter.
 - The `defined` and `undefined` tests compares values with `null`.
 - If  `Environment({getAttribute})` is not passed, `getItem` will be used.
-  This allows you to use `{{ map.key }}` expression without internal checks.
+  This allows you to use `{{ map.key }}` as `{{ map['key'] }}` expression.
 - _work in progress_
 
 ## Dynamically invoked members

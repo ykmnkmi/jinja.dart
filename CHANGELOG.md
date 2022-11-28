@@ -1,7 +1,7 @@
 ## 0.4.0-dev.53
 - minimal SDK version: 2.18.0
 - added:
-  - `PassArgument`, `passContext` and `passEnvironment` ...
+  - `passContext` and `passEnvironment` ...
   - `print` to globals: `{{ do print(name) }}`
   - `Environment`
     - `Environment({lineCommentPrefix, lineStatementPrefix, newLine, autoReload, modifiers, templates})`
@@ -14,14 +14,12 @@
     - `modifiers` field
     - `newLine` field
     - `lex` method
-    - `listTemplates` method
-    - `parse` method
     - `scan` method
+    - `parse` method
   - `Template`
     - `Template({path, lineCommentPrefix, lineStatementPrefix, newLine, modifiers, templates})`
       constructor arguments
     - `renderTo` method
-  - `FileSystemLoader.findFile` method
   - exceptions are public now:
     - `TemplateError`
     - `TemplateSyntaxError`
@@ -29,6 +27,7 @@
     - `TemplateNotFound`
     - `TemplatesNotFound`
     - `TemplateRuntimeError`
+    - `FilterArgumentError`
   - statements:
     - `do`
     - `with`
@@ -44,10 +43,8 @@
     - `wordwrap`
     - `item`
     - `map`
-  - `filters`, `tests` and `runtime` library
 - changed:
   - `FieldGetter` typedef renamed to `AttributeGetter`
-  - `mapping` test renamed to `map`
   - `default` filter compare values with `null`, no boolean argument
   - `defined` and `undefined` tests compare values with `null`
   - `Environment`

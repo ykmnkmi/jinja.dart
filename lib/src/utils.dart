@@ -4,7 +4,7 @@ import 'package:textwrap/utils.dart';
 /// Jinja [Environment] function types.
 ///
 /// See [passContext] and [passEnvironment].
-enum FunctionType {
+enum PassArgument {
   /// Function with [Context] argument.
   ///
   /// See [passContext].
@@ -16,7 +16,7 @@ enum FunctionType {
   environment;
 
   /// Type cache for functions, filters and tests.
-  static final Expando<FunctionType> types = Expando<FunctionType>();
+  static final Expando<PassArgument> types = Expando<PassArgument>();
 }
 
 /// Convert value to [bool]
