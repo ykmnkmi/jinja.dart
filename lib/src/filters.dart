@@ -8,64 +8,29 @@ import 'package:jinja/src/markup.dart';
 import 'package:jinja/src/utils.dart' as utils;
 import 'package:textwrap/textwrap.dart' show TextWrapper;
 
-/// Returns a callable that looks up the given item from a
-/// passed object with the rules of the environment.
-///
-/// Dots are allowed to access attributes of attributes.
-/// Integer parts in paths are looked up as integers.
+/// Returns a callable that looks up the given attribute from a passed object
+/// with the rules of the environment.
 Object? Function(Object?) makeAttributeGetter(
   Environment environment,
-  Object attribute, {
+  String attribute, {
   Object? defaultValue,
-  Object? Function(Object?)? postProcess,
 }) {
-  Object? Function(Object? object) get;
-
-  if (attribute is String) {
-    // TODO: move to parser or make as modifier
-    Object map(String part) {
-      return int.tryParse(part) ?? part;
-    }
-
-    var parts = attribute.split('.').map<Object>(map);
-
-    Object? getter(Object? object) {
-      for (var part in parts) {
-        if (part is String) {
-          object = environment.getAttribute(object, part);
-        } else {
-          object = environment.getItem(object, part);
-        }
-
-        if (object == null) {
-          if (defaultValue != null) {
-            object = defaultValue;
-          }
-
-          break;
-        }
-      }
-
-      return object;
-    }
-
-    get = getter;
-  } else {
-    Object? getter(Object? object) {
-      return environment.getItem(object, attribute);
-    }
-
-    get = getter;
+  Object? getter(Object? object) {
+    return environment.getAttribute(object, attribute) ?? defaultValue;
   }
 
+  return getter;
+}
+
+/// Returns a callable that looks up the given item from a passed object with
+/// the rules of the environment.
+Object? Function(Object?) makeItemGetter(
+  Environment environment,
+  Object item, {
+  Object? defaultValue,
+}) {
   Object? getter(Object? object) {
-    object = get(object);
-
-    if (postProcess != null) {
-      object = postProcess(object);
-    }
-
-    return object;
+    return environment.getItem(object, item) ?? defaultValue;
   }
 
   return getter;
@@ -206,7 +171,15 @@ List<Object?> doDictSort(
 
 /// If the value is null it will return the passed default value,
 /// otherwise the value of the variable.
-Object? doDefault(Object? value, [Object? defaultValue = '']) {
+Object? doDefault(
+  Object? value, [
+  Object? defaultValue = '',
+  bool asBool = false,
+]) {
+  if (asBool) {
+    return utils.boolean(value) ? value : defaultValue;
+  }
+
   return value ?? defaultValue;
 }
 
@@ -549,27 +522,42 @@ Object? doReverse(Object? value) {
 /// This is useful when dealing with lists of objects but you are really
 /// only interested in a certain value of it.
 ///
-/// The basic usage is mapping on an attribute.
-Iterable<Object?> doMap(
+/// The basic usage is mapping on an attribute or item.
+Iterable<Object?>? doMap(
   Context context,
-  Iterable<Object?> values, {
+  Iterable<Object?>? values, {
   String? filter,
-  Object? attribute,
+  String? attribute,
+  Object? item,
   Object? defaultValue,
   List<Object?> positional = const <Object?>[],
   Map<Object?, Object?> named = const <Object?, Object?>{},
 }) {
-  if (attribute != null) {
-    if (named.isNotEmpty) {
-      var name = named.keys.first;
-      throw FilterArgumentError('Unexpected keyword argument $name');
-    }
+  if (values == null) {
+    return null;
+  }
 
-    var getter = makeAttributeGetter(
+  Object? Function(Object?)? getter;
+
+  if (attribute != null) {
+    getter = makeAttributeGetter(
       context.environment,
       attribute,
       defaultValue: defaultValue,
     );
+  } else if (item != null) {
+    getter = makeItemGetter(
+      context.environment,
+      item,
+      defaultValue: defaultValue,
+    );
+  }
+
+  if (getter != null) {
+    if (named.isNotEmpty) {
+      var name = named.keys.first;
+      throw FilterArgumentError('Unexpected keyword argument $name');
+    }
 
     return values.map<Object?>(getter);
   }

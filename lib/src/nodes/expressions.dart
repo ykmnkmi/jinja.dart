@@ -659,7 +659,7 @@ class Call extends Callable {
 
   @override
   String toString() {
-    return 'Call($expression${this.format(comma: true)})';
+    return 'Call($expression${format(comma: true)})';
   }
 }
 
@@ -702,14 +702,16 @@ class Filter extends Callable {
 
   @override
   Object? resolve(Context context) {
-    return apply(context, (positional, named) {
+    Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
       return context.filter(name, positional, named);
-    });
+    }
+
+    return apply(context, callback);
   }
 
   @override
   String toString() {
-    return 'Filter.$name(${this.format()})';
+    return 'Filter.$name(${format()})';
   }
 }
 
@@ -748,7 +750,7 @@ class Test extends Callable {
 
   @override
   String toString() {
-    return 'Test.$name(${this.format()})';
+    return 'Test.$name(${format()})';
   }
 }
 

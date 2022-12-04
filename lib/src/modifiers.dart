@@ -26,6 +26,7 @@ void mapModifier(Node node) {
       for (var keyword in keywords) {
         switch (keyword.key) {
           case 'attribute':
+          case 'item':
           case 'defaultValue':
             filter.keywords.add(keyword);
             break;

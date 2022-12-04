@@ -10,7 +10,21 @@ import 'environment.dart';
 class User {
   User(this.name);
 
-  String name;
+  String? name;
+}
+
+class FullName {
+  FullName(this.first, this.last);
+
+  String? first;
+
+  String? last;
+}
+
+class FirstName {
+  FirstName(this.first);
+
+  String? first;
 }
 
 void main() {
@@ -36,16 +50,16 @@ void main() {
       expect(tmpl.render(), equals('no'));
       tmpl = env.fromString('{{ false|default("no") }}');
       expect(tmpl.render(), equals('false'));
-      // tmpl = env.fromString('{{ false|default("no", true) }}');
-      // expect(tmpl.render(), equals('no'));
+      tmpl = env.fromString('{{ false|default("no", true) }}');
+      expect(tmpl.render(), equals('no'));
       tmpl = env.fromString('{{ given|default("no") }}');
       expect(tmpl.render({'given': 'yes'}), equals('yes'));
     });
 
     test('dictsort', () {
-      var foo = {'aa': 0, 'b': 1, 'c': 2, 'AB': 3};
+      var foo = {'aa': 0, 'AB': 3, 'b': 1, 'c': 2};
       var data = {'foo': foo};
-      var tmpl = env.fromString('{{ foo|dictsort() }}');
+      var tmpl = env.fromString('{{ foo|dictsort }}');
       expect(tmpl.render(data), equals('[[aa, 0], [AB, 3], [b, 1], [c, 2]]'));
       tmpl = env.fromString('{{ foo|dictsort(caseSensetive=true) }}');
       expect(tmpl.render(data), equals('[[AB, 3], [aa, 0], [b, 1], [c, 2]]'));
@@ -253,8 +267,11 @@ void main() {
 
     test('truncate', () {
       var data = {'data': 'foobar baz bar' * 10, 'smalldata': 'foobar baz bar'};
+
       var tmpl = env.fromString(
-          '{{ data|truncate(length=15, killWords=true, end=">>>") }}');
+        '{{ data|truncate(length=15, killWords=true, end=">>>") }}',
+      );
+
       expect(tmpl.render(data), equals('foobar baz b>>>'));
       tmpl = env.fromString('{{ data|truncate(length=15, end=">>>") }}');
       expect(tmpl.render(data), equals('foobar baz>>>'));
@@ -265,14 +282,19 @@ void main() {
     test('truncate very short', () {
       var tmpl = env.fromString('{{ "foo bar baz"|truncate(length=9) }}');
       expect(tmpl.render(), equals('foo bar baz'));
-      tmpl =
-          env.fromString('{{ "foo bar"|truncate(length=6, killWords=true) }}');
+
+      tmpl = env.fromString(
+        '{{ "foo bar"|truncate(length=6, killWords=true) }}',
+      );
+
       expect(tmpl.render(), equals('foo bar'));
     });
 
     test('truncate end length', () {
       var tmpl = env.fromString(
-          '{{ "Joel is a slug"|truncate(length=7, killWords=true) }}');
+        '{{ "Joel is a slug"|truncate(length=7, killWords=true) }}',
+      );
+
       expect(tmpl.render(), equals('Joel...'));
     });
 
@@ -367,7 +389,9 @@ void main() {
 
     test('filtertag', () {
       var tmpl = env.fromString(
-          '{% filter upper|replace("FOO", "foo") %}foobar{% endfilter %}');
+        '{% filter upper|replace("FOO", "foo") %}foobar{% endfilter %}',
+      );
+
       expect(tmpl.render(), equals('fooBAR'));
     });
 
@@ -401,20 +425,69 @@ void main() {
     // TODO: add test: urlencode
     // test('urlencode', () {});
 
-    // TODO: add test: simple map
-    // test('simple map', () {});
+    test('simple map', () {
+      var tmpl = env.fromString('{{ ["1", "2", "3"]|map("int")|sum }}');
+      expect(tmpl.render(), equals('6'));
+    });
 
-    // TODO: add test: map sum
-    // test('map sum', () {});
+    test('map sum', () {
+      var tmpl = env.fromString('{{ [[1,2], [3], [4,5,6]]|map("sum")|list }}');
+      expect(tmpl.render(), equals('[3, 3, 15]'));
+    });
 
-    // TODO: add test: attribute map
-    // test('attribute map', () {});
+    test('attribute map', () {
+      var tmpl = env.fromString('{{ users|map(attribute="name")|join("|") }}');
+      var users = [User('john'), User('jane'), User('mike')];
+      expect(tmpl.render({'users': users}), equals('john|jane|mike'));
+    });
 
-    // TODO: add test: empty map
-    // test('empty map', () {});
+    test('empty map', () {
+      var tmpl = env.fromString('{{ none|map("upper")|list }}');
+      expect(tmpl.render(), equals('[]'));
+    });
 
-    // TODO: add test: map default
-    // test('map default', () {});
+    test('map attribute default', () {
+      var users = [
+        FullName('john', 'lennon'),
+        FullName('jon', null),
+        FirstName('mike'),
+      ];
+      var data = {'users': users};
+
+      var tmpl = env.fromString(
+        '{{ users|map(attribute="last", default="smith")|join(", ") }}',
+      );
+
+      expect(tmpl.render(data), equals('lennon, smith, smith'));
+
+      tmpl = env.fromString(
+        '{{ users|map(attribute="last", default="")|join(", ") }}',
+      );
+
+      expect(tmpl.render(data), equals('lennon, , '));
+    });
+
+    test('map item default', () {
+      var users = [
+        {'first': 'john', 'last': 'lennon'},
+        {'first': 'jon', 'last': null},
+        {'first': 'mike'},
+      ];
+
+      var data = {'users': users};
+
+      var tmpl = env.fromString(
+        '{{ users|map(item="last", default="smith")|join(", ") }}',
+      );
+
+      expect(tmpl.render(data), equals('lennon, smith, smith'));
+
+      tmpl = env.fromString(
+        '{{ users|map(item="last", default="")|join(", ") }}',
+      );
+
+      expect(tmpl.render(data), equals('lennon, , '));
+    });
 
     // TODO: add test: simple select
     // test('simple select', () {});
@@ -472,8 +545,10 @@ void main() {
       expect(t1.render(), equals('foo'));
       expect(t2.render(), equals('foo'));
 
-      var matcher = throwsA(predicate((error) =>
-          error is TemplateRuntimeError && error.message == "No filter named 'f'"));
+      var matcher = throwsA(predicate<TemplateRuntimeError>(
+        (error) => error.message == "No filter named 'f'",
+      ));
+
       expect(() => t1.render({'x': 42}), matcher);
       expect(() => t2.render({'x': 42}), matcher);
     });
