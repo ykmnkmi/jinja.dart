@@ -3,14 +3,13 @@ library jinja.loaders;
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:jinja/src/environment.dart';
+import 'package:jinja/src/exceptions.dart';
+import 'package:jinja/src/loaders.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' show extension, join, normalize, relative;
 
-import 'src/environment.dart';
-import 'src/exceptions.dart';
-import 'src/loaders.dart';
-
-export 'src/loaders.dart';
+export 'package:jinja/src/loaders.dart';
 
 /// Loads templates from the file system.  This loader can find templates
 /// in folders on the file system and is the preferred way to load them:
