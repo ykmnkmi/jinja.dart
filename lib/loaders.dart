@@ -24,15 +24,12 @@ export 'package:jinja/src/loaders.dart';
 ///     var loader = FileSystemLoader(path: 'path', followLinks: true)
 ///
 class FileSystemLoader extends Loader {
-  FileSystemLoader(
-      {String? path,
-      List<String>? paths,
-      this.followLinks = true,
-      this.extensions = const <String>{'html'},
-      this.encoding = utf8})
-      : paths = paths == null
-            ? <String>[path == null ? 'templates' : normalize(path)]
-            : paths.map<String>(normalize).toList();
+  FileSystemLoader({
+    List<String> paths = const <String>['templates'],
+    this.followLinks = true,
+    this.extensions = const <String>{'html'},
+    this.encoding = utf8,
+  }) : paths = paths.map<String>(normalize).toList();
 
   final List<String> paths;
 

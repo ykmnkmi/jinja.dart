@@ -1,4 +1,4 @@
-## 0.4.0-dev.63
+## 0.4.0-dev.64
 - minimal SDK version: 2.18.0
 - added:
   - `passContext` and `passEnvironment` ...
@@ -57,7 +57,7 @@
   - `Loader.listSources` method renamed to `listTemplates`
   - `MapLoader.mapping` field renamed to  `sources`
   - `FileSystemLoader`
-    - `FileSystemLoader({path})` constructor argument is nullable now
+    - `FileSystemLoader({paths})` argument now non-nullable, defaults to `['templates']`
     - moved to `package:jinja/loaders.dart` library
   - `package:jinja/get_field.dart` library renamed to `package:jinja/reflection.dart`
   - `getField` function renamed to `getAttribute`
@@ -66,7 +66,7 @@
   - `Environment.undefined` method
   - `Template.render` method
   - `FileSystemLoader`:
-    - `FileSystemLoader({bool autoReload})` constructor argument
+    - `FileSystemLoader({path, autoReload})` arguments
     - `autoReload` field
     - `directory` field
   - slices and negative indexes
