@@ -29,6 +29,14 @@ class FirstName {
 
 void main() {
   group('Filter', () {
+    var aNoFilterNamedF = throwsA(predicate<TemplateAssertionError>(
+      (error) => error.message == "No filter named 'f'",
+    ));
+
+    var rNoFilterNamedF = throwsA(predicate<TemplateRuntimeError>(
+      (error) => error.message == "No filter named 'f'",
+    ));
+
     test('filter calling', () {
       var nums = [1, 2, 3];
       var positional = [nums];
@@ -524,20 +532,49 @@ void main() {
       expect(result, equals('Hello!\nThis is Jinja saying\nsomething.'));
     });
 
-    // TODO: add test: filter undefined
-    // test('filter undefined', () {});
+    // TODO(compiler): enable test
+    test('filter undefined', () {
+      expect(() => env.fromString('{{ var|f }}'), aNoFilterNamedF);
+    }, skip: true);
 
-    // TODO: add test: filter undefined in if
-    // test('filter undefined in if', () {});
+    test('filter undefined in if', () {
+      var t1 = env.fromString(
+        '{%- if x is defined -%}{{ x|f }}{%- else -%}x{% endif %}',
+      );
 
-    // TODO: add test: filter undefined in elif
-    // test('filter undefined in elif', () {});
+      expect(t1.render(), equals('x'));
+      expect(() => t1.render({'x': 42}), rNoFilterNamedF);
+    });
 
-    // TODO: add test: filter undefined in else
-    // test('filter undefined in else', () {});
+    test('filter undefined in elif', () {
+      var t1 = env.fromString(
+        '{%- if x is defined -%}{{ x }}{%- elif y is defined -%}'
+        '{{ y|f }}{%- else -%}foo{%- endif -%}',
+      );
 
-    // TODO: add test: filter undefined in nested if
-    // test('filter undefined in nested if', () {});
+      expect(t1.render(), equals('foo'));
+      expect(() => t1.render({'y': 42}), rNoFilterNamedF);
+    });
+
+    test('filter undefined in else', () {
+      var t1 = env.fromString(
+        '{%- if x is not defined -%}foo{%- else -%}{{ x|f }}{%- endif -%}',
+      );
+
+      expect(t1.render(), equals('foo'));
+      expect(() => t1.render({'x': 42}), rNoFilterNamedF);
+    });
+
+    test('filter undefined in nested if', () {
+      var t1 = env.fromString(
+        '{%- if x is not defined -%}foo{%- else -%}{%- if y '
+        'is defined -%}{{ y|f }}{%- endif -%}{{ x }}{%- endif -%}',
+      );
+
+      expect(t1.render(), equals('foo'));
+      expect(t1.render({'x': 42}), equals('42'));
+      expect(() => t1.render({'x': 42, 'y': 42}), rNoFilterNamedF);
+    });
 
     test('filter undefined in cond expr', () {
       var t1 = env.fromString('{{ x|f if x is defined else "foo" }}');
@@ -545,12 +582,8 @@ void main() {
       expect(t1.render(), equals('foo'));
       expect(t2.render(), equals('foo'));
 
-      var matcher = throwsA(predicate<TemplateRuntimeError>(
-        (error) => error.message == "No filter named 'f'",
-      ));
-
-      expect(() => t1.render({'x': 42}), matcher);
-      expect(() => t2.render({'x': 42}), matcher);
+      expect(() => t1.render({'x': 42}), rNoFilterNamedF);
+      expect(() => t2.render({'x': 42}), rNoFilterNamedF);
     });
   });
 }
