@@ -48,11 +48,15 @@ Function passEnvironment(Function function) {
 }
 
 /// {@template environment}
-/// The core component of Jinja 2 is the Environment. It contains
-/// important shared variables like configuration, filters, tests and others.
+/// The core component of Jinja 2 is the Environment.
+///
+/// It contains important shared variables like configuration, filters, tests
+/// and others.
+///
 /// Instances of this class may be modified if they are not shared and if no
 /// template was loaded so far.
 /// {@endtemplate}
+// TODO(env): update part about modification
 class Environment {
   /// {@macro environment}
   Environment({
@@ -417,8 +421,9 @@ class Environment {
   }
 }
 
-/// The central `Template` object. This class represents a compiled template
-/// and is used to evaluate it.
+/// The central `Template` object.
+///
+/// This class represents a compiled template and is used to evaluate it.
 ///
 /// Normally the template is generated from `Environment` but
 /// it also has a constructor that makes it possible to create a template
@@ -427,8 +432,8 @@ class Environment {
 class Template extends Node {
   factory Template(
     String source, {
-    String? path,
     Environment? environment,
+    String? path,
     String blockStart = defaults.blockStart,
     String blockEnd = defaults.blockEnd,
     String variableStatr = defaults.variableStart,

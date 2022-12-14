@@ -51,6 +51,7 @@ See also examples with [conduit][conduit_example] and
     - selectAutoescape
   - addExtension
   - compileExpression
+  - policies
 - List of Control Structures
   - Macros
   - Call

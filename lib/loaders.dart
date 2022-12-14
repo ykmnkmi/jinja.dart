@@ -11,8 +11,10 @@ import 'package:path/path.dart' show extension, join, normalize, relative;
 
 export 'package:jinja/src/loaders.dart';
 
-/// Loads templates from the file system.  This loader can find templates
-/// in folders on the file system and is the preferred way to load them:
+/// Loads templates from the file system.
+///
+/// This loader can find templates in folders on the file system and is the
+/// preferred way to load them:
 ///
 ///     var loader = FileSystemLoader(path: 'templates', ext: ['html', 'xml']))
 ///     var loader = FileSystemLoader(paths: ['overrides/templates', 'default/templates'], ext: ['html', 'xml']))

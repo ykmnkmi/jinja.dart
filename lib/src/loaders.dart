@@ -2,6 +2,7 @@ import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/exceptions.dart';
 
 /// Base abstract class for all loaders.
+///
 /// Subclass this and override [getSource], [listTemplates] and [load]
 /// to implement a custom loading mechanism.
 abstract class Loader {
@@ -29,9 +30,10 @@ abstract class Loader {
   Template load(Environment environment, String path);
 }
 
-/// Loads a template from a map. It's passed a map of strings bound to
-/// template names.
-/// This loader is useful for testing.
+/// Loads a template from a map.
+///
+/// It's passed a map of strings bound to template names. This loader is
+/// useful for testing.
 ///
 ///     var loader = MapLoader({'index.html': 'source here'})
 ///

@@ -43,6 +43,10 @@
     - `wordwrap`
     - `item`
     - `map`
+    - `tojson`
+  - test:
+    - `filter`
+    - `test`
 - changed:
   - `FieldGetter` typedef renamed to `AttributeGetter`
   - `default` filter compare values with `null`, no boolean argument

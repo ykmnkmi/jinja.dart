@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:jinja/src/markup.dart';
 import 'package:textwrap/utils.dart';
 
@@ -58,6 +60,28 @@ List<R> generate<T, R>(
   return List<R>.generate(list.length, generator);
 }
 
+/// Serialize an object to a string of JSON with [JsonEncoder], then replace
+/// HTML-unsafe characters with Unicode escapes and mark the result safe with
+/// [Markup].
+///
+/// This is available in templates as the `|tojson` filter.
+///
+/// The following characters are escaped: `<`, `>`, `&`, `'`.
+///
+/// {@macro safestring}
+Markup htmlSafeJsonEncode(Object? value, [String? indent]) {
+  var encoder = indent == null ? json.encoder : JsonEncoder.withIndent(indent);
+
+  var encoded = encoder
+      .convert(value)
+      .replaceAll('<', '\\u003c')
+      .replaceAll('>', '\\u003e')
+      .replaceAll('&', '\\u0026')
+      .replaceAll("'", '\\u0027');
+
+  return Markup.escaped(encoded);
+}
+
 /// Identity function.
 Object? identity(Object? value) {
   return value;
@@ -86,7 +110,6 @@ Iterable<Object?> iterate(Object? value) {
     return value.entries;
   }
 
-  // TODO: update error
   throw TypeError();
 }
 
@@ -109,7 +132,7 @@ List<Object?> list(Object? value) {
 /// Creates an [Iterable] of [int]s that iterates from `start` to `stop` by `step`.
 Iterable<int> range(int startOrStop, [int? stop, int step = 1]) sync* {
   if (step == 0) {
-    // TODO: update error
+    // TODO(error): add message
     throw ArgumentError.value(step, 'step');
   }
 

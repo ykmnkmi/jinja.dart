@@ -584,15 +584,29 @@ Iterable<Object?>? doMap(
 /// Get an attribute of an object.
 ///
 /// `foo | attr('bar')` works like `foo.bar`.
-Object? doAttribute(Environment environment, Object? object, String attribute) {
-  return environment.getAttribute(object, attribute);
+Object? doAttribute(Environment environment, Object? value, String attribute) {
+  return environment.getAttribute(value, attribute);
 }
 
 /// Get an item of an object.
 ///
 /// `foo | item('bar')` works like `foo['bar']`.
-Object? doItem(Environment environment, Object? object, Object? item) {
-  return environment.getItem(object, item);
+Object? doItem(Environment environment, Object? value, Object? item) {
+  return environment.getItem(value, item);
+}
+
+/// Serialize an object to a string of JSON, and mark it safe to render in
+/// HTML.
+///
+/// This filter is only for use in HTML documents.
+///
+/// {@template safestring}
+/// The returned string is safe to render in HTML documents and `<script>` tags.
+/// The exception is in HTML attributes that are double quoted; either use
+/// single quotes or the `|forceescape` filter.
+/// {@endtemplate}
+Markup doToJson(Object? value, [String? indent]) {
+  return utils.htmlSafeJsonEncode(value, indent);
 }
 
 final Map<String, Function> filters = <String, Function>{
@@ -650,5 +664,5 @@ final Map<String, Function> filters = <String, Function>{
   // 'reject': passContext(doReject),
   // 'selectattr': passContext(doSelectAttr),
   // 'rejectattr': passContext(doRejectAttr),
-  // 'tojson': passContext(doToJson),
+  'tojson': doToJson,
 };

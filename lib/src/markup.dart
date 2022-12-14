@@ -3,14 +3,16 @@ import 'dart:convert';
 import 'package:html_unescape/html_unescape.dart';
 
 /// HTML escape [Converter].
-final htmlEscape = HtmlEscape(HtmlEscapeMode(
-  escapeLtGt: true,
-  escapeQuot: true,
-  escapeApos: true,
-));
+final HtmlEscape htmlEscape = HtmlEscape(
+  HtmlEscapeMode(
+    escapeLtGt: true,
+    escapeQuot: true,
+    escapeApos: true,
+  ),
+);
 
 /// HTML unescape [Converter].
-final htmlUnescape = HtmlUnescape();
+final HtmlUnescape htmlUnescape = HtmlUnescape();
 
 String escape(String text) {
   return htmlEscape.convert(text);

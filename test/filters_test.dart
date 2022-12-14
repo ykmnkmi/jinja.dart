@@ -29,13 +29,17 @@ class FirstName {
 
 void main() {
   group('Filter', () {
-    var aNoFilterNamedF = throwsA(predicate<TemplateAssertionError>(
-      (error) => error.message == "No filter named 'f'",
-    ));
+    var aNoFilterNamedF = throwsA(
+      predicate<TemplateAssertionError>(
+        (error) => error.message == "No filter named 'f'",
+      ),
+    );
 
-    var rNoFilterNamedF = throwsA(predicate<TemplateRuntimeError>(
-      (error) => error.message == "No filter named 'f'",
-    ));
+    var rNoFilterNamedF = throwsA(
+      predicate<TemplateRuntimeError>(
+        (error) => error.message == "No filter named 'f'",
+      ),
+    );
 
     test('filter calling', () {
       var nums = [1, 2, 3];
@@ -522,7 +526,14 @@ void main() {
     // test('func reject attr', () {});
 
     // TODO: add test: json dump
-    // test('json dump', () {});
+    test('json dump', () {
+      var env = Environment(autoEscape: true);
+      var tmpl = env.fromString('{{ x|tojson }}');
+      var x = {'foo': 'bar'};
+      expect(tmpl.render({'x': x}), equals('{"foo":"bar"}'));
+      expect(tmpl.render({'x': '"' "ba&r'"}), equals('"\\"ba\\u0026r\\u0027"'));
+      expect(tmpl.render({'x': '<bar>'}), equals('"\\u003cbar\\u003e"'));
+    });
 
     test('wordwrap', () {
       var env = Environment(newLine: '\n');
