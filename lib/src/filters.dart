@@ -15,11 +15,9 @@ Object? Function(Object?) makeAttributeGetter(
   String attribute, {
   Object? defaultValue,
 }) {
-  Object? getter(Object? object) {
+  return (Object? object) {
     return environment.getAttribute(object, attribute) ?? defaultValue;
-  }
-
-  return getter;
+  };
 }
 
 /// Returns a callable that looks up the given item from a passed object with
@@ -29,11 +27,9 @@ Object? Function(Object?) makeItemGetter(
   Object item, {
   Object? defaultValue,
 }) {
-  Object? getter(Object? object) {
+  return (Object? object) {
     return environment.getItem(object, item) ?? defaultValue;
-  }
-
-  return getter;
+  };
 }
 
 /// Replace the characters `&`, `<`, `>`, `'`, and `"`

@@ -11,12 +11,13 @@ See `CHANGELOG.md`.
 Mostly same as [Jinja](https://jinja.palletsprojects.com/en/3.0.x/templates/)
 template documentation. _work in progress_.
 
-## Differences
+## Differences with Python version
 - `BigInt` and complex numbers are not supported.
 - The `default` filter compares values with `null`, no `boolean` parameter.
 - The `defined` and `undefined` tests compares values with `null`.
-- The `map` filter with `default` argument compares values with `null`.
-  No dots. Use `attribute` for fields and `item` for items.
+- The `map` filter compares values with `null`.
+  Use `attribute` for fields and `item` for items.
+  Nested attributes and items are not supported.
 - If  `Environment({getAttribute})` is not passed, `getItem` will be used.
   This allows you to use `{{ map.key }}` as `{{ map['key'] }}` expression.
 - _work in progress_

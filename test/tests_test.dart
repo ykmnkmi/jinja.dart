@@ -345,7 +345,6 @@ void main() {
       expect(tmpl.render(), equals('false'));
     });
 
-    // TODO(compiler): enable test
     test('name undefined', () {
       var matcher = throwsA(
         predicate<TemplateAssertionError>(
@@ -354,7 +353,7 @@ void main() {
       );
 
       expect(() => env.fromString('{{ x is f }}'), matcher);
-    }, skip: true);
+    }, skip: 'Assertion checks not yet implemented');
 
     test('name undefined in if', () {
       var tmpl = env.fromString('{% if x is defined %}{{ x is f }}{% endif %}');

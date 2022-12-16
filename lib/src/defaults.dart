@@ -34,13 +34,13 @@ Object finalize(Context context, Object? value) {
   return value ?? '';
 }
 
-Object? getItem(dynamic object, Object? item) {
+Object? getItem(dynamic value, Object? item) {
   try {
     // TODO: dynamic invocation
     // ignore: avoid_dynamic_calls
-    return object[item];
+    return value[item];
   } on NoSuchMethodError {
-    if (object == null) {
+    if (value == null) {
       rethrow;
     }
 

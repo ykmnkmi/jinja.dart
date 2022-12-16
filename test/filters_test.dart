@@ -178,16 +178,16 @@ void main() {
       expect(tmpl.render({'value': 'abc'}), equals('1.0'));
     });
 
-    // TODO: add test: format
+    // TODO(filters): add test - format
     // test('format', () {});
 
-    // TODO: add test: indent
+    // TODO(filters): add test - indent
     // test('indent', () {});
 
-    // TODO: add test: indent markup input
+    // TODO(filters): add test - indent markup input
     // test('indent markup input', () {});
 
-    // TODO: add test: indent width string
+    // TODO(filters): add test - indent width string
     // test('indent width string', () {});
 
     test('int', () {
@@ -240,13 +240,13 @@ void main() {
       expect(tmpl.render(), equals('foo'));
     });
 
-    // TODO: add test: items
+    // TODO(filters): add test - items
     // test('items', () {});
 
-    // TODO: add test: items unefined
+    // TODO(filters): add test - items unefined
     // test('items unefined', () {});
 
-    // TODO: add test: pprint
+    // TODO(filters): add test - pprint
     // test('pprint', () {});
 
     test('random', () {
@@ -274,7 +274,7 @@ void main() {
       expect(tmpl.render(data), equals('${[1, 2, 3, 4, 5]}'));
     });
 
-    // TODO: add test: title
+    // TODO(filters): add test - title
     // test('title', () {});
 
     test('truncate', () {
@@ -315,16 +315,16 @@ void main() {
       expect(tmpl.render(), equals('FOO'));
     });
 
-    // TODO: add test: urlize
+    // TODO(filters): add test - urlize
     // test('urlize', () {});
 
-    // TODO: add test: urlize rel policy
+    // TODO(filters): add test - urlize rel policy
     // test('urlize rel policy', () {});
 
-    // TODO: add test: urlize target parameter
+    // TODO(filters): add test - urlize target parameter
     // test('urlize target parameter', () {});
 
-    // TODO: add test: urlize extra schemes parameter
+    // TODO(filters): add test - urlize extra schemes parameter
     // test('urlize extra schemes parameter', () {});
 
     test('wordcount', () {
@@ -342,61 +342,92 @@ void main() {
       expect(tmpl.render(), equals('&lt;FOO&gt;'));
     });
 
-    // TODO: add test: sum
-    // test('sum', () {});
+    test('sum', () {
+      var tmpl = env.fromString('{{ [1, 2, 3, 4, 5, 6]|sum }}');
+      expect(tmpl.render(), equals('21'));
+    });
 
-    // TODO: add test: sum attributes
-    // test('sum attributes', () {});
+    test('sum attributes', () {
+      var tmpl = env.fromString('{{ values|map(item="value")|sum }}');
 
-    // TODO: add test: sum attributes nested
-    // test('sum attributes nested', () {});
+      var values = [
+        {'value': 23},
+        {'value': 1},
+        {'value': 18},
+      ];
 
-    // TODO: add test: sum attributes tuple
-    // test('sum attributes tuple', () {});
+      expect(tmpl.render({'values': values}), equals('42'));
+    });
 
-    // TODO: add test: abs
-    // test('abs', () {});
+    test('sum attributes nested', () {
+      var tmpl = env.fromString('{{ values|map(item="real.value")|sum }}');
 
-    // TODO: add test: round positive
+      var values = [
+        {
+          'real': {'value': 23}
+        },
+        {
+          'real': {'value': 1}
+        },
+        {
+          'real': {'value': 18}
+        },
+      ];
+
+      expect(tmpl.render({'values': values}), equals('42'));
+    }, skip: 'Nested attributes and items not supported.');
+
+    test('sum attributes tuple', () {
+      var tmpl = env.fromString('{{ values.entries|map("list")|map(item=1)|sum }}');
+      var values = {'foo': 23, 'bar': 1, 'baz': 18};
+      expect(tmpl.render({'values': values}), equals('42'));
+    });
+
+    test('abs', () {
+      var tmpl = env.fromString('{{ -1|abs }}|{{ 1|abs }}');
+      expect(tmpl.render(), equals('1|1'));
+    });
+
+    // TODO(filters): add test - round positive
     // test('round positive', () {});
 
-    // TODO: add test: round negative
+    // TODO(filters): add test - round negative
     // test('round negative', () {});
 
-    // TODO: add test: xmlattr
+    // TODO(filters): add test - xmlattr
     // test('xmlattr', () {});
 
-    // TODO: add test: sortN
+    // TODO(filters): add test - sortN
     // test('sortN', () {});
 
-    // TODO: add test: unique
+    // TODO(filters): add test - unique
     // test('unique', () {});
 
-    // TODO: add test: unique case sensitive
+    // TODO(filters): add test - unique case sensitive
     // test('unique case sensitive', () {});
 
-    // TODO: add test: unique attribute
+    // TODO(filters): add test - unique attribute
     // test('unique attribute', () {});
 
-    // TODO: add test: min max
+    // TODO(filters): add test - min max
     // test('min max', () {});
 
-    // TODO: add test: min max attribute
+    // TODO(filters): add test - min max attribute
     // test('min max attribute', () {});
 
-    // TODO: add test: groupby
+    // TODO(filters): add test - groupby
     // test('groupby', () {});
 
-    // TODO: add test: groupby tuple index
+    // TODO(filters): add test - groupby tuple index
     // test('groupby tuple index', () {});
 
-    // TODO: add test: groupby multidot
+    // TODO(filters): add test - groupby multidot
     // test('groupby multidot', () {});
 
-    // TODO: add test: groupby default
+    // TODO(filters): add test - groupby default
     // test('groupby default', () {});
 
-    // TODO: add test: groupby case
+    // TODO(filters): add test - groupby case
     // test('groupby case', () {});
 
     test('filtertag', () {
@@ -420,10 +451,10 @@ void main() {
       expect(tmpl.render({'string': 'foo'}), equals('f&gt;x&lt;&gt;x&lt;'));
     });
 
-    test('force escape', () {
-      var data = {'x': Markup.escaped('<div />')};
+    test('forceescape', () {
       var tmpl = env.fromString('{{ x|forceescape }}');
-      expect(tmpl.render(data), equals('&lt;div /&gt;'));
+      var div = Markup.escaped('<div />');
+      expect(tmpl.render({'x': div}), equals('&lt;div /&gt;'));
     });
 
     test('safe', () {
@@ -434,7 +465,7 @@ void main() {
       expect(tmpl.render(), equals('&lt;div&gt;foo&lt;/div&gt;'));
     });
 
-    // TODO: add test: urlencode
+    // TODO(filters): add test - urlencode
     // test('urlencode', () {});
 
     test('simple map', () {
@@ -501,31 +532,30 @@ void main() {
       expect(tmpl.render(data), equals('lennon, , '));
     });
 
-    // TODO: add test: simple select
+    // TODO(filters): add test - simple select
     // test('simple select', () {});
 
-    // TODO: add test: bool select
+    // TODO(filters): add test - bool select
     // test('bool select', () {});
 
-    // TODO: add test: simple reject
+    // TODO(filters): add test - simple reject
     // test('simple reject', () {});
 
-    // TODO: add test: bool reject
+    // TODO(filters): add test - bool reject
     // test('bool reject', () {});
 
-    // TODO: add test: simple select attr
+    // TODO(filters): add test - simple select attr
     // test('simple select attr', () {});
 
-    // TODO: add test: simple reject attr
+    // TODO(filters): add test - simple reject attr
     // test('simple reject attr', () {});
 
-    // TODO: add test: func select attr
+    // TODO(filters): add test - func select attr
     // test('func select attr', () {});
 
-    // TODO: add test: func reject attr
+    // TODO(filters): add test - func reject attr
     // test('func reject attr', () {});
 
-    // TODO: add test: json dump
     test('json dump', () {
       var env = Environment(autoEscape: true);
       var tmpl = env.fromString('{{ x|tojson }}');
@@ -546,7 +576,7 @@ void main() {
     // TODO(compiler): enable test
     test('filter undefined', () {
       expect(() => env.fromString('{{ var|f }}'), aNoFilterNamedF);
-    }, skip: true);
+    }, skip: 'Assertion checks not yet implemented.');
 
     test('filter undefined in if', () {
       var t1 = env.fromString(
