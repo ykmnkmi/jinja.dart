@@ -14,19 +14,33 @@ import 'package:jinja/src/utils.dart';
 import 'package:jinja/src/visitor.dart';
 import 'package:meta/meta.dart';
 
-/// Signature for callable that can be used to process the result
-/// of a variable expression before it is output.
+/// {@template finalizer}
+/// A [Function] that can be used to process the result of a variable
+/// expression before it is output.
+///
+/// For example one can convert `null` implicitly into an empty string here.
+/// {@endtemplate}
 typedef Finalizer = Object Function(Object? value);
 
+/// {@macro finalizer}
+///
+/// Takes [Context] as first argument.
 typedef ContextFinalizer = Object Function(Context context, Object? value);
 
+/// {@macro finalizer}
+///
+/// Takes [Environment] as first argument.
 typedef EnvironmentFinalizer = Object Function(
     Environment environment, Object? value);
 
-/// Signature for the object attribute getter.
+/// A [Function] that can be used to get object atribute.
+///
+/// Used by `object.attribute` expression.
 typedef AttributeGetter = Object? Function(Object? object, String attribute);
 
-/// Signature for the object item getter.
+/// A [Function] that can be used to get object item.
+///
+/// Used by `object['item']` expression.
 typedef ItemGetter = Object? Function(Object? object, Object? item);
 
 /// Pass the [Context] as the first argument to the applied function when
@@ -49,34 +63,32 @@ Function passEnvironment(Function function) {
 
 /// {@template environment}
 /// The core component of Jinja 2 is the Environment.
+/// {@endtemplate}
 ///
 /// It contains important shared variables like configuration, filters, tests
 /// and others.
 ///
-/// Instances of this class may be modified if they are not shared and if no
-/// template was loaded so far.
-/// {@endtemplate}
-// TODO(env): update part about modification
+/// Environment modifications can break templates that have been parsed or loaded.
 class Environment {
   /// {@macro environment}
   Environment({
-    this.commentStart = defaults.commentStart,
-    this.commentEnd = defaults.commentEnd,
-    this.variableStart = defaults.variableStart,
-    this.variableEnd = defaults.variableEnd,
-    this.blockStart = defaults.blockStart,
-    this.blockEnd = defaults.blockEnd,
-    this.lineCommentPrefix = defaults.lineCommentPrefix,
-    this.lineStatementPrefix = defaults.lineStatementPrefix,
-    this.leftStripBlocks = defaults.lStripBlocks,
-    this.trimBlocks = defaults.trimBlocks,
-    this.newLine = defaults.newLine,
-    this.keepTrailingNewLine = defaults.keepTrailingNewLine,
-    this.optimize = defaults.optimize,
+    this.commentStart = '{#',
+    this.commentEnd = '#}',
+    this.variableStart = '{{',
+    this.variableEnd = '}}',
+    this.blockStart = '{%',
+    this.blockEnd = '%}',
+    this.lineCommentPrefix,
+    this.lineStatementPrefix,
+    this.leftStripBlocks = false,
+    this.trimBlocks = false,
+    this.newLine = '\n',
+    this.keepTrailingNewLine = false,
+    this.optimize = true,
     Function finalize = defaults.finalize,
-    this.autoEscape = defaults.autoEscape,
+    this.autoEscape = false,
     this.loader,
-    this.autoReload = defaults.autoReload,
+    this.autoReload = true,
     Map<String, Object?>? globals,
     Map<String, Function>? filters,
     Map<String, Function>? tests,
@@ -93,6 +105,11 @@ class Environment {
         templates = HashMap<String, Template>(),
         random = random ?? Random(),
         getAttribute = wrapGetAttribute(getAttribute, getItem) {
+    if (newLine != '\r' && newLine != '\n' && newLine != '\r\n') {
+      // TODO: add error message
+      throw ArgumentError.value(newLine, 'newLine');
+    }
+
     if (globals != null) {
       this.globals.addAll(globals);
     }
@@ -150,7 +167,7 @@ class Environment {
 
   /// The sequence that starts a newline.
   ///
-  /// Must be one of `'\r'`, `'\n'` or `'\r\n'`.
+  /// Must be one of `\r`, `\n` or `\r\n`.
   final String newLine;
 
   /// Preserve the trailing newline when rendering templates.
@@ -206,6 +223,9 @@ class Environment {
   final Random random;
 
   /// Get an attribute of an object.
+  ///
+  /// If `getAttribute` is not passed to the [Environment], the item is
+  /// returned.
   final AttributeGetter getAttribute;
 
   /// Get an item of an object.
@@ -248,7 +268,6 @@ class Environment {
   }
 
   /// Common filter and test caller.
-  // TODO: move argument checks to parser or new modifier
   @internal
   Object? callCommon(
     Function function,
@@ -272,7 +291,7 @@ class Environment {
     return Function.apply(function, positional, named);
   }
 
-  /// If [name] filter not found [StateError] thrown.
+  /// If [name] filter not found [TemplateRuntimeError] thrown.
   @internal
   Object? callFilter(
     String name,
@@ -306,7 +325,7 @@ class Environment {
     return callCommon(function, positional, named, context) as bool;
   }
 
-  /// Lex the given sourcecode and return a list of tokens.
+  /// Lex the given source and return a list of tokens.
   ///
   /// This can be useful for extension development and debugging templates.
   List<Token> lex(String source, {String? path}) {
@@ -343,7 +362,7 @@ class Environment {
     return Template.parsed(this, body, path: path);
   }
 
-  /// Load a template by name with [loader] and return a [Template].
+  /// Load a template by name with `loader` and return a [Template].
   ///
   /// If the template does not exist a [TemplateNotFound] exception is thrown.
   Template getTemplate(String template) {
@@ -421,34 +440,31 @@ class Environment {
   }
 }
 
-/// The central `Template` object.
-///
-/// This class represents a compiled template and is used to evaluate it.
-///
-/// Normally the template is generated from `Environment` but
-/// it also has a constructor that makes it possible to create a template
-/// instance directly using the constructor. It takes the same arguments as
-/// the environment constructor but it's not possible to specify a loader.
+/// {@template template}
+/// The base `Template` class.
+/// {@endtemplate}
+// TODO(template): add note about environment modification
 class Template extends Node {
+  /// {@macro template}
   factory Template(
     String source, {
     Environment? environment,
     String? path,
-    String blockStart = defaults.blockStart,
-    String blockEnd = defaults.blockEnd,
-    String variableStatr = defaults.variableStart,
-    String variableEnd = defaults.variableEnd,
-    String commentStart = defaults.commentStart,
-    String commentEnd = defaults.commentEnd,
-    String? lineCommentPrefix = defaults.lineCommentPrefix,
-    String? lineStatementPrefix = defaults.lineStatementPrefix,
-    bool trimBlocks = defaults.trimBlocks,
-    bool leftStripBlocks = defaults.lStripBlocks,
-    String newLine = defaults.newLine,
-    bool keepTrailingNewLine = defaults.keepTrailingNewLine,
-    bool optimize = defaults.optimize,
+    String blockStart = '{%',
+    String blockEnd = '%}',
+    String variableStatr = '{{',
+    String variableEnd = '}}',
+    String commentStart = '{#',
+    String commentEnd = '#}',
+    String? lineCommentPrefix,
+    String? lineStatementPrefix,
+    bool trimBlocks = false,
+    bool leftStripBlocks = false,
+    String newLine = '\n',
+    bool keepTrailingNewLine = false,
+    bool optimize = true,
     ContextFinalizer finalize = defaults.finalize,
-    bool autoEscape = defaults.autoEscape,
+    bool autoEscape = false,
     Map<String, Object?>? globals,
     Map<String, Function>? filters,
     Map<String, Function>? tests,
@@ -522,8 +538,12 @@ class Template extends Node {
   }
 
   @internal
-  Template.parsed(this.environment, this.body, {this.path, List<Block>? blocks})
-      : blocks = blocks ?? <Block>[];
+  Template.parsed(
+    this.environment,
+    this.body, {
+    this.path,
+    List<Block>? blocks,
+  }) : blocks = blocks ?? <Block>[];
 
   /// The environment used to parse and render template.
   final Environment environment;

@@ -34,8 +34,8 @@ class Context {
     return environment.callCommon(function, positional, named, this);
   }
 
-  Context derived() {
-    return Context(environment, parent: context);
+  Context derived({Map<String, Object?>? data}) {
+    return Context(environment, parent: context, data: data);
   }
 
   Object escape(Object value) {

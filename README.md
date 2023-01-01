@@ -27,6 +27,7 @@ template documentation. _work in progress_.
 - `object.length` getter
 - `object.call` getter
 - _work in progress_
+- also `Function.apply(function, ...)`
 
 ## Example
 ```dart
@@ -37,7 +38,7 @@ import 'package:jinja/jinja.dart';
 var environment = Environment(blockStart: '...', blockEnd: '...');
 var template = environment.fromString('...source...');
 print(template.render({'key': value}));
-// or write directly to StringSink, IOSink, HttpResponse and other implementers
+// or write directly to StringSink (IOSink, HttpResponse, ...)
 template.renderTo(stringSink, {'key': value});
 ```
 

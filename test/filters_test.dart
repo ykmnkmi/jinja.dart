@@ -178,16 +178,16 @@ void main() {
       expect(tmpl.render({'value': 'abc'}), equals('1.0'));
     });
 
-    // TODO(filters): add test - format
+    // TODO(filter): add test - format
     // test('format', () {});
 
-    // TODO(filters): add test - indent
+    // TODO(filter): add test - indent
     // test('indent', () {});
 
-    // TODO(filters): add test - indent markup input
+    // TODO(filter): add test - indent markup input
     // test('indent markup input', () {});
 
-    // TODO(filters): add test - indent width string
+    // TODO(filter): add test - indent width string
     // test('indent width string', () {});
 
     test('int', () {
@@ -240,13 +240,13 @@ void main() {
       expect(tmpl.render(), equals('foo'));
     });
 
-    // TODO(filters): add test - items
+    // TODO(filter): add test - items
     // test('items', () {});
 
-    // TODO(filters): add test - items unefined
+    // TODO(filter): add test - items unefined
     // test('items unefined', () {});
 
-    // TODO(filters): add test - pprint
+    // TODO(filter): add test - pprint
     // test('pprint', () {});
 
     test('random', () {
@@ -274,7 +274,7 @@ void main() {
       expect(tmpl.render(data), equals('${[1, 2, 3, 4, 5]}'));
     });
 
-    // TODO(filters): add test - title
+    // TODO(filter): add test - title
     // test('title', () {});
 
     test('truncate', () {
@@ -315,16 +315,16 @@ void main() {
       expect(tmpl.render(), equals('FOO'));
     });
 
-    // TODO(filters): add test - urlize
+    // TODO(filter): add test - urlize
     // test('urlize', () {});
 
-    // TODO(filters): add test - urlize rel policy
+    // TODO(filter): add test - urlize rel policy
     // test('urlize rel policy', () {});
 
-    // TODO(filters): add test - urlize target parameter
+    // TODO(filter): add test - urlize target parameter
     // test('urlize target parameter', () {});
 
-    // TODO(filters): add test - urlize extra schemes parameter
+    // TODO(filter): add test - urlize extra schemes parameter
     // test('urlize extra schemes parameter', () {});
 
     test('wordcount', () {
@@ -388,46 +388,46 @@ void main() {
       expect(tmpl.render(), equals('1|1'));
     });
 
-    // TODO(filters): add test - round positive
+    // TODO(filter): add test - round positive
     // test('round positive', () {});
 
-    // TODO(filters): add test - round negative
+    // TODO(filter): add test - round negative
     // test('round negative', () {});
 
-    // TODO(filters): add test - xmlattr
+    // TODO(filter): add test - xmlattr
     // test('xmlattr', () {});
 
-    // TODO(filters): add test - sortN
+    // TODO(filter): add test - sortN
     // test('sortN', () {});
 
-    // TODO(filters): add test - unique
+    // TODO(filter): add test - unique
     // test('unique', () {});
 
-    // TODO(filters): add test - unique case sensitive
+    // TODO(filter): add test - unique case sensitive
     // test('unique case sensitive', () {});
 
-    // TODO(filters): add test - unique attribute
+    // TODO(filter): add test - unique attribute
     // test('unique attribute', () {});
 
-    // TODO(filters): add test - min max
+    // TODO(filter): add test - min max
     // test('min max', () {});
 
-    // TODO(filters): add test - min max attribute
+    // TODO(filter): add test - min max attribute
     // test('min max attribute', () {});
 
-    // TODO(filters): add test - groupby
+    // TODO(filter): add test - groupby
     // test('groupby', () {});
 
-    // TODO(filters): add test - groupby tuple index
+    // TODO(filter): add test - groupby tuple index
     // test('groupby tuple index', () {});
 
-    // TODO(filters): add test - groupby multidot
+    // TODO(filter): add test - groupby multidot
     // test('groupby multidot', () {});
 
-    // TODO(filters): add test - groupby default
+    // TODO(filter): add test - groupby default
     // test('groupby default', () {});
 
-    // TODO(filters): add test - groupby case
+    // TODO(filter): add test - groupby case
     // test('groupby case', () {});
 
     test('filtertag', () {
@@ -465,7 +465,7 @@ void main() {
       expect(tmpl.render(), equals('&lt;div&gt;foo&lt;/div&gt;'));
     });
 
-    // TODO(filters): add test - urlencode
+    // TODO(filter): add test - urlencode
     // test('urlencode', () {});
 
     test('simple map', () {
@@ -532,28 +532,28 @@ void main() {
       expect(tmpl.render(data), equals('lennon, , '));
     });
 
-    // TODO(filters): add test - simple select
+    // TODO(filter): add test - simple select
     // test('simple select', () {});
 
-    // TODO(filters): add test - bool select
+    // TODO(filter): add test - bool select
     // test('bool select', () {});
 
-    // TODO(filters): add test - simple reject
+    // TODO(filter): add test - simple reject
     // test('simple reject', () {});
 
-    // TODO(filters): add test - bool reject
+    // TODO(filter): add test - bool reject
     // test('bool reject', () {});
 
-    // TODO(filters): add test - simple select attr
+    // TODO(filter): add test - simple select attr
     // test('simple select attr', () {});
 
-    // TODO(filters): add test - simple reject attr
+    // TODO(filter): add test - simple reject attr
     // test('simple reject attr', () {});
 
-    // TODO(filters): add test - func select attr
+    // TODO(filter): add test - func select attr
     // test('func select attr', () {});
 
-    // TODO(filters): add test - func reject attr
+    // TODO(filter): add test - func reject attr
     // test('func reject attr', () {});
 
     test('json dump', () {
