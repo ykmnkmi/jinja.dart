@@ -1,4 +1,4 @@
-## 0.4.0-dev.68
+## 0.4.0
 - minimal SDK version: 2.18.0
 - added:
   - `passContext` and `passEnvironment` ...
