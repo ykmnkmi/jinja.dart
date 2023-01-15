@@ -38,7 +38,7 @@ jobs:
 
       - name: Run Tests
         run: |
-          dart pub global activate coverage 1.6.0
+          dart pub global activate coverage
           dart test --coverage=coverage && dart pub global run coverage:format_coverage --lcov --in=coverage --out=coverage/lcov.info --report-on=lib
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
