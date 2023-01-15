@@ -125,7 +125,7 @@ fork and issue a pull request with your fix.
 [pub]: https://pub.dev/packages/jinja
 [test_ci_icon]: https://github.com/ykmnkmi/jinja.dart/actions/workflows/test.yaml/badge.svg
 [test_ci]: https://github.com/ykmnkmi/jinja.dart/actions/workflows/test.yaml
-[codecov_icon]: https://codecov.io/gh/ykmnkmi/jinja.dart/branch/master/graph/badge.svg?token=PRP3DHMO48
+[codecov_icon]: https://codecov.io/gh/ykmnkmi/jinja.dart/branch/main/graph/badge.svg?token=PRP3DHMO48
 [codecov]: https://codecov.io/gh/ykmnkmi/jinja.dart
 [jinja]: https://www.palletsprojects.com/p/jinja
 [jinja_templates]: https://jinja.palletsprojects.com/en/3.0.x/templates
