@@ -378,7 +378,8 @@ void main() {
     }, skip: 'Nested attributes and items not supported.');
 
     test('sum attributes tuple', () {
-      var tmpl = env.fromString('{{ values.entries|map("list")|map(item=1)|sum }}');
+      var tmpl =
+          env.fromString('{{ values.entries|map("list")|map(item=1)|sum }}');
       var values = {'foo': 23, 'bar': 1, 'baz': 18};
       expect(tmpl.render({'values': values}), equals('42'));
     });
