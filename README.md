@@ -1,5 +1,7 @@
 # jinja
-[![Pub](https://img.shields.io/pub/v/jinja.svg)](https://pub.dev/packages/jinja)
+
+[![Pub Package][pub_icon]][pub]
+[![Test Status][test_ci_icon]][test_ci]
 
 [Jinja][jinja] server-side template engine port for Dart 2.
 Variables, expressions, control structures and template inheritance.
