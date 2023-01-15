@@ -8,20 +8,17 @@ analyzer:
 
 linter:
   rules:
-    always_declare_return_types: true
-    always_put_control_body_on_new_line: true
-    avoid_dynamic_calls: true
-    avoid_escaping_inner_quotes: true
-    avoid_final_parameters: true
-    avoid_print: true
-    avoid_void_async: true
-    combinators_ordering: true
-    directives_ordering: true
-    library_prefixes: false
-    prefer_single_quotes: true
-    # public_member_api_docs: true
-    unnecessary_final: true
-    unnecessary_lambdas: true
-    unnecessary_parenthesis: true
-    unnecessary_raw_strings: true
-    use_super_parameters: true
+    - always_declare_return_types
+    - always_put_control_body_on_new_line
+    - avoid_dynamic_calls
+    - avoid_escaping_inner_quotes
+    - avoid_final_parameters
+    - avoid_print
+    - avoid_void_async
+    - directives_ordering
+    - prefer_single_quotes
+    - unnecessary_final
+    - unnecessary_lambdas
+    - unnecessary_parenthesis
+    - unnecessary_raw_strings
+    - use_super_parameters

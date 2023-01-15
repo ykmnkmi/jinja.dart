@@ -1,4 +1,4 @@
-# Jinja for Dart
+# jinja
 [![Pub](https://img.shields.io/pub/v/jinja.svg)](https://pub.dev/packages/jinja)
 
 [Jinja][jinja] server-side template engine port for Dart 2.
@@ -8,8 +8,8 @@ Variables, expressions, control structures and template inheritance.
 See `CHANGELOG.md`.
 
 ## Documentation
-Mostly same as [Jinja](https://jinja.palletsprojects.com/en/3.0.x/templates/)
-template documentation. _work in progress_.
+Mostly same as [Jinja][jinja_templates] template documentation.
+_work in progress_.
 
 ## Differences with Python version
 - `BigInt` and complex numbers are not supported.
@@ -118,9 +118,14 @@ If you found a bug, typo or you have better description or comment
 for documentation, just create a [new issue][new_issue] or even better
 fork and issue a pull request with your fix.
 
+[pub_icon]: https://img.shields.io/pub/v/jinja.svg
+[pub]: https://pub.dev/packages/jinja
+[test_ci_icon]: https://github.com/ykmnkmi/jinja.dart/actions/workflows/test.yaml/badge.svg
+[test_ci]: https://github.com/ykmnkmi/jinja.dart/actions/workflows/test.yaml
 [jinja]: https://www.palletsprojects.com/p/jinja
+[jinja_templates]: https://jinja.palletsprojects.com/en/3.0.x/templates
 [conduit_example]: https://github.com/ykmnkmi/jinja_conduit_example
 [reflectable_example]: https://github.com/ykmnkmi/jinja_reflectable_example
 [filters]: https://github.com/ykmnkmi/jinja.dart/blob/master/lib/src/filters.dart
 [tests]: https://github.com/ykmnkmi/jinja.dart/blob/master/lib/src/tests.dart
-[new_issue]: https://github.com/ykmnkmi/dart-jinja/issues/new
+[new_issue]: https://github.com/ykmnkmi/jinja.dart/issues
