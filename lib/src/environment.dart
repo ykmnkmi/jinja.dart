@@ -253,7 +253,7 @@ class Environment {
   }
 
   @override
-  bool operator ==(Object? other) {
+  bool operator ==(Object other) {
     return other is Environment &&
         blockStart == other.blockStart &&
         blockEnd == other.blockEnd &&

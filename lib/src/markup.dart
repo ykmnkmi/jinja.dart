@@ -51,7 +51,7 @@ class Markup {
   }
 
   @override
-  bool operator ==(Object? other) {
+  bool operator ==(Object other) {
     return other is Markup && value == other.value;
   }
 
@@ -73,7 +73,7 @@ class Escaped implements Markup {
   }
 
   @override
-  bool operator ==(Object? other) {
+  bool operator ==(Object other) {
     return other is Markup && value == other.value;
   }
 
