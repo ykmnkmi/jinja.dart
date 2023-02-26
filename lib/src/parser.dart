@@ -99,6 +99,253 @@ class Parser {
     }
   }
 
+  Node parseStatement(TokenReader reader) {
+    var token = reader.current;
+
+    if (!token.test('name')) {
+      fail('Tag name expected', token.line);
+    }
+
+    tagStack.add(token.value);
+
+    var popTag = true;
+
+    try {
+      switch (token.value) {
+        case 'set':
+          return parseSet(reader);
+        case 'for':
+          return parseFor(reader);
+        case 'if':
+          return parseIf(reader);
+        case 'with':
+          return parseWith(reader);
+        case 'autoescape':
+          return parseAutoEscape(reader);
+        case 'block':
+          return parseBlock(reader);
+        case 'extends':
+          return parseExtends(reader);
+        case 'include':
+          return parseInclude(reader);
+        case 'call':
+          return parseCallBlock(reader);
+        case 'filter':
+          return parseFilterBlock(reader);
+        case 'macro':
+          return parseMacro(reader);
+        case 'do':
+          return parseDo(reader);
+        default:
+          tagStack.removeLast();
+          popTag = false;
+          failUnknownTag(token.value, token.line);
+      }
+    } finally {
+      if (popTag) {
+        tagStack.removeLast();
+      }
+    }
+  }
+
+  List<Node> parseStatements(
+    TokenReader reader,
+    List<String> endTokens, [
+    bool dropNeedle = false,
+  ]) {
+    reader.skipIf('colon');
+    reader.expect('block_end');
+
+    var nodes = subParse(reader, endTokens: endTokens);
+
+    if (reader.current.test('eof')) {
+      failEof(endTokens);
+    }
+
+    if (dropNeedle) {
+      reader.next();
+    }
+
+    return nodes;
+  }
+
+  Statement parseSet(TokenReader reader) {
+    reader.expect('name', 'set');
+
+    var target = parseAssignTarget(reader, withNamespace: true);
+
+    if (reader.skipIf('assign')) {
+      var expression = parseTuple(reader);
+      return Assign(target, expression);
+    }
+
+    const endSet = <String>['name:endset'];
+
+    var filters = parseFilters(reader);
+    var nodes = parseStatements(reader, endSet, true);
+    return AssignBlock(target, Output.orSingle(nodes), filters);
+  }
+
+  For parseFor(TokenReader reader) {
+    reader.expect('name', 'for');
+
+    var target = parseAssignTarget(reader, extraEndRules: <String>['name:in']);
+
+    if (target is Name && target.name == 'loop') {
+      fail("Can't assign to special loop variable in for-loop target");
+    }
+
+    reader.expect('name', 'in');
+
+    var iterable = parseTuple(reader, withCondition: false);
+    Expression? test;
+
+    if (reader.skipIf('name', 'if')) {
+      test = parseExpression(reader);
+    }
+
+    const endForElse = <String>['name:endfor', 'name:else'];
+
+    var recursive = reader.skipIf('name', 'recursive');
+    var nodes = parseStatements(reader, endForElse);
+    var body = Output.orSingle(nodes);
+
+    Node? orElse;
+
+    if (reader.next().test('name', 'else')) {
+      var nodes = parseStatements(reader, <String>['name:endfor'], true);
+      orElse = Output.orSingle(nodes);
+    }
+
+    return For(target, iterable, body,
+        orElse: orElse, test: test, recursive: recursive);
+  }
+
+  If parseIf(TokenReader reader) {
+    reader.expect('name', 'if');
+
+    const endIfElseEndIf = <String>['name:elif', 'name:else', 'name:endif'];
+
+    var test = parseExpression(reader, false);
+    var nodes = parseStatements(reader, endIfElseEndIf);
+    var root = If(test, Output.orSingle(nodes));
+    var node = root;
+
+    while (true) {
+      var tag = reader.next();
+
+      if (tag.test('name', 'elif')) {
+        var test = parseTuple(reader, withCondition: false);
+        var nodes = parseStatements(reader, endIfElseEndIf);
+        var next = If(test, Output.orSingle(nodes));
+        node.orElse = next;
+        node = next;
+        continue;
+      }
+
+      if (tag.test('name', 'else')) {
+        const endIf = <String>['name:endif'];
+
+        var nodes = parseStatements(reader, endIf, true);
+        node.orElse = Output.orSingle(nodes);
+      }
+
+      break;
+    }
+
+    return root;
+  }
+
+  With parseWith(TokenReader reader) {
+    reader.expect('name', 'with');
+
+    var targets = <Expression>[];
+    var values = <Expression>[];
+
+    while (!reader.current.test('block_end')) {
+      if (targets.isNotEmpty) {
+        reader.expect('comma');
+      }
+
+      var target = parseAssignTarget(reader);
+      (target as Assignable).context = AssignContext.parameter;
+      targets.add(target);
+      reader.expect('assign');
+      values.add(parseExpression(reader));
+    }
+
+    const endWith = <String>['name:endwith'];
+
+    var nodes = parseStatements(reader, endWith, true);
+    return With(targets, values, Output.orSingle(nodes));
+  }
+
+  AutoEscape parseAutoEscape(TokenReader reader) {
+    reader.expect('name', 'autoescape');
+
+    const endAutoEscape = <String>['name:endautoescape'];
+
+    var escape = parseExpression(reader);
+    var body = parseStatements(reader, endAutoEscape, true);
+    return AutoEscape(escape, Output.orSingle(body));
+  }
+
+  Block parseBlock(TokenReader reader) {
+    var token = reader.expect('name', 'block');
+    var name = reader.expect('name');
+
+    if (blocks.any((block) => block.name == name.value)) {
+      fail("Block '${name.value}' defined twice", reader.current.line);
+    }
+
+    var scoped = reader.skipIf('name', 'scoped');
+
+    if (reader.current.test('sub')) {
+      fail('Use an underscore instead', reader.current.line);
+    }
+
+    const endBlock = <String>['name:endblock'];
+
+    var required = reader.skipIf('name', 'required');
+    var nodes = parseStatements(reader, endBlock, true);
+
+    if (required && nodes.any((node) => node is! Data || !node.isLeaf)) {
+      fail('Required blocks can only contain comments or whitespace',
+          token.line);
+    }
+
+    var maybeName = reader.current;
+
+    if (maybeName.test('name')) {
+      if (maybeName.value != name.value) {
+        fail("'${name.value}' expected, got ${maybeName.value}");
+      }
+
+      reader.next();
+    }
+
+    var block = Block(name.value, scoped, required, Output.orSingle(nodes));
+    blocks.add(block);
+    return block;
+  }
+
+  Extends parseExtends(TokenReader reader) {
+    var token = reader.expect('name', 'extends');
+    var primary = parsePrimary(reader);
+
+    if (primary is! Constant) {
+      fail('Template name or path literal expected', reader.current.line);
+    }
+
+    if (extendsNode != null) {
+      fail('Extended multiple times', token.line);
+    }
+
+    var node = Extends(primary.value as String);
+    extendsNode = node;
+    return node;
+  }
+
   T parseImportContext<T extends ImportContext>(
     TokenReader reader,
     T node, [
@@ -116,6 +363,40 @@ class Parser {
 
     return node;
   }
+
+  Include parseInclude(TokenReader reader) {
+    reader.expect('name', 'include');
+
+    var name = reader.expect('string');
+    var node = Include(name.value);
+    return parseImportContext<Include>(reader, node, true);
+  }
+
+  // TODO(parser): parseImport
+
+  // TODO(parser): parseFrom
+
+  // TODO(parser): parseSignature
+
+  CallBlock parseCallBlock(TokenReader reader) {
+    throw UnimplementedError();
+  }
+
+  FilterBlock parseFilterBlock(TokenReader reader) {
+    reader.expect('name', 'filter');
+
+    const endFilter = <String>['name:endfilter'];
+
+    var filters = parseFilters(reader, true);
+    var nodes = parseStatements(reader, endFilter, true);
+    return FilterBlock(filters, Output.orSingle(nodes));
+  }
+
+  Macro parseMacro(TokenReader reader) {
+    throw UnimplementedError();
+  }
+
+  // TODO(parser): parsePrint
 
   Expression parseAssignTarget(
     TokenReader reader, {
@@ -157,262 +438,9 @@ class Parser {
     return target;
   }
 
-  Node parseStatement(TokenReader reader) {
-    var token = reader.current;
-
-    if (!token.test('name')) {
-      fail('Tag name expected', token.line);
-    }
-
-    tagStack.add(token.value);
-
-    var popTag = true;
-
-    try {
-      switch (token.value) {
-        case 'extends':
-          return parseExtends(reader);
-        case 'for':
-          return parseFor(reader);
-        case 'if':
-          return parseIf(reader);
-        case 'filter':
-          return parseFilterBlock(reader);
-        case 'with':
-          return parseWith(reader);
-        case 'block':
-          return parseBlock(reader);
-        case 'include':
-          return parseInclude(reader);
-        case 'do':
-          return parseDo(reader);
-        case 'set':
-          return parseAssign(reader);
-        case 'autoescape':
-          return parseAutoEscape(reader);
-        default:
-          tagStack.removeLast();
-          popTag = false;
-          failUnknownTag(token.value, token.line);
-      }
-    } finally {
-      if (popTag) {
-        tagStack.removeLast();
-      }
-    }
-  }
-
-  List<Node> parseStatements(
-    TokenReader reader,
-    List<String> endTokens, [
-    bool dropNeedle = false,
-  ]) {
-    reader.skipIf('colon');
-    reader.expect('block_end');
-
-    var nodes = subParse(reader, endTokens: endTokens);
-
-    if (reader.current.test('eof')) {
-      failEof(endTokens);
-    }
-
-    if (dropNeedle) {
-      reader.next();
-    }
-
-    return nodes;
-  }
-
-  Extends parseExtends(TokenReader reader) {
-    var token = reader.expect('name', 'extends');
-    var primary = parsePrimary(reader);
-
-    if (primary is! Constant) {
-      fail('Template name or path literal expected', reader.current.line);
-    }
-
-    if (extendsNode != null) {
-      fail('Extended multiple times', token.line);
-    }
-
-    var node = Extends(primary.value as String);
-    extendsNode = node;
-    return node;
-  }
-
-  For parseFor(TokenReader reader) {
-    reader.expect('name', 'for');
-
-    var target = parseAssignTarget(reader, extraEndRules: <String>['name:in']);
-
-    if (target is Name && target.name == 'loop') {
-      fail("Can't assign to special loop variable in for-loop target");
-    }
-
-    reader.expect('name', 'in');
-
-    var iterable = parseTuple(reader, withCondition: false);
-    Expression? test;
-
-    if (reader.skipIf('name', 'if')) {
-      test = parseExpression(reader);
-    }
-
-    const endForElse = <String>['name:endfor', 'name:else'];
-    var recursive = reader.skipIf('name', 'recursive');
-    var nodes = parseStatements(reader, endForElse);
-    var body = Output.orSingle(nodes);
-
-    Node? orElse;
-
-    if (reader.next().test('name', 'else')) {
-      var nodes = parseStatements(reader, <String>['name:endfor'], true);
-      orElse = Output.orSingle(nodes);
-    }
-
-    return For(target, iterable, body,
-        orElse: orElse, test: test, recursive: recursive);
-  }
-
-  If parseIf(TokenReader reader) {
-    reader.expect('name', 'if');
-
-    const endIfElseEndIf = <String>['name:elif', 'name:else', 'name:endif'];
-    var test = parseExpression(reader, false);
-    var nodes = parseStatements(reader, endIfElseEndIf);
-    var root = If(test, Output.orSingle(nodes));
-    var node = root;
-
-    while (true) {
-      var tag = reader.next();
-
-      if (tag.test('name', 'elif')) {
-        var test = parseTuple(reader, withCondition: false);
-        var nodes = parseStatements(reader, endIfElseEndIf);
-        var next = If(test, Output.orSingle(nodes));
-        node.orElse = next;
-        node = next;
-        continue;
-      }
-
-      if (tag.test('name', 'else')) {
-        const endIf = <String>['name:endif'];
-        var nodes = parseStatements(reader, endIf, true);
-        node.orElse = Output.orSingle(nodes);
-      }
-
-      break;
-    }
-
-    return root;
-  }
-
-  FilterBlock parseFilterBlock(TokenReader reader) {
-    reader.expect('name', 'filter');
-
-    const endFilter = <String>['name:endfilter'];
-    var filters = parseFilters(reader, true);
-    var nodes = parseStatements(reader, endFilter, true);
-    return FilterBlock(filters, Output.orSingle(nodes));
-  }
-
-  With parseWith(TokenReader reader) {
-    reader.expect('name', 'with');
-
-    var targets = <Expression>[];
-    var values = <Expression>[];
-
-    while (!reader.current.test('block_end')) {
-      if (targets.isNotEmpty) {
-        reader.expect('comma');
-      }
-
-      var target = parseAssignTarget(reader);
-      (target as Assignable).context = AssignContext.parameter;
-      targets.add(target);
-      reader.expect('assign');
-      values.add(parseExpression(reader));
-    }
-
-    const endWith = <String>['name:endwith'];
-    var nodes = parseStatements(reader, endWith, true);
-    return With(targets, values, Output.orSingle(nodes));
-  }
-
-  Block parseBlock(TokenReader reader) {
-    var token = reader.expect('name', 'block');
-    var name = reader.expect('name');
-
-    if (blocks.any((block) => block.name == name.value)) {
-      fail("Block '${name.value}' defined twice", reader.current.line);
-    }
-
-    var scoped = reader.skipIf('name', 'scoped');
-
-    if (reader.current.test('sub')) {
-      fail('Use an underscore instead', reader.current.line);
-    }
-
-    const endBlock = <String>['name:endblock'];
-    var required = reader.skipIf('name', 'required');
-    var nodes = parseStatements(reader, endBlock, true);
-
-    if (required && nodes.any((node) => node is! Data || !node.isLeaf)) {
-      fail('Required blocks can only contain comments or whitespace',
-          token.line);
-    }
-
-    var maybeName = reader.current;
-
-    if (maybeName.test('name')) {
-      if (maybeName.value != name.value) {
-        fail("'${name.value}' expected, got ${maybeName.value}");
-      }
-
-      reader.next();
-    }
-
-    var block = Block(name.value, scoped, required, Output.orSingle(nodes));
-    blocks.add(block);
-    return block;
-  }
-
-  Include parseInclude(TokenReader reader) {
-    reader.expect('name', 'include');
-
-    var name = reader.expect('string');
-    var node = Include(name.value);
-    return parseImportContext<Include>(reader, node, true);
-  }
-
   Do parseDo(TokenReader reader) {
     reader.expect('name', 'do');
     return Do(parseTuple(reader));
-  }
-
-  Statement parseAssign(TokenReader reader) {
-    reader.expect('name', 'set');
-
-    var target = parseAssignTarget(reader, withNamespace: true);
-
-    if (reader.skipIf('assign')) {
-      var expression = parseTuple(reader);
-      return Assign(target, expression);
-    }
-
-    const endSet = <String>['name:endset'];
-    var filters = parseFilters(reader);
-    var nodes = parseStatements(reader, endSet, true);
-    return AssignBlock(target, Output.orSingle(nodes), filters);
-  }
-
-  AutoEscape parseAutoEscape(TokenReader reader) {
-    reader.expect('name', 'autoescape');
-
-    const endAutoEscape = <String>['name:endautoescape'];
-    var escape = parseExpression(reader);
-    var body = parseStatements(reader, endAutoEscape, true);
-    return AutoEscape(escape, Output.orSingle(body));
   }
 
   Expression parseExpression(TokenReader reader, [bool withCondition = true]) {
@@ -471,6 +499,7 @@ class Parser {
 
   Expression parseCompare(TokenReader reader) {
     const operators = <String>['eq', 'ne', 'lt', 'lteq', 'gt', 'gteq'];
+
     var expression = parseMath1(reader);
     var operands = <Operand>[];
 
@@ -950,8 +979,16 @@ class Parser {
 
     var current = reader.current;
 
-    const allow = ['name', 'string', 'integer', 'float', 'lbracket', 'lbrace'];
-    const deny = ['name:else', 'name:or', 'name:and'];
+    const allow = <String>[
+      'name',
+      'string',
+      'integer',
+      'float',
+      'lbracket',
+      'lbrace',
+    ];
+
+    const deny = <String>['name:else', 'name:or', 'name:and'];
 
     if (current.test('lparen')) {
       parseSignature(reader, test);

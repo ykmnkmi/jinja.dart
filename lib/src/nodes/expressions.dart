@@ -418,7 +418,7 @@ class Keyword extends Expression {
 
 typedef Callback<T> = T Function(List<Object?>, Map<Symbol, Object?>);
 
-class Callable extends Expression {
+abstract class Callable extends Expression {
   Callable({
     List<Expression>? arguments,
     List<Keyword>? keywords,

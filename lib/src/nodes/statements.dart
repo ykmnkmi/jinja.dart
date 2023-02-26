@@ -126,6 +126,28 @@ class If extends Statement {
   }
 }
 
+abstract class MacroCall extends Statement {}
+
+class Macro extends MacroCall {
+  Macro(this.name);
+
+  String name;
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    throw UnimplementedError();
+  }
+}
+
+class CallBlock extends MacroCall {
+  CallBlock();
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    throw UnimplementedError();
+  }
+}
+
 class FilterBlock extends Statement {
   FilterBlock(this.filters, this.body);
 
