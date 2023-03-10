@@ -14,29 +14,25 @@ typedef NodeVisitor = void Function(Node node);
 abstract class Node {
   const Node();
 
-  List<Node> get childrens {
+  List<Node> get children {
     return const <Node>[];
   }
 
   R accept<C, R>(Visitor<C, R> visitor, C context);
 
+  T find<T extends Node>() {
+    var all = findAll<T>();
+    return all.first;
+  }
+
   Iterable<T> findAll<T extends Node>() sync* {
-    for (var child in childrens) {
+    for (var child in children) {
       if (child is T) {
         yield child;
       }
 
       yield* child.findAll<T>();
     }
-  }
-
-  T findOne<T extends Node>() {
-    var all = findAll<T>();
-    return all.first;
-  }
-
-  void visitChildrens(NodeVisitor visitor) {
-    childrens.forEach(visitor);
   }
 }
 
@@ -64,7 +60,7 @@ class Data extends Node {
 
   @override
   String toString() {
-    return 'Data($literal)';
+    return 'Data $literal';
   }
 }
 
@@ -74,7 +70,7 @@ class Output extends Node {
   List<Node> nodes;
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return nodes;
   }
 
@@ -85,7 +81,7 @@ class Output extends Node {
 
   @override
   String toString() {
-    return 'Output(${nodes.join(', ')})';
+    return nodes.join(', ');
   }
 
   static Node orSingle(List<Node> nodes) {

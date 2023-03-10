@@ -51,6 +51,12 @@ class Optimizer implements Visitor<Context, Node> {
   }
 
   @override
+  CallBlock visitCallBlock(CallBlock node, Context context) {
+    // TODO: implement visitCallBlock
+    return node;
+  }
+
+  @override
   Data visitData(Data node, Context context) {
     return node;
   }
@@ -126,6 +132,12 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   Include visitInclude(Include node, Context context) {
+    return node;
+  }
+
+  @override
+  Macro visitMacro(Macro node, Context context) {
+    // TODO: implement visitMacro
     return node;
   }
 

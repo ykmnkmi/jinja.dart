@@ -1,11 +1,5 @@
 part of '../nodes.dart';
 
-enum AssignContext {
-  load,
-  store,
-  parameter,
-}
-
 class Impossible implements Exception {}
 
 abstract class Expression extends Node {
@@ -27,7 +21,13 @@ abstract class Expression extends Node {
   void update(ExpressionUpdater updater) {}
 }
 
-mixin Assignable on Expression {
+enum AssignContext {
+  load,
+  store,
+  parameter,
+}
+
+abstract class Assignable implements Expression {
   bool get canAssign;
 
   abstract AssignContext context;
@@ -160,7 +160,7 @@ class Tuple extends Literal implements Assignable {
   }
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return values;
   }
 
@@ -202,7 +202,7 @@ class Array extends Literal {
   List<Expression> values;
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return values;
   }
 
@@ -246,7 +246,7 @@ class Pair extends Expression {
   Expression value;
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return <Node>[key, value];
   }
 
@@ -284,7 +284,7 @@ class Dict extends Literal {
   List<Pair> pairs;
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return pairs;
   }
 
@@ -331,7 +331,7 @@ class Condition extends Expression {
   Expression? orElse;
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     var orElse = this.orElse;
     return <Node>[test, value, if (orElse != null) orElse];
   }
@@ -387,7 +387,7 @@ class Keyword extends Expression {
   Expression value;
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return <Node>[value];
   }
 
@@ -436,7 +436,7 @@ abstract class Callable extends Expression {
   Expression? dKeywords;
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return <Node>[
       ...arguments,
       ...keywords,
@@ -539,50 +539,6 @@ abstract class Callable extends Expression {
     return callback(positional, named);
   }
 
-  String format({bool comma = false}) {
-    var result = '';
-
-    if (arguments.isNotEmpty) {
-      if (comma) {
-        result = '$result, ';
-      } else {
-        comma = true;
-      }
-
-      result = '$result${arguments.join(', ')}';
-    }
-
-    if (keywords.isNotEmpty) {
-      if (comma) {
-        result = '$result, ';
-      } else {
-        comma = true;
-      }
-
-      result = '$result${keywords.join(', ')}';
-    }
-
-    if (dArguments != null) {
-      if (comma) {
-        result = '$result, ';
-      } else {
-        comma = true;
-      }
-
-      result = '$result*$dArguments';
-    }
-
-    if (dKeywords != null) {
-      if (comma) {
-        result = '$result, ';
-      }
-
-      result = '$result**$dKeywords';
-    }
-
-    return result;
-  }
-
   @override
   void update(ExpressionUpdater updater) {
     for (var i = 0; i < arguments.length; i += 1) {
@@ -624,8 +580,8 @@ class Call extends Callable {
   Expression expression;
 
   @override
-  List<Node> get childrens {
-    return <Node>[expression, ...super.childrens];
+  List<Node> get children {
+    return <Node>[expression, ...super.children];
   }
 
   @override
@@ -659,7 +615,7 @@ class Call extends Callable {
 
   @override
   String toString() {
-    return 'Call($expression${format(comma: true)})';
+    return 'Call($expression)';
   }
 }
 
@@ -711,7 +667,7 @@ class Filter extends Callable {
 
   @override
   String toString() {
-    return 'Filter.$name(${format()})';
+    return 'Filter($name)';
   }
 }
 
@@ -750,7 +706,7 @@ class Test extends Callable {
 
   @override
   String toString() {
-    return 'Test.$name(${format()})';
+    return 'Test($name)';
   }
 }
 
@@ -764,7 +720,7 @@ class Item extends Expression {
   Expression value;
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return <Node>[key, value];
   }
 
@@ -825,7 +781,7 @@ class ItemString extends Expression implements Item {
   }
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return <Node>[key, value];
   }
 
@@ -861,7 +817,7 @@ class Attribute extends Expression {
   Expression value;
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return <Node>[value];
   }
 
@@ -895,7 +851,7 @@ class Concat extends Expression {
   List<Expression> values;
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return values;
   }
 
@@ -953,7 +909,7 @@ class Operand extends Expression {
   Expression value;
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return <Node>[value];
   }
 
@@ -1010,7 +966,7 @@ class Compare extends Expression {
   List<Operand> operands;
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return <Node>[value, ...operands];
   }
 
@@ -1092,7 +1048,7 @@ class Unary extends Expression {
   Expression value;
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return <Node>[value];
   }
 
@@ -1146,7 +1102,7 @@ abstract class Binary<T extends Enum> extends Expression {
   Expression right;
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return <Node>[left, right];
   }
 

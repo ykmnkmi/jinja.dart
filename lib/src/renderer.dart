@@ -235,6 +235,11 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
   }
 
   @override
+  void visitCallBlock(CallBlock node, StringSinkRenderContext context) {
+    // TODO: implement visitCallBlock
+  }
+
+  @override
   void visitData(Data node, StringSinkRenderContext context) {
     context.write(node.data);
   }
@@ -358,6 +363,11 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
       context = StringSinkRenderContext(context.environment, context.sink);
       template.body.accept(this, context);
     }
+  }
+
+  @override
+  void visitMacro(Macro node, StringSinkRenderContext context) {
+    // TODO: implement visitMacro
   }
 
   @override

@@ -170,6 +170,8 @@ class Parser {
   }
 
   Statement parseSet(TokenReader reader) {
+    const endSet = <String>['name:endset'];
+
     reader.expect('name', 'set');
 
     var target = parseAssignTarget(reader, withNamespace: true);
@@ -179,14 +181,14 @@ class Parser {
       return Assign(target, expression);
     }
 
-    const endSet = <String>['name:endset'];
-
     var filters = parseFilters(reader);
     var nodes = parseStatements(reader, endSet, true);
     return AssignBlock(target, Output.orSingle(nodes), filters);
   }
 
   For parseFor(TokenReader reader) {
+    const endForElse = <String>['name:endfor', 'name:else'];
+
     reader.expect('name', 'for');
 
     var target = parseAssignTarget(reader, extraEndRules: <String>['name:in']);
@@ -204,8 +206,6 @@ class Parser {
       test = parseExpression(reader);
     }
 
-    const endForElse = <String>['name:endfor', 'name:else'];
-
     var recursive = reader.skipIf('name', 'recursive');
     var nodes = parseStatements(reader, endForElse);
     var body = Output.orSingle(nodes);
@@ -217,14 +217,21 @@ class Parser {
       orElse = Output.orSingle(nodes);
     }
 
-    return For(target, iterable, body,
-        orElse: orElse, test: test, recursive: recursive);
+    return For(
+      target,
+      iterable,
+      body,
+      orElse: orElse,
+      test: test,
+      recursive: recursive,
+    );
   }
 
   If parseIf(TokenReader reader) {
-    reader.expect('name', 'if');
-
+    const endIf = <String>['name:endif'];
     const endIfElseEndIf = <String>['name:elif', 'name:else', 'name:endif'];
+
+    reader.expect('name', 'if');
 
     var test = parseExpression(reader, false);
     var nodes = parseStatements(reader, endIfElseEndIf);
@@ -237,15 +244,11 @@ class Parser {
       if (tag.test('name', 'elif')) {
         var test = parseTuple(reader, withCondition: false);
         var nodes = parseStatements(reader, endIfElseEndIf);
-        var next = If(test, Output.orSingle(nodes));
-        node.orElse = next;
-        node = next;
+        node = node.orElse = If(test, Output.orSingle(nodes));
         continue;
       }
 
       if (tag.test('name', 'else')) {
-        const endIf = <String>['name:endif'];
-
         var nodes = parseStatements(reader, endIf, true);
         node.orElse = Output.orSingle(nodes);
       }
@@ -257,6 +260,8 @@ class Parser {
   }
 
   With parseWith(TokenReader reader) {
+    const endWith = <String>['name:endwith'];
+
     reader.expect('name', 'with');
 
     var targets = <Expression>[];
@@ -274,16 +279,14 @@ class Parser {
       values.add(parseExpression(reader));
     }
 
-    const endWith = <String>['name:endwith'];
-
     var nodes = parseStatements(reader, endWith, true);
     return With(targets, values, Output.orSingle(nodes));
   }
 
   AutoEscape parseAutoEscape(TokenReader reader) {
-    reader.expect('name', 'autoescape');
-
     const endAutoEscape = <String>['name:endautoescape'];
+
+    reader.expect('name', 'autoescape');
 
     var escape = parseExpression(reader);
     var body = parseStatements(reader, endAutoEscape, true);
@@ -291,7 +294,9 @@ class Parser {
   }
 
   Block parseBlock(TokenReader reader) {
-    var token = reader.expect('name', 'block');
+    const endBlock = <String>['name:endblock'];
+
+    var token = reader.next();
     var name = reader.expect('name');
 
     if (blocks.any((block) => block.name == name.value)) {
@@ -303,8 +308,6 @@ class Parser {
     if (reader.current.test('sub')) {
       fail('Use an underscore instead', reader.current.line);
     }
-
-    const endBlock = <String>['name:endblock'];
 
     var required = reader.skipIf('name', 'required');
     var nodes = parseStatements(reader, endBlock, true);
@@ -330,11 +333,11 @@ class Parser {
   }
 
   Extends parseExtends(TokenReader reader) {
-    var token = reader.expect('name', 'extends');
+    var token = reader.next();
     var primary = parsePrimary(reader);
 
     if (primary is! Constant) {
-      fail('Template name or path literal expected', reader.current.line);
+      fail('Template path literal expected', reader.current.line);
     }
 
     if (extendsNode != null) {
@@ -346,9 +349,9 @@ class Parser {
     return node;
   }
 
-  T parseImportContext<T extends ImportContext>(
+  void parseImportContext(
     TokenReader reader,
-    T node, [
+    ImportContext node, [
     bool defaultValue = true,
   ]) {
     var keywords = <String>['name:with', 'name:without'];
@@ -360,32 +363,70 @@ class Parser {
     } else {
       node.withContext = defaultValue;
     }
-
-    return node;
   }
 
   Include parseInclude(TokenReader reader) {
-    reader.expect('name', 'include');
+    reader.next();
 
     var name = reader.expect('string');
     var node = Include(name.value);
-    return parseImportContext<Include>(reader, node, true);
+    parseImportContext(reader, node, true);
+    return node;
   }
 
   // TODO(parser): parseImport
 
   // TODO(parser): parseFrom
 
-  // TODO(parser): parseSignature
+  void parseSignature(TokenReader reader, MacroCall node) {
+    var arguments = node.arguments = <Expression>[];
+    var defaults = node.defaults = <Expression>[];
+
+    reader.expect('lparen');
+
+    while (reader.current.test('rparen')) {
+      if (arguments.isNotEmpty) {
+        reader.expect('comma');
+      }
+
+      var argument = parseAssignTarget(reader, nameOnly: true) as Name;
+      argument.context = AssignContext.parameter;
+
+      if (reader.skipIf('assign')) {
+        defaults.add(parseExpression(reader));
+      } else if (defaults.isNotEmpty) {
+        fail('non-default argument follows default argument');
+      }
+
+      arguments.add(argument);
+    }
+  }
 
   CallBlock parseCallBlock(TokenReader reader) {
-    throw UnimplementedError();
+    const endCall = <String>['name:endcall'];
+
+    var token = reader.next();
+    var node = CallBlock(Constant(''));
+
+    if (reader.current.test('lparen')) {
+      parseSignature(reader, node);
+    }
+
+    var call = parseExpression(reader);
+
+    if (call is! Call) {
+      fail('expected call', token.line);
+    }
+
+    var nodes = parseStatements(reader, endCall, true);
+    node.body = Output.orSingle(nodes);
+    return node;
   }
 
   FilterBlock parseFilterBlock(TokenReader reader) {
-    reader.expect('name', 'filter');
-
     const endFilter = <String>['name:endfilter'];
+
+    reader.next();
 
     var filters = parseFilters(reader, true);
     var nodes = parseStatements(reader, endFilter, true);
@@ -393,7 +434,17 @@ class Parser {
   }
 
   Macro parseMacro(TokenReader reader) {
-    throw UnimplementedError();
+    const endMacro = <String>['name:endmacro'];
+
+    reader.next();
+
+    var name = parseAssignTarget(reader, nameOnly: true) as Name;
+    var node = Macro(name.name);
+    parseSignature(reader, node);
+
+    var nodes = parseStatements(reader, endMacro, true);
+    node.body = Output.orSingle(nodes);
+    return node;
   }
 
   // TODO(parser): parsePrint
@@ -655,15 +706,18 @@ class Parser {
           case 'false':
             expression = Constant(false);
             break;
+
           case 'True':
           case 'true':
             expression = Constant(true);
             break;
+
           case 'None':
           case 'none':
           case 'null':
             expression = Constant(null);
             break;
+
           default:
             expression = Name(current.value);
         }
@@ -866,7 +920,7 @@ class Parser {
     fail('Expected subscript expression', token.line);
   }
 
-  void parseSignature(TokenReader reader, Callable callable) {
+  void parseCallArguments(TokenReader reader, Callable callable) {
     var token = reader.expect('lparen');
     var arguments = callable.arguments;
     var keywords = callable.keywords;
@@ -926,7 +980,7 @@ class Parser {
 
   Call parseCall(TokenReader reader, Expression expression) {
     var call = Call(expression);
-    parseSignature(reader, call);
+    parseCallArguments(reader, call);
     return call;
   }
 
@@ -953,7 +1007,7 @@ class Parser {
       var filter = Filter(token.value);
 
       if (reader.current.test('lparen')) {
-        parseSignature(reader, filter);
+        parseCallArguments(reader, filter);
       }
 
       filters.add(filter);
@@ -980,18 +1034,14 @@ class Parser {
     var current = reader.current;
 
     const allow = <String>[
-      'name',
-      'string',
-      'integer',
-      'float',
-      'lbracket',
-      'lbrace',
+      'name', 'string', 'integer', //
+      'float', 'lbracket', 'lbrace',
     ];
 
     const deny = <String>['name:else', 'name:or', 'name:and'];
 
     if (current.test('lparen')) {
-      parseSignature(reader, test);
+      parseCallArguments(reader, test);
     } else if (current.testAny(allow) && !current.testAny(deny)) {
       if (current.test('name', 'is')) {
         fail('You cannot chain multiple tests with is');
@@ -1029,11 +1079,13 @@ class Parser {
             nodes.add(Data(token.value));
             reader.next();
             break;
+
           case 'variable_start':
             reader.next();
             nodes.add(parseTuple(reader));
             reader.expect('variable_end');
             break;
+
           case 'block_start':
             reader.next();
 
@@ -1050,6 +1102,7 @@ class Parser {
             nodes.add(node);
             reader.expect('block_end');
             break;
+
           default:
             assert(false, 'Unreachable');
         }
@@ -1066,8 +1119,7 @@ class Parser {
   Node parse(String template) {
     var tokens = environment.lex(template, path: path);
     var nodes = scan(tokens);
-    var node = extendsNode;
-    var body = node ?? Output.orSingle(nodes);
+    var body = extendsNode ?? Output.orSingle(nodes);
 
     if (blocks.isEmpty) {
       return body;

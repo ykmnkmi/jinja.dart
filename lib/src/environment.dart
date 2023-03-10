@@ -558,7 +558,7 @@ class Template extends Node {
   final List<Block> blocks;
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return <Node>[body];
   }
 

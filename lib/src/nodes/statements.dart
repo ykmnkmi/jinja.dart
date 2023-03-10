@@ -20,7 +20,7 @@ class Extends extends Statement {
 
   @override
   String toString() {
-    return 'Extends($path)';
+    return 'Extends ($path)';
   }
 }
 
@@ -56,7 +56,7 @@ class For extends Statement {
   bool recursive;
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return <Node>[
       target,
       iterable,
@@ -73,25 +73,23 @@ class For extends Statement {
 
   @override
   String toString() {
-    var result = 'For';
-
-    if (recursive) {
-      result = '$result.recursive';
-    }
-
-    result = '$result($target, $iterable';
+    var result = 'For ($target, $iterable';
 
     if (test != null) {
       result = '$result, $test';
     }
 
-    result = '$result, $body';
-
-    if (orElse != null) {
-      result = '$result, orElse: $orElse';
+    if (recursive) {
+      result = '$result, recursive';
     }
 
-    return '$result)';
+    result = '$result) { $body }';
+
+    if (orElse == null) {
+      return result;
+    }
+
+    return '$result Else $orElse';
   }
 }
 
@@ -105,7 +103,7 @@ class If extends Statement {
   Node? orElse;
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return <Node>[test, body, if (orElse != null) orElse!];
   }
 
@@ -116,35 +114,69 @@ class If extends Statement {
 
   @override
   String toString() {
-    var result = 'If($test, $body';
-
-    if (orElse != null) {
-      result = '$result, orElse: $orElse';
+    if (orElse == null) {
+      return 'If ($test) { $body }';
     }
 
-    return '$result)';
+    return 'If ($test) { $body } Else $orElse';
   }
 }
 
-abstract class MacroCall extends Statement {}
+abstract class MacroCall extends Statement {
+  MacroCall({
+    List<Expression>? arguments,
+    List<Expression>? defaults,
+    Node? body,
+  })  : arguments = arguments ?? <Expression>[],
+        defaults = defaults ?? <Expression>[],
+        body = body ?? Data('');
+
+  List<Expression> arguments;
+
+  List<Expression> defaults;
+
+  Node body;
+}
 
 class Macro extends MacroCall {
-  Macro(this.name);
+  Macro(
+    this.name, {
+    super.arguments,
+    super.defaults,
+    super.body,
+  });
 
   String name;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
-    throw UnimplementedError();
+    return visitor.visitMacro(this, context);
+  }
+
+  @override
+  String toString() {
+    return 'Macro ($name, $arguments, $defaults) { $body }';
   }
 }
 
 class CallBlock extends MacroCall {
-  CallBlock();
+  CallBlock(
+    this.call, {
+    super.arguments,
+    super.defaults,
+    super.body,
+  });
+
+  Expression call;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
-    throw UnimplementedError();
+    return visitor.visitCallBlock(this, context);
+  }
+
+  @override
+  String toString() {
+    return 'CallBlock ($call, $arguments, $defaults) { $body }';
   }
 }
 
@@ -156,7 +188,7 @@ class FilterBlock extends Statement {
   Node body;
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return <Node>[...filters, body];
   }
 
@@ -167,7 +199,7 @@ class FilterBlock extends Statement {
 
   @override
   String toString() {
-    return 'FilterBlock($filters, $body)';
+    return 'FilterBlock ($filters) { $body }';
   }
 }
 
@@ -181,7 +213,7 @@ class With extends Statement {
   Node body;
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return <Node>[...targets, ...values, body];
   }
 
@@ -192,7 +224,7 @@ class With extends Statement {
 
   @override
   String toString() {
-    return 'With($targets, $values, $body)';
+    return 'With ($targets, $values) { $body }';
   }
 }
 
@@ -217,7 +249,7 @@ class Block extends Statement {
   Node body;
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return <Node>[body];
   }
 
@@ -228,7 +260,7 @@ class Block extends Statement {
 
   @override
   String toString() {
-    var result = 'Block($name';
+    var result = 'Block ($name';
 
     if (scoped) {
       result = '$result, scoped';
@@ -238,7 +270,7 @@ class Block extends Statement {
       result = '$result, super';
     }
 
-    return '$result, $body)';
+    return '$result) { $body }';
   }
 }
 
@@ -257,13 +289,13 @@ class Include extends Statement implements ImportContext {
 
   @override
   String toString() {
-    var prefix = 'Include';
+    var result = 'Include ($template';
 
     if (withContext) {
-      prefix = '${prefix}withContext';
+      result = '$result, withContext';
     }
 
-    return '$prefix($template)';
+    return '$result)';
   }
 }
 
@@ -273,7 +305,7 @@ class Do extends Statement {
   Expression expression;
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return <Node>[expression];
   }
 
@@ -284,7 +316,7 @@ class Do extends Statement {
 
   @override
   String toString() {
-    return 'Do($expression)';
+    return 'Do ($expression)';
   }
 }
 
@@ -296,7 +328,7 @@ class Assign extends Statement {
   Expression value;
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return <Node>[target, value];
   }
 
@@ -307,7 +339,7 @@ class Assign extends Statement {
 
   @override
   String toString() {
-    return 'Assign($target, $value)';
+    return 'Assign ($target, $value)';
   }
 }
 
@@ -321,7 +353,7 @@ class AssignBlock extends Statement {
   List<Filter>? filters;
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return <Node>[target, body, ...?filters];
   }
 
@@ -332,13 +364,13 @@ class AssignBlock extends Statement {
 
   @override
   String toString() {
-    var result = 'AssignBlock($target, $body';
+    var result = 'AssignBlock ($target';
 
     if (filters != null && filters!.isNotEmpty) {
       result = '$result, $filters';
     }
 
-    return '$result)';
+    return '$result) { $body }';
   }
 }
 
@@ -350,7 +382,7 @@ class AutoEscape extends Statement {
   Node body;
 
   @override
-  List<Node> get childrens {
+  List<Node> get children {
     return <Node>[value, body];
   }
 
@@ -361,6 +393,6 @@ class AutoEscape extends Statement {
 
   @override
   String toString() {
-    return 'AutoEscape($value, $body)';
+    return 'AutoEscape ($value) { $body }';
   }
 }

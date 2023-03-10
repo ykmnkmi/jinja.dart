@@ -20,6 +20,8 @@ abstract class Visitor<C, R> {
 
   R visitBlock(Block node, C context);
 
+  R visitCallBlock(CallBlock node, C context);
+
   R visitData(Data node, C context);
 
   R visitDo(Do node, C context);
@@ -35,6 +37,8 @@ abstract class Visitor<C, R> {
   R visitIf(If node, C context);
 
   R visitInclude(Include node, C context);
+
+  R visitMacro(Macro node, C context);
 
   R visitOutput(Output node, C context);
 
@@ -192,6 +196,11 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
   }
 
   @override
+  void visitCallBlock(CallBlock node, ExpressionUpdater context) {
+    // TODO: implement visitCallBlock
+  }
+
+  @override
   Expression visitExpression(Expression node, ExpressionUpdater context) {
     node.update(context);
     return context(node);
@@ -264,6 +273,11 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
 
   @override
   void visitInclude(Include node, ExpressionUpdater context) {}
+
+  @override
+  void visitMacro(Macro node, ExpressionUpdater context) {
+    // TODO: implement visitMacro
+  }
 
   @override
   void visitOutput(Output node, ExpressionUpdater context) {
