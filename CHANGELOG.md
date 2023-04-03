@@ -1,4 +1,4 @@
-## 0.5.0-dev.2
+## 0.5.0-dev.3
 - minimal SDK version: 2.19.0
 - adding:
   - statements:

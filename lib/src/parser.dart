@@ -1135,7 +1135,7 @@ class Parser {
   Template parse(String template) {
     var tokens = environment.lex(template, path: path);
     var nodes = scan(tokens);
-    nodes = extendsNode == null ? nodes: <Node>[extendsNode!];
+    nodes = extendsNode == null ? nodes : <Node>[extendsNode!];
     return Template.parsed(environment, nodes, path: path, blocks: blocks);
   }
 }
