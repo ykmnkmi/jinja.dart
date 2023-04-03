@@ -63,35 +63,3 @@ class Data extends Node {
     return 'Data $literal';
   }
 }
-
-class Output extends Node {
-  Output(this.nodes);
-
-  List<Node> nodes;
-
-  @override
-  List<Node> get children {
-    return nodes;
-  }
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitOutput(this, context);
-  }
-
-  @override
-  String toString() {
-    return nodes.join(', ');
-  }
-
-  static Node orSingle(List<Node> nodes) {
-    switch (nodes.length) {
-      case 0:
-        return Data();
-      case 1:
-        return nodes[0];
-      default:
-        return Output(nodes);
-    }
-  }
-}

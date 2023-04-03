@@ -349,17 +349,17 @@ class Environment {
 
   /// Load a template from a source string without using [loader].
   Template fromString(String source, {String? path}) {
-    var body = Parser(this, path: path).parse(source);
+    var template = Parser(this, path: path).parse(source);
 
     for (var modifier in modifiers) {
-      modifier(body);
+      modifier(template);
     }
 
     if (optimize) {
-      body.accept(const Optimizer(), Context(this));
+      const Optimizer().visitTemplate(template, Context(this));
     }
 
-    return Template.parsed(this, body, path: path);
+    return template;
   }
 
   /// Load a template by name with `loader` and return a [Template].
@@ -443,7 +443,6 @@ class Environment {
 /// {@template template}
 /// The base `Template` class.
 /// {@endtemplate}
-// TODO(template): add note about environment modification
 class Template extends Node {
   /// {@macro template}
   factory Template(
@@ -507,17 +506,19 @@ class Template extends Node {
     List<Node> nodes, {
     String? path,
   }) {
-    Node body;
+    List<Node> body;
+    List<Block> blocks;
 
     if (nodes.isEmpty) {
-      body = Data();
+      body = <Node>[];
+      blocks = const <Block>[];
     } else if (nodes.first is Extends) {
-      body = nodes.first;
+      body = nodes;
+      blocks = const <Block>[];
     } else {
-      body = Output.orSingle(nodes);
+      body = nodes;
+      blocks = <Block>[for (var node in nodes) ...node.findAll<Block>()];
     }
-
-    var blocks = <Block>[for (var node in nodes) ...node.findAll<Block>()];
 
     var template = Template.parsed(
       environment,
@@ -552,14 +553,14 @@ class Template extends Node {
   final String? path;
 
   /// Template body node.
-  final Node body;
+  final List<Node> body;
 
   /// Template blocks.
   final List<Block> blocks;
 
   @override
   List<Node> get children {
-    return <Node>[body];
+    return body;
   }
 
   @override

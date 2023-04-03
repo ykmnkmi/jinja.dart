@@ -33,8 +33,8 @@ class Optimizer implements Visitor<Context, Node> {
       visitAll(filters, context);
     }
 
-    node.body = node.body.accept(this, context);
     node.target = visitExpression(node.target, context);
+    visitAll(node.body, context);
     return node;
   }
 
@@ -46,13 +46,16 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   Block visitBlock(Block node, Context context) {
-    node.body = node.body.accept(this, context);
+    visitAll(node.body, context);
     return node;
   }
 
   @override
   CallBlock visitCallBlock(CallBlock node, Context context) {
-    // TODO: implement visitCallBlock
+    node.call = visitExpression(node.call, context);
+    visitAll(node.arguments, context);
+    visitAll(node.defaults, context);
+    visitAll(node.body, context);
     return node;
   }
 
@@ -85,7 +88,7 @@ class Optimizer implements Visitor<Context, Node> {
   @override
   FilterBlock visitFilterBlock(FilterBlock node, Context context) {
     visitAll(node.filters, context);
-    node.body = node.body.accept(this, context);
+    visitAll(node.body, context);
     return node;
   }
 
@@ -93,18 +96,14 @@ class Optimizer implements Visitor<Context, Node> {
   For visitFor(For node, Context context) {
     node.target = visitExpression(node.target, context);
     node.iterable = visitExpression(node.iterable, context);
-    node.body = node.body.accept(this, context);
+    visitAll(node.body, context);
 
-    var orElse = node.orElse;
-
-    if (orElse != null) {
-      node.orElse = orElse.accept(this, context);
+    if (node.orElse != null) {
+      visitAll(node.orElse!, context);
     }
 
-    var test = node.test;
-
-    if (test != null) {
-      var value = visitExpression(test, context);
+    if (node.test != null) {
+      var value = visitExpression(node.test!, context);
 
       if (value is Constant && boolean(value.value)) {
         node.test = null;
@@ -119,12 +118,10 @@ class Optimizer implements Visitor<Context, Node> {
   @override
   If visitIf(If node, Context context) {
     node.test = visitExpression(node.test, context);
-    node.body = node.body.accept(this, context);
+    visitAll(node.body, context);
 
-    var orElse = node.orElse;
-
-    if (orElse != null) {
-      node.orElse = orElse.accept(this, context);
+    if (node.orElse != null) {
+      visitAll(node.orElse!, context);
     }
 
     return node;
@@ -137,20 +134,16 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   Macro visitMacro(Macro node, Context context) {
-    // TODO: implement visitMacro
-    return node;
-  }
-
-  @override
-  Node visitOutput(Output node, Context context) {
-    visitAll(node.nodes, context);
+    visitAll(node.arguments, context);
+    visitAll(node.defaults, context);
+    visitAll(node.body, context);
     return node;
   }
 
   @override
   Node visitTemplate(Template node, Context context) {
-    node.body.accept(this, context);
     visitAll(node.blocks, context);
+    visitAll(node.body, context);
     return node;
   }
 
@@ -158,7 +151,7 @@ class Optimizer implements Visitor<Context, Node> {
   Node visitWith(With node, Context context) {
     visitAll(node.targets, context);
     visitAll(node.values, context);
-    node.body = node.body.accept(this, context);
+    visitAll(node.body, context);
     return node;
   }
 }

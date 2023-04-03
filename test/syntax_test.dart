@@ -302,7 +302,7 @@ void main() {
     test('neg filter priority', () {
       var tmpl = env.fromString('{{ -1|foo }}');
 
-      expect(tmpl.body, predicate<Filter>((filter) {
+      expect(tmpl.body.first, predicate<Filter>((filter) {
         var expression = filter.arguments[0];
         return expression is Unary &&
             expression.operator == UnaryOperator.minus;

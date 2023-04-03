@@ -57,7 +57,14 @@ See also examples with [conduit][conduit_example] and
   - addExtension
   - compileExpression
   - policies
+- Template:
+  - generate
+  - stream
+  - `await` support
 - List of Control Structures
+  - For
+    - `continue`
+    - `break`
   - Macros
   - Call
   - Import

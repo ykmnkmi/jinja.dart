@@ -40,8 +40,6 @@ abstract class Visitor<C, R> {
 
   R visitMacro(Macro node, C context);
 
-  R visitOutput(Output node, C context);
-
   R visitTemplate(Template node, C context);
 
   R visitWith(With node, C context);
@@ -117,11 +115,6 @@ abstract class ThrowingVisitor<C, R> implements Visitor<C, R> {
   }
 
   @override
-  R visitOutput(Output node, C context) {
-    fail(node, context);
-  }
-
-  @override
   R visitTemplate(Template node, C context) {
     fail(node, context);
   }
@@ -157,17 +150,10 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
   @override
   void visitAssignBlock(AssignBlock node, ExpressionUpdater context) {
     node.target = visitExpression(node.target, context);
+    visitAll(node.body, context);
 
-    var body = node.body;
-
-    if (body is Expression) {
-      node.body = visitExpression(body, context);
-    }
-
-    var filters = node.filters;
-
-    if (filters != null) {
-      visitAll(filters, context);
+    if (node.filters != null) {
+      visitAll(node.filters!, context);
     }
   }
 
@@ -178,13 +164,7 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
 
   @override
   void visitBlock(Block node, ExpressionUpdater context) {
-    var body = node.body;
-
-    if (body is Expression) {
-      node.body = visitExpression(body, context);
-    } else {
-      body.accept(this, context);
-    }
+    visitAll(node.body, context);
   }
 
   @override
@@ -197,7 +177,10 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
 
   @override
   void visitCallBlock(CallBlock node, ExpressionUpdater context) {
-    // TODO: implement visitCallBlock
+    node.call = visitExpression(node.call, context);
+    visitAll(node.arguments, context);
+    visitAll(node.defaults, context);
+    visitAll(node.body, context);
   }
 
   @override
@@ -212,14 +195,7 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
   @override
   void visitFilterBlock(FilterBlock node, ExpressionUpdater context) {
     visitAll(node.filters, context);
-
-    var body = node.body;
-
-    if (body is Expression) {
-      node.body = visitExpression(body, context);
-    } else {
-      body.accept(this, context);
-    }
+    visitAll(node.body, context);
   }
 
   @override
@@ -227,47 +203,24 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
     node.target = visitExpression(node.target, context);
     node.iterable = visitExpression(node.iterable, context);
 
-    var test = node.test;
-
-    if (test != null) {
-      node.test = visitExpression(test, context);
+    if (node.test != null) {
+      node.test = visitExpression(node.test!, context);
     }
 
-    var body = node.body;
+    visitAll(node.body, context);
 
-    if (body is Expression) {
-      node.body = visitExpression(body, context);
-    } else {
-      body.accept(this, context);
-    }
-
-    var orElse = node.orElse;
-
-    if (orElse is Expression) {
-      node.orElse = visitExpression(orElse, context);
-    } else if (orElse != null) {
-      orElse.accept(this, context);
+    if (node.orElse != null) {
+      visitAll(node.orElse!, context);
     }
   }
 
   @override
   void visitIf(If node, ExpressionUpdater context) {
     node.test = visitExpression(node.test, context);
+    visitAll(node.body, context);
 
-    var body = node.body;
-
-    if (body is Expression) {
-      node.body = visitExpression(body, context);
-    } else {
-      body.accept(this, context);
-    }
-
-    var orElse = node.orElse;
-
-    if (orElse is Expression) {
-      node.orElse = visitExpression(orElse, context);
-    } else if (orElse != null) {
-      orElse.accept(this, context);
+    if (node.orElse != null) {
+      visitAll(node.orElse!, context);
     }
   }
 
@@ -276,31 +229,21 @@ class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
 
   @override
   void visitMacro(Macro node, ExpressionUpdater context) {
-    // TODO: implement visitMacro
-  }
-
-  @override
-  void visitOutput(Output node, ExpressionUpdater context) {
-    visitAll(node.nodes, context);
+    visitAll(node.arguments, context);
+    visitAll(node.defaults, context);
+    visitAll(node.body, context);
   }
 
   @override
   void visitTemplate(Template node, ExpressionUpdater context) {
-    node.body.accept(this, context);
     visitAll(node.blocks, context);
+    visitAll(node.body, context);
   }
 
   @override
   void visitWith(With node, ExpressionUpdater context) {
     visitAll(node.targets, context);
     visitAll(node.values, context);
-
-    var body = node.body;
-
-    if (body is Expression) {
-      node.body = visitExpression(body, context);
-    } else {
-      body.accept(this, context);
-    }
+    visitAll(node.body, context);
   }
 }

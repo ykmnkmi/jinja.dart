@@ -45,11 +45,11 @@ class For extends Statement {
 
   Expression iterable;
 
-  Node body;
+  List<Node> body;
 
   bool hasLoop;
 
-  Node? orElse;
+  List<Node>? orElse;
 
   Expression? test;
 
@@ -60,8 +60,8 @@ class For extends Statement {
     return <Node>[
       target,
       iterable,
-      body,
-      if (orElse != null) orElse!,
+      ...body,
+      ...?orElse,
       if (test != null) test!,
     ];
   }
@@ -98,13 +98,13 @@ class If extends Statement {
 
   Expression test;
 
-  Node body;
+  List<Node> body;
 
-  Node? orElse;
+  List<Node>? orElse;
 
   @override
   List<Node> get children {
-    return <Node>[test, body, if (orElse != null) orElse!];
+    return <Node>[test, ...body, ...?orElse];
   }
 
   @override
@@ -126,16 +126,16 @@ abstract class MacroCall extends Statement {
   MacroCall({
     List<Expression>? arguments,
     List<Expression>? defaults,
-    Node? body,
+    List<Node>? body,
   })  : arguments = arguments ?? <Expression>[],
         defaults = defaults ?? <Expression>[],
-        body = body ?? Data('');
+        body = body ?? <Node>[];
 
   List<Expression> arguments;
 
   List<Expression> defaults;
 
-  Node body;
+  List<Node> body;
 }
 
 class Macro extends MacroCall {
@@ -185,11 +185,11 @@ class FilterBlock extends Statement {
 
   List<Filter> filters;
 
-  Node body;
+  List<Node> body;
 
   @override
   List<Node> get children {
-    return <Node>[...filters, body];
+    return <Node>[...filters, ...body];
   }
 
   @override
@@ -210,11 +210,11 @@ class With extends Statement {
 
   List<Expression> values;
 
-  Node body;
+  List<Node> body;
 
   @override
   List<Node> get children {
-    return <Node>[...targets, ...values, body];
+    return <Node>[...targets, ...values, ...body];
   }
 
   @override
@@ -246,11 +246,11 @@ class Block extends Statement {
 
   bool hasSuper;
 
-  Node body;
+  List<Node> body;
 
   @override
   List<Node> get children {
-    return <Node>[body];
+    return body;
   }
 
   @override
@@ -348,13 +348,13 @@ class AssignBlock extends Statement {
 
   Expression target;
 
-  Node body;
+  List<Node> body;
 
   List<Filter>? filters;
 
   @override
   List<Node> get children {
-    return <Node>[target, body, ...?filters];
+    return <Node>[target, ...body, ...?filters];
   }
 
   @override
@@ -379,11 +379,11 @@ class AutoEscape extends Statement {
 
   Expression value;
 
-  Node body;
+  List<Node> body;
 
   @override
   List<Node> get children {
-    return <Node>[value, body];
+    return <Node>[value, ...body];
   }
 
   @override

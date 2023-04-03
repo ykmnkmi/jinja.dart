@@ -2,12 +2,18 @@ import 'package:jinja/jinja.dart';
 import 'package:jinja/reflection.dart';
 import 'package:stack_trace/stack_trace.dart';
 
-const String source = '''{{ '<">&'|escape }}''';
+const String source = '''
+{% macro input(name, value='', type='text', size=20) -%}
+  <input type="{{ type }}" name="{{ name }}" value="{{ value|e }}" size="{{ size }}">
+{%- endmacro %}
+<p>{{ input('username') }}</p>
+<p>{{ input('password', type='password') }}</p>
+''';
 
 void main() {
   try {
     var environment = Environment(getAttribute: getAttribute);
-    environment.filters;
+
     var tokens = environment.lex(source);
     print('tokens:');
 
@@ -25,13 +31,13 @@ void main() {
     var template = Template.fromNodes(environment, nodes);
 
     print('\nmodified body:');
-    print(template.body);
 
-    var emptyMap = <String, Object?>{};
-    var data = {'foo': emptyMap};
+    for (var node in template.body) {
+      print(node);
+    }
 
     print('\nrender:');
-    print(template.render(data));
+    print(template.render());
   } catch (error, trace) {
     print(error);
     print(Trace.format(trace, terse: true));

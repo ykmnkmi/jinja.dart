@@ -90,6 +90,7 @@ class Parser {
       case 'block_end':
       case 'rparen':
         return true;
+
       default:
         if (extraEndRules != null && extraEndRules.isNotEmpty) {
           return reader.current.testAny(extraEndRules);
@@ -114,28 +115,40 @@ class Parser {
       switch (token.value) {
         case 'set':
           return parseSet(reader);
+
         case 'for':
           return parseFor(reader);
+
         case 'if':
           return parseIf(reader);
+
         case 'with':
           return parseWith(reader);
+
         case 'autoescape':
           return parseAutoEscape(reader);
+
         case 'block':
           return parseBlock(reader);
+
         case 'extends':
           return parseExtends(reader);
+
         case 'include':
           return parseInclude(reader);
+
         case 'call':
           return parseCallBlock(reader);
+
         case 'filter':
           return parseFilterBlock(reader);
+
         case 'macro':
           return parseMacro(reader);
+
         case 'do':
           return parseDo(reader);
+
         default:
           tagStack.removeLast();
           popTag = false;
@@ -183,7 +196,7 @@ class Parser {
 
     var filters = parseFilters(reader);
     var nodes = parseStatements(reader, endSet, true);
-    return AssignBlock(target, Output.orSingle(nodes), filters);
+    return AssignBlock(target, nodes, filters);
   }
 
   For parseFor(TokenReader reader) {
@@ -208,19 +221,16 @@ class Parser {
 
     var recursive = reader.skipIf('name', 'recursive');
     var nodes = parseStatements(reader, endForElse);
-    var body = Output.orSingle(nodes);
-
-    Node? orElse;
+    List<Node>? orElse;
 
     if (reader.next().test('name', 'else')) {
-      var nodes = parseStatements(reader, <String>['name:endfor'], true);
-      orElse = Output.orSingle(nodes);
+      orElse = parseStatements(reader, <String>['name:endfor'], true);
     }
 
     return For(
       target,
       iterable,
-      body,
+      nodes,
       orElse: orElse,
       test: test,
       recursive: recursive,
@@ -235,7 +245,7 @@ class Parser {
 
     var test = parseExpression(reader, false);
     var nodes = parseStatements(reader, endIfElseEndIf);
-    var root = If(test, Output.orSingle(nodes));
+    var root = If(test, nodes);
     var node = root;
 
     while (true) {
@@ -244,13 +254,14 @@ class Parser {
       if (tag.test('name', 'elif')) {
         var test = parseTuple(reader, withCondition: false);
         var nodes = parseStatements(reader, endIfElseEndIf);
-        node = node.orElse = If(test, Output.orSingle(nodes));
+        var elif = If(test, nodes);
+        node.orElse = <Node>[elif];
+        node = elif;
         continue;
       }
 
       if (tag.test('name', 'else')) {
-        var nodes = parseStatements(reader, endIf, true);
-        node.orElse = Output.orSingle(nodes);
+        node.orElse = parseStatements(reader, endIf, true);
       }
 
       break;
@@ -280,7 +291,7 @@ class Parser {
     }
 
     var nodes = parseStatements(reader, endWith, true);
-    return With(targets, values, Output.orSingle(nodes));
+    return With(targets, values, nodes);
   }
 
   AutoEscape parseAutoEscape(TokenReader reader) {
@@ -289,8 +300,8 @@ class Parser {
     reader.expect('name', 'autoescape');
 
     var escape = parseExpression(reader);
-    var body = parseStatements(reader, endAutoEscape, true);
-    return AutoEscape(escape, Output.orSingle(body));
+    var nodes = parseStatements(reader, endAutoEscape, true);
+    return AutoEscape(escape, nodes);
   }
 
   Block parseBlock(TokenReader reader) {
@@ -327,7 +338,7 @@ class Parser {
       reader.next();
     }
 
-    var block = Block(name.value, scoped, required, Output.orSingle(nodes));
+    var block = Block(name.value, scoped, required, nodes);
     blocks.add(block);
     return block;
   }
@@ -374,9 +385,9 @@ class Parser {
     return node;
   }
 
-  // TODO(parser): parseImport
+  // TODO: add parseImport
 
-  // TODO(parser): parseFrom
+  // TODO: add parseFrom
 
   void parseSignature(TokenReader reader, MacroCall node) {
     var arguments = node.arguments = <Expression>[];
@@ -384,7 +395,7 @@ class Parser {
 
     reader.expect('lparen');
 
-    while (reader.current.test('rparen')) {
+    while (!reader.current.test('rparen')) {
       if (arguments.isNotEmpty) {
         reader.expect('comma');
       }
@@ -400,13 +411,15 @@ class Parser {
 
       arguments.add(argument);
     }
+
+    reader.expect('rparen');
   }
 
   CallBlock parseCallBlock(TokenReader reader) {
     const endCall = <String>['name:endcall'];
 
     var token = reader.next();
-    var node = CallBlock(Constant(''));
+    var node = CallBlock(Constant(null));
 
     if (reader.current.test('lparen')) {
       parseSignature(reader, node);
@@ -418,8 +431,7 @@ class Parser {
       fail('expected call', token.line);
     }
 
-    var nodes = parseStatements(reader, endCall, true);
-    node.body = Output.orSingle(nodes);
+    node.body = parseStatements(reader, endCall, true);
     return node;
   }
 
@@ -430,7 +442,7 @@ class Parser {
 
     var filters = parseFilters(reader, true);
     var nodes = parseStatements(reader, endFilter, true);
-    return FilterBlock(filters, Output.orSingle(nodes));
+    return FilterBlock(filters, nodes);
   }
 
   Macro parseMacro(TokenReader reader) {
@@ -441,13 +453,11 @@ class Parser {
     var name = parseAssignTarget(reader, nameOnly: true) as Name;
     var node = Macro(name.name);
     parseSignature(reader, node);
-
-    var nodes = parseStatements(reader, endMacro, true);
-    node.body = Output.orSingle(nodes);
+    node.body = parseStatements(reader, endMacro, true);
     return node;
   }
 
-  // TODO(parser): parsePrint
+  // TODO: add parsePrint
 
   Expression parseAssignTarget(
     TokenReader reader, {
@@ -594,10 +604,12 @@ class Parser {
           reader.next();
           operator = ScalarOperator.plus;
           break;
+
         case 'sub':
           reader.next();
           operator = ScalarOperator.minus;
           break;
+
         default:
           break outer;
       }
@@ -635,18 +647,22 @@ class Parser {
           reader.next();
           operator = ScalarOperator.multiple;
           break;
+
         case 'div':
           reader.next();
           operator = ScalarOperator.division;
           break;
+
         case 'floordiv':
           reader.next();
           operator = ScalarOperator.floorDivision;
           break;
+
         case 'mod':
           reader.next();
           operator = ScalarOperator.module;
           break;
+
         default:
           break outer;
       }
@@ -1116,15 +1132,10 @@ class Parser {
     return nodes;
   }
 
-  Node parse(String template) {
+  Template parse(String template) {
     var tokens = environment.lex(template, path: path);
     var nodes = scan(tokens);
-    var body = extendsNode ?? Output.orSingle(nodes);
-
-    if (blocks.isEmpty) {
-      return body;
-    }
-
-    return Template.parsed(environment, body, path: path, blocks: blocks);
+    nodes = extendsNode == null ? nodes: <Node>[extendsNode!];
+    return Template.parsed(environment, nodes, path: path, blocks: blocks);
   }
 }
