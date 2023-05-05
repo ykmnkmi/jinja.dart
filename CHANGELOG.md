@@ -1,9 +1,5 @@
-## 0.5.0-dev.3
+## 0.5.0-dev.4
 - minimal SDK version: 2.19.0
-- adding:
-  - statements:
-    - `macro`
-    - `call`
 
 ## 0.4.2
 - internal changes.

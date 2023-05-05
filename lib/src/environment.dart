@@ -356,7 +356,7 @@ class Environment {
     }
 
     if (optimize) {
-      const Optimizer().visitTemplate(template, Context(this));
+      template.accept(const Optimizer(), Context(this));
     }
 
     return template;

@@ -44,12 +44,12 @@ Object? doEscape(Object? value) {
 ///
 /// This will probably double escape variables.
 Markup doForceEscape(Object? value) {
-  return Markup(value.toString());
+  return Markup('$value');
 }
 
 /// A string representation of this object.
 String doString(Object? value) {
-  return value.toString();
+  return '$value';
 }
 
 /// Return a copy of the value with all occurrences of a substring
@@ -504,7 +504,7 @@ Markup doMarkSafe(String value) {
 ///
 /// This is the reverse operation for `safe`.
 String doMarkUnsafe(Object? value) {
-  return value.toString();
+  return '$value';
 }
 
 /// Reverse the object or return an iterator that iterates over it the other

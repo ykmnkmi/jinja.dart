@@ -49,7 +49,7 @@ abstract class ThrowingVisitor<C, R> implements Visitor<C, R> {
   const ThrowingVisitor();
 
   Never fail(Node node, C context) {
-    throw UnimplementedError(node.runtimeType.toString());
+    throw UnimplementedError('$node');
   }
 
   @override
@@ -71,6 +71,11 @@ abstract class ThrowingVisitor<C, R> implements Visitor<C, R> {
 
   @override
   R visitBlock(Block node, C context) {
+    fail(node, context);
+  }
+
+  @override
+  R visitCallBlock(CallBlock node, C context) {
     fail(node, context);
   }
 
@@ -111,6 +116,11 @@ abstract class ThrowingVisitor<C, R> implements Visitor<C, R> {
 
   @override
   R visitInclude(Include node, C context) {
+    fail(node, context);
+  }
+
+  @override
+  R visitMacro(Macro node, C context) {
     fail(node, context);
   }
 

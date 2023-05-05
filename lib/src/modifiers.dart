@@ -1,8 +1,11 @@
+// TODO: move to RuntimeCompiler
+library;
+
 import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/visitor.dart';
 
 /// Modifies Template AST from `map('filter', *args, **kwargs)`
-/// to `map(null, attribute=..., positional=args, named=kwargs)`
+/// to `map(filter='filter', positional=args, named=kwargs)`
 /// to match [doMap] definition.
 void mapModifier(Node node) {
   for (var filter in node.findAll<Filter>()) {
@@ -150,10 +153,12 @@ void loopModifier(Node node) {
   node.accept(const ExpressionMapper(), attribute);
 }
 
-// TODO: add RuntimeCompiler and move to it
+void macroModifier(Node node) {}
+
 const List<NodeVisitor> modifiers = <NodeVisitor>[
   mapModifier,
   namespaceModifier,
   selfModifier,
   loopModifier,
+  macroModifier,
 ];

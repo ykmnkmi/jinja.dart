@@ -160,7 +160,8 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
     var derived = context.derived(sink: buffer);
     visitAll(node.body, derived);
 
-    Object? value = buffer.toString();
+    Object? value = '$buffer';
+
     var filters = node.filters;
 
     if (filters == null || filters.isEmpty) {
@@ -269,7 +270,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
     var derived = context.derived(sink: buffer);
     visitAll(node.body, derived);
 
-    Object? value = buffer.toString();
+    Object? value = '$buffer';
 
     for (var filter in node.filters) {
       Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
