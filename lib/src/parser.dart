@@ -196,7 +196,7 @@ class Parser {
 
     var filters = parseFilters(reader);
     var body = parseStatements(reader, endSet, true);
-    return AssignBlock(target: target, body: body, filters: filters);
+    return AssignBlock(target: target, filters: filters, body: body);
   }
 
   For parseFor(TokenReader reader) {

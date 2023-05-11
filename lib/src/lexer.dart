@@ -348,8 +348,8 @@ class Lexer {
             var token = rule.tokens[i];
 
             if (token.startsWith('@')) {
-              // TODO: update error
-              throw Exception(token.substring(1));
+              // TODO(lexer): add error message
+              throw Exception();
             } else if (token == '#group') {
               var notFound = true;
 

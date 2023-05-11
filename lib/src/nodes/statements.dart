@@ -34,8 +34,8 @@ class For extends Statement {
     required this.target,
     required this.iterable,
     required this.body,
-    this.orElse = const <Node>[],
     this.test,
+    this.orElse = const <Node>[],
     this.recursive = false,
   });
 
@@ -45,9 +45,9 @@ class For extends Statement {
 
   final List<Node> body;
 
-  final List<Node> orElse;
-
   final Expression? test;
+
+  final List<Node> orElse;
 
   final bool recursive;
 
@@ -57,8 +57,8 @@ class For extends Statement {
       target,
       iterable,
       ...body,
-      ...orElse,
       if (test != null) test!,
+      ...orElse,
     ];
   }
 
@@ -72,16 +72,16 @@ class For extends Statement {
     Expression? target,
     Expression? iterable,
     List<Node>? body,
-    List<Node>? orElse,
     Expression? test = defaultExpression,
+    List<Node>? orElse,
     bool? recursive,
   }) {
     return For(
       target: target ?? this.target,
       iterable: iterable ?? this.iterable,
       body: body ?? this.body,
-      orElse: orElse ?? this.orElse,
       test: test == defaultExpression ? this.test : test,
+      orElse: orElse ?? this.orElse,
       recursive: recursive ?? this.recursive,
     );
   }
@@ -473,19 +473,19 @@ class Assign extends Statement {
 class AssignBlock extends Statement {
   AssignBlock({
     required this.target,
-    required this.body,
     this.filters = const <Filter>[],
+    required this.body,
   });
 
   final Expression target;
 
-  final List<Node> body;
-
   final List<Filter> filters;
+
+  final List<Node> body;
 
   @override
   List<Node> get children {
-    return <Node>[target, ...body, ...filters];
+    return <Node>[target, ...filters, ...body];
   }
 
   @override
@@ -496,13 +496,13 @@ class AssignBlock extends Statement {
   @override
   AssignBlock copyWith({
     Expression? target,
-    List<Node>? body,
     List<Filter>? filters,
+    List<Node>? body,
   }) {
     return AssignBlock(
       target: target ?? this.target,
-      body: body ?? this.body,
       filters: filters ?? this.filters,
+      body: body ?? this.body,
     );
   }
 

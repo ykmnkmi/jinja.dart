@@ -1,62 +1,75 @@
 import 'package:jinja/src/context.dart';
 import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/nodes.dart';
-import 'package:jinja/src/utils.dart';
 import 'package:jinja/src/visitor.dart';
 
 class Optimizer implements Visitor<Context, Node> {
   const Optimizer();
 
-  @override
-  void visitAll(List<Node> nodes, Context context) {
-    for (var i = 0; i < nodes.length; i += 1) {
+  List<Node> visitAll(List<Node> nodes, Context context) {
+    Node generate(int index) {
       try {
-        nodes[i] = nodes[i].accept(this, context);
+        return nodes[index].accept(this, context);
       } on Impossible {
-        continue;
+        return nodes[index];
       }
     }
+
+    return List<Node>.generate(nodes.length, generate);
   }
+
+  // Expressions
+  // ...
+
+  // Statements
 
   @override
   Assign visitAssign(Assign node, Context context) {
-    node.target = visitExpression(node.target, context);
-    node.value = visitExpression(node.value, context);
-    return node;
+    var target = visitExpression(node.target, context);
+    var value = visitExpression(node.value, context);
+    return Assign(target: target, value: value);
   }
 
   @override
   AssignBlock visitAssignBlock(AssignBlock node, Context context) {
-    var filters = node.filters;
-
-    if (filters != null) {
-      visitAll(filters, context);
-    }
-
-    node.target = visitExpression(node.target, context);
-    visitAll(node.body, context);
-    return node;
+    var target = visitExpression(node.target, context);
+    var filters = visitAll(node.filters, context) as List<Filter>;
+    var body = visitAll(node.body, context);
+    return AssignBlock(target: target, filters: filters, body: body);
   }
 
   @override
-  Node visitAutoEscape(AutoEscape node, Context context) {
-    node.value = visitExpression(node.value, context);
-    return node;
+  AutoEscape visitAutoEscape(AutoEscape node, Context context) {
+    var value = visitExpression(node.value, context);
+    var body = visitAll(node.body, context);
+    return AutoEscape(value: value, body: body);
   }
 
   @override
   Block visitBlock(Block node, Context context) {
-    visitAll(node.body, context);
-    return node;
+    var body = visitAll(node.body, context);
+
+    return Block(
+      name: node.name,
+      scoped: node.scoped,
+      required: node.required,
+      body: body,
+    );
   }
 
   @override
   CallBlock visitCallBlock(CallBlock node, Context context) {
-    node.call = visitExpression(node.call, context);
-    visitAll(node.arguments, context);
-    visitAll(node.defaults, context);
-    visitAll(node.body, context);
-    return node;
+    var call = visitExpression(node.call, context);
+    var arguments = visitAll(node.arguments, context) as List<Expression>;
+    var defaults = visitAll(node.defaults, context) as List<Expression>;
+    var body = visitAll(node.body, context);
+
+    return CallBlock(
+      call: call,
+      arguments: arguments,
+      defaults: defaults,
+      body: body,
+    );
   }
 
   @override
@@ -66,18 +79,13 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   Do visitDo(Do node, Context context) {
-    node.expression = visitExpression(node.expression, context);
-    return node;
+    var expression = visitExpression(node.expression, context);
+    return Do(expression: expression);
   }
 
   @override
   Expression visitExpression(Expression node, Context context) {
-    try {
-      var value = node.asConst(context);
-      return Constant(value);
-    } on Impossible {
-      return node;
-    }
+    return node.accept(this, context) as Expression;
   }
 
   @override
@@ -87,44 +95,41 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   FilterBlock visitFilterBlock(FilterBlock node, Context context) {
-    visitAll(node.filters, context);
-    visitAll(node.body, context);
-    return node;
+    var filters = visitAll(node.filters, context) as List<Filter>;
+    var body = visitAll(node.body, context);
+    return FilterBlock(filters: filters, body: body);
   }
 
+  // TODO(optimizer): check false test
   @override
   For visitFor(For node, Context context) {
-    node.target = visitExpression(node.target, context);
-    node.iterable = visitExpression(node.iterable, context);
-    visitAll(node.body, context);
+    var target = visitExpression(node.target, context);
+    var iterable = visitExpression(node.iterable, context);
+    var body = visitAll(node.body, context);
+    Expression? test;
 
-    if (node.orElse != null) {
-      visitAll(node.orElse!, context);
+    if (node.test case var nodeTest?) {
+      test = visitExpression(nodeTest, context);
     }
 
-    if (node.test != null) {
-      var value = visitExpression(node.test!, context);
+    var orElse = visitAll(node.orElse, context);
 
-      if (value is Constant && boolean(value.value)) {
-        node.test = null;
-      } else {
-        node.test = value;
-      }
-    }
-
-    return node;
+    return For(
+      target: target,
+      iterable: iterable,
+      body: body,
+      test: test,
+      orElse: orElse,
+      recursive: node.recursive,
+    );
   }
 
   @override
   If visitIf(If node, Context context) {
-    node.test = visitExpression(node.test, context);
-    visitAll(node.body, context);
-
-    if (node.orElse != null) {
-      visitAll(node.orElse!, context);
-    }
-
-    return node;
+    var test = visitExpression(node.test, context);
+    var body = visitAll(node.body, context);
+    var orElse = visitAll(node.orElse, context);
+    return If(test: test, body: body, orElse: orElse);
   }
 
   @override
@@ -134,24 +139,36 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   Macro visitMacro(Macro node, Context context) {
-    visitAll(node.arguments, context);
-    visitAll(node.defaults, context);
-    visitAll(node.body, context);
-    return node;
+    var arguments = visitAll(node.arguments, context) as List<Expression>;
+    var defaults = visitAll(node.defaults, context) as List<Expression>;
+    var body = visitAll(node.body, context);
+
+    return Macro(
+      name: node.name,
+      arguments: arguments,
+      defaults: defaults,
+      body: body,
+    );
   }
 
   @override
   Node visitTemplate(Template node, Context context) {
-    visitAll(node.blocks, context);
-    visitAll(node.body, context);
-    return node;
+    var blocks = visitAll(node.blocks, context) as List<Block>;
+    var body = visitAll(node.body, context);
+
+    return Template.parsed(
+      environment: node.environment,
+      path: node.path,
+      blocks: blocks,
+      body: body,
+    );
   }
 
   @override
   Node visitWith(With node, Context context) {
-    visitAll(node.targets, context);
-    visitAll(node.values, context);
-    visitAll(node.body, context);
-    return node;
+    var targets = visitAll(node.targets, context) as List<Expression>;
+    var values = visitAll(node.values, context) as List<Expression>;
+    var body = visitAll(node.body, context);
+    return With(targets: targets, values: values, body: body);
   }
 }

@@ -1,16 +1,52 @@
 import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/nodes.dart';
 
-typedef ExpressionUpdater = Expression Function(Expression expression);
-
 abstract class Visitor<C, R> {
   const Visitor();
 
-  void visitAll(List<Node> nodes, C context) {
-    for (var node in nodes) {
-      node.accept(this, context);
-    }
-  }
+  // Expressions
+
+  R visitArray(Array node, C context);
+
+  R visitAttribute(Attribute node, C context);
+
+  R visitCall(Call node, C context);
+
+  R visitCompare(Compare node, C context);
+
+  R visitConcat(Concat node, C context);
+
+  R visitCondition(Condition node, C context);
+
+  R visitConstant(Constant node, C context);
+
+  R visitDict(Dict node, C context);
+
+  R visitFilter(Filter node, C context);
+
+  R visitItem(Item node, C context);
+
+  R visitKeyword(Keyword node, C context);
+
+  R visitLogical(Logical node, C context);
+
+  R visitName(Name node, C context);
+
+  R visitNamespaceRef(NamespaceRef node, C context);
+
+  R visitOperand(Operand node, C context);
+
+  R visitPair(Pair node, C context);
+
+  R visitScalar(Scalar node, C context);
+
+  R visitTest(Test node, C context);
+
+  R visitTuple(Tuple node, C context);
+
+  R visitUnary(Unary node, C context);
+
+  // Statements
 
   R visitAssign(Assign node, C context);
 
@@ -45,215 +81,196 @@ abstract class Visitor<C, R> {
   R visitWith(With node, C context);
 }
 
-abstract class ThrowingVisitor<C, R> implements Visitor<C, R> {
+class ThrowingVisitor<C, R> implements Visitor<C, R> {
   const ThrowingVisitor();
 
-  Never fail(Node node, C context) {
-    throw UnimplementedError('$node');
-  }
-
-  @override
   void visitAll(List<Node> nodes, C context) {
     for (var node in nodes) {
       node.accept(this, context);
     }
   }
 
+  // Expressions
+
+  @override
+  R visitArray(Array node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  @override
+  R visitAttribute(Attribute node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  @override
+  R visitAutoEscape(AutoEscape node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  @override
+  R visitCall(Call node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  @override
+  R visitCompare(Compare node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  @override
+  R visitConcat(Concat node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  @override
+  R visitCondition(Condition node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  @override
+  R visitConstant(Constant node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  @override
+  R visitDict(Dict node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  @override
+  R visitFilter(Filter node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  @override
+  R visitItem(Item node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  @override
+  R visitKeyword(Keyword node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  @override
+  R visitLogical(Logical node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  @override
+  R visitName(Name node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  @override
+  R visitNamespaceRef(NamespaceRef node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  @override
+  R visitOperand(Operand node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  @override
+  R visitPair(Pair node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  @override
+  R visitScalar(Scalar node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  @override
+  R visitTest(Test node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  @override
+  R visitTuple(Tuple node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  @override
+  R visitUnary(Unary node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  // Statements
+
   @override
   R visitAssign(Assign node, C context) {
-    fail(node, context);
+    throw UnimplementedError('$node');
   }
 
   @override
   R visitAssignBlock(AssignBlock node, C context) {
-    fail(node, context);
+    throw UnimplementedError('$node');
   }
 
   @override
   R visitBlock(Block node, C context) {
-    fail(node, context);
+    throw UnimplementedError('$node');
   }
 
   @override
   R visitCallBlock(CallBlock node, C context) {
-    fail(node, context);
+    throw UnimplementedError('$node');
   }
 
   @override
   R visitData(Data node, C context) {
-    fail(node, context);
+    throw UnimplementedError('$node');
   }
 
   @override
   R visitDo(Do node, C context) {
-    fail(node, context);
+    throw UnimplementedError('$node');
   }
 
   @override
   R visitExpression(Expression node, C context) {
-    fail(node, context);
+    throw UnimplementedError('$node');
   }
 
   @override
   R visitExtends(Extends node, C context) {
-    fail(node, context);
+    throw UnimplementedError('$node');
   }
 
   @override
   R visitFilterBlock(FilterBlock node, C context) {
-    fail(node, context);
+    throw UnimplementedError('$node');
   }
 
   @override
   R visitFor(For node, C context) {
-    fail(node, context);
+    throw UnimplementedError('$node');
   }
 
   @override
   R visitIf(If node, C context) {
-    fail(node, context);
+    throw UnimplementedError('$node');
   }
 
   @override
   R visitInclude(Include node, C context) {
-    fail(node, context);
+    throw UnimplementedError('$node');
   }
 
   @override
   R visitMacro(Macro node, C context) {
-    fail(node, context);
+    throw UnimplementedError('$node');
   }
 
   @override
   R visitTemplate(Template node, C context) {
-    fail(node, context);
+    throw UnimplementedError('$node');
   }
 
   @override
   R visitWith(With node, C context) {
-    fail(node, context);
-  }
-}
-
-class ExpressionMapper extends Visitor<ExpressionUpdater, void> {
-  const ExpressionMapper();
-
-  @override
-  void visitAll(List<Node> nodes, ExpressionUpdater context) {
-    for (var i = 0; i < nodes.length; i += 1) {
-      var node = nodes[i];
-
-      if (node is Expression) {
-        nodes[i] = visitExpression(node, context);
-      } else {
-        node.accept(this, context);
-      }
-    }
-  }
-
-  @override
-  void visitAssign(Assign node, ExpressionUpdater context) {
-    node.target = visitExpression(node.target, context);
-    node.value = visitExpression(node.value, context);
-  }
-
-  @override
-  void visitAssignBlock(AssignBlock node, ExpressionUpdater context) {
-    node.target = visitExpression(node.target, context);
-    visitAll(node.body, context);
-
-    if (node.filters != null) {
-      visitAll(node.filters!, context);
-    }
-  }
-
-  @override
-  void visitAutoEscape(AutoEscape node, ExpressionUpdater context) {
-    node.value = visitExpression(node.value, context);
-  }
-
-  @override
-  void visitBlock(Block node, ExpressionUpdater context) {
-    visitAll(node.body, context);
-  }
-
-  @override
-  void visitData(Data node, ExpressionUpdater context) {}
-
-  @override
-  void visitDo(Do node, ExpressionUpdater context) {
-    node.expression = visitExpression(node.expression, context);
-  }
-
-  @override
-  void visitCallBlock(CallBlock node, ExpressionUpdater context) {
-    node.call = visitExpression(node.call, context);
-    visitAll(node.arguments, context);
-    visitAll(node.defaults, context);
-    visitAll(node.body, context);
-  }
-
-  @override
-  Expression visitExpression(Expression node, ExpressionUpdater context) {
-    node.update(context);
-    return context(node);
-  }
-
-  @override
-  void visitExtends(Extends node, ExpressionUpdater context) {}
-
-  @override
-  void visitFilterBlock(FilterBlock node, ExpressionUpdater context) {
-    visitAll(node.filters, context);
-    visitAll(node.body, context);
-  }
-
-  @override
-  void visitFor(For node, ExpressionUpdater context) {
-    node.target = visitExpression(node.target, context);
-    node.iterable = visitExpression(node.iterable, context);
-
-    if (node.test != null) {
-      node.test = visitExpression(node.test!, context);
-    }
-
-    visitAll(node.body, context);
-
-    if (node.orElse != null) {
-      visitAll(node.orElse!, context);
-    }
-  }
-
-  @override
-  void visitIf(If node, ExpressionUpdater context) {
-    node.test = visitExpression(node.test, context);
-    visitAll(node.body, context);
-
-    if (node.orElse != null) {
-      visitAll(node.orElse!, context);
-    }
-  }
-
-  @override
-  void visitInclude(Include node, ExpressionUpdater context) {}
-
-  @override
-  void visitMacro(Macro node, ExpressionUpdater context) {
-    visitAll(node.arguments, context);
-    visitAll(node.defaults, context);
-    visitAll(node.body, context);
-  }
-
-  @override
-  void visitTemplate(Template node, ExpressionUpdater context) {
-    visitAll(node.blocks, context);
-    visitAll(node.body, context);
-  }
-
-  @override
-  void visitWith(With node, ExpressionUpdater context) {
-    visitAll(node.targets, context);
-    visitAll(node.values, context);
-    visitAll(node.body, context);
+    throw UnimplementedError('$node');
   }
 }

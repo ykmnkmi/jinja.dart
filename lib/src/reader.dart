@@ -93,7 +93,7 @@ class TokenIterable extends Iterable<Token> {
   }
 }
 
-class TokenIterator extends Iterator<Token> {
+class TokenIterator implements Iterator<Token> {
   TokenIterator(this.reader);
 
   final TokenReader reader;

@@ -11,11 +11,6 @@ const Constant defaultExpression = Constant(value: defaultObject);
 abstract class Expression extends Node {
   const Expression();
 
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitExpression(this, context);
-  }
-
   Object? asConst(Context context) {
     throw Impossible();
   }
@@ -51,6 +46,11 @@ class Name extends Expression implements Assignable {
   @override
   bool get canAssign {
     return context == AssignContext.store;
+  }
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitName(this, context);
   }
 
   @override
@@ -92,6 +92,11 @@ class NamespaceRef extends Expression {
   final String attribute;
 
   @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitNamespaceRef(this, context);
+  }
+
+  @override
   NamespaceValue resolve(Context context) {
     return NamespaceValue(name, attribute);
   }
@@ -118,6 +123,11 @@ class Constant extends Literal {
   const Constant({required this.value});
 
   final Object? value;
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitConstant(this, context);
+  }
 
   @override
   Object? asConst(Context context) {
@@ -163,6 +173,11 @@ class Tuple extends Literal implements Assignable {
   }
 
   @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitTuple(this, context);
+  }
+
+  @override
   List<Object?> asConst(Context context) {
     Object? generator(int index) {
       return values[index].asConst(context);
@@ -202,6 +217,11 @@ class Array extends Literal {
   @override
   List<Node> get children {
     return values;
+  }
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitArray(this, context);
   }
 
   @override
@@ -246,6 +266,11 @@ class Pair extends Expression {
   }
 
   @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitPair(this, context);
+  }
+
+  @override
   MapEntry<Object?, Object?> asConst(Context context) {
     return MapEntry<Object?, Object?>(
       key.asConst(context),
@@ -280,6 +305,11 @@ class Dict extends Literal {
   @override
   List<Node> get children {
     return pairs;
+  }
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitDict(this, context);
   }
 
   @override
@@ -332,6 +362,11 @@ class Condition extends Expression {
   }
 
   @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitCondition(this, context);
+  }
+
+  @override
   Object? asConst(Context context) {
     if (boolean(test.asConst(context))) {
       return value.asConst(context);
@@ -378,6 +413,11 @@ class Keyword extends Expression {
   @override
   List<Node> get children {
     return <Node>[value];
+  }
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitKeyword(this, context);
   }
 
   @override
@@ -553,6 +593,11 @@ class Call extends Callable {
   }
 
   @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitCall(this, context);
+  }
+
+  @override
   Object? asConst(Context context) {
     var function = expression.asConst(context);
 
@@ -609,6 +654,11 @@ class Filter extends Callable {
   final String name;
 
   @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitFilter(this, context);
+  }
+
+  @override
   Object? asConst(Context context) {
     throw Impossible();
   }
@@ -655,6 +705,11 @@ class Test extends Callable {
   });
 
   final String name;
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitTest(this, context);
+  }
 
   @override
   Object? asConst(Context context) {
@@ -714,6 +769,11 @@ class Item extends Expression {
   }
 
   @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitItem(this, context);
+  }
+
+  @override
   Object? asConst(Context context) {
     var key = this.key.asConst(context);
     var value = this.value.asConst(context);
@@ -751,6 +811,11 @@ class Attribute extends Expression {
   }
 
   @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitAttribute(this, context);
+  }
+
+  @override
   Object? asConst(Context context) {
     var value = this.value.asConst(context);
     return context.environment.getAttribute(value, attribute);
@@ -784,6 +849,11 @@ class Concat extends Expression {
   @override
   List<Node> get children {
     return values;
+  }
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitConcat(this, context);
   }
 
   // TODO: try reduce operands if imposible
@@ -839,6 +909,11 @@ class Operand extends Expression {
   @override
   List<Node> get children {
     return <Node>[value];
+  }
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitOperand(this, context);
   }
 
   @override
@@ -898,6 +973,11 @@ class Compare extends Expression {
   @override
   List<Node> get children {
     return <Node>[value, ...operands];
+  }
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitCompare(this, context);
   }
 
   // TODO: try reduce operands if imposible
@@ -978,6 +1058,11 @@ class Unary extends Expression {
   @override
   List<Node> get children {
     return <Node>[value];
+  }
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitUnary(this, context);
   }
 
   @override
@@ -1062,6 +1147,11 @@ class Scalar extends Binary<ScalarOperator> {
   });
 
   @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitScalar(this, context);
+  }
+
+  @override
   Object? asConst(Context context) {
     try {
       var left = this.left.asConst(context);
@@ -1135,6 +1225,11 @@ class Logical extends Binary<LogicalOperator> {
     required super.left,
     required super.right,
   });
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitLogical(this, context);
+  }
 
   @override
   Object? asConst(Context context) {

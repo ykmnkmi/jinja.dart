@@ -521,10 +521,10 @@ class Template extends Node {
     }
 
     var template = Template.parsed(
-      environment,
-      body,
+      environment: environment,
       path: path,
       blocks: blocks,
+      body: body,
     );
 
     for (var modifier in environment.modifiers) {
@@ -539,12 +539,12 @@ class Template extends Node {
   }
 
   @internal
-  Template.parsed(
-    this.environment,
-    this.body, {
+  const Template.parsed({
+    required this.environment,
     this.path,
-    List<Block>? blocks,
-  }) : blocks = blocks ?? <Block>[];
+    this.blocks = const <Block>[],
+    required this.body,
+  });
 
   /// The environment used to parse and render template.
   final Environment environment;
@@ -552,11 +552,11 @@ class Template extends Node {
   /// The path to the template if it was loaded.
   final String? path;
 
-  /// Template body node.
-  final List<Node> body;
-
   /// Template blocks.
   final List<Block> blocks;
+
+  /// Template body node.
+  final List<Node> body;
 
   @override
   List<Node> get children {
@@ -571,8 +571,7 @@ class Template extends Node {
   /// If no arguments are given the context will be empty.
   String render([Map<String, Object?>? data]) {
     var buffer = StringBuffer();
-    var context = StringSinkRenderContext(environment, buffer, data: data);
-    accept(const StringSinkRenderer(), context);
+    renderTo(buffer, data);
     return buffer.toString();
   }
 
@@ -580,5 +579,16 @@ class Template extends Node {
   void renderTo(StringSink sink, [Map<String, Object?>? data]) {
     var context = StringSinkRenderContext(environment, sink, data: data);
     accept(const StringSinkRenderer(), context);
+  }
+
+  @override
+  Template copyWith({
+    Environment? environment,
+    String? path,
+    List<Block>? blocks,
+    List<Node>? body,
+  }) {
+    // TODO(template): add error message
+    throw UnsupportedError('');
   }
 }

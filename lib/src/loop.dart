@@ -129,7 +129,7 @@ class LoopContext extends Iterable<Object?> {
   }
 }
 
-class LoopIterator extends Iterator<Object?> {
+class LoopIterator implements Iterator<Object?> {
   LoopIterator(this.context);
 
   final LoopContext context;
@@ -183,7 +183,7 @@ class Cycler extends Iterable<Object?> {
   }
 }
 
-class CyclerIterator extends Iterator<Object?> {
+class CyclerIterator implements Iterator<Object?> {
   CyclerIterator(this.cycler);
 
   final Cycler cycler;
