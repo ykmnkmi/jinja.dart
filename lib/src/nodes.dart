@@ -5,6 +5,7 @@ import 'package:jinja/src/namespace.dart';
 import 'package:jinja/src/tests.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:jinja/src/visitor.dart';
+import 'package:meta/meta.dart';
 
 part 'nodes/expressions.dart';
 part 'nodes/statements.dart';
@@ -19,6 +20,8 @@ abstract class Node {
   }
 
   R accept<C, R>(Visitor<C, R> visitor, C context);
+
+  Node copyWith();
 
   T find<T extends Node>() {
     var all = findAll<T>();
@@ -37,9 +40,9 @@ abstract class Node {
 }
 
 class Data extends Node {
-  Data([this.data = '']);
+  const Data([this.data = '']);
 
-  String data;
+  final String data;
 
   bool get isLeaf {
     return trimmed.isEmpty;
@@ -56,6 +59,11 @@ class Data extends Node {
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitData(this, context);
+  }
+
+  @override
+  Data copyWith({String? data}) {
+    return Data(data ?? this.data);
   }
 
   @override

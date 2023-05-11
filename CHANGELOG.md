@@ -1,5 +1,5 @@
-## 0.5.0-dev.4
-- minimal SDK version: 2.19.0
+## 0.5.0-dev.5
+- minimal SDK version: 3.0.0
 
 ## 0.4.2
 - internal changes.
@@ -10,7 +10,7 @@
 ## 0.4.0
 - minimal SDK version: 2.18.0
 - added:
-  - `passContext` and `passEnvironment` ...
+  - `passContext` and `passEnvironment` functions
   - `print` to globals: `{{ do print(name) }}`
   - `Environment`
     - `Environment({lineCommentPrefix, lineStatementPrefix, newLine, autoReload, modifiers, templates})`

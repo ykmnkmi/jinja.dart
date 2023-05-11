@@ -2,6 +2,12 @@ part of '../nodes.dart';
 
 class Impossible implements Exception {}
 
+@internal
+const Object defaultObject = Object();
+
+@internal
+const Constant defaultExpression = Constant(value: defaultObject);
+
 abstract class Expression extends Node {
   const Expression();
 
@@ -17,8 +23,6 @@ abstract class Expression extends Node {
   Object? resolve(Context context) {
     return null;
   }
-
-  void update(ExpressionUpdater updater) {}
 }
 
 enum AssignContext {
@@ -30,16 +34,19 @@ enum AssignContext {
 abstract class Assignable implements Expression {
   bool get canAssign;
 
-  abstract AssignContext context;
+  AssignContext get context;
+
+  @override
+  Assignable copyWith({AssignContext? context});
 }
 
 class Name extends Expression implements Assignable {
-  Name(this.name, {this.context = AssignContext.load});
+  const Name({required this.name, this.context = AssignContext.load});
 
-  String name;
+  final String name;
 
   @override
-  AssignContext context;
+  final AssignContext context;
 
   @override
   bool get canAssign {
@@ -63,6 +70,11 @@ class Name extends Expression implements Assignable {
   }
 
   @override
+  Name copyWith({String? name, AssignContext? context}) {
+    return Name(name: name ?? this.name, context: context ?? this.context);
+  }
+
+  @override
   String toString() {
     if (context == AssignContext.load) {
       return 'Name($name)';
@@ -73,15 +85,23 @@ class Name extends Expression implements Assignable {
 }
 
 class NamespaceRef extends Expression {
-  NamespaceRef(this.name, this.attribute);
+  const NamespaceRef({required this.name, required this.attribute});
 
-  String name;
+  final String name;
 
-  String attribute;
+  final String attribute;
 
   @override
   NamespaceValue resolve(Context context) {
     return NamespaceValue(name, attribute);
+  }
+
+  @override
+  NamespaceRef copyWith({String? name, String? attribute}) {
+    return NamespaceRef(
+      name: name ?? this.name,
+      attribute: attribute ?? this.attribute,
+    );
   }
 
   @override
@@ -90,12 +110,14 @@ class NamespaceRef extends Expression {
   }
 }
 
-abstract class Literal extends Expression {}
+abstract class Literal extends Expression {
+  const Literal();
+}
 
 class Constant extends Literal {
-  Constant(this.value);
+  const Constant({required this.value});
 
-  Object? value;
+  final Object? value;
 
   @override
   Object? asConst(Context context) {
@@ -108,52 +130,28 @@ class Constant extends Literal {
   }
 
   @override
+  Constant copyWith({Object? value = defaultObject}) {
+    return Constant(value: value == defaultObject ? this.value : value);
+  }
+
+  @override
   String toString() {
     return 'Constant($value)';
   }
 }
 
 class Tuple extends Literal implements Assignable {
-  Tuple(this.values, [AssignContext? context]) {
-    context = context ?? AssignContext.load;
-  }
+  const Tuple({required this.values, this.context = AssignContext.load});
 
-  List<Expression> values;
+  final List<Expression> values;
 
   @override
-  AssignContext get context {
-    if (values.isEmpty) {
-      return AssignContext.load;
-    }
-
-    var first = values.first;
-
-    if (first is Assignable) {
-      return first.context;
-    }
-
-    return AssignContext.load;
-  }
-
-  @override
-  set context(AssignContext context) {
-    if (values.isEmpty) {
-      return;
-    }
-
-    for (var value in values) {
-      if (value is! Assignable) {
-        throw TypeError();
-      }
-
-      value.context = context;
-    }
-  }
+  final AssignContext context;
 
   @override
   bool get canAssign {
     bool test(Expression value) {
-      return value is Assignable && !value.canAssign;
+      return value is Assignable && value.canAssign;
     }
 
     return values.every(test);
@@ -183,11 +181,11 @@ class Tuple extends Literal implements Assignable {
   }
 
   @override
-  void update(ExpressionUpdater updater) {
-    for (var index = 0; index < values.length; index += 1) {
-      values[index].update(updater);
-      values[index] = updater(values[index]);
-    }
+  Tuple copyWith({List<Expression>? values, AssignContext? context}) {
+    return Tuple(
+      values: values ?? this.values,
+      context: context ?? this.context,
+    );
   }
 
   @override
@@ -197,9 +195,9 @@ class Tuple extends Literal implements Assignable {
 }
 
 class Array extends Literal {
-  Array(this.values);
+  const Array({required this.values});
 
-  List<Expression> values;
+  final List<Expression> values;
 
   @override
   List<Node> get children {
@@ -225,11 +223,8 @@ class Array extends Literal {
   }
 
   @override
-  void update(ExpressionUpdater updater) {
-    for (var index = 0; index < values.length; index += 1) {
-      values[index].update(updater);
-      values[index] = updater(values[index]);
-    }
+  Array copyWith({List<Expression>? values}) {
+    return Array(values: values ?? this.values);
   }
 
   @override
@@ -239,11 +234,11 @@ class Array extends Literal {
 }
 
 class Pair extends Expression {
-  Pair(this.key, this.value);
+  const Pair({required this.key, required this.value});
 
-  Expression key;
+  final Expression key;
 
-  Expression value;
+  final Expression value;
 
   @override
   List<Node> get children {
@@ -267,9 +262,8 @@ class Pair extends Expression {
   }
 
   @override
-  void update(ExpressionUpdater updater) {
-    key = updater(key);
-    value = updater(value);
+  Pair copyWith({Expression? key, Expression? value}) {
+    return Pair(key: key ?? this.key, value: value ?? this.value);
   }
 
   @override
@@ -279,9 +273,9 @@ class Pair extends Expression {
 }
 
 class Dict extends Literal {
-  Dict(this.pairs);
+  const Dict({required this.pairs});
 
-  List<Pair> pairs;
+  final List<Pair> pairs;
 
   @override
   List<Node> get children {
@@ -309,10 +303,8 @@ class Dict extends Literal {
   }
 
   @override
-  void update(ExpressionUpdater updater) {
-    for (var index = 0; index < pairs.length; index += 1) {
-      pairs[index].update(updater);
-    }
+  Dict copyWith({List<Pair>? pairs}) {
+    return Dict(pairs: pairs ?? this.pairs);
   }
 
   @override
@@ -322,18 +314,21 @@ class Dict extends Literal {
 }
 
 class Condition extends Expression {
-  Condition(this.test, this.value, [this.orElse]);
+  const Condition({
+    required this.test,
+    required this.value,
+    this.orElse,
+  });
 
-  Expression test;
+  final Expression test;
 
-  Expression value;
+  final Expression value;
 
-  Expression? orElse;
+  final Expression? orElse;
 
   @override
   List<Node> get children {
-    var orElse = this.orElse;
-    return <Node>[test, value, if (orElse != null) orElse];
+    return <Node>[test, value, if (orElse != null) orElse!];
   }
 
   @override
@@ -355,36 +350,30 @@ class Condition extends Expression {
   }
 
   @override
-  void update(ExpressionUpdater updater) {
-    test.update(updater);
-    test = updater(test);
-    value.update(updater);
-    value = updater(value);
-
-    var orElse = this.orElse;
-
-    if (orElse != null) {
-      orElse.update(updater);
-      this.orElse = updater(orElse);
-    }
+  Condition copyWith({
+    Expression? test,
+    Expression? value,
+    Expression? orElse = defaultExpression,
+  }) {
+    return Condition(
+      test: test ?? this.test,
+      value: value ?? this.value,
+      orElse: orElse == defaultExpression ? this.orElse : orElse,
+    );
   }
 
   @override
   String toString() {
-    if (orElse == null) {
-      return 'Condition($test, $value)';
-    }
-
     return 'Condition($test, $value, $orElse)';
   }
 }
 
 class Keyword extends Expression {
-  Keyword(this.key, this.value);
+  const Keyword({required this.key, required this.value});
 
-  String key;
+  final String key;
 
-  Expression value;
+  final Expression value;
 
   @override
   List<Node> get children {
@@ -401,13 +390,13 @@ class Keyword extends Expression {
     return value.resolve(context);
   }
 
-  Pair toPair() {
-    return Pair(Constant(key), value);
+  @override
+  Keyword copyWith({String? key, Expression? value}) {
+    return Keyword(key: key ?? this.key, value: value ?? this.value);
   }
 
-  @override
-  void update(ExpressionUpdater updater) {
-    value = updater(value);
+  Pair toPair() {
+    return Pair(key: Constant(value: key), value: value);
   }
 
   @override
@@ -419,21 +408,20 @@ class Keyword extends Expression {
 typedef Callback<T> = T Function(List<Object?>, Map<Symbol, Object?>);
 
 abstract class Callable extends Expression {
-  Callable({
-    List<Expression>? arguments,
-    List<Keyword>? keywords,
+  const Callable({
+    this.arguments = const <Expression>[],
+    this.keywords = const <Keyword>[],
     this.dArguments,
     this.dKeywords,
-  })  : arguments = arguments ?? <Expression>[],
-        keywords = keywords ?? <Keyword>[];
+  });
 
-  List<Expression> arguments;
+  final List<Expression> arguments;
 
-  List<Keyword> keywords;
+  final List<Keyword> keywords;
 
-  Expression? dArguments;
+  final Expression? dArguments;
 
-  Expression? dKeywords;
+  final Expression? dKeywords;
 
   @override
   List<Node> get children {
@@ -540,44 +528,24 @@ abstract class Callable extends Expression {
   }
 
   @override
-  void update(ExpressionUpdater updater) {
-    for (var i = 0; i < arguments.length; i += 1) {
-      arguments[i] = updater(arguments[i]);
-      arguments[i].update(updater);
-    }
-
-    for (var i = 0; i < keywords.length; i += 1) {
-      keywords[i].update(updater);
-    }
-
-    var dArguments = this.dArguments;
-
-    if (dArguments != null) {
-      dArguments = updater(dArguments);
-      dArguments.update(updater);
-      this.dArguments = dArguments;
-    }
-
-    var dKeywords = this.dKeywords;
-
-    if (dKeywords != null) {
-      dKeywords = updater(dKeywords);
-      dKeywords.update(updater);
-      this.dKeywords = dKeywords;
-    }
-  }
+  Callable copyWith({
+    List<Expression>? arguments,
+    List<Keyword>? keywords,
+    Expression? dArguments,
+    Expression? dKeywords,
+  });
 }
 
 class Call extends Callable {
-  Call(
-    this.expression, {
+  const Call({
+    required this.expression,
     super.arguments,
     super.keywords,
     super.dArguments,
     super.dKeywords,
   });
 
-  Expression expression;
+  final Expression expression;
 
   @override
   List<Node> get children {
@@ -607,10 +575,20 @@ class Call extends Callable {
   }
 
   @override
-  void update(ExpressionUpdater updater) {
-    expression = updater(expression);
-    expression.update(updater);
-    super.update(updater);
+  Call copyWith({
+    Expression? expression,
+    List<Expression>? arguments,
+    List<Keyword>? keywords,
+    Expression? dArguments,
+    Expression? dKeywords,
+  }) {
+    return Call(
+      expression: expression ?? this.expression,
+      arguments: arguments ?? this.arguments,
+      keywords: keywords ?? this.keywords,
+      dArguments: dArguments ?? this.dArguments,
+      dKeywords: dKeywords ?? this.dKeywords,
+    );
   }
 
   @override
@@ -620,36 +598,15 @@ class Call extends Callable {
 }
 
 class Filter extends Callable {
-  Filter(
-    this.name, {
-    Expression? expression,
+  const Filter({
+    required this.name,
     super.arguments,
     super.keywords,
     super.dArguments,
     super.dKeywords,
-  })
-  // remove after better null safety promotion
-  // ignore: prefer_initializing_formals
-  : hasExpression = expression != null;
+  });
 
-  String name;
-
-  bool hasExpression;
-
-  set expression(Expression? expression) {
-    if (hasExpression) {
-      if (expression == null) {
-        hasExpression = false;
-        arguments = arguments.sublist(1);
-        return;
-      }
-
-      arguments[0] = expression;
-    } else if (expression != null) {
-      hasExpression = true;
-      arguments = <Expression>[expression, ...arguments];
-    }
-  }
+  final String name;
 
   @override
   Object? asConst(Context context) {
@@ -666,21 +623,38 @@ class Filter extends Callable {
   }
 
   @override
+  Filter copyWith({
+    String? name,
+    List<Expression>? arguments,
+    List<Keyword>? keywords,
+    Expression? dArguments,
+    Expression? dKeywords,
+  }) {
+    return Filter(
+      name: name ?? this.name,
+      arguments: arguments ?? this.arguments,
+      keywords: keywords ?? this.keywords,
+      dArguments: dArguments ?? this.dArguments,
+      dKeywords: dKeywords ?? this.dKeywords,
+    );
+  }
+
+  @override
   String toString() {
     return 'Filter($name)';
   }
 }
 
 class Test extends Callable {
-  Test(
-    this.name, {
+  const Test({
+    required this.name,
     super.arguments,
     super.keywords,
     super.dArguments,
     super.dKeywords,
   });
 
-  String name;
+  final String name;
 
   @override
   Object? asConst(Context context) {
@@ -705,19 +679,34 @@ class Test extends Callable {
   }
 
   @override
+  Test copyWith({
+    String? name,
+    List<Expression>? arguments,
+    List<Keyword>? keywords,
+    Expression? dArguments,
+    Expression? dKeywords,
+  }) {
+    return Test(
+      name: name ?? this.name,
+      arguments: arguments ?? this.arguments,
+      keywords: keywords ?? this.keywords,
+      dArguments: dArguments ?? this.dArguments,
+      dKeywords: dKeywords ?? this.dKeywords,
+    );
+  }
+
+  @override
   String toString() {
     return 'Test($name)';
   }
 }
 
 class Item extends Expression {
-  factory Item.string(String key, Expression value) = ItemString;
+  const Item({required this.key, required this.value});
 
-  Item(this.key, this.value);
+  final Expression key;
 
-  Expression key;
-
-  Expression value;
+  final Expression value;
 
   @override
   List<Node> get children {
@@ -739,11 +728,8 @@ class Item extends Expression {
   }
 
   @override
-  void update(ExpressionUpdater updater) {
-    key = updater(key);
-    key.update(updater);
-    value = updater(value);
-    value.update(updater);
+  Item copyWith({Expression? key, Expression? value}) {
+    return Item(key: key ?? this.key, value: value ?? this.value);
   }
 
   @override
@@ -752,69 +738,12 @@ class Item extends Expression {
   }
 }
 
-class ItemString extends Expression implements Item {
-  ItemString(this.keyString, this.value);
-
-  String keyString;
-
-  @override
-  Expression value;
-
-  @override
-  Expression get key {
-    return Constant(keyString);
-  }
-
-  @override
-  set key(Expression key) {
-    if (key is! Constant) {
-      throw TypeError();
-    }
-
-    var value = key.value;
-
-    if (value is! String) {
-      throw TypeError();
-    }
-
-    keyString = value;
-  }
-
-  @override
-  List<Node> get children {
-    return <Node>[key, value];
-  }
-
-  @override
-  Object? asConst(Context context) {
-    var value = this.value.asConst(context);
-    return context.environment.getItem(value, keyString);
-  }
-
-  @override
-  Object? resolve(Context context) {
-    var value = this.value.resolve(context);
-    return context.environment.getItem(value, keyString);
-  }
-
-  @override
-  void update(ExpressionUpdater updater) {
-    value = updater(value);
-    value.update(updater);
-  }
-
-  @override
-  String toString() {
-    return 'Item.string($keyString, $value)';
-  }
-}
-
 class Attribute extends Expression {
-  Attribute(this.attribute, this.value);
+  const Attribute({required this.attribute, required this.value});
 
-  String attribute;
+  final String attribute;
 
-  Expression value;
+  final Expression value;
 
   @override
   List<Node> get children {
@@ -834,9 +763,11 @@ class Attribute extends Expression {
   }
 
   @override
-  void update(ExpressionUpdater updater) {
-    value = updater(value);
-    value.update(updater);
+  Attribute copyWith({String? attribute, Expression? value}) {
+    return Attribute(
+      attribute: attribute ?? this.attribute,
+      value: value ?? this.value,
+    );
   }
 
   @override
@@ -846,9 +777,9 @@ class Attribute extends Expression {
 }
 
 class Concat extends Expression {
-  Concat(this.values);
+  const Concat({required this.values});
 
-  List<Expression> values;
+  final List<Expression> values;
 
   @override
   List<Node> get children {
@@ -877,11 +808,8 @@ class Concat extends Expression {
   }
 
   @override
-  void update(ExpressionUpdater updater) {
-    for (var i = 0; i < values.length; i += 1) {
-      values[i] = updater(values[i]);
-      values[i].update(updater);
-    }
+  Concat copyWith({List<Expression>? values}) {
+    return Concat(values: values ?? this.values);
   }
 
   @override
@@ -902,11 +830,11 @@ enum CompareOperator {
 }
 
 class Operand extends Expression {
-  Operand(this.operator, this.value);
+  const Operand({required this.operator, required this.value});
 
-  CompareOperator operator;
+  final CompareOperator operator;
 
-  Expression value;
+  final Expression value;
 
   @override
   List<Node> get children {
@@ -924,9 +852,11 @@ class Operand extends Expression {
   }
 
   @override
-  void update(ExpressionUpdater updater) {
-    value = updater(value);
-    value.update(updater);
+  Operand copyWith({CompareOperator? operator, Expression? value}) {
+    return Operand(
+      operator: operator ?? this.operator,
+      value: value ?? this.value,
+    );
   }
 
   @override
@@ -959,11 +889,11 @@ class Operand extends Expression {
 }
 
 class Compare extends Expression {
-  Compare(this.value, this.operands);
+  const Compare({required this.value, required this.operands});
 
-  Expression value;
+  final Expression value;
 
-  List<Operand> operands;
+  final List<Operand> operands;
 
   @override
   List<Node> get children {
@@ -998,13 +928,11 @@ class Compare extends Expression {
   }
 
   @override
-  void update(ExpressionUpdater updater) {
-    value = updater(value);
-    value.update(updater);
-
-    for (var i = 0; i < operands.length; i += 1) {
-      operands[i].update(updater);
-    }
+  Compare copyWith({Expression? value, List<Operand>? operands}) {
+    return Compare(
+      value: value ?? this.value,
+      operands: operands ?? this.operands,
+    );
   }
 
   @override
@@ -1041,11 +969,11 @@ enum UnaryOperator {
 }
 
 class Unary extends Expression {
-  Unary(this.operator, this.value);
+  const Unary({required this.operator, required this.value});
 
-  UnaryOperator operator;
+  final UnaryOperator operator;
 
-  Expression value;
+  final Expression value;
 
   @override
   List<Node> get children {
@@ -1067,9 +995,11 @@ class Unary extends Expression {
   }
 
   @override
-  void update(ExpressionUpdater updater) {
-    value = updater(value);
-    value.update(updater);
+  Unary copyWith({UnaryOperator? operator, Expression? value}) {
+    return Unary(
+      operator: operator ?? this.operator,
+      value: value ?? this.value,
+    );
   }
 
   @override
@@ -1093,13 +1023,17 @@ class Unary extends Expression {
 }
 
 abstract class Binary<T extends Enum> extends Expression {
-  Binary(this.operator, this.left, this.right);
+  const Binary({
+    required this.operator,
+    required this.left,
+    required this.right,
+  });
 
-  T operator;
+  final T operator;
 
-  Expression left;
+  final Expression left;
 
-  Expression right;
+  final Expression right;
 
   @override
   List<Node> get children {
@@ -1107,12 +1041,7 @@ abstract class Binary<T extends Enum> extends Expression {
   }
 
   @override
-  void update(ExpressionUpdater updater) {
-    left = updater(left);
-    left.update(updater);
-    right = updater(right);
-    right.update(updater);
-  }
+  Binary<T> copyWith({T? operator, Expression? left, Expression? right});
 }
 
 enum ScalarOperator {
@@ -1126,7 +1055,11 @@ enum ScalarOperator {
 }
 
 class Scalar extends Binary<ScalarOperator> {
-  Scalar(super.operator, super.left, super.right);
+  const Scalar({
+    required super.operator,
+    required super.left,
+    required super.right,
+  });
 
   @override
   Object? asConst(Context context) {
@@ -1144,6 +1077,19 @@ class Scalar extends Binary<ScalarOperator> {
     var left = this.left.resolve(context);
     var right = this.right.resolve(context);
     return calc(operator, left, right);
+  }
+
+  @override
+  Scalar copyWith({
+    ScalarOperator? operator,
+    Expression? left,
+    Expression? right,
+  }) {
+    return Scalar(
+      operator: operator ?? this.operator,
+      left: left ?? this.left,
+      right: right ?? this.right,
+    );
   }
 
   @override
@@ -1184,7 +1130,11 @@ enum LogicalOperator {
 }
 
 class Logical extends Binary<LogicalOperator> {
-  Logical(super.operator, super.left, super.right);
+  const Logical({
+    required super.operator,
+    required super.left,
+    required super.right,
+  });
 
   @override
   Object? asConst(Context context) {
@@ -1213,6 +1163,19 @@ class Logical extends Binary<LogicalOperator> {
       case LogicalOperator.and:
         return boolean(left) ? right.resolve(context) : left;
     }
+  }
+
+  @override
+  Logical copyWith({
+    LogicalOperator? operator,
+    Expression? left,
+    Expression? right,
+  }) {
+    return Logical(
+      operator: operator ?? this.operator,
+      left: left ?? this.left,
+      right: right ?? this.right,
+    );
   }
 
   @override
