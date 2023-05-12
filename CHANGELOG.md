@@ -1,4 +1,4 @@
-## 0.5.0-dev.5
+## 0.5.0-dev.7
 - minimal SDK version: 3.0.0
 
 ## 0.4.2

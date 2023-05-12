@@ -72,7 +72,7 @@ class For extends Statement {
     Expression? target,
     Expression? iterable,
     List<Node>? body,
-    Expression? test = defaultExpression,
+    Expression? test = _expression,
     List<Node>? orElse,
     bool? recursive,
   }) {
@@ -80,7 +80,7 @@ class For extends Statement {
       target: target ?? this.target,
       iterable: iterable ?? this.iterable,
       body: body ?? this.body,
-      test: test == defaultExpression ? this.test : test,
+      test: test == _expression ? this.test : test,
       orElse: orElse ?? this.orElse,
       recursive: recursive ?? this.recursive,
     );

@@ -2,18 +2,12 @@ part of '../nodes.dart';
 
 class Impossible implements Exception {}
 
-@internal
-const Object defaultObject = Object();
+const Object _object = Object();
 
-@internal
-const Constant defaultExpression = Constant(value: defaultObject);
+const Constant _expression = Constant(value: _object);
 
 abstract class Expression extends Node {
   const Expression();
-
-  Object? asConst(Context context) {
-    throw Impossible();
-  }
 
   Object? resolve(Context context) {
     return null;
@@ -140,8 +134,8 @@ class Constant extends Literal {
   }
 
   @override
-  Constant copyWith({Object? value = defaultObject}) {
-    return Constant(value: value == defaultObject ? this.value : value);
+  Constant copyWith({Object? value = _object}) {
+    return Constant(value: value == _object ? this.value : value);
   }
 
   @override
@@ -388,12 +382,12 @@ class Condition extends Expression {
   Condition copyWith({
     Expression? test,
     Expression? value,
-    Expression? orElse = defaultExpression,
+    Expression? orElse = _expression,
   }) {
     return Condition(
       test: test ?? this.test,
       value: value ?? this.value,
-      orElse: orElse == defaultExpression ? this.orElse : orElse,
+      orElse: orElse == _expression ? this.orElse : orElse,
     );
   }
 
@@ -445,10 +439,10 @@ class Keyword extends Expression {
   }
 }
 
-typedef Callback<T> = T Function(List<Object?>, Map<Symbol, Object?>);
+typedef Parameters = (List<Object?>, Map<Symbol, Object?>);
 
-abstract class Callable extends Expression {
-  const Callable({
+class Calling extends Expression {
+  const Calling({
     this.arguments = const <Expression>[],
     this.keywords = const <Keyword>[],
     this.dArguments,
@@ -464,65 +458,27 @@ abstract class Callable extends Expression {
   final Expression? dKeywords;
 
   @override
-  List<Node> get children {
-    return <Node>[
-      ...arguments,
-      ...keywords,
-      if (dArguments != null) dArguments!,
-      if (dKeywords != null) dKeywords!
-    ];
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitCalling(this, context);
   }
 
-  Object? applyAsConst(Context context, Callback<Object?> callback) {
-    List<Object?> positional;
-
-    if (arguments.isEmpty) {
-      positional = <Object?>[];
-    } else {
-      Object? generator(int index) {
-        return arguments[index].asConst(context);
-      }
-
-      positional = List<Object?>.generate(arguments.length, generator);
-    }
-
-    var named = <Symbol, Object?>{};
-
-    for (var argument in keywords) {
-      named[Symbol(argument.key)] = argument.asConst(context);
-    }
-
-    var dArguments = this.dArguments;
-
-    if (dArguments != null) {
-      var arguments = dArguments.asConst(context);
-
-      if (arguments is! Iterable) {
-        throw TypeError();
-      }
-
-      positional.addAll(arguments);
-    }
-
-    var dKeywords = this.dKeywords;
-
-    if (dKeywords != null) {
-      var resolvedKeywords = dKeywords.asConst(context);
-
-      if (resolvedKeywords is! Map) {
-        throw TypeError();
-      }
-
-      void action(String key, Object? value) {
-        named[Symbol(key)] = value;
-      }
-
-      resolvedKeywords.cast<String, Object?>().forEach(action);
-    }
-
-    return callback(positional, named);
+  @override
+  Calling copyWith({
+    List<Expression>? arguments,
+    List<Keyword>? keywords,
+    Expression? dArguments = _expression,
+    Expression? dKeywords = _expression,
+  }) {
+    return Calling(
+      arguments: arguments ?? this.arguments,
+      keywords: keywords ?? this.keywords,
+      dArguments: dArguments == _expression ? this.dArguments : dArguments,
+      dKeywords: dKeywords == _expression ? this.dKeywords : dKeywords,
+    );
   }
+}
 
+abstract class Callable extends Expression {
   T apply<T extends Object?>(Context context, Callback<T> callback) {
     List<Object?> positional;
 
@@ -566,46 +522,26 @@ abstract class Callable extends Expression {
 
     return callback(positional, named);
   }
-
-  @override
-  Callable copyWith({
-    List<Expression>? arguments,
-    List<Keyword>? keywords,
-    Expression? dArguments,
-    Expression? dKeywords,
-  });
 }
 
-class Call extends Callable {
+class Call extends Expression {
   const Call({
     required this.expression,
-    super.arguments,
-    super.keywords,
-    super.dArguments,
-    super.dKeywords,
+    this.calling = const Calling(),
   });
 
   final Expression expression;
 
+  final Calling calling;
+
   @override
   List<Node> get children {
-    return <Node>[expression, ...super.children];
+    return <Node>[expression, calling];
   }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitCall(this, context);
-  }
-
-  @override
-  Object? asConst(Context context) {
-    var function = expression.asConst(context);
-
-    Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
-      return context(function, positional, named);
-    }
-
-    return applyAsConst(context, callback);
   }
 
   @override
@@ -620,19 +556,10 @@ class Call extends Callable {
   }
 
   @override
-  Call copyWith({
-    Expression? expression,
-    List<Expression>? arguments,
-    List<Keyword>? keywords,
-    Expression? dArguments,
-    Expression? dKeywords,
-  }) {
+  Call copyWith({Expression? expression, Calling? calling}) {
     return Call(
       expression: expression ?? this.expression,
-      arguments: arguments ?? this.arguments,
-      keywords: keywords ?? this.keywords,
-      dArguments: dArguments ?? this.dArguments,
-      dKeywords: dKeywords ?? this.dKeywords,
+      calling: calling ?? this.calling,
     );
   }
 
@@ -816,12 +743,6 @@ class Attribute extends Expression {
   }
 
   @override
-  Object? asConst(Context context) {
-    var value = this.value.asConst(context);
-    return context.environment.getAttribute(value, attribute);
-  }
-
-  @override
   Object? resolve(Context context) {
     var value = this.value.resolve(context);
     return context.environment.getAttribute(value, attribute);
@@ -856,16 +777,6 @@ class Concat extends Expression {
     return visitor.visitConcat(this, context);
   }
 
-  // TODO: try reduce operands if imposible
-  @override
-  Object? asConst(Context context) {
-    Object? toElement(Expression expression) {
-      return expression.asConst(context);
-    }
-
-    return values.map<Object?>(toElement).join();
-  }
-
   @override
   String resolve(Context context) {
     var buffer = StringBuffer();
@@ -896,50 +807,9 @@ enum CompareOperator {
   greaterThan,
   greaterThanOrEqual,
   contains,
-  notContains,
-}
+  notContains;
 
-class Operand extends Expression {
-  const Operand({required this.operator, required this.value});
-
-  final CompareOperator operator;
-
-  final Expression value;
-
-  @override
-  List<Node> get children {
-    return <Node>[value];
-  }
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitOperand(this, context);
-  }
-
-  @override
-  Object? asConst(Context context) {
-    return value.asConst(context);
-  }
-
-  @override
-  Object? resolve(Context context) {
-    return value.resolve(context);
-  }
-
-  @override
-  Operand copyWith({CompareOperator? operator, Expression? value}) {
-    return Operand(
-      operator: operator ?? this.operator,
-      value: value ?? this.value,
-    );
-  }
-
-  @override
-  String toString() {
-    return 'Operand(${operator.name}, $value)';
-  }
-
-  static CompareOperator? operatorFrom(String operator) {
+  static CompareOperator? tryParse(String operator) {
     switch (operator) {
       case 'eq':
         return CompareOperator.equal;
@@ -963,35 +833,18 @@ class Operand extends Expression {
   }
 }
 
-class Compare extends Expression {
-  const Compare({required this.value, required this.operands});
+typedef Operand = ({CompareOperator operator, Expression value});
 
-  final Expression value;
-
-  final List<Operand> operands;
-
-  @override
-  List<Node> get children {
-    return <Node>[value, ...operands];
-  }
+class Compare extends Binary<CompareOperator> {
+  const Compare({
+    required super.operator,
+    required super.left,
+    required super.right,
+  });
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitCompare(this, context);
-  }
-
-  // TODO: try reduce operands if imposible
-  @override
-  Object? asConst(Context context) {
-    var temp = value.asConst(context);
-
-    for (var operand in operands) {
-      if (!calc(operand.operator, temp, temp = operand.asConst(context))) {
-        return false;
-      }
-    }
-
-    return true;
   }
 
   @override
@@ -1008,37 +861,21 @@ class Compare extends Expression {
   }
 
   @override
-  Compare copyWith({Expression? value, List<Operand>? operands}) {
+  Compare copyWith({
+    CompareOperator? operator,
+    Expression? left,
+    Expression? right,
+  }) {
     return Compare(
-      value: value ?? this.value,
-      operands: operands ?? this.operands,
+      operator: operator ?? this.operator,
+      left: left ?? this.left,
+      right: right ?? this.right,
     );
   }
 
   @override
   String toString() {
-    return 'Compare($value, $operands)';
-  }
-
-  static bool calc(CompareOperator operator, Object? left, Object? right) {
-    switch (operator) {
-      case CompareOperator.equal:
-        return isEqual(left, right);
-      case CompareOperator.notEqual:
-        return isNotEqual(left, right);
-      case CompareOperator.lessThan:
-        return isLessThan(left, right);
-      case CompareOperator.lessThanOrEqual:
-        return isLessThanOrEqual(left, right);
-      case CompareOperator.greaterThan:
-        return isGreaterThan(left, right);
-      case CompareOperator.greaterThanOrEqual:
-        return isGreaterThanOrEqual(left, right);
-      case CompareOperator.contains:
-        return isIn(left, right);
-      case CompareOperator.notContains:
-        return !isIn(left, right);
-    }
+    return 'Compare(${operator.name}, $left, $right)';
   }
 }
 

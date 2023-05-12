@@ -1,3 +1,4 @@
+import 'package:jinja/src/context.dart';
 import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/nodes.dart';
 
@@ -11,6 +12,8 @@ abstract class Visitor<C, R> {
   R visitAttribute(Attribute node, C context);
 
   R visitCall(Call node, C context);
+
+  R visitCalling(Calling node, C context);
 
   R visitCompare(Compare node, C context);
 
@@ -33,8 +36,6 @@ abstract class Visitor<C, R> {
   R visitName(Name node, C context);
 
   R visitNamespaceRef(NamespaceRef node, C context);
-
-  R visitOperand(Operand node, C context);
 
   R visitPair(Pair node, C context);
 
@@ -84,12 +85,6 @@ abstract class Visitor<C, R> {
 class ThrowingVisitor<C, R> implements Visitor<C, R> {
   const ThrowingVisitor();
 
-  void visitAll(List<Node> nodes, C context) {
-    for (var node in nodes) {
-      node.accept(this, context);
-    }
-  }
-
   // Expressions
 
   @override
@@ -109,6 +104,11 @@ class ThrowingVisitor<C, R> implements Visitor<C, R> {
 
   @override
   R visitCall(Call node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  @override
+  R visitCalling(Calling node, C context) {
     throw UnimplementedError('$node');
   }
 
@@ -164,11 +164,6 @@ class ThrowingVisitor<C, R> implements Visitor<C, R> {
 
   @override
   R visitNamespaceRef(NamespaceRef node, C context) {
-    throw UnimplementedError('$node');
-  }
-
-  @override
-  R visitOperand(Operand node, C context) {
     throw UnimplementedError('$node');
   }
 
@@ -273,4 +268,9 @@ class ThrowingVisitor<C, R> implements Visitor<C, R> {
   R visitWith(With node, C context) {
     throw UnimplementedError('$node');
   }
+}
+
+class ExpressionResolver<C extends Context>
+    extends ThrowingVisitor<C, Object?> {
+  const ExpressionResolver();
 }
