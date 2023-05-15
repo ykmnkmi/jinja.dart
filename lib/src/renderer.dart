@@ -247,7 +247,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
 
   @override
   void visitDo(Do node, StringSinkRenderContext context) {
-    node.expression.resolve(context);
+    node.value.resolve(context);
   }
 
   @override

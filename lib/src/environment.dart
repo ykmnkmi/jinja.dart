@@ -349,7 +349,7 @@ class Environment {
   /// Load a template from a source string without using [loader].
   Template fromString(String source, {String? path}) {
     var nodes = Parser(this, path: path).parse(source);
-    var body = Output(nodes: nodes);
+    var body = Output(body: nodes);
 
     for (var modifier in modifiers) {
       modifier(body);

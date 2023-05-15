@@ -47,9 +47,9 @@ class Data extends Node {
 }
 
 class Interpolation extends Node {
-  const Interpolation({required this.expression});
+  const Interpolation({required this.value});
 
-  final Expression expression;
+  final Expression value;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -57,15 +57,15 @@ class Interpolation extends Node {
   }
 
   @override
-  Interpolation copyWith({Expression? expression}) {
-    return Interpolation(expression: expression ?? this.expression);
+  Interpolation copyWith({Expression? value}) {
+    return Interpolation(value: value ?? this.value);
   }
 }
 
 class Output extends Node {
-  const Output({this.nodes = const <Node>[]});
+  const Output({this.body = const <Node>[]});
 
-  final List<Node> nodes;
+  final List<Node> body;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -73,7 +73,7 @@ class Output extends Node {
   }
 
   @override
-  Output copyWith({List<Node>? nodes}) {
-    return Output(nodes: nodes ?? this.nodes);
+  Output copyWith({List<Node>? body}) {
+    return Output(body: body ?? this.body);
   }
 }

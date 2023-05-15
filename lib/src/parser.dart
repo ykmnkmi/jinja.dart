@@ -273,10 +273,10 @@ class Parser {
       orElse = const <Node>[];
     }
 
-    var node = ifNodes.last.copyWith(falseValue: orElse);
+    var node = ifNodes.last.copyWith(orElse: orElse);
 
     for (var ifNode in ifNodes.reversed.skip(1)) {
-      node = ifNode.copyWith(falseValue: <Node>[node]);
+      node = ifNode.copyWith(orElse: <Node>[node]);
     }
 
     return node;
@@ -357,7 +357,12 @@ class Parser {
       body: body,
     );
 
-    blocks.add(block);
+    if (extendsNode case var extendsNode?) {
+      this.extendsNode = extendsNode.copyWith(
+        blocks: <Block>[...extendsNode.blocks, block],
+      );
+    }
+
     return block;
   }
 
@@ -541,7 +546,7 @@ class Parser {
   Do parseDo(TokenReader reader) {
     reader.expect('name', 'do');
 
-    return Do(expression: parseTuple(reader));
+    return Do(value: parseTuple(reader));
   }
 
   Expression parseExpression(TokenReader reader, [bool withCondition = true]) {
@@ -597,7 +602,7 @@ class Parser {
       reader.next();
 
       var value = parseNot(reader);
-      return Unary(operator: UnaryOperator.not, expression: value);
+      return Unary(operator: UnaryOperator.not, value: value);
     }
 
     return parseCompare(reader);
@@ -745,14 +750,14 @@ class Parser {
         reader.next();
 
         value = parseUnary(reader, withFilter: false);
-        value = Unary(operator: UnaryOperator.plus, expression: value);
+        value = Unary(operator: UnaryOperator.plus, value: value);
         break;
 
       case 'sub':
         reader.next();
 
         value = parseUnary(reader, withFilter: false);
-        value = Unary(operator: UnaryOperator.minus, expression: value);
+        value = Unary(operator: UnaryOperator.minus, value: value);
         break;
 
       default:
@@ -1151,7 +1156,7 @@ class Parser {
     expression = Test(name: token.value, calling: calling);
 
     if (negated) {
-      expression = Unary(operator: UnaryOperator.not, expression: expression);
+      expression = Unary(operator: UnaryOperator.not, value: expression);
     }
 
     return expression;
@@ -1189,7 +1194,7 @@ class Parser {
           case 'variable_start':
             reader.next();
 
-            nodes.add(Interpolation(expression: parseTuple(reader)));
+            nodes.add(Interpolation(value: parseTuple(reader)));
 
             reader.expect('variable_end');
             break;

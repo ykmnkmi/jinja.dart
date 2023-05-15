@@ -11,117 +11,109 @@ class Optimizer implements Visitor<Context, Node> {
 
   // Expressions
 
-  Expression visitExpression(Expression node, Context context) {
-    return node.accept(this, context) as Expression;
-  }
-
   @override
-  Node visitArray(Array node, Context context) {
+  Expression visitArray(Array node, Context context) {
     var values = <Expression>[
-      for (var value in node.values) visitExpression(value, context)
+      for (var value in node.values) //
+        value.accept(this, context) as Expression
     ];
 
     if (values.every((value) => value is Constant)) {
-      var value = values
-          .cast<Constant>()
-          .map<Object?>((constant) => constant.value)
-          .toList();
-
-      return Constant(value: value);
+      return Constant(
+        value: <Object?>[
+          for (var value in values.cast<Constant>()) //
+            value.value
+        ],
+      );
     }
 
     return node.copyWith(values: values);
   }
 
   @override
-  Node visitAttribute(Attribute node, Context context) {
-    var value = visitExpression(node.value, context);
+  Expression visitAttribute(Attribute node, Context context) {
+    var value = node.value.accept(this, context) as Expression;
 
     if (value is Constant) {
-      var valueAttribute = context.attribute(value, node.attribute);
-      return Constant(value: valueAttribute);
+      return Constant(
+        value: context.attribute(node.attribute, value.value),
+      );
     }
 
-    return node.copyWith(expression: value);
+    return node.copyWith(value: value);
   }
 
   @override
-  Node visitCall(Call node, Context context) {
-    var calling = visitExpression(node.calling, context) as Calling;
-    return node.copyWith(calling: calling);
-  }
-
-  @override
-  Calling visitCalling(Calling node, Context context) {
-    var arguments = <Expression>[
-      for (var argument in node.arguments) visitExpression(argument, context)
-    ];
-
-    var keywords = <Keyword>[
-      for (var (:key, :value) in node.keywords)
-        (key: key, value: visitExpression(value, context))
-    ];
-
-    Expression? dArguments;
-    Expression? dKeywords;
-
-    if (node.dArguments case var dArguments?) {
-      dArguments = visitExpression(dArguments, context);
-    }
-
-    if (node.dKeywords case var dKeywords?) {
-      dKeywords = visitExpression(dKeywords, context);
-    }
-
-    return Calling(
-      arguments: arguments,
-      keywords: keywords,
-      dArguments: dArguments,
-      dKeywords: dKeywords,
+  Call visitCall(Call node, Context context) {
+    return node.copyWith(
+      calling: node.calling.accept(this, context) as Calling,
     );
   }
 
   @override
-  Node visitCompare(Compare node, Context context) {
-    var left = visitExpression(node.left, context);
-    var right = visitExpression(node.right, context);
+  Calling visitCalling(Calling node, Context context) {
+    return node.copyWith(
+      arguments: <Expression>[
+        for (var argument in node.arguments)
+          argument.accept(this, context) as Expression
+      ],
+      keywords: <Keyword>[
+        for (var (:key, :value) in node.keywords)
+          (
+            key: key,
+            value: value.accept(this, context) as Expression,
+          )
+      ],
+      dArguments: node.dArguments?.accept(this, context) as Expression?,
+      dKeywords: node.dKeywords?.accept(this, context) as Expression?,
+    );
+  }
+
+  @override
+  Expression visitCompare(Compare node, Context context) {
+    var left = node.left.accept(this, context) as Expression;
+    var right = node.right.accept(this, context) as Expression;
 
     if (left is Constant && right is Constant) {
-      var leftValue = left.value;
-      var rightValue = right.value;
-
-      var value = switch (node.operator) {
-        CompareOperator.equal => isEqual(leftValue, rightValue),
-        CompareOperator.notEqual => isNotEqual(leftValue, rightValue),
-        CompareOperator.lessThan => isLessThan(leftValue, rightValue),
-        CompareOperator.lessThanOrEqual =>
-          isLessThanOrEqual(leftValue, rightValue),
-        CompareOperator.greaterThan => isGreaterThan(leftValue, rightValue),
-        CompareOperator.greaterThanOrEqual =>
-          isGreaterThanOrEqual(leftValue, rightValue),
-        CompareOperator.contains => isIn(leftValue, rightValue),
-        CompareOperator.notContains => !isIn(leftValue, rightValue),
-      };
-
-      return Constant(value: value);
+      return Constant(
+        value: switch (node.operator) {
+          CompareOperator.equal => //
+            isEqual(left.value, right.value),
+          CompareOperator.notEqual => //
+            isNotEqual(left.value, right.value),
+          CompareOperator.lessThan => //
+            isLessThan(left.value, right.value),
+          CompareOperator.lessThanOrEqual =>
+            isLessThanOrEqual(left.value, right.value),
+          CompareOperator.greaterThan => //
+            isGreaterThan(left.value, right.value),
+          CompareOperator.greaterThanOrEqual =>
+            isGreaterThanOrEqual(left.value, right.value),
+          CompareOperator.contains => //
+            isIn(left.value, right.value),
+          CompareOperator.notContains => //
+            !isIn(left.value, right.value),
+        },
+      );
     }
 
     return node.copyWith(left: left, right: right);
   }
 
   @override
-  Node visitConcat(Concat node, Context context) {
+  Expression visitConcat(Concat node, Context context) {
     var values = <Expression>[
-      for (var value in node.values) visitExpression(value, context)
+      for (var value in node.values) //
+        value.accept(this, context) as Expression
     ];
 
     if (values.every((value) => value is Constant)) {
-      var value = values
-          .cast<Constant>()
-          .map<Object?>((constant) => constant.value)
-          .join();
-
-      return Constant(value: value);
+      return Constant(
+        value: <Object?>[
+          for (var value in values.cast<Constant>()) //
+            value.value
+        ],
+      );
     }
 
     var newValues = <Expression>[];
@@ -147,89 +139,87 @@ class Optimizer implements Visitor<Context, Node> {
   }
 
   @override
-  Node visitCondition(Condition node, Context context) {
-    var test = visitExpression(node.test, context);
-    var trueValue = visitExpression(node.trueValue, context);
-    Expression? falseValue;
-
-    if (node.falseValue case var nodeFalseValue?) {
-      falseValue = visitExpression(nodeFalseValue, context);
-    }
+  Expression visitCondition(Condition node, Context context) {
+    var test = node.test.accept(this, context) as Expression;
+    var trueValue = node.trueValue.accept(this, context) as Expression;
+    var falseValue = node.falseValue?.accept(this, context) as Expression?;
 
     if (test is Constant) {
       if (boolean(test.value)) {
         return trueValue;
       } else {
-        return falseValue ?? Constant(value: null);
+        return falseValue ?? const Constant(value: null);
       }
     }
 
     return node.copyWith(
       test: test,
       trueValue: trueValue,
-      falseValue: falseValue,
+      orElse: falseValue,
     );
   }
 
   @override
-  Node visitConstant(Constant node, Context context) {
+  Constant visitConstant(Constant node, Context context) {
     return node;
   }
 
   @override
-  Node visitDict(Dict node, Context context) {
+  Expression visitDict(Dict node, Context context) {
     var pairs = <Pair>[
       for (var (:key, :value) in node.pairs)
         (
-          key: visitExpression(key, context),
-          value: visitExpression(value, context),
+          key: key.accept(this, context) as Expression,
+          value: value.accept(this, context) as Expression,
         )
     ];
 
     if (pairs.any((pair) => pair.key is Constant && pair.value is Constant)) {
       var constantPairs = pairs.cast<({Constant key, Constant value})>();
 
-      var value = <Object?, Object?>{
-        for (var (:key, :value) in constantPairs) key.value: value.value,
-      };
-
-      return Constant(value: value);
+      return Constant(
+        value: <Object?, Object?>{
+          for (var (:key, :value) in constantPairs) //
+            key.value: value.value,
+        },
+      );
     }
 
     return node.copyWith(pairs: pairs);
   }
 
   @override
-  Node visitFilter(Filter node, Context context) {
-    var calling = visitExpression(node.calling, context) as Calling;
-    return node.copyWith(calling: calling);
+  Filter visitFilter(Filter node, Context context) {
+    return node.copyWith(
+      calling: node.calling.accept(this, context) as Calling,
+    );
   }
 
   @override
-  Node visitItem(Item node, Context context) {
+  Expression visitItem(Item node, Context context) {
     var key = node.key;
     var value = node.value;
 
     if (key is Constant && value is Constant) {
-      return Constant(value: context.item(value.value, key.value));
+      return Constant(value: context.item(key.value, value.value));
     }
 
-    return node.copyWith(key: key, expression: value);
+    return node.copyWith(key: key, value: value);
   }
 
   @override
-  Node visitLogical(Logical node, Context context) {
-    var left = visitExpression(node.left, context);
-    var right = visitExpression(node.right, context);
+  Expression visitLogical(Logical node, Context context) {
+    var left = node.left.accept(this, context) as Expression;
+    var right = node.right.accept(this, context) as Expression;
 
     if (left is Constant) {
-      var leftValue = boolean(left.value);
-
       return switch (node.operator) {
-        LogicalOperator.and =>
-          leftValue ? visitExpression(node.right, context) : left,
-        LogicalOperator.or =>
-          leftValue ? left : visitExpression(node.right, context),
+        LogicalOperator.and => boolean(left.value)
+            ? node.right.accept(this, context) as Expression
+            : left,
+        LogicalOperator.or => boolean(left.value)
+            ? left
+            : node.right.accept(this, context) as Expression,
       };
     }
 
@@ -237,146 +227,159 @@ class Optimizer implements Visitor<Context, Node> {
   }
 
   @override
-  Node visitName(Name node, Context context) {
+  Name visitName(Name node, Context context) {
     return node;
   }
 
   @override
-  Node visitNamespaceRef(NamespaceRef node, Context context) {
+  NamespaceRef visitNamespaceRef(NamespaceRef node, Context context) {
     return node;
   }
 
   @override
-  Node visitScalar(Scalar node, Context context) {
-    var left = visitExpression(node.left, context);
-    var right = visitExpression(node.right, context);
+  Expression visitScalar(Scalar node, Context context) {
+    var left = node.left.accept(this, context) as Expression;
+    var right = node.right.accept(this, context) as Expression;
 
     if (left is Constant && right is Constant) {
-      var leftValue = left.value as dynamic;
-      var rightValue = left.value as dynamic;
-
-      var value = switch (node.operator) {
-        ScalarOperator.power => math.pow(leftValue as num, rightValue as num),
-        // ignore: avoid_dynamic_calls
-        ScalarOperator.module => leftValue % rightValue,
-        // ignore: avoid_dynamic_calls
-        ScalarOperator.floorDivision => leftValue ~/ rightValue,
-        // ignore: avoid_dynamic_calls
-        ScalarOperator.division => leftValue / rightValue,
-        // ignore: avoid_dynamic_calls
-        ScalarOperator.multiple => leftValue * rightValue,
-        // ignore: avoid_dynamic_calls
-        ScalarOperator.minus => leftValue - rightValue,
-        // ignore: avoid_dynamic_calls
-        ScalarOperator.plus => leftValue + rightValue,
-      };
-
-      return Constant(value: value);
+      return Constant(
+        value: switch (node.operator) {
+          ScalarOperator.power =>
+            // ...
+            math.pow(left.value as num, right.value as num),
+          ScalarOperator.module =>
+            // ignore: avoid_dynamic_calls
+            (left.value as dynamic) % right.value,
+          ScalarOperator.floorDivision =>
+            // ignore: avoid_dynamic_calls
+            (left.value as dynamic) ~/ right.value,
+          ScalarOperator.division =>
+            // ignore: avoid_dynamic_calls
+            (left.value as dynamic) / right.value,
+          ScalarOperator.multiple =>
+            // ignore: avoid_dynamic_calls
+            (left.value as dynamic) * right.value,
+          ScalarOperator.minus =>
+            // ignore: avoid_dynamic_calls
+            (left.value as dynamic) - right.value,
+          ScalarOperator.plus =>
+            // ignore: avoid_dynamic_calls
+            (left.value as dynamic) + right.value,
+        },
+      );
     }
 
     return node.copyWith(left: left, right: right);
   }
 
   @override
-  Node visitTest(Test node, Context context) {
-    var calling = visitExpression(node.calling, context) as Calling;
+  Test visitTest(Test node, Context context) {
+    var calling = node.calling.accept(this, context) as Calling;
     return node.copyWith(calling: calling);
   }
 
   @override
-  Node visitTuple(Tuple node, Context context) {
+  Expression visitTuple(Tuple node, Context context) {
     var values = <Expression>[
-      for (var value in node.values) visitExpression(value, context)
+      for (var value in node.values) //
+        value.accept(this, context) as Expression
     ];
 
     if (values.every((value) => value is Constant)) {
-      var value = values
-          .cast<Constant>()
-          .map<Object?>((constant) => constant.value)
-          .toList();
-
-      return Constant(value: value);
+      return Constant(
+        value: <Object?>[
+          for (var value in values.cast<Constant>()) //
+            value.value
+        ],
+      );
     }
 
     return node.copyWith(values: values);
   }
 
   @override
-  Node visitUnary(Unary node, Context context) {
-    var expression = visitExpression(node.expression, context);
+  Expression visitUnary(Unary node, Context context) {
+    var value = node.value.accept(this, context) as Expression;
 
-    if (expression is Constant) {
-      var expressionValue = expression.value as dynamic;
-
-      var value = switch (node.operator) {
-        UnaryOperator.plus => expressionValue,
-        // ignore: avoid_dynamic_calls
-        UnaryOperator.minus => -expressionValue,
-        UnaryOperator.not => !boolean(expressionValue),
-      };
-
-      return Constant(value: value);
+    if (value is Constant) {
+      return Constant(
+        value: switch (node.operator) {
+          UnaryOperator.plus => //
+            value.value,
+          UnaryOperator.minus => //
+            // ignore: avoid_dynamic_calls
+            -(value.value as dynamic),
+          UnaryOperator.not => //
+            !boolean(value.value),
+        },
+      );
     }
 
-    return node.copyWith(expression: expression);
+    return node.copyWith(value: value);
   }
 
   // Statements
 
-  List<Node> visitNodes(List<Node> nodes, Context context) {
-    Node generate(int index) {
-      return nodes[index].accept(this, context);
-    }
-
-    return List<Node>.generate(nodes.length, generate);
-  }
-
   @override
   Assign visitAssign(Assign node, Context context) {
-    var target = visitExpression(node.target, context);
-    var value = visitExpression(node.value, context);
-    return Assign(target: target, value: value);
+    return node.copyWith(
+      target: node.target.accept(this, context) as Expression,
+      value: node.value.accept(this, context) as Expression,
+    );
   }
 
   @override
   AssignBlock visitAssignBlock(AssignBlock node, Context context) {
-    var target = visitExpression(node.target, context);
-    var filters = visitNodes(node.filters, context) as List<Filter>;
-    var body = visitNodes(node.body, context);
-    return AssignBlock(target: target, filters: filters, body: body);
+    return node.copyWith(
+      target: node.target.accept(this, context) as Expression,
+      filters: <Filter>[
+        for (var filter in node.filters) //
+          filter.accept(this, context) as Filter
+      ],
+      body: <Node>[
+        for (var node in node.body) //
+          node.accept(this, context)
+      ],
+    );
   }
 
   @override
   AutoEscape visitAutoEscape(AutoEscape node, Context context) {
-    var value = visitExpression(node.value, context);
-    var body = visitNodes(node.body, context);
-    return AutoEscape(value: value, body: body);
+    return node.copyWith(
+      value: node.value.accept(this, context) as Expression,
+      body: <Node>[
+        for (var node in node.body) //
+          node.accept(this, context)
+      ],
+    );
   }
 
   @override
   Block visitBlock(Block node, Context context) {
-    var body = visitNodes(node.body, context);
-
-    return Block(
-      name: node.name,
-      scoped: node.scoped,
-      required: node.required,
-      body: body,
+    return node.copyWith(
+      body: <Node>[
+        for (var node in node.body) //
+          node.accept(this, context)
+      ],
     );
   }
 
   @override
   CallBlock visitCallBlock(CallBlock node, Context context) {
-    var call = visitExpression(node.call, context);
-    var arguments = visitNodes(node.arguments, context) as List<Expression>;
-    var defaults = visitNodes(node.defaults, context) as List<Expression>;
-    var body = visitNodes(node.body, context);
-
-    return CallBlock(
-      call: call,
-      arguments: arguments,
-      defaults: defaults,
-      body: body,
+    return node.copyWith(
+      call: node.call.accept(this, context) as Expression,
+      arguments: <Expression>[
+        for (var argument in node.arguments) //
+          argument.accept(this, context) as Expression
+      ],
+      defaults: <Expression>[
+        for (var default_ in node.defaults) //
+          default_.accept(this, context) as Expression
+      ],
+      body: <Node>[
+        for (var node in node.body) //
+          node.accept(this, context)
+      ],
     );
   }
 
@@ -387,52 +390,66 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   Do visitDo(Do node, Context context) {
-    var expression = visitExpression(node.expression, context);
-    return Do(expression: expression);
+    return node.copyWith(
+      value: node.value.accept(this, context) as Expression,
+    );
   }
 
   @override
   Extends visitExtends(Extends node, Context context) {
-    return node;
+    return node.copyWith(
+      blocks: <Block>[
+        for (var block in node.blocks) //
+          block.accept(this, context) as Block
+      ],
+    );
   }
 
   @override
   FilterBlock visitFilterBlock(FilterBlock node, Context context) {
-    var filters = visitNodes(node.filters, context) as List<Filter>;
-    var body = visitNodes(node.body, context);
-    return FilterBlock(filters: filters, body: body);
+    return node.copyWith(
+      filters: <Filter>[
+        for (var filter in node.filters) //
+          filter.accept(this, context) as Filter
+      ],
+      body: <Node>[
+        for (var node in node.body) //
+          node.accept(this, context)
+      ],
+    );
   }
 
   // TODO(optimizer): check false test
   @override
   For visitFor(For node, Context context) {
-    var target = visitExpression(node.target, context);
-    var iterable = visitExpression(node.iterable, context);
-    var body = visitNodes(node.body, context);
-    Expression? test;
-
-    if (node.test case var nodeTest?) {
-      test = visitExpression(nodeTest, context);
-    }
-
-    var orElse = visitNodes(node.orElse, context);
-
-    return For(
-      target: target,
-      iterable: iterable,
-      body: body,
-      test: test,
-      orElse: orElse,
-      recursive: node.recursive,
+    return node.copyWith(
+      target: node.target.accept(this, context) as Expression,
+      iterable: node.iterable.accept(this, context) as Expression,
+      body: <Node>[
+        for (var node in node.body) //
+          node.accept(this, context)
+      ],
+      test: node.test?.accept(this, context) as Expression?,
+      orElse: <Node>[
+        for (var node in node.orElse) //
+          node.accept(this, context)
+      ],
     );
   }
 
   @override
   If visitIf(If node, Context context) {
-    var test = visitExpression(node.test, context);
-    var body = visitNodes(node.body, context);
-    var orElse = visitNodes(node.orElse, context);
-    return If(test: test, body: body, orElse: orElse);
+    return node.copyWith(
+      test: node.test.accept(this, context) as Expression,
+      body: <Node>[
+        for (var node in node.body) //
+          node.accept(this, context)
+      ],
+      orElse: <Node>[
+        for (var node in node.orElse) //
+          node.accept(this, context)
+      ],
+    );
   }
 
   @override
@@ -442,36 +459,54 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   Node visitInterpolation(Interpolation node, Context context) {
-    var value = visitExpression(node.expression, context);
-    return node.copyWith(expression: value);
+    return node.copyWith(
+      value: node.value.accept(this, context) as Expression,
+    );
   }
 
   @override
   Macro visitMacro(Macro node, Context context) {
-    var arguments = visitNodes(node.arguments, context) as List<Expression>;
-    var defaults = visitNodes(node.defaults, context) as List<Expression>;
-    var body = visitNodes(node.body, context);
-
-    return Macro(
-      name: node.name,
-      arguments: arguments,
-      defaults: defaults,
-      body: body,
+    return node.copyWith(
+      arguments: <Expression>[
+        for (var argument in node.arguments) //
+          argument.accept(this, context) as Expression
+      ],
+      defaults: <Expression>[
+        for (var default_ in node.defaults) //
+          default_.accept(this, context) as Expression
+      ],
+      body: <Node>[
+        for (var node in node.body) //
+          node.accept(this, context)
+      ],
     );
   }
 
   @override
   Node visitOutput(Output node, Context context) {
-    var blocks = visitNodes(node.blocks, context) as List<Block>;
-    var body = visitNodes(node.nodes, context);
-    return Output(blocks: blocks, nodes: body);
+    return node.copyWith(
+      body: <Node>[
+        for (var node in node.body) //
+          node.accept(this, context)
+      ],
+    );
   }
 
   @override
   Node visitWith(With node, Context context) {
-    var targets = visitNodes(node.targets, context) as List<Expression>;
-    var values = visitNodes(node.values, context) as List<Expression>;
-    var body = visitNodes(node.body, context);
-    return With(targets: targets, values: values, body: body);
+    return node.copyWith(
+      targets: <Expression>[
+        for (var target in node.targets) //
+          target.accept(this, context) as Expression
+      ],
+      values: <Expression>[
+        for (var value in node.values) //
+          value.accept(this, context) as Expression
+      ],
+      body: <Node>[
+        for (var node in node.body) //
+          node.accept(this, context)
+      ],
+    );
   }
 }

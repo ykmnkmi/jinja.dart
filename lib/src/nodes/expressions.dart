@@ -97,8 +97,8 @@ class Constant extends Literal {
   }
 
   @override
-  Constant copyWith({Object? expression = _object}) {
-    return Constant(value: expression == _object ? this.value : expression);
+  Constant copyWith({Object? value = _object}) {
+    return Constant(value: value == _object ? this.value : value);
   }
 
   @override
@@ -212,12 +212,12 @@ class Condition extends Expression {
   Condition copyWith({
     Expression? test,
     Expression? trueValue,
-    Expression? falseValue = _expression,
+    Expression? orElse = _expression,
   }) {
     return Condition(
       test: test ?? this.test,
       trueValue: trueValue ?? this.trueValue,
-      falseValue: falseValue == _expression ? this.falseValue : falseValue,
+      falseValue: orElse == _expression ? this.falseValue : orElse,
     );
   }
 
@@ -284,9 +284,9 @@ class Call extends Expression {
   }
 
   @override
-  Call copyWith({Expression? expression, Calling? calling}) {
+  Call copyWith({Expression? value, Calling? calling}) {
     return Call(
-      expression: expression ?? this.expression,
+      expression: value ?? this.expression,
       calling: calling ?? this.calling,
     );
   }
@@ -362,8 +362,8 @@ class Item extends Expression {
   }
 
   @override
-  Item copyWith({Expression? key, Expression? expression}) {
-    return Item(key: key ?? this.key, value: expression ?? this.value);
+  Item copyWith({Expression? key, Expression? value}) {
+    return Item(key: key ?? this.key, value: value ?? this.value);
   }
 
   @override
@@ -385,10 +385,10 @@ class Attribute extends Expression {
   }
 
   @override
-  Attribute copyWith({String? attribute, Expression? expression}) {
+  Attribute copyWith({String? attribute, Expression? value}) {
     return Attribute(
       attribute: attribute ?? this.attribute,
-      value: expression ?? this.value,
+      value: value ?? this.value,
     );
   }
 
@@ -494,11 +494,11 @@ enum UnaryOperator {
 }
 
 class Unary extends Expression {
-  const Unary({required this.operator, required this.expression});
+  const Unary({required this.operator, required this.value});
 
   final UnaryOperator operator;
 
-  final Expression expression;
+  final Expression value;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -506,16 +506,16 @@ class Unary extends Expression {
   }
 
   @override
-  Unary copyWith({UnaryOperator? operator, Expression? expression}) {
+  Unary copyWith({UnaryOperator? operator, Expression? value}) {
     return Unary(
       operator: operator ?? this.operator,
-      expression: expression ?? this.expression,
+      value: value ?? this.value,
     );
   }
 
   @override
   String toString() {
-    return 'Unary(${operator.name}, $expression)';
+    return 'Unary(${operator.name}, $value)';
   }
 }
 

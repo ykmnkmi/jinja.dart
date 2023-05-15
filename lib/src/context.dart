@@ -78,11 +78,11 @@ class Context {
     return parent[key];
   }
 
-  Object? item(Object? value, Object? key) {
+  Object? item(Object? key, Object? value) {
     return environment.getItem(value, key);
   }
 
-  Object? attribute(Object? value, String key) {
+  Object? attribute(String key, Object? value) {
     return environment.getAttribute(value, key);
   }
 

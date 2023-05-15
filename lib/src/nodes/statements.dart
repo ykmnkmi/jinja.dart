@@ -21,8 +21,11 @@ class Extends extends Statement {
   }
 
   @override
-  Extends copyWith({String? path}) {
-    return Extends(path: path ?? this.path);
+  Extends copyWith({String? path, List<Block>? blocks}) {
+    return Extends(
+      path: path ?? this.path,
+      blocks: blocks ?? this.blocks,
+    );
   }
 
   @override
@@ -64,7 +67,7 @@ class For extends Statement {
     Expression? iterable,
     List<Node>? body,
     Expression? test = _expression,
-    List<Node>? falseValue,
+    List<Node>? orElse,
     bool? recursive,
   }) {
     return For(
@@ -72,7 +75,7 @@ class For extends Statement {
       iterable: iterable ?? this.iterable,
       body: body ?? this.body,
       test: test == _expression ? this.test : test,
-      orElse: falseValue ?? this.orElse,
+      orElse: orElse ?? this.orElse,
       recursive: recursive ?? this.recursive,
     );
   }
@@ -121,12 +124,12 @@ class If extends Statement {
   If copyWith({
     Expression? test,
     List<Node>? body,
-    List<Node>? falseValue,
+    List<Node>? orElse,
   }) {
     return If(
       test: test ?? this.test,
       body: body ?? this.body,
-      orElse: falseValue ?? this.orElse,
+      orElse: orElse ?? this.orElse,
     );
   }
 
@@ -383,9 +386,9 @@ class Include extends Statement implements ImportContext {
 }
 
 class Do extends Statement {
-  Do({required this.expression});
+  Do({required this.value});
 
-  final Expression expression;
+  final Expression value;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -393,15 +396,15 @@ class Do extends Statement {
   }
 
   @override
-  Do copyWith({Expression? expression}) {
+  Do copyWith({Expression? value}) {
     return Do(
-      expression: expression ?? this.expression,
+      value: value ?? this.value,
     );
   }
 
   @override
   String toString() {
-    return 'Do ($expression)';
+    return 'Do ($value)';
   }
 }
 
@@ -418,10 +421,10 @@ class Assign extends Statement {
   }
 
   @override
-  Assign copyWith({Expression? target, Expression? expression}) {
+  Assign copyWith({Expression? target, Expression? value}) {
     return Assign(
       target: target ?? this.target,
-      value: expression ?? this.value,
+      value: value ?? this.value,
     );
   }
 
@@ -488,11 +491,11 @@ class AutoEscape extends Statement {
 
   @override
   AutoEscape copyWith({
-    Expression? expression,
+    Expression? value,
     List<Node>? body,
   }) {
     return AutoEscape(
-      value: expression ?? this.value,
+      value: value ?? this.value,
       body: body ?? this.body,
     );
   }

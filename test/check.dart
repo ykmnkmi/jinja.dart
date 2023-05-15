@@ -32,7 +32,7 @@ void main() {
 
     print('\nmodified body:');
 
-    for (var node in template.body.nodes) {
+    for (var node in template.body.body) {
       print(node);
     }
 
