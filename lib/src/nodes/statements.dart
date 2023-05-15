@@ -9,9 +9,11 @@ abstract class Statement extends Node {
 }
 
 class Extends extends Statement {
-  const Extends({required this.path});
+  const Extends({required this.path, this.blocks = const <Block>[]});
 
   final String path;
+
+  final List<Block> blocks;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -50,17 +52,6 @@ class For extends Statement {
   final List<Node> orElse;
 
   final bool recursive;
-
-  @override
-  List<Node> get children {
-    return <Node>[
-      target,
-      iterable,
-      ...body,
-      if (test != null) test!,
-      ...orElse,
-    ];
-  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -120,11 +111,6 @@ class If extends Statement {
   final List<Node> body;
 
   final List<Node> orElse;
-
-  @override
-  List<Node> get children {
-    return <Node>[test, ...body, ...orElse];
-  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -260,11 +246,6 @@ class FilterBlock extends Statement {
   final List<Node> body;
 
   @override
-  List<Node> get children {
-    return <Node>[...filters, ...body];
-  }
-
-  @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitFilterBlock(this, context);
   }
@@ -295,11 +276,6 @@ class With extends Statement {
   final List<Expression> values;
 
   final List<Node> body;
-
-  @override
-  List<Node> get children {
-    return <Node>[...targets, ...values, ...body];
-  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -340,11 +316,6 @@ class Block extends Statement {
   final bool required;
 
   final List<Node> body;
-
-  @override
-  List<Node> get children {
-    return body;
-  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -417,11 +388,6 @@ class Do extends Statement {
   final Expression expression;
 
   @override
-  List<Node> get children {
-    return <Node>[expression];
-  }
-
-  @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitDo(this, context);
   }
@@ -447,20 +413,15 @@ class Assign extends Statement {
   final Expression value;
 
   @override
-  List<Node> get children {
-    return <Node>[target, value];
-  }
-
-  @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitAssign(this, context);
   }
 
   @override
-  Assign copyWith({Expression? target, Expression? value}) {
+  Assign copyWith({Expression? target, Expression? expression}) {
     return Assign(
       target: target ?? this.target,
-      value: value ?? this.value,
+      value: expression ?? this.value,
     );
   }
 
@@ -482,11 +443,6 @@ class AssignBlock extends Statement {
   final List<Filter> filters;
 
   final List<Node> body;
-
-  @override
-  List<Node> get children {
-    return <Node>[target, ...filters, ...body];
-  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -526,22 +482,17 @@ class AutoEscape extends Statement {
   final List<Node> body;
 
   @override
-  List<Node> get children {
-    return <Node>[value, ...body];
-  }
-
-  @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitAutoEscape(this, context);
   }
 
   @override
   AutoEscape copyWith({
-    Expression? value,
+    Expression? expression,
     List<Node>? body,
   }) {
     return AutoEscape(
-      value: value ?? this.value,
+      value: expression ?? this.value,
       body: body ?? this.body,
     );
   }

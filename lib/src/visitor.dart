@@ -68,9 +68,11 @@ abstract class Visitor<C, R> {
 
   R visitInclude(Include node, C context);
 
+  R visitInterpolation(Interpolation node, C context);
+
   R visitMacro(Macro node, C context);
 
-  R visitTemplateNode(TemplateNode node, C context);
+  R visitOutput(Output node, C context);
 
   R visitWith(With node, C context);
 }
@@ -233,12 +235,17 @@ class ThrowingVisitor<C, R> implements Visitor<C, R> {
   }
 
   @override
+  R visitInterpolation(Interpolation node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  @override
   R visitMacro(Macro node, C context) {
     throw UnimplementedError('$node');
   }
 
   @override
-  R visitTemplateNode(TemplateNode node, C context) {
+  R visitOutput(Output node, C context) {
     throw UnimplementedError('$node');
   }
 

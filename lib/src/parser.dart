@@ -1159,7 +1159,13 @@ class Parser {
 
   List<Node> scan(List<Token> tokens) {
     var reader = TokenReader(tokens);
-    return subParse(reader);
+    var nodes = subParse(reader);
+
+    if (extendsNode case var extendsNode?) {
+      nodes = <Node>[extendsNode];
+    }
+
+    return nodes;
   }
 
   List<Node> subParse(TokenReader reader, {List<String>? endTokens}) {
@@ -1183,7 +1189,7 @@ class Parser {
           case 'variable_start':
             reader.next();
 
-            nodes.add(parseTuple(reader));
+            nodes.add(Interpolation(expression: parseTuple(reader)));
 
             reader.expect('variable_end');
             break;
@@ -1219,10 +1225,8 @@ class Parser {
     return nodes;
   }
 
-  Node parse(String template) {
+  List<Node> parse(String template) {
     var tokens = environment.lex(template, path: path);
-    var body = scan(tokens);
-    body = extendsNode == null ? body : <Node>[extendsNode!];
-    return TemplateNode(blocks: blocks, body: body);
+    return scan(tokens);
   }
 }

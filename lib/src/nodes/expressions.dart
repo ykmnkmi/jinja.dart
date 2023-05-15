@@ -42,17 +42,6 @@ class Name extends Expression implements Assignable {
   }
 
   @override
-  Object? resolve(Context context) {
-    switch (this.context) {
-      case AssignContext.load:
-        return context.resolve(name);
-      case AssignContext.store:
-      case AssignContext.parameter:
-        return name;
-    }
-  }
-
-  @override
   Name copyWith({String? name, AssignContext? context}) {
     return Name(name: name ?? this.name, context: context ?? this.context);
   }
@@ -77,11 +66,6 @@ class NamespaceRef extends Expression {
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitNamespaceRef(this, context);
-  }
-
-  @override
-  NamespaceValue resolve(Context context) {
-    return NamespaceValue(name, attribute);
   }
 
   @override
@@ -113,13 +97,8 @@ class Constant extends Literal {
   }
 
   @override
-  Object? resolve(Context context) {
-    return value;
-  }
-
-  @override
-  Constant copyWith({Object? value = _object}) {
-    return Constant(value: value == _object ? this.value : value);
+  Constant copyWith({Object? expression = _object}) {
+    return Constant(value: expression == _object ? this.value : expression);
   }
 
   @override
@@ -151,15 +130,6 @@ class Tuple extends Literal implements Assignable {
   }
 
   @override
-  List<Object?> resolve(Context context) {
-    Object? generator(int index) {
-      return values[index].resolve(context);
-    }
-
-    return List<Object?>.generate(values.length, generator);
-  }
-
-  @override
   Tuple copyWith({List<Expression>? values, AssignContext? context}) {
     return Tuple(
       values: values ?? this.values,
@@ -181,15 +151,6 @@ class Array extends Literal {
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitArray(this, context);
-  }
-
-  @override
-  List<Object?> resolve(Context context) {
-    Object? generator(int index) {
-      return values[index].resolve(context);
-    }
-
-    return List<Object?>.generate(values.length, generator);
   }
 
   @override
@@ -216,16 +177,6 @@ class Dict extends Literal {
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitDict(this, context);
-  }
-
-  @override
-  Map<Object?, Object?> resolve(Context context) {
-    MapEntry<Object?, Object?> toElement(Pair pair) {
-      return pair.resolve(context);
-    }
-
-    var entries = pairs.map<MapEntry<Object?, Object?>>(toElement);
-    return Map<Object?, Object?>.fromEntries(entries);
   }
 
   @override
@@ -258,23 +209,14 @@ class Condition extends Expression {
   }
 
   @override
-  Object? resolve(Context context) {
-    if (boolean(test.resolve(context))) {
-      return trueValue.resolve(context);
-    }
-
-    return falseValue?.resolve(context);
-  }
-
-  @override
   Condition copyWith({
     Expression? test,
-    Expression? value,
+    Expression? trueValue,
     Expression? falseValue = _expression,
   }) {
     return Condition(
       test: test ?? this.test,
-      trueValue: value ?? this.trueValue,
+      trueValue: trueValue ?? this.trueValue,
       falseValue: falseValue == _expression ? this.falseValue : falseValue,
     );
   }
@@ -342,17 +284,6 @@ class Call extends Expression {
   }
 
   @override
-  Object? resolve(Context context) {
-    var function = expression.resolve(context);
-
-    Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
-      return context(function, positional, named);
-    }
-
-    return apply<Object?>(context, callback);
-  }
-
-  @override
   Call copyWith({Expression? expression, Calling? calling}) {
     return Call(
       expression: expression ?? this.expression,
@@ -382,15 +313,6 @@ class Filter extends Expression {
   }
 
   @override
-  Object? resolve(Context context) {
-    Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
-      return context.filter(name, positional, named);
-    }
-
-    return apply(context, callback);
-  }
-
-  @override
   Filter copyWith({String? name, Calling? calling}) {
     return Filter(name: name ?? this.name, calling: calling ?? this.calling);
   }
@@ -417,15 +339,6 @@ class Test extends Expression {
   }
 
   @override
-  bool resolve(Context context) {
-    bool callback(List<Object?> positional, Map<Symbol, Object?> named) {
-      return context.test(name, positional, named);
-    }
-
-    return apply<bool>(context, callback);
-  }
-
-  @override
   Test copyWith({String? name, Calling? calling}) {
     return Test(name: name ?? this.name, calling: calling ?? this.calling);
   }
@@ -449,15 +362,8 @@ class Item extends Expression {
   }
 
   @override
-  Object? resolve(Context context) {
-    var key = this.key.resolve(context);
-    var value = this.value.resolve(context);
-    return context.environment.getItem(value, key);
-  }
-
-  @override
-  Item copyWith({Expression? key, Expression? value}) {
-    return Item(key: key ?? this.key, value: value ?? this.value);
+  Item copyWith({Expression? key, Expression? expression}) {
+    return Item(key: key ?? this.key, value: expression ?? this.value);
   }
 
   @override
@@ -479,16 +385,10 @@ class Attribute extends Expression {
   }
 
   @override
-  Object? resolve(Context context) {
-    var value = this.value.resolve(context);
-    return context.environment.getAttribute(value, attribute);
-  }
-
-  @override
-  Attribute copyWith({String? attribute, Expression? value}) {
+  Attribute copyWith({String? attribute, Expression? expression}) {
     return Attribute(
       attribute: attribute ?? this.attribute,
-      value: value ?? this.value,
+      value: expression ?? this.value,
     );
   }
 
@@ -506,17 +406,6 @@ class Concat extends Expression {
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitConcat(this, context);
-  }
-
-  @override
-  String resolve(Context context) {
-    var buffer = StringBuffer();
-
-    for (var expression in values) {
-      buffer.write(expression.resolve(context));
-    }
-
-    return buffer.toString();
   }
 
   @override
@@ -580,19 +469,6 @@ class Compare extends Binary<CompareOperator> {
   }
 
   @override
-  Object? resolve(Context context) {
-    var temp = value.resolve(context);
-
-    for (var operand in operands) {
-      if (!calc(operand.operator, temp, temp = operand.resolve(context))) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  @override
   Compare copyWith({
     CompareOperator? operator,
     Expression? left,
@@ -627,11 +503,6 @@ class Unary extends Expression {
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitUnary(this, context);
-  }
-
-  @override
-  Object? resolve(Context context) {
-    return calc(operator, expression.resolve(context));
   }
 
   @override
@@ -688,13 +559,6 @@ class Scalar extends Binary<ScalarOperator> {
   }
 
   @override
-  Object? resolve(Context context) {
-    var left = this.left.resolve(context);
-    var right = this.right.resolve(context);
-    return calc(operator, left, right);
-  }
-
-  @override
   Scalar copyWith({
     ScalarOperator? operator,
     Expression? left,
@@ -728,19 +592,6 @@ class Logical extends Binary<LogicalOperator> {
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitLogical(this, context);
-  }
-
-  @override
-  Object? resolve(Context context) {
-    var left = this.left.resolve(context);
-
-    switch (operator) {
-      case LogicalOperator.or:
-        return boolean(left) ? left : right.resolve(context);
-
-      case LogicalOperator.and:
-        return boolean(left) ? right.resolve(context) : left;
-    }
   }
 
   @override

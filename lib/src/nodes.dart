@@ -1,6 +1,3 @@
-import 'package:jinja/src/context.dart';
-import 'package:jinja/src/namespace.dart';
-import 'package:jinja/src/utils.dart';
 import 'package:jinja/src/visitor.dart';
 
 part 'nodes/expressions.dart';
@@ -49,23 +46,34 @@ class Data extends Node {
   }
 }
 
-class TemplateNode extends Node {
-  TemplateNode({this.blocks = const <Block>[], required this.body});
+class Interpolation extends Node {
+  const Interpolation({required this.expression});
 
-  final List<Block> blocks;
-
-  final List<Node> body;
+  final Expression expression;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitTemplateNode(this, context);
+    return visitor.visitInterpolation(this, context);
   }
 
   @override
-  TemplateNode copyWith({List<Block>? blocks, List<Node>? body}) {
-    return TemplateNode(
-      blocks: blocks ?? this.blocks,
-      body: body ?? this.body,
-    );
+  Interpolation copyWith({Expression? expression}) {
+    return Interpolation(expression: expression ?? this.expression);
+  }
+}
+
+class Output extends Node {
+  const Output({this.nodes = const <Node>[]});
+
+  final List<Node> nodes;
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitOutput(this, context);
+  }
+
+  @override
+  Output copyWith({List<Node>? nodes}) {
+    return Output(nodes: nodes ?? this.nodes);
   }
 }

@@ -28,11 +28,11 @@ void main() {
       print(node);
     }
 
-    var template = Template.fromNodes(environment, nodes);
+    var template = Template.fromNode(environment, body: nodes);
 
     print('\nmodified body:');
 
-    for (var node in template.body) {
+    for (var node in template.body.nodes) {
       print(node);
     }
 

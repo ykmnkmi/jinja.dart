@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:jinja/src/context.dart';
-import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/tests.dart';
 import 'package:jinja/src/utils.dart';
@@ -43,7 +42,7 @@ class Optimizer implements Visitor<Context, Node> {
       return Constant(value: valueAttribute);
     }
 
-    return node.copyWith(value: value);
+    return node.copyWith(expression: value);
   }
 
   @override
@@ -165,7 +164,11 @@ class Optimizer implements Visitor<Context, Node> {
       }
     }
 
-    return node.copyWith(test: test, value: trueValue, falseValue: falseValue);
+    return node.copyWith(
+      test: test,
+      trueValue: trueValue,
+      falseValue: falseValue,
+    );
   }
 
   @override
@@ -211,7 +214,7 @@ class Optimizer implements Visitor<Context, Node> {
       return Constant(value: context.item(value.value, key.value));
     }
 
-    return node.copyWith(key: key, value: value);
+    return node.copyWith(key: key, expression: value);
   }
 
   @override
@@ -438,6 +441,12 @@ class Optimizer implements Visitor<Context, Node> {
   }
 
   @override
+  Node visitInterpolation(Interpolation node, Context context) {
+    var value = visitExpression(node.expression, context);
+    return node.copyWith(expression: value);
+  }
+
+  @override
   Macro visitMacro(Macro node, Context context) {
     var arguments = visitNodes(node.arguments, context) as List<Expression>;
     var defaults = visitNodes(node.defaults, context) as List<Expression>;
@@ -452,16 +461,10 @@ class Optimizer implements Visitor<Context, Node> {
   }
 
   @override
-  Node visitTemplate(Template node, Context context) {
+  Node visitOutput(Output node, Context context) {
     var blocks = visitNodes(node.blocks, context) as List<Block>;
-    var body = visitNodes(node.body, context);
-
-    return Template.parsed(
-      environment: node.environment,
-      path: node.path,
-      blocks: blocks,
-      body: body,
-    );
+    var body = visitNodes(node.nodes, context);
+    return Output(blocks: blocks, nodes: body);
   }
 
   @override

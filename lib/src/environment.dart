@@ -348,7 +348,8 @@ class Environment {
 
   /// Load a template from a source string without using [loader].
   Template fromString(String source, {String? path}) {
-    var body = Parser(this, path: path).parse(source);
+    var nodes = Parser(this, path: path).parse(source);
+    var body = Output(nodes: nodes);
 
     for (var modifier in modifiers) {
       modifier(body);
@@ -358,7 +359,7 @@ class Environment {
       body.accept(const Optimizer(), Context(this));
     }
 
-    return Template.fromTemplateNode(this, body: body);
+    return Template.fromNode(this, body: body);
   }
 
   /// Load a template by name with `loader` and return a [Template].
@@ -500,11 +501,7 @@ class Template {
     return environment.fromString(source, path: path);
   }
 
-  Template.fromTemplateNode(
-    this.environment, {
-    this.path,
-    required this.body,
-  });
+  Template.fromNode(this.environment, {this.path, required this.body});
 
   /// The environment used to parse and render template.
   final Environment environment;
@@ -513,7 +510,7 @@ class Template {
   final String? path;
 
   /// Template body node.
-  final Node body;
+  final Output body;
 
   /// If no arguments are given the context will be empty.
   String render([Map<String, Object?>? data]) {
