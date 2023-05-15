@@ -73,7 +73,7 @@ class For extends Statement {
     Expression? iterable,
     List<Node>? body,
     Expression? test = _expression,
-    List<Node>? orElse,
+    List<Node>? falseValue,
     bool? recursive,
   }) {
     return For(
@@ -81,7 +81,7 @@ class For extends Statement {
       iterable: iterable ?? this.iterable,
       body: body ?? this.body,
       test: test == _expression ? this.test : test,
-      orElse: orElse ?? this.orElse,
+      orElse: falseValue ?? this.orElse,
       recursive: recursive ?? this.recursive,
     );
   }
@@ -135,12 +135,12 @@ class If extends Statement {
   If copyWith({
     Expression? test,
     List<Node>? body,
-    List<Node>? orElse,
+    List<Node>? falseValue,
   }) {
     return If(
       test: test ?? this.test,
       body: body ?? this.body,
-      orElse: orElse ?? this.orElse,
+      orElse: falseValue ?? this.orElse,
     );
   }
 

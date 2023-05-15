@@ -1,5 +1,4 @@
 import 'package:jinja/src/context.dart';
-import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/nodes.dart';
 
 abstract class Visitor<C, R> {
@@ -29,15 +28,11 @@ abstract class Visitor<C, R> {
 
   R visitItem(Item node, C context);
 
-  R visitKeyword(Keyword node, C context);
-
   R visitLogical(Logical node, C context);
 
   R visitName(Name node, C context);
 
   R visitNamespaceRef(NamespaceRef node, C context);
-
-  R visitPair(Pair node, C context);
 
   R visitScalar(Scalar node, C context);
 
@@ -63,8 +58,6 @@ abstract class Visitor<C, R> {
 
   R visitDo(Do node, C context);
 
-  R visitExpression(Expression node, C context);
-
   R visitExtends(Extends node, C context);
 
   R visitFilterBlock(FilterBlock node, C context);
@@ -77,7 +70,7 @@ abstract class Visitor<C, R> {
 
   R visitMacro(Macro node, C context);
 
-  R visitTemplate(Template node, C context);
+  R visitTemplateNode(TemplateNode node, C context);
 
   R visitWith(With node, C context);
 }
@@ -148,11 +141,6 @@ class ThrowingVisitor<C, R> implements Visitor<C, R> {
   }
 
   @override
-  R visitKeyword(Keyword node, C context) {
-    throw UnimplementedError('$node');
-  }
-
-  @override
   R visitLogical(Logical node, C context) {
     throw UnimplementedError('$node');
   }
@@ -164,11 +152,6 @@ class ThrowingVisitor<C, R> implements Visitor<C, R> {
 
   @override
   R visitNamespaceRef(NamespaceRef node, C context) {
-    throw UnimplementedError('$node');
-  }
-
-  @override
-  R visitPair(Pair node, C context) {
     throw UnimplementedError('$node');
   }
 
@@ -225,11 +208,6 @@ class ThrowingVisitor<C, R> implements Visitor<C, R> {
   }
 
   @override
-  R visitExpression(Expression node, C context) {
-    throw UnimplementedError('$node');
-  }
-
-  @override
   R visitExtends(Extends node, C context) {
     throw UnimplementedError('$node');
   }
@@ -260,7 +238,7 @@ class ThrowingVisitor<C, R> implements Visitor<C, R> {
   }
 
   @override
-  R visitTemplate(Template node, C context) {
+  R visitTemplateNode(TemplateNode node, C context) {
     throw UnimplementedError('$node');
   }
 

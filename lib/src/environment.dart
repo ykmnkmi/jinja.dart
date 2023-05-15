@@ -11,7 +11,6 @@ import 'package:jinja/src/optimizer.dart';
 import 'package:jinja/src/parser.dart';
 import 'package:jinja/src/renderer.dart';
 import 'package:jinja/src/utils.dart';
-import 'package:jinja/src/visitor.dart';
 import 'package:meta/meta.dart';
 
 /// {@template finalizer}
@@ -349,17 +348,17 @@ class Environment {
 
   /// Load a template from a source string without using [loader].
   Template fromString(String source, {String? path}) {
-    var template = Parser(this, path: path).parse(source);
+    var body = Parser(this, path: path).parse(source);
 
     for (var modifier in modifiers) {
-      modifier(template);
+      modifier(body);
     }
 
     if (optimize) {
-      template.accept(const Optimizer(), Context(this));
+      body.accept(const Optimizer(), Context(this));
     }
 
-    return template;
+    return Template.fromTemplateNode(this, body: body);
   }
 
   /// Load a template by name with `loader` and return a [Template].
@@ -443,7 +442,7 @@ class Environment {
 /// {@template template}
 /// The base `Template` class.
 /// {@endtemplate}
-class Template extends Node {
+class Template {
   /// {@macro template}
   factory Template(
     String source, {
@@ -501,48 +500,9 @@ class Template extends Node {
     return environment.fromString(source, path: path);
   }
 
-  factory Template.fromNodes(
-    Environment environment,
-    List<Node> nodes, {
-    String? path,
-  }) {
-    List<Node> body;
-    List<Block> blocks;
-
-    if (nodes.isEmpty) {
-      body = <Node>[];
-      blocks = const <Block>[];
-    } else if (nodes.first is Extends) {
-      body = nodes;
-      blocks = const <Block>[];
-    } else {
-      body = nodes;
-      blocks = <Block>[for (var node in nodes) ...node.findAll<Block>()];
-    }
-
-    var template = Template.parsed(
-      environment: environment,
-      path: path,
-      blocks: blocks,
-      body: body,
-    );
-
-    for (var modifier in environment.modifiers) {
-      modifier(template);
-    }
-
-    if (environment.optimize) {
-      template.accept(const Optimizer(), Context(environment));
-    }
-
-    return template;
-  }
-
-  @internal
-  const Template.parsed({
-    required this.environment,
+  Template.fromTemplateNode(
+    this.environment, {
     this.path,
-    this.blocks = const <Block>[],
     required this.body,
   });
 
@@ -552,21 +512,8 @@ class Template extends Node {
   /// The path to the template if it was loaded.
   final String? path;
 
-  /// Template blocks.
-  final List<Block> blocks;
-
   /// Template body node.
-  final List<Node> body;
-
-  @override
-  List<Node> get children {
-    return body;
-  }
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitTemplate(this, context);
-  }
+  final Node body;
 
   /// If no arguments are given the context will be empty.
   String render([Map<String, Object?>? data]) {
@@ -578,17 +525,6 @@ class Template extends Node {
   /// If no arguments are given the context will be empty.
   void renderTo(StringSink sink, [Map<String, Object?>? data]) {
     var context = StringSinkRenderContext(environment, sink, data: data);
-    accept(const StringSinkRenderer(), context);
-  }
-
-  @override
-  Template copyWith({
-    Environment? environment,
-    String? path,
-    List<Block>? blocks,
-    List<Node>? body,
-  }) {
-    // TODO(template): add error message
-    throw UnsupportedError('');
+    body.accept(const StringSinkRenderer(), context);
   }
 }

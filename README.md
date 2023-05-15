@@ -16,13 +16,13 @@ _work in progress_.
 
 ## Differences with Python version
 - `BigInt` and complex numbers are not supported.
-- The `default` filter compares values with `null`, no `boolean` parameter.
-- The `defined` and `undefined` tests compares values with `null`.
-- The `map` filter compares values with `null`.
+- The `default` filter compares values with `null`; there is no `boolean` parameter.
+- The `defined` and `undefined` tests compare values with `null`.
+- The `map` filter also compares values with `null`.
   Use `attribute` for fields and `item` for items.
-  Nested attributes and items are not supported.
-- If  `Environment({getAttribute})` is not passed, `getItem` will be used.
-  This allows you to use `{{ map.key }}` as `{{ map['key'] }}` expression.
+  Support for nested attributes and items is not available.
+- If `Environment({getAttribute})` is not passed, `getItem` will be used.
+  This allows you to use `{{ map.key }}` as an expression equivalent to `{{ map['key'] }}`.
 - _work in progress_
 
 ## Dynamically invoked members

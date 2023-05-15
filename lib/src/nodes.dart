@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:jinja/src/context.dart';
 import 'package:jinja/src/namespace.dart';
 import 'package:jinja/src/utils.dart';
@@ -13,28 +11,9 @@ typedef NodeVisitor = void Function(Node node);
 abstract class Node {
   const Node();
 
-  List<Node> get children {
-    return const <Node>[];
-  }
-
   R accept<C, R>(Visitor<C, R> visitor, C context);
 
   Node copyWith();
-
-  T find<T extends Node>() {
-    var all = findAll<T>();
-    return all.first;
-  }
-
-  Iterable<T> findAll<T extends Node>() sync* {
-    for (var child in children) {
-      if (child is T) {
-        yield child;
-      }
-
-      yield* child.findAll<T>();
-    }
-  }
 }
 
 class Data extends Node {
@@ -67,5 +46,26 @@ class Data extends Node {
   @override
   String toString() {
     return 'Data $literal';
+  }
+}
+
+class TemplateNode extends Node {
+  TemplateNode({this.blocks = const <Block>[], required this.body});
+
+  final List<Block> blocks;
+
+  final List<Node> body;
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitTemplateNode(this, context);
+  }
+
+  @override
+  TemplateNode copyWith({List<Block>? blocks, List<Node>? body}) {
+    return TemplateNode(
+      blocks: blocks ?? this.blocks,
+      body: body ?? this.body,
+    );
   }
 }

@@ -1,17 +1,11 @@
 part of '../nodes.dart';
 
-class Impossible implements Exception {}
-
 const Object _object = Object();
 
 const Constant _expression = Constant(value: _object);
 
 abstract class Expression extends Node {
   const Expression();
-
-  Object? resolve(Context context) {
-    return null;
-  }
 }
 
 enum AssignContext {
@@ -45,11 +39,6 @@ class Name extends Expression implements Assignable {
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitName(this, context);
-  }
-
-  @override
-  Object? asConst(Context context) {
-    throw Impossible();
   }
 
   @override
@@ -124,11 +113,6 @@ class Constant extends Literal {
   }
 
   @override
-  Object? asConst(Context context) {
-    return value;
-  }
-
-  @override
   Object? resolve(Context context) {
     return value;
   }
@@ -162,22 +146,8 @@ class Tuple extends Literal implements Assignable {
   }
 
   @override
-  List<Node> get children {
-    return values;
-  }
-
-  @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitTuple(this, context);
-  }
-
-  @override
-  List<Object?> asConst(Context context) {
-    Object? generator(int index) {
-      return values[index].asConst(context);
-    }
-
-    return List<Object?>.generate(values.length, generator);
   }
 
   @override
@@ -209,22 +179,8 @@ class Array extends Literal {
   final List<Expression> values;
 
   @override
-  List<Node> get children {
-    return values;
-  }
-
-  @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitArray(this, context);
-  }
-
-  @override
-  List<Object?> asConst(Context context) {
-    Object? generator(int index) {
-      return values[index].asConst(context);
-    }
-
-    return List<Object?>.generate(values.length, generator);
   }
 
   @override
@@ -247,49 +203,10 @@ class Array extends Literal {
   }
 }
 
-class Pair extends Expression {
-  const Pair({required this.key, required this.value});
-
-  final Expression key;
-
-  final Expression value;
-
-  @override
-  List<Node> get children {
-    return <Node>[key, value];
-  }
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitPair(this, context);
-  }
-
-  @override
-  MapEntry<Object?, Object?> asConst(Context context) {
-    return MapEntry<Object?, Object?>(
-      key.asConst(context),
-      value.asConst(context),
-    );
-  }
-
-  @override
-  MapEntry<Object?, Object?> resolve(Context context) {
-    return MapEntry<Object?, Object?>(
-      key.resolve(context),
-      value.resolve(context),
-    );
-  }
-
-  @override
-  Pair copyWith({Expression? key, Expression? value}) {
-    return Pair(key: key ?? this.key, value: value ?? this.value);
-  }
-
-  @override
-  String toString() {
-    return 'Pair($key, $value)';
-  }
-}
+typedef Pair = ({
+  Expression key,
+  Expression value,
+});
 
 class Dict extends Literal {
   const Dict({required this.pairs});
@@ -297,23 +214,8 @@ class Dict extends Literal {
   final List<Pair> pairs;
 
   @override
-  List<Node> get children {
-    return pairs;
-  }
-
-  @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitDict(this, context);
-  }
-
-  @override
-  Map<Object?, Object?> asConst(Context context) {
-    MapEntry<Object?, Object?> toElement(Pair pair) {
-      return pair.asConst(context);
-    }
-
-    var entries = pairs.map<MapEntry<Object?, Object?>>(toElement);
-    return Map<Object?, Object?>.fromEntries(entries);
   }
 
   @override
@@ -340,20 +242,15 @@ class Dict extends Literal {
 class Condition extends Expression {
   const Condition({
     required this.test,
-    required this.value,
-    this.orElse,
+    required this.trueValue,
+    this.falseValue,
   });
 
   final Expression test;
 
-  final Expression value;
+  final Expression trueValue;
 
-  final Expression? orElse;
-
-  @override
-  List<Node> get children {
-    return <Node>[test, value, if (orElse != null) orElse!];
-  }
+  final Expression? falseValue;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -361,83 +258,34 @@ class Condition extends Expression {
   }
 
   @override
-  Object? asConst(Context context) {
-    if (boolean(test.asConst(context))) {
-      return value.asConst(context);
-    }
-
-    return orElse?.asConst(context);
-  }
-
-  @override
   Object? resolve(Context context) {
     if (boolean(test.resolve(context))) {
-      return value.resolve(context);
+      return trueValue.resolve(context);
     }
 
-    return orElse?.resolve(context);
+    return falseValue?.resolve(context);
   }
 
   @override
   Condition copyWith({
     Expression? test,
     Expression? value,
-    Expression? orElse = _expression,
+    Expression? falseValue = _expression,
   }) {
     return Condition(
       test: test ?? this.test,
-      value: value ?? this.value,
-      orElse: orElse == _expression ? this.orElse : orElse,
+      trueValue: value ?? this.trueValue,
+      falseValue: falseValue == _expression ? this.falseValue : falseValue,
     );
   }
 
   @override
   String toString() {
-    return 'Condition($test, $value, $orElse)';
+    return 'Condition($test, $trueValue, $falseValue)';
   }
 }
 
-class Keyword extends Expression {
-  const Keyword({required this.key, required this.value});
-
-  final String key;
-
-  final Expression value;
-
-  @override
-  List<Node> get children {
-    return <Node>[value];
-  }
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitKeyword(this, context);
-  }
-
-  @override
-  Object? asConst(Context context) {
-    return value.asConst(context);
-  }
-
-  @override
-  Object? resolve(Context context) {
-    return value.resolve(context);
-  }
-
-  @override
-  Keyword copyWith({String? key, Expression? value}) {
-    return Keyword(key: key ?? this.key, value: value ?? this.value);
-  }
-
-  Pair toPair() {
-    return Pair(key: Constant(value: key), value: value);
-  }
-
-  @override
-  String toString() {
-    return 'Keyword($key, $value)';
-  }
-}
+typedef Keyword = ({String key, Expression value});
 
 typedef Parameters = (List<Object?>, Map<Symbol, Object?>);
 
@@ -478,52 +326,6 @@ class Calling extends Expression {
   }
 }
 
-abstract class Callable extends Expression {
-  T apply<T extends Object?>(Context context, Callback<T> callback) {
-    List<Object?> positional;
-
-    if (arguments.isEmpty) {
-      positional = <Object?>[];
-    } else {
-      Object? generator(int index) {
-        return arguments[index].resolve(context);
-      }
-
-      positional = List<Object?>.generate(arguments.length, generator);
-    }
-
-    var named = <Symbol, Object?>{};
-
-    for (var keyword in keywords) {
-      named[Symbol(keyword.key)] = keyword.resolve(context);
-    }
-
-    var dArguments = this.dArguments;
-
-    if (dArguments != null) {
-      positional.addAll(dArguments.resolve(context) as Iterable<Object?>);
-    }
-
-    var dKeywords = this.dKeywords;
-
-    if (dKeywords != null) {
-      var resolvedKeywords = dKeywords.resolve(context);
-
-      if (resolvedKeywords is! Map) {
-        throw TypeError();
-      }
-
-      void action(String key, Object? value) {
-        named[Symbol(key)] = value;
-      }
-
-      resolvedKeywords.cast<String, Object?>().forEach(action);
-    }
-
-    return callback(positional, named);
-  }
-}
-
 class Call extends Expression {
   const Call({
     required this.expression,
@@ -533,11 +335,6 @@ class Call extends Expression {
   final Expression expression;
 
   final Calling calling;
-
-  @override
-  List<Node> get children {
-    return <Node>[expression, calling];
-  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -569,25 +366,19 @@ class Call extends Expression {
   }
 }
 
-class Filter extends Callable {
+class Filter extends Expression {
   const Filter({
     required this.name,
-    super.arguments,
-    super.keywords,
-    super.dArguments,
-    super.dKeywords,
+    this.calling = const Calling(),
   });
 
   final String name;
 
+  final Calling calling;
+
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitFilter(this, context);
-  }
-
-  @override
-  Object? asConst(Context context) {
-    throw Impossible();
   }
 
   @override
@@ -600,20 +391,8 @@ class Filter extends Callable {
   }
 
   @override
-  Filter copyWith({
-    String? name,
-    List<Expression>? arguments,
-    List<Keyword>? keywords,
-    Expression? dArguments,
-    Expression? dKeywords,
-  }) {
-    return Filter(
-      name: name ?? this.name,
-      arguments: arguments ?? this.arguments,
-      keywords: keywords ?? this.keywords,
-      dArguments: dArguments ?? this.dArguments,
-      dKeywords: dKeywords ?? this.dKeywords,
-    );
+  Filter copyWith({String? name, Calling? calling}) {
+    return Filter(name: name ?? this.name, calling: calling ?? this.calling);
   }
 
   @override
@@ -622,33 +401,19 @@ class Filter extends Callable {
   }
 }
 
-class Test extends Callable {
+class Test extends Expression {
   const Test({
     required this.name,
-    super.arguments,
-    super.keywords,
-    super.dArguments,
-    super.dKeywords,
+    this.calling = const Calling(),
   });
 
   final String name;
 
+  final Calling calling;
+
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitTest(this, context);
-  }
-
-  @override
-  Object? asConst(Context context) {
-    if (context.environment.tests.containsKey(name)) {
-      Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
-        return context.test(name, positional, named);
-      }
-
-      return applyAsConst(context, callback);
-    }
-
-    throw Impossible();
   }
 
   @override
@@ -661,20 +426,8 @@ class Test extends Callable {
   }
 
   @override
-  Test copyWith({
-    String? name,
-    List<Expression>? arguments,
-    List<Keyword>? keywords,
-    Expression? dArguments,
-    Expression? dKeywords,
-  }) {
-    return Test(
-      name: name ?? this.name,
-      arguments: arguments ?? this.arguments,
-      keywords: keywords ?? this.keywords,
-      dArguments: dArguments ?? this.dArguments,
-      dKeywords: dKeywords ?? this.dKeywords,
-    );
+  Test copyWith({String? name, Calling? calling}) {
+    return Test(name: name ?? this.name, calling: calling ?? this.calling);
   }
 
   @override
@@ -691,20 +444,8 @@ class Item extends Expression {
   final Expression value;
 
   @override
-  List<Node> get children {
-    return <Node>[key, value];
-  }
-
-  @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitItem(this, context);
-  }
-
-  @override
-  Object? asConst(Context context) {
-    var key = this.key.asConst(context);
-    var value = this.value.asConst(context);
-    return context.environment.getItem(value, key);
   }
 
   @override
@@ -731,11 +472,6 @@ class Attribute extends Expression {
   final String attribute;
 
   final Expression value;
-
-  @override
-  List<Node> get children {
-    return <Node>[value];
-  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -766,11 +502,6 @@ class Concat extends Expression {
   const Concat({required this.values});
 
   final List<Expression> values;
-
-  @override
-  List<Node> get children {
-    return values;
-  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -809,7 +540,7 @@ enum CompareOperator {
   contains,
   notContains;
 
-  static CompareOperator? tryParse(String operator) {
+  static CompareOperator parse(String operator) {
     switch (operator) {
       case 'eq':
         return CompareOperator.equal;
@@ -828,7 +559,8 @@ enum CompareOperator {
       case 'notin':
         return CompareOperator.notContains;
       default:
-        return null;
+        // TODO(expressions): update error message
+        throw UnsupportedError(operator);
     }
   }
 }
@@ -886,16 +618,11 @@ enum UnaryOperator {
 }
 
 class Unary extends Expression {
-  const Unary({required this.operator, required this.value});
+  const Unary({required this.operator, required this.expression});
 
   final UnaryOperator operator;
 
-  final Expression value;
-
-  @override
-  List<Node> get children {
-    return <Node>[value];
-  }
+  final Expression expression;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -903,44 +630,21 @@ class Unary extends Expression {
   }
 
   @override
-  Object? asConst(Context context) {
-    try {
-      return calc(operator, value.asConst(context));
-    } catch (error) {
-      throw Impossible();
-    }
-  }
-
-  @override
   Object? resolve(Context context) {
-    return calc(operator, value.resolve(context));
+    return calc(operator, expression.resolve(context));
   }
 
   @override
-  Unary copyWith({UnaryOperator? operator, Expression? value}) {
+  Unary copyWith({UnaryOperator? operator, Expression? expression}) {
     return Unary(
       operator: operator ?? this.operator,
-      value: value ?? this.value,
+      expression: expression ?? this.expression,
     );
   }
 
   @override
   String toString() {
-    return 'Unary(${operator.name}, $value)';
-  }
-
-  static Object? calc(UnaryOperator operator, dynamic value) {
-    switch (operator) {
-      case UnaryOperator.plus:
-        // how i should implement this?
-        return value;
-      case UnaryOperator.minus:
-        // TODO: dynamic invocation
-        // ignore: avoid_dynamic_calls
-        return -value;
-      case UnaryOperator.not:
-        return !boolean(value);
-    }
+    return 'Unary(${operator.name}, $expression)';
   }
 }
 
@@ -956,11 +660,6 @@ abstract class Binary<T extends Enum> extends Expression {
   final Expression left;
 
   final Expression right;
-
-  @override
-  List<Node> get children {
-    return <Node>[left, right];
-  }
 
   @override
   Binary<T> copyWith({T? operator, Expression? left, Expression? right});
@@ -989,17 +688,6 @@ class Scalar extends Binary<ScalarOperator> {
   }
 
   @override
-  Object? asConst(Context context) {
-    try {
-      var left = this.left.asConst(context);
-      var right = this.right.asConst(context);
-      return calc(operator, left, right);
-    } catch (error) {
-      throw Impossible();
-    }
-  }
-
-  @override
   Object? resolve(Context context) {
     var left = this.left.resolve(context);
     var right = this.right.resolve(context);
@@ -1023,32 +711,6 @@ class Scalar extends Binary<ScalarOperator> {
   String toString() {
     return 'Binary(${operator.name}, $left, $right)';
   }
-
-  // TODO: dynamic invocation
-  static Object? calc(ScalarOperator operator, dynamic left, dynamic right) {
-    switch (operator) {
-      case ScalarOperator.power:
-        return math.pow(left as num, right as num);
-      case ScalarOperator.module:
-        // ignore: avoid_dynamic_calls
-        return left % right;
-      case ScalarOperator.floorDivision:
-        // ignore: avoid_dynamic_calls
-        return left ~/ right;
-      case ScalarOperator.division:
-        // ignore: avoid_dynamic_calls
-        return left / right;
-      case ScalarOperator.multiple:
-        // ignore: avoid_dynamic_calls
-        return left * right;
-      case ScalarOperator.minus:
-        // ignore: avoid_dynamic_calls
-        return left - right;
-      case ScalarOperator.plus:
-        // ignore: avoid_dynamic_calls
-        return left + right;
-    }
-  }
 }
 
 enum LogicalOperator {
@@ -1066,22 +728,6 @@ class Logical extends Binary<LogicalOperator> {
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitLogical(this, context);
-  }
-
-  @override
-  Object? asConst(Context context) {
-    try {
-      var left = this.left.asConst(context);
-
-      switch (operator) {
-        case LogicalOperator.or:
-          return boolean(left) ? left : right.asConst(context);
-        case LogicalOperator.and:
-          return boolean(left) ? right.asConst(context) : left;
-      }
-    } catch (error) {
-      throw Impossible();
-    }
   }
 
   @override
