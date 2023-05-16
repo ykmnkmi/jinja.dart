@@ -266,11 +266,11 @@ class Calling extends Expression {
 
 class Call extends Expression {
   const Call({
-    required this.expression,
+    required this.value,
     this.calling = const Calling(),
   });
 
-  final Expression expression;
+  final Expression value;
 
   final Calling calling;
 
@@ -282,14 +282,14 @@ class Call extends Expression {
   @override
   Call copyWith({Expression? value, Calling? calling}) {
     return Call(
-      expression: value ?? this.expression,
+      value: value ?? this.value,
       calling: calling ?? this.calling,
     );
   }
 
   @override
   String toString() {
-    return 'Call($expression)';
+    return 'Call($value)';
   }
 }
 

@@ -1,115 +1,308 @@
 import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/visitor.dart';
 
-abstract class RuntimeCompiler<C, R> implements Visitor<C, R> {
+class RuntimeCompiler<C> implements Visitor<C, Node> {
   const RuntimeCompiler();
 
   // Expressions
 
   @override
-  R visitArray(Array node, C context);
+  Array visitArray(Array node, C context) {
+    return node.copyWith(
+      values: <Expression>[
+        for (var value in node.values) value.accept(this, context) as Expression
+      ],
+    );
+  }
 
   @override
-  R visitAttribute(Attribute node, C context);
+  Attribute visitAttribute(Attribute node, C context) {
+    return node.copyWith(value: node.value.accept(this, context) as Expression);
+  }
 
   @override
-  R visitCall(Call node, C context);
+  Call visitCall(Call node, C context) {
+    node = node.copyWith(value: node.value.accept(this, context) as Expression);
+
+    // Modifies Template AST from `namespace(map1, ..., key1=value1, ...)`
+    // to `namespace([map1, ..., {'key1': value1, ...}])`, to match [namespace]
+    // definition.
+    if (node.value case Name(name: var name) when name == 'namespace') {
+      var calling = node.calling;
+
+      var arguments = <Expression>[
+        for (var argument in calling.arguments)
+          argument.accept(this, context) as Expression
+      ];
+
+      if (calling.keywords.isNotEmpty) {
+        var pairs = <Pair>[
+          for (var (:key, :value) in calling.keywords)
+            (
+              key: Constant(value: key),
+              value: value.accept(this, context) as Expression
+            )
+        ];
+
+        arguments.add(Dict(pairs: pairs));
+      }
+
+      if (calling.dArguments case var dArguments?) {
+        arguments.add(dArguments.accept(this, context) as Expression);
+      }
+
+      if (calling.dKeywords case var dKeywords?) {
+        arguments.add(dKeywords.accept(this, context) as Expression);
+      }
+
+      // calling = calling.copyWith(
+      //   arguments: arguments,
+      //   keywords: <Keyword>[],
+      //   dArguments: null,
+      //   dKeywords: null,
+      // );
+
+      calling = Calling(arguments: arguments, keywords: <Keyword>[]);
+      node = node.copyWith(calling: calling);
+    } else {
+      node = node.copyWith(
+        calling: node.calling.accept(this, context) as Calling,
+      );
+    }
+
+    return node;
+  }
 
   @override
-  R visitCalling(Calling node, C context);
+  Calling visitCalling(Calling node, C context) {
+    return node.copyWith(
+      arguments: <Expression>[
+        for (var argument in node.arguments)
+          argument.accept(this, context) as Expression
+      ],
+      keywords: <Keyword>[
+        for (var (:key, :value) in node.keywords)
+          (key: key, value: value.accept(this, context) as Expression)
+      ],
+      dArguments: node.dArguments?.accept(this, context) as Expression?,
+      dKeywords: node.dKeywords?.accept(this, context) as Expression?,
+    );
+  }
 
   @override
-  R visitCompare(Compare node, C context);
+  Compare visitCompare(Compare node, C context) {
+    return node.copyWith(
+      left: node.left.accept(this, context) as Expression,
+      right: node.right.accept(this, context) as Expression,
+    );
+  }
 
   @override
-  R visitConcat(Concat node, C context);
+  Concat visitConcat(Concat node, C context) {
+    return node.copyWith(
+      values: <Expression>[
+        for (var value in node.values) value.accept(this, context) as Expression
+      ],
+    );
+  }
 
   @override
-  R visitCondition(Condition node, C context);
+  Condition visitCondition(Condition node, C context) {
+    return node;
+  }
 
   @override
-  R visitConstant(Constant node, C context);
+  Constant visitConstant(Constant node, C context) {
+    return node;
+  }
 
   @override
-  R visitDict(Dict node, C context);
+  Dict visitDict(Dict node, C context) {
+    return node;
+  }
 
   @override
-  R visitFilter(Filter node, C context);
+  Filter visitFilter(Filter node, C context) {
+    // Modifies Template AST from `map('filter', *args, **kwargs)`
+    // to `map(filter='filter', positional=args, named=kwargs)`
+    // to match [doMap] definition.
+    if (node.name == 'map') {
+      var calling = node.calling;
+
+      var arguments = <Expression>[
+        calling.arguments[0].accept(this, context) as Expression,
+      ];
+
+      var keywords = <Keyword>[];
+
+      var values = <Expression>[];
+      var pairs = <Pair>[];
+
+      if (calling.arguments.length > 1) {
+        keywords.add((
+          key: 'filter',
+          value: calling.arguments[1].accept(this, context) as Expression,
+        ));
+
+        values.addAll([
+          for (var argument in calling.arguments.skip(2))
+            argument.accept(this, context) as Expression
+        ]);
+      }
+
+      for (var (:key, :value) in calling.keywords) {
+        switch (key) {
+          case 'attribute' || 'item' || 'defaultValue':
+            keywords.add((
+              key: key,
+              value: value.accept(this, context) as Expression,
+            ));
+
+            break;
+
+          default:
+            pairs.add((
+              key: Constant(value: key),
+              value: value.accept(this, context) as Expression,
+            ));
+        }
+      }
+
+      keywords
+        ..add((key: 'positional', value: Array(values: values)))
+        ..add((key: 'named', value: Dict(pairs: pairs)));
+
+      calling = calling.copyWith(arguments: arguments, keywords: keywords);
+      node = node.copyWith(calling: calling);
+    }
+
+    return node;
+  }
 
   @override
-  R visitItem(Item node, C context);
+  Item visitItem(Item node, C context) {
+    return node;
+  }
 
   @override
-  R visitLogical(Logical node, C context);
+  Logical visitLogical(Logical node, C context) {
+    return node;
+  }
 
   @override
-  R visitName(Name node, C context);
+  Name visitName(Name node, C context) {
+    return node;
+  }
 
   @override
-  R visitNamespaceRef(NamespaceRef node, C context);
+  NamespaceRef visitNamespaceRef(NamespaceRef node, C context) {
+    return node;
+  }
 
   @override
-  R visitScalar(Scalar node, C context);
+  Scalar visitScalar(Scalar node, C context) {
+    return node;
+  }
 
   @override
-  R visitTest(Test node, C context);
+  Test visitTest(Test node, C context) {
+    return node;
+  }
 
   @override
-  R visitTuple(Tuple node, C context);
+  Tuple visitTuple(Tuple node, C context) {
+    return node;
+  }
 
   @override
-  R visitUnary(Unary node, C context);
+  Unary visitUnary(Unary node, C context) {
+    return node;
+  }
 
   // Statements
 
   @override
-  R visitAssign(Assign node, C context);
+  Assign visitAssign(Assign node, C context) {
+    return node;
+  }
 
   @override
-  R visitAssignBlock(AssignBlock node, C context);
+  AssignBlock visitAssignBlock(AssignBlock node, C context) {
+    return node;
+  }
 
   @override
-  R visitAutoEscape(AutoEscape node, C context);
+  AutoEscape visitAutoEscape(AutoEscape node, C context) {
+    return node;
+  }
 
   @override
-  R visitBlock(Block node, C context);
+  Block visitBlock(Block node, C context) {
+    return node;
+  }
 
   @override
-  R visitCallBlock(CallBlock node, C context);
+  CallBlock visitCallBlock(CallBlock node, C context) {
+    return node;
+  }
 
   @override
-  R visitData(Data node, C context);
+  Data visitData(Data node, C context) {
+    return node;
+  }
 
   @override
-  R visitDo(Do node, C context);
+  Do visitDo(Do node, C context) {
+    return node;
+  }
 
   @override
-  R visitExtends(Extends node, C context);
+  Extends visitExtends(Extends node, C context) {
+    return node;
+  }
 
   @override
-  R visitFilterBlock(FilterBlock node, C context);
+  FilterBlock visitFilterBlock(FilterBlock node, C context) {
+    return node;
+  }
 
   @override
-  R visitFor(For node, C context);
+  For visitFor(For node, C context) {
+    return node;
+  }
 
   @override
-  R visitIf(If node, C context);
+  If visitIf(If node, C context) {
+    return node;
+  }
 
   @override
-  R visitInclude(Include node, C context);
+  Include visitInclude(Include node, C context) {
+    return node;
+  }
 
   @override
-  R visitInterpolation(Interpolation node, C context);
+  Interpolation visitInterpolation(Interpolation node, C context) {
+    return node;
+  }
 
   @override
-  R visitMacro(Macro node, C context);
+  Macro visitMacro(Macro node, C context) {
+    return node;
+  }
 
   @override
-  R visitOutput(Output node, C context);
+  Output visitOutput(Output node, C context) {
+    return node;
+  }
 
   @override
-  R visitTemplateNode(TemplateNode node, C context);
+  TemplateNode visitTemplateNode(TemplateNode node, C context) {
+    return node;
+  }
 
   @override
-  R visitWith(With node, C context);
+  With visitWith(With node, C context) {
+    return node;
+  }
 }

@@ -773,19 +773,15 @@ class Parser {
     switch (current.type) {
       case 'name':
         switch (current.value) {
-          case 'False':
-          case 'false':
+          case 'False' || 'false':
             expression = const Constant(value: false);
             break;
 
-          case 'True':
-          case 'true':
+          case 'True' || 'true':
             expression = const Constant(value: true);
             break;
 
-          case 'None':
-          case 'none':
-          case 'null':
+          case 'None' || 'none' || 'null':
             expression = const Constant(value: null);
             break;
 
@@ -1069,7 +1065,7 @@ class Parser {
 
   Call parseCall(TokenReader reader, Expression expression) {
     var calling = parseCalling(reader);
-    return Call(expression: expression, calling: calling);
+    return Call(value: expression, calling: calling);
   }
 
   Expression parseFilter(TokenReader reader, Expression expression) {
