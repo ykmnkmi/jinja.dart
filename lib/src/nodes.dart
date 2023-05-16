@@ -14,7 +14,7 @@ abstract class Node {
 }
 
 class Data extends Node {
-  const Data([this.data = '']);
+  const Data({this.data = ''});
 
   final String data;
 
@@ -37,7 +37,7 @@ class Data extends Node {
 
   @override
   Data copyWith({String? data}) {
-    return Data(data ?? this.data);
+    return Data(data: data ?? this.data);
   }
 
   @override
@@ -60,12 +60,17 @@ class Interpolation extends Node {
   Interpolation copyWith({Expression? value}) {
     return Interpolation(value: value ?? this.value);
   }
+
+  @override
+  String toString() {
+    return 'Interpolation $value';
+  }
 }
 
 class Output extends Node {
-  const Output({this.body = const <Node>[]});
+  const Output({this.nodes = const <Node>[]});
 
-  final List<Node> body;
+  final List<Node> nodes;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -73,7 +78,35 @@ class Output extends Node {
   }
 
   @override
-  Output copyWith({List<Node>? body}) {
-    return Output(body: body ?? this.body);
+  Output copyWith({List<Node>? nodes}) {
+    return Output(nodes: nodes ?? this.nodes);
+  }
+
+  @override
+  String toString() {
+    return '{ ${nodes.join(', ')} }';
+  }
+}
+
+class TemplateNode extends Node {
+  const TemplateNode({this.blocks = const <Block>[], required this.body});
+
+  final List<Block> blocks;
+
+  final Node body;
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitTemplateNode(this, context);
+  }
+
+  @override
+  TemplateNode copyWith({List<Block>? blocks, Node? body}) {
+    return TemplateNode(blocks: blocks ?? this.blocks, body: body ?? this.body);
+  }
+
+  @override
+  String toString() {
+    return 'TemplateNode $body';
   }
 }

@@ -1,9 +1,5 @@
 part of '../nodes.dart';
 
-const Object _object = Object();
-
-const Constant _expression = Constant(value: _object);
-
 abstract class Expression extends Node {
   const Expression();
 }
@@ -97,8 +93,8 @@ class Constant extends Literal {
   }
 
   @override
-  Constant copyWith({Object? value = _object}) {
-    return Constant(value: value == _object ? this.value : value);
+  Constant copyWith({Object? value}) {
+    return Constant(value: value ?? this.value);
   }
 
   @override
@@ -212,12 +208,12 @@ class Condition extends Expression {
   Condition copyWith({
     Expression? test,
     Expression? trueValue,
-    Expression? orElse = _expression,
+    Expression? falseValue,
   }) {
     return Condition(
       test: test ?? this.test,
       trueValue: trueValue ?? this.trueValue,
-      falseValue: orElse == _expression ? this.falseValue : orElse,
+      falseValue: falseValue ?? this.falseValue,
     );
   }
 
@@ -256,14 +252,14 @@ class Calling extends Expression {
   Calling copyWith({
     List<Expression>? arguments,
     List<Keyword>? keywords,
-    Expression? dArguments = _expression,
-    Expression? dKeywords = _expression,
+    Expression? dArguments,
+    Expression? dKeywords,
   }) {
     return Calling(
       arguments: arguments ?? this.arguments,
       keywords: keywords ?? this.keywords,
-      dArguments: dArguments == _expression ? this.dArguments : dArguments,
-      dKeywords: dKeywords == _expression ? this.dKeywords : dKeywords,
+      dArguments: dArguments ?? this.dArguments,
+      dKeywords: dKeywords ?? this.dKeywords,
     );
   }
 }
@@ -430,27 +426,18 @@ enum CompareOperator {
   notContains;
 
   static CompareOperator parse(String operator) {
-    switch (operator) {
-      case 'eq':
-        return CompareOperator.equal;
-      case 'ne':
-        return CompareOperator.notEqual;
-      case 'lt':
-        return CompareOperator.lessThan;
-      case 'lteq':
-        return CompareOperator.lessThanOrEqual;
-      case 'gt':
-        return CompareOperator.greaterThan;
-      case 'gteq':
-        return CompareOperator.greaterThanOrEqual;
-      case 'in':
-        return CompareOperator.contains;
-      case 'notin':
-        return CompareOperator.notContains;
-      default:
-        // TODO(expressions): update error message
-        throw UnsupportedError(operator);
-    }
+    return switch (operator) {
+      'eq' => CompareOperator.equal,
+      'ne' => CompareOperator.notEqual,
+      'lt' => CompareOperator.lessThan,
+      'lteq' => CompareOperator.lessThanOrEqual,
+      'gt' => CompareOperator.greaterThan,
+      'gteq' => CompareOperator.greaterThanOrEqual,
+      'in' => CompareOperator.contains,
+      'notin' => CompareOperator.notContains,
+      // TODO(expressions): update error message
+      _ => throw UnsupportedError(operator),
+    };
   }
 }
 

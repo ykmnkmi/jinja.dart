@@ -85,19 +85,12 @@ class Parser {
   }
 
   bool isTupleEnd(TokenReader reader, [List<String>? extraEndRules]) {
-    switch (reader.current.type) {
-      case 'variable_end':
-      case 'block_end':
-      case 'rparen':
-        return true;
-
-      default:
-        if (extraEndRules != null && extraEndRules.isNotEmpty) {
-          return reader.current.testAny(extraEndRules);
-        }
-
-        return false;
-    }
+    return switch (reader.current.type) {
+      'variable_end' || 'block_end' || 'rparen' => true,
+      _ => extraEndRules != null && extraEndRules.isNotEmpty
+          ? reader.current.testAny(extraEndRules)
+          : false,
+    };
   }
 
   Node parseStatement(TokenReader reader) {
@@ -161,7 +154,7 @@ class Parser {
     }
   }
 
-  List<Node> parseStatements(
+  Node parseStatements(
     TokenReader reader,
     List<String> endTokens, [
     bool dropNeedle = false,
@@ -179,7 +172,11 @@ class Parser {
       reader.next();
     }
 
-    return nodes;
+    if (nodes.length == 1) {
+      return nodes.first;
+    }
+
+    return Output(nodes: nodes);
   }
 
   Statement parseSet(TokenReader reader) {
@@ -221,12 +218,10 @@ class Parser {
 
     var recursive = reader.skipIf('name', 'recursive');
     var body = parseStatements(reader, endForElse);
-    List<Node> orElse;
+    Node? orElse;
 
     if (reader.next().test('name', 'else')) {
       orElse = parseStatements(reader, <String>['name:endfor'], true);
-    } else {
-      orElse = const <Node>[];
     }
 
     return For(
@@ -265,18 +260,16 @@ class Parser {
       break;
     }
 
-    List<Node> orElse;
+    Node? orElse;
 
     if (tag.test('name', 'else')) {
       orElse = parseStatements(reader, endIf, true);
-    } else {
-      orElse = const <Node>[];
     }
 
     var node = ifNodes.last.copyWith(orElse: orElse);
 
     for (var ifNode in ifNodes.reversed.skip(1)) {
-      node = ifNode.copyWith(orElse: <Node>[node]);
+      node = ifNode.copyWith(orElse: node);
     }
 
     return node;
@@ -335,9 +328,14 @@ class Parser {
     var required = reader.skipIf('name', 'required');
     var body = parseStatements(reader, endBlock, true);
 
-    if (required && body.any((node) => node is! Data || !node.isLeaf)) {
-      fail('Required blocks can only contain comments or whitespace',
-          token.line);
+    if (required) {
+      switch (body) {
+        case Data() when body.isLeaf:
+          break;
+
+        default:
+          fail('...', token.line);
+      }
     }
 
     var maybeName = reader.current;
@@ -357,12 +355,7 @@ class Parser {
       body: body,
     );
 
-    if (extendsNode case var extendsNode?) {
-      this.extendsNode = extendsNode.copyWith(
-        blocks: <Block>[...extendsNode.blocks, block],
-      );
-    }
-
+    blocks.add(block);
     return block;
   }
 
@@ -813,10 +806,9 @@ class Parser {
           reader.next();
         }
 
-        var value = buffer //
-            .toString()
-            .replaceAll(r'\\r', '\r')
-            .replaceAll(r'\\n', '\n');
+        var value = buffer.toString();
+        // TODO(parser): replace all escaped characters
+        value = value.replaceAll(r'\\r', '\r').replaceAll(r'\\n', '\n');
         expression = Constant(value: value);
         break;
 
@@ -1162,7 +1154,7 @@ class Parser {
     return expression;
   }
 
-  List<Node> scan(List<Token> tokens) {
+  Node scan(List<Token> tokens) {
     var reader = TokenReader(tokens);
     var nodes = subParse(reader);
 
@@ -1170,7 +1162,15 @@ class Parser {
       nodes = <Node>[extendsNode];
     }
 
-    return nodes;
+    if (blocks.isEmpty) {
+      if (nodes.length == 1) {
+        return nodes.first;
+      }
+
+      return Output(nodes: nodes);
+    }
+
+    return TemplateNode(blocks: blocks.toList(), body: Output(nodes: nodes));
   }
 
   List<Node> subParse(TokenReader reader, {List<String>? endTokens}) {
@@ -1186,7 +1186,7 @@ class Parser {
 
         switch (token.type) {
           case 'data':
-            nodes.add(Data(token.value));
+            nodes.add(Data(data: token.value));
 
             reader.next();
             break;
@@ -1230,7 +1230,7 @@ class Parser {
     return nodes;
   }
 
-  List<Node> parse(String template) {
+  Node parse(String template) {
     var tokens = environment.lex(template, path: path);
     return scan(tokens);
   }

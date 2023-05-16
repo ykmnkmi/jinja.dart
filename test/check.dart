@@ -21,20 +21,13 @@ void main() {
       print('${token.type}: ${token.value}');
     }
 
-    var nodes = environment.scan(tokens);
+    var body = environment.scan(tokens);
     print('\noriginal nodes:');
+    print(body);
 
-    for (var node in nodes) {
-      print(node);
-    }
-
-    var template = Template.fromNode(environment, body: nodes);
+    var template = Template.fromNode(environment, body: body);
 
     print('\nmodified body:');
-
-    for (var node in template.body.body) {
-      print(node);
-    }
 
     print('\nrender:');
     print(template.render());

@@ -74,6 +74,8 @@ abstract class Visitor<C, R> {
 
   R visitOutput(Output node, C context);
 
+  R visitTemplateNode(TemplateNode node, C context);
+
   R visitWith(With node, C context);
 }
 
@@ -246,6 +248,11 @@ class ThrowingVisitor<C, R> implements Visitor<C, R> {
 
   @override
   R visitOutput(Output node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  @override
+  R visitTemplateNode(TemplateNode node, C context) {
     throw UnimplementedError('$node');
   }
 

@@ -9,11 +9,9 @@ abstract class Statement extends Node {
 }
 
 class Extends extends Statement {
-  const Extends({required this.path, this.blocks = const <Block>[]});
+  const Extends({required this.path});
 
   final String path;
-
-  final List<Block> blocks;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -21,11 +19,8 @@ class Extends extends Statement {
   }
 
   @override
-  Extends copyWith({String? path, List<Block>? blocks}) {
-    return Extends(
-      path: path ?? this.path,
-      blocks: blocks ?? this.blocks,
-    );
+  Extends copyWith({String? path}) {
+    return Extends(path: path ?? this.path);
   }
 
   @override
@@ -40,7 +35,7 @@ class For extends Statement {
     required this.iterable,
     required this.body,
     this.test,
-    this.orElse = const <Node>[],
+    this.orElse,
     this.recursive = false,
   });
 
@@ -48,11 +43,11 @@ class For extends Statement {
 
   final Expression iterable;
 
-  final List<Node> body;
+  final Node body;
 
   final Expression? test;
 
-  final List<Node> orElse;
+  final Node? orElse;
 
   final bool recursive;
 
@@ -65,16 +60,16 @@ class For extends Statement {
   For copyWith({
     Expression? target,
     Expression? iterable,
-    List<Node>? body,
-    Expression? test = _expression,
-    List<Node>? orElse,
+    Node? body,
+    Expression? test,
+    Node? orElse,
     bool? recursive,
   }) {
     return For(
       target: target ?? this.target,
       iterable: iterable ?? this.iterable,
       body: body ?? this.body,
-      test: test == _expression ? this.test : test,
+      test: test ?? this.test,
       orElse: orElse ?? this.orElse,
       recursive: recursive ?? this.recursive,
     );
@@ -92,9 +87,9 @@ class For extends Statement {
       result = '$result, recursive';
     }
 
-    result = '$result) { $body }';
+    result = '$result) $body';
 
-    if (orElse.isEmpty) {
+    if (orElse == null) {
       return result;
     }
 
@@ -106,14 +101,14 @@ class If extends Statement {
   const If({
     required this.test,
     required this.body,
-    this.orElse = const <Node>[],
+    this.orElse,
   });
 
   final Expression test;
 
-  final List<Node> body;
+  final Node body;
 
-  final List<Node> orElse;
+  final Node? orElse;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -123,8 +118,8 @@ class If extends Statement {
   @override
   If copyWith({
     Expression? test,
-    List<Node>? body,
-    List<Node>? orElse,
+    Node? body,
+    Node? orElse,
   }) {
     return If(
       test: test ?? this.test,
@@ -135,11 +130,11 @@ class If extends Statement {
 
   @override
   String toString() {
-    if (orElse.isEmpty) {
-      return 'If ($test) { $body }';
+    if (orElse == null) {
+      return 'If ($test) $body';
     }
 
-    return 'If ($test) { $body } Else $orElse';
+    return 'If ($test) $body Else $orElse';
   }
 }
 
@@ -159,13 +154,13 @@ abstract class MacroCall extends Statement {
 
   final List<Expression> defaults;
 
-  final List<Node> body;
+  final Node body;
 
   @override
   MacroCall copyWith({
     List<Expression>? arguments,
     List<Expression>? defaults,
-    List<Node>? body,
+    Node? body,
   });
 }
 
@@ -189,7 +184,7 @@ class Macro extends MacroCall {
     String? name,
     List<Expression>? arguments,
     List<Expression>? defaults,
-    List<Node>? body,
+    Node? body,
   }) {
     return Macro(
       name: name ?? this.name,
@@ -201,7 +196,7 @@ class Macro extends MacroCall {
 
   @override
   String toString() {
-    return 'Macro ($name, $arguments, $defaults) { $body }';
+    return 'Macro ($name, $arguments, $defaults) $body';
   }
 }
 
@@ -225,7 +220,7 @@ class CallBlock extends MacroCall {
     Expression? call,
     List<Expression>? arguments,
     List<Expression>? defaults,
-    List<Node>? body,
+    Node? body,
   }) {
     return CallBlock(
       call: call ?? this.call,
@@ -237,7 +232,7 @@ class CallBlock extends MacroCall {
 
   @override
   String toString() {
-    return 'CallBlock ($call, $arguments, $defaults) { $body }';
+    return 'CallBlock ($call, $arguments, $defaults) $body';
   }
 }
 
@@ -246,7 +241,7 @@ class FilterBlock extends Statement {
 
   final List<Filter> filters;
 
-  final List<Node> body;
+  final Node body;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -254,7 +249,7 @@ class FilterBlock extends Statement {
   }
 
   @override
-  FilterBlock copyWith({List<Filter>? filters, List<Node>? body}) {
+  FilterBlock copyWith({List<Filter>? filters, Node? body}) {
     return FilterBlock(
       filters: filters ?? this.filters,
       body: body ?? this.body,
@@ -263,7 +258,7 @@ class FilterBlock extends Statement {
 
   @override
   String toString() {
-    return 'FilterBlock ($filters) { $body }';
+    return 'FilterBlock ($filters) $body';
   }
 }
 
@@ -278,7 +273,7 @@ class With extends Statement {
 
   final List<Expression> values;
 
-  final List<Node> body;
+  final Node body;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -289,7 +284,7 @@ class With extends Statement {
   With copyWith({
     List<Expression>? targets,
     List<Expression>? values,
-    List<Node>? body,
+    Node? body,
   }) {
     return With(
       targets: targets ?? this.targets,
@@ -300,7 +295,7 @@ class With extends Statement {
 
   @override
   String toString() {
-    return 'With ($targets, $values) { $body }';
+    return 'With ($targets, $values) $body';
   }
 }
 
@@ -318,7 +313,7 @@ class Block extends Statement {
 
   final bool required;
 
-  final List<Node> body;
+  final Node body;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -330,7 +325,7 @@ class Block extends Statement {
     String? name,
     bool? scoped,
     bool? required,
-    List<Node>? body,
+    Node? body,
   }) {
     return Block(
       name: name ?? this.name,
@@ -348,7 +343,7 @@ class Block extends Statement {
       result = '$result, scoped';
     }
 
-    return '$result) { $body }';
+    return '$result) $body';
   }
 }
 
@@ -445,7 +440,7 @@ class AssignBlock extends Statement {
 
   final List<Filter> filters;
 
-  final List<Node> body;
+  final Node body;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -456,7 +451,7 @@ class AssignBlock extends Statement {
   AssignBlock copyWith({
     Expression? target,
     List<Filter>? filters,
-    List<Node>? body,
+    Node? body,
   }) {
     return AssignBlock(
       target: target ?? this.target,
@@ -473,7 +468,7 @@ class AssignBlock extends Statement {
       result = '$result, $filters';
     }
 
-    return '$result) { $body }';
+    return '$result) $body';
   }
 }
 
@@ -482,7 +477,7 @@ class AutoEscape extends Statement {
 
   final Expression value;
 
-  final List<Node> body;
+  final Node body;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -492,7 +487,7 @@ class AutoEscape extends Statement {
   @override
   AutoEscape copyWith({
     Expression? value,
-    List<Node>? body,
+    Node? body,
   }) {
     return AutoEscape(
       value: value ?? this.value,
@@ -502,6 +497,6 @@ class AutoEscape extends Statement {
 
   @override
   String toString() {
-    return 'AutoEscape ($value) { $body }';
+    return 'AutoEscape ($value) $body';
   }
 }

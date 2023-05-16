@@ -1,8 +1,8 @@
 import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/visitor.dart';
 
-abstract class Compiler<C, R> implements Visitor<C, R> {
-  const Compiler();
+abstract class RuntimeCompiler<C, R> implements Visitor<C, R> {
+  const RuntimeCompiler();
 
   // Expressions
 
@@ -99,10 +99,16 @@ abstract class Compiler<C, R> implements Visitor<C, R> {
   R visitInclude(Include node, C context);
 
   @override
+  R visitInterpolation(Interpolation node, C context);
+
+  @override
   R visitMacro(Macro node, C context);
 
   @override
   R visitOutput(Output node, C context);
+
+  @override
+  R visitTemplateNode(TemplateNode node, C context);
 
   @override
   R visitWith(With node, C context);

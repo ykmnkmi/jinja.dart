@@ -61,12 +61,11 @@ See also examples with [conduit][conduit_example] and
   - generate
   - stream
   - `await` support
+- HTML Escaping
+  - Automatic
 - List of Control Structures
-  - For
-    - `continue`
-    - `break`
-  - Macros
-  - Call
+  - Macros 🔥
+  - Call 🔥
   - Import
 - Loaders
   - PackageLoader (VM)
@@ -76,7 +75,7 @@ See also examples with [conduit][conduit_example] and
   - Expression Statement
   - Loop Controls
   - Debug Statement
-- Template compiler
+- Template compiler (builder)
 - ...
 
 ### Done:
@@ -98,7 +97,6 @@ See also examples with [conduit][conduit_example] and
   - Block Nesting and Scope
 - HTML Escaping
   - Manual
-  - Automatic
 - List of Control Structures
   - For
   - If

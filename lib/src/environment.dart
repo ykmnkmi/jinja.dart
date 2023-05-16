@@ -334,29 +334,28 @@ class Environment {
   /// Parse the list of tokens and return the AST nodes.
   ///
   /// This can be useful for debugging or to extract information from templates.
-  List<Node> scan(List<Token> tokens, {String? path}) {
+  Node scan(List<Token> tokens, {String? path}) {
     return Parser(this, path: path).scan(tokens);
   }
 
   /// Parse the source code and return the AST nodes.
   ///
   /// This can be useful for debugging or to extract information from templates.
-  List<Node> parse(String source, {String? path}) {
+  Node parse(String source, {String? path}) {
     var tokens = lex(source);
     return scan(tokens, path: path);
   }
 
   /// Load a template from a source string without using [loader].
   Template fromString(String source, {String? path}) {
-    var nodes = Parser(this, path: path).parse(source);
-    var body = Output(body: nodes);
+    var body = Parser(this, path: path).parse(source);
 
     for (var modifier in modifiers) {
       modifier(body);
     }
 
     if (optimize) {
-      body.accept(const Optimizer(), Context(this));
+      body = body.accept(const Optimizer(), Context(this));
     }
 
     return Template.fromNode(this, body: body);
@@ -510,7 +509,7 @@ class Template {
   final String? path;
 
   /// Template body node.
-  final Output body;
+  final Node body;
 
   /// If no arguments are given the context will be empty.
   String render([Map<String, Object?>? data]) {

@@ -14,15 +14,13 @@ class Optimizer implements Visitor<Context, Node> {
   @override
   Expression visitArray(Array node, Context context) {
     var values = <Expression>[
-      for (var value in node.values) //
-        value.accept(this, context) as Expression
+      for (var value in node.values) value.accept(this, context) as Expression
     ];
 
     if (values.every((value) => value is Constant)) {
       return Constant(
         value: <Object?>[
-          for (var value in values.cast<Constant>()) //
-            value.value
+          for (var value in values.cast<Constant>()) value.value
         ],
       );
     }
@@ -77,22 +75,16 @@ class Optimizer implements Visitor<Context, Node> {
     if (left is Constant && right is Constant) {
       return Constant(
         value: switch (node.operator) {
-          CompareOperator.equal => //
-            isEqual(left.value, right.value),
-          CompareOperator.notEqual => //
-            isNotEqual(left.value, right.value),
-          CompareOperator.lessThan => //
-            isLessThan(left.value, right.value),
+          CompareOperator.equal => isEqual(left.value, right.value),
+          CompareOperator.notEqual => isNotEqual(left.value, right.value),
+          CompareOperator.lessThan => isLessThan(left.value, right.value),
           CompareOperator.lessThanOrEqual =>
             isLessThanOrEqual(left.value, right.value),
-          CompareOperator.greaterThan => //
-            isGreaterThan(left.value, right.value),
+          CompareOperator.greaterThan => isGreaterThan(left.value, right.value),
           CompareOperator.greaterThanOrEqual =>
             isGreaterThanOrEqual(left.value, right.value),
-          CompareOperator.contains => //
-            isIn(left.value, right.value),
-          CompareOperator.notContains => //
-            !isIn(left.value, right.value),
+          CompareOperator.contains => isIn(left.value, right.value),
+          CompareOperator.notContains => !isIn(left.value, right.value),
         },
       );
     }
@@ -103,15 +95,13 @@ class Optimizer implements Visitor<Context, Node> {
   @override
   Expression visitConcat(Concat node, Context context) {
     var values = <Expression>[
-      for (var value in node.values) //
-        value.accept(this, context) as Expression
+      for (var value in node.values) value.accept(this, context) as Expression
     ];
 
     if (values.every((value) => value is Constant)) {
       return Constant(
         value: <Object?>[
-          for (var value in values.cast<Constant>()) //
-            value.value
+          for (var value in values.cast<Constant>()) value.value
         ],
       );
     }
@@ -155,7 +145,7 @@ class Optimizer implements Visitor<Context, Node> {
     return node.copyWith(
       test: test,
       trueValue: trueValue,
-      orElse: falseValue,
+      falseValue: falseValue,
     );
   }
 
@@ -179,8 +169,7 @@ class Optimizer implements Visitor<Context, Node> {
 
       return Constant(
         value: <Object?, Object?>{
-          for (var (:key, :value) in constantPairs) //
-            key.value: value.value,
+          for (var (:key, :value) in constantPairs) key.value: value.value,
         },
       );
     }
@@ -245,26 +234,20 @@ class Optimizer implements Visitor<Context, Node> {
       return Constant(
         value: switch (node.operator) {
           ScalarOperator.power =>
-            // ...
             math.pow(left.value as num, right.value as num),
-          ScalarOperator.module =>
-            // ignore: avoid_dynamic_calls
-            (left.value as dynamic) % right.value,
+          // ignore: avoid_dynamic_calls
+          ScalarOperator.module => (left.value as dynamic) % right.value,
           ScalarOperator.floorDivision =>
             // ignore: avoid_dynamic_calls
             (left.value as dynamic) ~/ right.value,
-          ScalarOperator.division =>
-            // ignore: avoid_dynamic_calls
-            (left.value as dynamic) / right.value,
-          ScalarOperator.multiple =>
-            // ignore: avoid_dynamic_calls
-            (left.value as dynamic) * right.value,
-          ScalarOperator.minus =>
-            // ignore: avoid_dynamic_calls
-            (left.value as dynamic) - right.value,
-          ScalarOperator.plus =>
-            // ignore: avoid_dynamic_calls
-            (left.value as dynamic) + right.value,
+          // ignore: avoid_dynamic_calls
+          ScalarOperator.division => (left.value as dynamic) / right.value,
+          // ignore: avoid_dynamic_calls
+          ScalarOperator.multiple => (left.value as dynamic) * right.value,
+          // ignore: avoid_dynamic_calls
+          ScalarOperator.minus => (left.value as dynamic) - right.value,
+          // ignore: avoid_dynamic_calls
+          ScalarOperator.plus => (left.value as dynamic) + right.value,
         },
       );
     }
@@ -281,15 +264,13 @@ class Optimizer implements Visitor<Context, Node> {
   @override
   Expression visitTuple(Tuple node, Context context) {
     var values = <Expression>[
-      for (var value in node.values) //
-        value.accept(this, context) as Expression
+      for (var value in node.values) value.accept(this, context) as Expression
     ];
 
     if (values.every((value) => value is Constant)) {
       return Constant(
         value: <Object?>[
-          for (var value in values.cast<Constant>()) //
-            value.value
+          for (var value in values.cast<Constant>()) value.value
         ],
       );
     }
@@ -304,13 +285,10 @@ class Optimizer implements Visitor<Context, Node> {
     if (value is Constant) {
       return Constant(
         value: switch (node.operator) {
-          UnaryOperator.plus => //
-            value.value,
-          UnaryOperator.minus => //
-            // ignore: avoid_dynamic_calls
-            -(value.value as dynamic),
-          UnaryOperator.not => //
-            !boolean(value.value),
+          UnaryOperator.plus => value.value,
+          // ignore: avoid_dynamic_calls
+          UnaryOperator.minus => -(value.value as dynamic),
+          UnaryOperator.not => !boolean(value.value),
         },
       );
     }
@@ -333,13 +311,9 @@ class Optimizer implements Visitor<Context, Node> {
     return node.copyWith(
       target: node.target.accept(this, context) as Expression,
       filters: <Filter>[
-        for (var filter in node.filters) //
-          filter.accept(this, context) as Filter
+        for (var filter in node.filters) filter.accept(this, context) as Filter
       ],
-      body: <Node>[
-        for (var node in node.body) //
-          node.accept(this, context)
-      ],
+      body: node.body.accept(this, context),
     );
   }
 
@@ -347,20 +321,14 @@ class Optimizer implements Visitor<Context, Node> {
   AutoEscape visitAutoEscape(AutoEscape node, Context context) {
     return node.copyWith(
       value: node.value.accept(this, context) as Expression,
-      body: <Node>[
-        for (var node in node.body) //
-          node.accept(this, context)
-      ],
+      body: node.body.accept(this, context),
     );
   }
 
   @override
   Block visitBlock(Block node, Context context) {
     return node.copyWith(
-      body: <Node>[
-        for (var node in node.body) //
-          node.accept(this, context)
-      ],
+      body: node.body.accept(this, context),
     );
   }
 
@@ -369,17 +337,14 @@ class Optimizer implements Visitor<Context, Node> {
     return node.copyWith(
       call: node.call.accept(this, context) as Expression,
       arguments: <Expression>[
-        for (var argument in node.arguments) //
+        for (var argument in node.arguments)
           argument.accept(this, context) as Expression
       ],
       defaults: <Expression>[
-        for (var default_ in node.defaults) //
+        for (var default_ in node.defaults)
           default_.accept(this, context) as Expression
       ],
-      body: <Node>[
-        for (var node in node.body) //
-          node.accept(this, context)
-      ],
+      body: node.body.accept(this, context),
     );
   }
 
@@ -397,25 +362,16 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   Extends visitExtends(Extends node, Context context) {
-    return node.copyWith(
-      blocks: <Block>[
-        for (var block in node.blocks) //
-          block.accept(this, context) as Block
-      ],
-    );
+    return node;
   }
 
   @override
   FilterBlock visitFilterBlock(FilterBlock node, Context context) {
     return node.copyWith(
       filters: <Filter>[
-        for (var filter in node.filters) //
-          filter.accept(this, context) as Filter
+        for (var filter in node.filters) filter.accept(this, context) as Filter
       ],
-      body: <Node>[
-        for (var node in node.body) //
-          node.accept(this, context)
-      ],
+      body: node.body.accept(this, context),
     );
   }
 
@@ -425,15 +381,9 @@ class Optimizer implements Visitor<Context, Node> {
     return node.copyWith(
       target: node.target.accept(this, context) as Expression,
       iterable: node.iterable.accept(this, context) as Expression,
-      body: <Node>[
-        for (var node in node.body) //
-          node.accept(this, context)
-      ],
+      body: node.body.accept(this, context),
       test: node.test?.accept(this, context) as Expression?,
-      orElse: <Node>[
-        for (var node in node.orElse) //
-          node.accept(this, context)
-      ],
+      orElse: node.orElse?.accept(this, context),
     );
   }
 
@@ -441,14 +391,8 @@ class Optimizer implements Visitor<Context, Node> {
   If visitIf(If node, Context context) {
     return node.copyWith(
       test: node.test.accept(this, context) as Expression,
-      body: <Node>[
-        for (var node in node.body) //
-          node.accept(this, context)
-      ],
-      orElse: <Node>[
-        for (var node in node.orElse) //
-          node.accept(this, context)
-      ],
+      body: node.body.accept(this, context),
+      orElse: node.orElse?.accept(this, context),
     );
   }
 
@@ -468,27 +412,31 @@ class Optimizer implements Visitor<Context, Node> {
   Macro visitMacro(Macro node, Context context) {
     return node.copyWith(
       arguments: <Expression>[
-        for (var argument in node.arguments) //
+        for (var argument in node.arguments)
           argument.accept(this, context) as Expression
       ],
       defaults: <Expression>[
-        for (var default_ in node.defaults) //
+        for (var default_ in node.defaults)
           default_.accept(this, context) as Expression
       ],
-      body: <Node>[
-        for (var node in node.body) //
-          node.accept(this, context)
-      ],
+      body: node.body.accept(this, context),
     );
   }
 
   @override
   Node visitOutput(Output node, Context context) {
     return node.copyWith(
-      body: <Node>[
-        for (var node in node.body) //
-          node.accept(this, context)
+      nodes: <Node>[for (var node in node.nodes) node.accept(this, context)],
+    );
+  }
+
+  @override
+  TemplateNode visitTemplateNode(TemplateNode node, Context context) {
+    return node.copyWith(
+      blocks: <Block>[
+        for (var block in node.blocks) block.accept(this, context) as Block
       ],
+      body: node.body.accept(this, context),
     );
   }
 
@@ -496,17 +444,13 @@ class Optimizer implements Visitor<Context, Node> {
   Node visitWith(With node, Context context) {
     return node.copyWith(
       targets: <Expression>[
-        for (var target in node.targets) //
+        for (var target in node.targets)
           target.accept(this, context) as Expression
       ],
       values: <Expression>[
-        for (var value in node.values) //
-          value.accept(this, context) as Expression
+        for (var value in node.values) value.accept(this, context) as Expression
       ],
-      body: <Node>[
-        for (var node in node.body) //
-          node.accept(this, context)
-      ],
+      body: node.body.accept(this, context),
     );
   }
 }
