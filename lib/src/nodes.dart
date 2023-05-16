@@ -3,8 +3,6 @@ import 'package:jinja/src/visitor.dart';
 part 'nodes/expressions.dart';
 part 'nodes/statements.dart';
 
-typedef NodeVisitor = void Function(Node node);
-
 abstract class Node {
   const Node();
 

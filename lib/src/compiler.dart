@@ -1,7 +1,7 @@
 import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/visitor.dart';
 
-class RuntimeCompiler<C> implements Visitor<C, Node> {
+class RuntimeCompiler<C extends Object?> implements Visitor<C, Node> {
   const RuntimeCompiler();
 
   // Expressions
@@ -16,18 +16,53 @@ class RuntimeCompiler<C> implements Visitor<C, Node> {
   }
 
   @override
-  Attribute visitAttribute(Attribute node, C context) {
+  Node visitAttribute(Attribute node, C context) {
+    // Modifies Template AST from `self.block()` to `self['block']()`.
+    if (node.value case Name(name: 'self')) {
+      return Item(key: Constant(value: node.attribute), value: node.value);
+    }
+
+    // Modifies Template AST from `loop.cycle` to `loop['cycle']`.
+
+    if (node.value case Name(name: 'loop')) {
+      return Item(key: Constant(value: node.attribute), value: node.value);
+    }
+
     return node.copyWith(value: node.value.accept(this, context) as Expression);
   }
 
   @override
   Call visitCall(Call node, C context) {
-    node = node.copyWith(value: node.value.accept(this, context) as Expression);
+    const loopCycle = Attribute(attribute: 'cycle', value: Name(name: 'loop'));
+
+    // Modifies Template AST from `loop.cycle(first, second, *list)`
+    // to `loop['cycle']([first, second], list)`, which matches
+    // [LoopContext.cycle] definition.
+    //
+    // TODO(compiler): check name arguments
+    if (node case Call(value: loopCycle, calling: var calling)) {
+      var arguments = <Expression>[Array(values: calling.arguments)];
+
+      if (calling.dArguments case var dArguments?) {
+        arguments.add(dArguments);
+      }
+
+      return node.copyWith(
+        value: node.value.accept(this, context) as Expression,
+        // calling: calling.copyWith(
+        //   arguments: arguments,
+        //   keywords: const <Keyword>[],
+        //   dArguments: null,
+        //   dKeywords: null,
+        // ),
+        calling: Calling(arguments: arguments),
+      );
+    }
 
     // Modifies Template AST from `namespace(map1, ..., key1=value1, ...)`
     // to `namespace([map1, ..., {'key1': value1, ...}])`, to match [namespace]
     // definition.
-    if (node.value case Name(name: var name) when name == 'namespace') {
+    if (node.value case Name(name: 'namespace')) {
       var calling = node.calling;
 
       var arguments = <Expression>[
@@ -55,22 +90,22 @@ class RuntimeCompiler<C> implements Visitor<C, Node> {
         arguments.add(dKeywords.accept(this, context) as Expression);
       }
 
-      // calling = calling.copyWith(
-      //   arguments: arguments,
-      //   keywords: <Keyword>[],
-      //   dArguments: null,
-      //   dKeywords: null,
-      // );
-
-      calling = Calling(arguments: arguments, keywords: <Keyword>[]);
-      node = node.copyWith(calling: calling);
-    } else {
-      node = node.copyWith(
-        calling: node.calling.accept(this, context) as Calling,
+      return node.copyWith(
+        value: node.value.accept(this, context) as Expression,
+        // calling: calling.copyWith(
+        //   arguments: arguments,
+        //   keywords: <Keyword>[],
+        //   dArguments: null,
+        //   dKeywords: null,
+        // ),
+        calling: Calling(arguments: arguments, keywords: <Keyword>[]),
       );
     }
 
-    return node;
+    return node.copyWith(
+      value: node.value.accept(this, context) as Expression,
+      calling: node.calling.accept(this, context) as Calling,
+    );
   }
 
   @override

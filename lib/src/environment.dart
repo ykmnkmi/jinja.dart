@@ -1,6 +1,7 @@
 import 'dart:collection' show HashMap;
 import 'dart:math' show Random;
 
+import 'package:jinja/src/compiler.dart';
 import 'package:jinja/src/context.dart';
 import 'package:jinja/src/defaults.dart' as defaults;
 import 'package:jinja/src/exceptions.dart';
@@ -91,7 +92,7 @@ class Environment {
     Map<String, Object?>? globals,
     Map<String, Function>? filters,
     Map<String, Function>? tests,
-    List<NodeVisitor>? modifiers,
+    List<Node Function(Node)>? modifiers,
     Map<String, Template>? templates,
     Random? random,
     AttributeGetter? getAttribute,
@@ -100,13 +101,13 @@ class Environment {
         globals = HashMap<String, Object?>.of(defaults.globals),
         filters = HashMap<String, Function>.of(defaults.filters),
         tests = HashMap<String, Function>.of(defaults.tests),
-        modifiers = List<NodeVisitor>.of(defaults.modifiers),
+        modifiers = <Node Function(Node)>[],
         templates = HashMap<String, Template>(),
         random = random ?? Random(),
         getAttribute = wrapGetAttribute(getAttribute, getItem) {
     if (newLine != '\r' && newLine != '\n' && newLine != '\r\n') {
-      // TODO: add error message
-      throw ArgumentError.value(newLine, 'newLine');
+      // TODO(environment): update error
+      throw ArgumentError.value(newLine);
     }
 
     if (globals != null) {
@@ -213,7 +214,7 @@ class Environment {
   final Map<String, Function> tests;
 
   /// A list of template modifiers.
-  final List<NodeVisitor> modifiers;
+  final List<Node Function(Node)> modifiers;
 
   /// A map of parsed templates loaded by the environment.
   final Map<String, Template> templates;
@@ -358,6 +359,7 @@ class Environment {
       body = body.accept(const Optimizer(), Context(this));
     }
 
+    body = body.accept(const RuntimeCompiler(), null);
     return Template.fromNode(this, body: body);
   }
 
@@ -466,7 +468,7 @@ class Template {
     Map<String, Object?>? globals,
     Map<String, Function>? filters,
     Map<String, Function>? tests,
-    List<NodeVisitor>? modifiers,
+    List<Node Function(Node)>? modifiers,
     Random? random,
     AttributeGetter? getAttribute,
     ItemGetter getItem = defaults.getItem,
