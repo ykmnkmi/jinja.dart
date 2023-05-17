@@ -41,7 +41,7 @@ typedef AttributeGetter = Object? Function(Object? object, String attribute);
 /// A [Function] that can be used to get object item.
 ///
 /// Used by `object['item']` expression.
-typedef ItemGetter = Object? Function(Object? object, Object? item);
+typedef ItemGetter = Object? Function(Object? object, Object? key);
 
 /// Pass the [Context] as the first argument to the applied function when
 /// called while rendering a template.
@@ -401,19 +401,15 @@ class Environment {
     }
 
     if (function is Object Function(Environment environment, Object? value)) {
-      Object finalize(Context context, Object? value) {
+      return (context, value) {
         return function(context.environment, value);
-      }
-
-      return finalize;
+      };
     }
 
     if (function is Object Function(Object? value)) {
-      Object finalize(Context context, Object? value) {
+      return (context, value) {
         return function(value);
-      }
-
-      return finalize;
+      };
     }
 
     // TODO: add error message
@@ -429,15 +425,13 @@ class Environment {
       return itemGetter;
     }
 
-    Object? getAttribute(Object? object, String field) {
+    return (object, field) {
       try {
         return attributeGetter(object, field);
       } on NoSuchMethodError {
         return itemGetter(object, field);
       }
-    }
-
-    return getAttribute;
+    };
   }
 }
 

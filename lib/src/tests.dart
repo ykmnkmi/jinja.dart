@@ -142,13 +142,15 @@ bool isNotEqual(Object? value, Object? other) {
 }
 
 /// Same as `a < b`.
-bool isLessThan(Object? value, Object? other) {
-  return (value as Comparable<Object?>).compareTo(other) < 0;
+bool isLessThan(dynamic value, Object? other) {
+  // ignore: avoid_dynamic_calls
+  return (value < other) as bool;
 }
 
 /// Same as `a <= b`.
-bool isLessThanOrEqual(Object? value, Object? other) {
-  return (value as Comparable<Object?>).compareTo(other) <= 0;
+bool isLessThanOrEqual(dynamic value, Object? other) {
+  // ignore: avoid_dynamic_calls
+  return (value <= other) as bool;
 }
 
 /// Same as `a == b`.
@@ -157,13 +159,15 @@ bool isEqual(Object? value, Object? other) {
 }
 
 /// Same as `a > b`.
-bool isGreaterThan(Object? value, Object? other) {
-  return (value as Comparable<Object?>).compareTo(other) > 0;
+bool isGreaterThan(dynamic value, Object? other) {
+  // ignore: avoid_dynamic_calls
+  return (value > other) as bool;
 }
 
 /// Same as `a >= b`.
-bool isGreaterThanOrEqual(Object? value, Object? other) {
-  return (value as Comparable<Object?>).compareTo(other) >= 0;
+bool isGreaterThanOrEqual(dynamic value, Object? other) {
+  // ignore: avoid_dynamic_calls
+  return (value >= other) as bool;
 }
 
 /// Return whether the object is callable (i.e., some kind of function).

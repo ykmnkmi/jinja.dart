@@ -49,6 +49,11 @@ class Optimizer implements Visitor<Context, Node> {
   }
 
   @override
+  Callback visitCallback(Callback node, Context context) {
+    return node;
+  }
+
+  @override
   Calling visitCalling(Calling node, Context context) {
     return node.copyWith(
       arguments: <Expression>[
@@ -100,9 +105,10 @@ class Optimizer implements Visitor<Context, Node> {
 
     if (values.every((value) => value is Constant)) {
       return Constant(
-        value: <Object?>[
-          for (var value in values.cast<Constant>()) value.value
-        ],
+        value: values
+            .cast<Constant>()
+            .map<Object?>((constant) => constant.value)
+            .join(),
       );
     }
 
@@ -203,12 +209,8 @@ class Optimizer implements Visitor<Context, Node> {
 
     if (left is Constant) {
       return switch (node.operator) {
-        LogicalOperator.and => boolean(left.value)
-            ? node.right.accept(this, context) as Expression
-            : left,
-        LogicalOperator.or => boolean(left.value)
-            ? left
-            : node.right.accept(this, context) as Expression,
+        LogicalOperator.and => boolean(left.value) ? right : left,
+        LogicalOperator.or => boolean(left.value) ? left : right,
       };
     }
 

@@ -303,9 +303,8 @@ void main() {
       var tmpl = env.fromString('{{ -1|foo }}');
 
       expect((tmpl.body as Interpolation).value, predicate<Filter>((filter) {
-        var expression = filter.calling.arguments[0];
-        return expression is Unary &&
-            expression.operator == UnaryOperator.minus;
+        var argument = filter.calling.arguments[0];
+        return argument is Constant && argument.value == -1;
       }));
     });
 

@@ -4,10 +4,6 @@ abstract class ImportContext {
   bool get withContext;
 }
 
-abstract class Statement extends Node {
-  const Statement();
-}
-
 class Extends extends Statement {
   const Extends({required this.path});
 

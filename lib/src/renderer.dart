@@ -1,10 +1,12 @@
+import 'dart:math' as math;
+
 import 'package:jinja/src/context.dart';
-import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/exceptions.dart';
 import 'package:jinja/src/loop.dart';
 import 'package:jinja/src/markup.dart';
 import 'package:jinja/src/namespace.dart';
 import 'package:jinja/src/nodes.dart';
+import 'package:jinja/src/tests.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:jinja/src/visitor.dart';
 
@@ -136,65 +138,258 @@ class StringSinkRenderContext extends RenderContext {
   }
 }
 
-class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
+class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
   const StringSinkRenderer();
 
+  // Expressions
+
   @override
-  void visitAll(List<Node> nodes, StringSinkRenderContext context) {
-    for (var node in nodes) {
-      node.accept(this, context);
-    }
+  List<Object?> visitArray(Array node, StringSinkRenderContext context) {
+    return <Object?>[
+      for (var value in node.values) value.accept(this, context)
+    ];
   }
 
   @override
+  Object? visitAttribute(Attribute node, StringSinkRenderContext context) {
+    var value = node.value.accept(this, context);
+    return context.environment.getAttribute(value, node.attribute);
+  }
+
+  @override
+  Object? visitCall(Call node, StringSinkRenderContext context) {
+    var function = node.value.accept(this, context);
+    var (positional, named) = node.calling.accept(this, context) as Parameters;
+    return context.call(function, positional, named);
+  }
+
+  @override
+  Object? visitCallback(Callback node, StringSinkRenderContext context) {
+    return node.callback(context);
+  }
+
+  @override
+  Parameters visitCalling(Calling node, StringSinkRenderContext context) {
+    var positional = <Object?>[
+      for (var argument in node.arguments) argument.accept(this, context)
+    ];
+
+    if (node.dArguments case var dArguments?) {
+      var values = dArguments.accept(this, context);
+
+      if (values is! Iterable) {
+        throw TypeError();
+      }
+
+      positional.addAll(values);
+    }
+
+    var named = <Symbol, Object?>{
+      for (var (:key, :value) in node.keywords)
+        Symbol(key): value.accept(this, context)
+    };
+
+    if (node.dKeywords case var dKeywords?) {
+      var values = dKeywords.accept(this, context);
+
+      if (values is! Map) {
+        throw TypeError();
+      }
+
+      var castedValues = values.cast<String, Object?>();
+
+      for (var MapEntry(key: key, value: value) in castedValues.entries) {
+        named[Symbol(key)] = value;
+      }
+    }
+
+    return (positional, named);
+  }
+
+  @override
+  Object? visitCompare(Compare node, StringSinkRenderContext context) {
+    var left = node.left.accept(this, context);
+    var right = node.right.accept(this, context);
+
+    return switch (node.operator) {
+      CompareOperator.equal => isEqual(left, right),
+      CompareOperator.notEqual => isNotEqual(left, right),
+      CompareOperator.lessThan => isLessThan(left, right),
+      CompareOperator.lessThanOrEqual => isLessThanOrEqual(left, right),
+      CompareOperator.greaterThan => isGreaterThan(left, right),
+      CompareOperator.greaterThanOrEqual => isGreaterThanOrEqual(left, right),
+      CompareOperator.contains => isIn(left, right),
+      CompareOperator.notContains => !isIn(left, right),
+    };
+  }
+
+  @override
+  Object? visitConcat(Concat node, StringSinkRenderContext context) {
+    var buffer = StringBuffer();
+
+    for (var value in node.values) {
+      buffer.write(value.accept(this, context));
+    }
+
+    return '$buffer';
+  }
+
+  @override
+  Object? visitCondition(Condition node, StringSinkRenderContext context) {
+    if (boolean(node.test.accept(this, context))) {
+      return node.trueValue.accept(this, context);
+    }
+
+    return node.falseValue?.accept(this, context);
+  }
+
+  @override
+  Object? visitConstant(Constant node, StringSinkRenderContext context) {
+    return node.value;
+  }
+
+  @override
+  Map<Object?, Object?> visitDict(Dict node, StringSinkRenderContext context) {
+    return <Object?, Object?>{
+      for (var (:key, :value) in node.pairs)
+        key.accept(this, context): value.accept(this, context)
+    };
+  }
+
+  @override
+  Object? visitFilter(Filter node, StringSinkRenderContext context) {
+    var (positional, named) = node.calling.accept(this, context) as Parameters;
+    return context.filter(node.name, positional, named);
+  }
+
+  @override
+  Object? visitItem(Item node, StringSinkRenderContext context) {
+    var key = node.key.accept(this, context);
+    var value = node.value.accept(this, context);
+    return context.environment.getItem(value, key);
+  }
+
+  @override
+  Object? visitLogical(Logical node, StringSinkRenderContext context) {
+    var left = node.left.accept(this, context);
+
+    return switch (node.operator) {
+      LogicalOperator.and =>
+        boolean(left) ? node.right.accept(this, context) : left,
+      LogicalOperator.or =>
+        boolean(left) ? left : node.right.accept(this, context),
+    };
+  }
+
+  @override
+  Object? visitName(Name node, StringSinkRenderContext context) {
+    return switch (node.context) {
+      AssignContext.load => context.resolve(node.name),
+      AssignContext.store || AssignContext.parameter => node.name,
+    };
+  }
+
+  @override
+  NamespaceValue visitNamespaceRef(
+    NamespaceRef node,
+    StringSinkRenderContext context,
+  ) {
+    return NamespaceValue(node.name, node.attribute);
+  }
+
+  @override
+  Object? visitScalar(Scalar node, StringSinkRenderContext context) {
+    var left = node.left.accept(this, context);
+    var right = node.right.accept(this, context);
+
+    return switch (node.operator) {
+      ScalarOperator.power => math.pow(left as num, right as num),
+      // ignore: avoid_dynamic_calls
+      ScalarOperator.module => (left as dynamic) % right,
+      // ignore: avoid_dynamic_calls
+      ScalarOperator.floorDivision => (left as dynamic) ~/ right,
+      // ignore: avoid_dynamic_calls
+      ScalarOperator.division => (left as dynamic) / right,
+      // ignore: avoid_dynamic_calls
+      ScalarOperator.multiple => (left as dynamic) * right,
+      // ignore: avoid_dynamic_calls
+      ScalarOperator.minus => (left as dynamic) - right,
+      // ignore: avoid_dynamic_calls
+      ScalarOperator.plus => (left as dynamic) + right,
+    };
+  }
+
+  @override
+  Object? visitTest(Test node, StringSinkRenderContext context) {
+    var (positional, named) = node.calling.accept(this, context) as Parameters;
+    return context.test(node.name, positional, named);
+  }
+
+  @override
+  List<Object?> visitTuple(Tuple node, StringSinkRenderContext context) {
+    return <Object?>[
+      for (var value in node.values) value.accept(this, context)
+    ];
+  }
+
+  @override
+  Object? visitUnary(Unary node, StringSinkRenderContext context) {
+    var value = node.value.accept(this, context);
+
+    return switch (node.operator) {
+      UnaryOperator.plus => value,
+      // ignore: avoid_dynamic_calls
+      UnaryOperator.minus => -(value as dynamic),
+      UnaryOperator.not => !boolean(value),
+    };
+  }
+
+  // Statements
+
+  @override
   void visitAssign(Assign node, StringSinkRenderContext context) {
-    var target = node.target.resolve(context);
-    var values = node.value.resolve(context);
+    var target = node.target.accept(this, context);
+    var values = node.value.accept(this, context);
     context.assignTargets(target, values);
   }
 
   @override
   void visitAssignBlock(AssignBlock node, StringSinkRenderContext context) {
-    var target = node.target.resolve(context);
+    var target = node.target.accept(this, context);
     var buffer = StringBuffer();
     var derived = context.derived(sink: buffer);
-    visitAll(node.body, derived);
+    node.body.accept(this, derived);
 
     Object? value = '$buffer';
 
     var filters = node.filters;
 
-    if (filters == null || filters.isEmpty) {
+    if (filters.isEmpty) {
       if (context.autoEscape) {
         value = Markup.escaped(value);
       }
 
       context.assignTargets(target, value);
-      return;
-    }
-
-    // TODO: replace with Filter { BlockExpression ( AssignBlock ) }
-    for (var filter in filters) {
-      Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
-        positional = <Object?>[value, ...positional];
-        return context.filter(filter.name, positional, named);
+    } else {
+      // TODO: replace with Filter { BlockExpression ( AssignBlock ) }
+      for (var Filter(name: name, calling: calling) in filters) {
+        var (positional, named) = calling.accept(this, context) as Parameters;
+        value = context.filter(name, positional, named);
       }
 
-      value = filter.apply(context, callback);
-    }
+      if (context.autoEscape) {
+        value = Markup.escaped(value);
+      }
 
-    if (context.autoEscape) {
-      value = Markup.escaped(value);
+      context.assignTargets(target, value);
     }
-
-    context.assignTargets(target, value);
   }
 
   @override
   void visitAutoEscape(AutoEscape node, StringSinkRenderContext context) {
     var current = context.autoEscape;
-    context.autoEscape = boolean(node.value.resolve(context));
-    visitAll(node.body, context);
+    context.autoEscape = boolean(node.value.accept(this, context));
+    node.body.accept(this, context);
     context.autoEscape = current;
   }
 
@@ -203,7 +398,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
     var blocks = context.blocks[node.name];
 
     if (blocks == null || blocks.isEmpty) {
-      visitAll(node.body, context);
+      node.body.accept(this, context);
     } else {
       if (node.required) {
         if (blocks.length == 1) {
@@ -214,24 +409,21 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
       var first = blocks[0];
       var index = 0;
 
-      if (first.hasSuper) {
-        String parent() {
-          if (index < blocks.length - 1) {
-            var parentBlock = blocks[index += 1];
-            visitAll(parentBlock.body, context);
-            return '';
-          }
-
-          // TODO: add error message
-          throw TemplateRuntimeError();
+      // TODO(renderer): move to Context
+      String parent() {
+        if (index < blocks.length - 1) {
+          var parentBlock = blocks[index += 1];
+          parentBlock.body.accept(this, context);
+          return '';
         }
 
-        context.set('super', parent);
-        visitAll(first.body, context);
-        context.remove('super');
-      } else {
-        visitAll(first.body, context);
+        // TODO(renderer): add error message
+        throw TemplateRuntimeError();
       }
+
+      context.set('super', parent);
+      first.body.accept(this, context);
+      context.remove('super');
     }
   }
 
@@ -247,38 +439,27 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
 
   @override
   void visitDo(Do node, StringSinkRenderContext context) {
-    node.value.resolve(context);
-  }
-
-  @override
-  void visitExpression(Expression node, StringSinkRenderContext context) {
-    var resolved = node.resolve(context);
-    var finalized = context.finalize(resolved);
-    var escaped = context.escape(finalized);
-    context.write(escaped);
+    node.value.accept(this, context);
   }
 
   @override
   void visitExtends(Extends node, StringSinkRenderContext context) {
     var template = context.environment.getTemplate(node.path);
-    visitTemplate(template, context);
+    template.body.accept(this, context);
   }
 
   @override
   void visitFilterBlock(FilterBlock node, StringSinkRenderContext context) {
     var buffer = StringBuffer();
     var derived = context.derived(sink: buffer);
-    visitAll(node.body, derived);
+    node.body.accept(this, derived);
 
     Object? value = '$buffer';
 
-    for (var filter in node.filters) {
-      Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
-        positional = <Object?>[value, ...positional];
-        return context.filter(filter.name, positional, named);
-      }
-
-      value = filter.apply(context, callback);
+    for (var Filter(name: name, calling: calling) in node.filters) {
+      var (positional, named) = calling.accept(this, context) as Parameters;
+      positional = <Object?>[value, ...positional];
+      value = context.filter(name, positional, named);
     }
 
     context.write(value);
@@ -286,8 +467,8 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
 
   @override
   void visitFor(For node, StringSinkRenderContext context) {
-    var targets = node.target.resolve(context);
-    var iterable = node.iterable.resolve(context);
+    var targets = node.target.accept(this, context);
+    var iterable = node.iterable.accept(this, context);
 
     if (iterable == null) {
       // TODO: update error
@@ -298,8 +479,8 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
       var values = list(iterable);
 
       if (values.isEmpty) {
-        if (node.orElse != null) {
-          visitAll(node.orElse!, context);
+        if (node.orElse case var orElse?) {
+          orElse.accept(this, context);
         }
 
         return '';
@@ -313,7 +494,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
           var data = getDataForTargets(targets, value);
           data = context.save(data);
 
-          if (boolean(test.resolve(context))) {
+          if (boolean(test.accept(this, context))) {
             filtered.add(value);
           }
 
@@ -330,7 +511,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
       for (var value in loop) {
         var data = getDataForTargets(targets, value);
         var forContext = context.derived(data: data);
-        visitAll(node.body, forContext);
+        node.body.accept(this, forContext);
       }
 
       context.set('loop', parent);
@@ -342,13 +523,10 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
 
   @override
   void visitIf(If node, StringSinkRenderContext context) {
-    if (boolean(node.test.resolve(context))) {
-      visitAll(node.body, context);
-      return;
-    }
-
-    if (node.orElse != null) {
-      visitAll(node.orElse!, context);
+    if (boolean(node.test.accept(this, context))) {
+      node.body.accept(this, context);
+    } else if (node.orElse case var orElse?) {
+      orElse.accept(this, context);
     }
   }
 
@@ -356,12 +534,19 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
   void visitInclude(Include node, StringSinkRenderContext context) {
     var template = context.environment.getTemplate(node.template);
 
-    if (node.withContext) {
-      visitAll(template.body, context);
-    } else {
+    if (!node.withContext) {
       context = StringSinkRenderContext(context.environment, context.sink);
-      visitAll(template.body, context);
     }
+
+    template.body.accept(this, context);
+  }
+
+  @override
+  void visitInterpolation(Interpolation node, StringSinkRenderContext context) {
+    var resolved = node.value.accept(this, context);
+    var finalized = context.finalize(resolved);
+    var escaped = context.escape(finalized);
+    context.write(escaped);
   }
 
   @override
@@ -370,7 +555,14 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
   }
 
   @override
-  void visitTemplate(Template node, StringSinkRenderContext context) {
+  void visitOutput(Output node, StringSinkRenderContext context) {
+    for (var node in node.nodes) {
+      node.accept(this, context);
+    }
+  }
+
+  @override
+  void visitTemplateNode(TemplateNode node, StringSinkRenderContext context) {
     var self = Namespace();
 
     for (var block in node.blocks) {
@@ -386,23 +578,21 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
     }
 
     context.set('self', self);
-    visitAll(node.body, context);
+    node.body.accept(this, context);
   }
 
   @override
   void visitWith(With node, StringSinkRenderContext context) {
-    Object? target(int index) {
-      return node.targets[index].resolve(context);
-    }
+    var targets = <Object?>[
+      for (var target in node.targets) target.accept(this, context)
+    ];
 
-    Object? value(int index) {
-      return node.values[index].resolve(context);
-    }
+    var values = <Object?>[
+      for (var value in node.values) value.accept(this, context)
+    ];
 
-    var targets = generate(node.targets, target);
-    var values = generate(node.values, value);
     var data = context.save(getDataForTargets(targets, values));
-    visitAll(node.body, context);
+    node.body.accept(this, context);
     context.restore(data);
   }
 }
@@ -433,9 +623,5 @@ Map<String, Object?> getDataForTargets(Object? targets, Object? current) {
   }
 
   // TODO: update error
-  throw ArgumentError.value(
-    targets,
-    'targets',
-    'must be String or List<String>',
-  );
+  throw ArgumentError.value(targets, 'targets', 'must be ListOr<String>');
 }

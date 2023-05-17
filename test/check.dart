@@ -1,18 +1,20 @@
-import 'package:jinja/jinja.dart';
 import 'package:jinja/reflection.dart';
+import 'package:jinja/src/compiler.dart';
+import 'package:jinja/src/context.dart';
+import 'package:jinja/src/environment.dart';
+import 'package:jinja/src/optimizer.dart';
 import 'package:stack_trace/stack_trace.dart';
 
 const String source = '''
-{% macro input(name, value='', type='text', size=20) -%}
-  <input type="{{ type }}" name="{{ name }}" value="{{ value|e }}" size="{{ size }}">
-{%- endmacro %}
-<p>{{ input('username') }}</p>
-<p>{{ input('password', type='password') }}</p>
-''';
+{% set ns = namespace(d, self=37) %}''';
 
 void main() {
   try {
-    var environment = Environment(getAttribute: getAttribute);
+    var environment = Environment(
+      getAttribute: getAttribute,
+      leftStripBlocks: true,
+      trimBlocks: false,
+    );
 
     var tokens = environment.lex(source);
     print('tokens:');
@@ -25,12 +27,18 @@ void main() {
     print('\noriginal nodes:');
     print(body);
 
+    body = body.accept(const Optimizer(), Context(environment));
+    print('\noptimized body:');
+    print(body);
+
+    body = body.accept(const RuntimeCompiler(), null);
+    print('\ncompiled body:');
+    print(body);
+
     var template = Template.fromNode(environment, body: body);
 
-    print('\nmodified body:');
-
     print('\nrender:');
-    print(template.render());
+    print(template.render({'d': {}}));
   } catch (error, trace) {
     print(error);
     print(Trace.format(trace, terse: true));

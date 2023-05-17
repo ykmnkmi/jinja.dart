@@ -184,7 +184,7 @@ class Parser {
 
     reader.expect('name', 'set');
 
-    var target = parseAssignTarget(reader, withNamespace: true);
+    var target = parseAssignNameSpace(reader);
 
     if (reader.skipIf('assign')) {
       var expression = parseTuple(reader);
@@ -288,8 +288,7 @@ class Parser {
         reader.expect('comma');
       }
 
-      var target = parseAssignTarget(reader) as Assignable;
-      target = target.copyWith(context: AssignContext.parameter);
+      var target = parseAssignTarget(reader, context: AssignContext.parameter);
       targets.add(target);
       reader.expect('assign');
       values.add(parseExpression(reader));
@@ -417,7 +416,7 @@ class Parser {
         reader.expect('comma');
       }
 
-      var argument = parseAssignTarget(reader, nameOnly: true) as Name;
+      var argument = parseAssignName(reader);
       argument = Name(name: argument.name, context: AssignContext.parameter);
 
       if (reader.skipIf('assign')) {
@@ -481,7 +480,7 @@ class Parser {
 
     reader.next();
 
-    var name = parseAssignTarget(reader, nameOnly: true) as Name;
+    var name = parseAssignName(reader);
     var signature = parseSignature(reader);
     var body = parseStatements(reader, endMacro, true);
 
@@ -495,45 +494,64 @@ class Parser {
 
   // TODO: add parsePrint
 
+  Name parseAssignName(TokenReader reader) {
+    var name = reader.expect('name');
+    return Name(name: name.value, context: AssignContext.store);
+  }
+
+  Expression parseAssignNameSpace(TokenReader reader) {
+    var line = reader.current.line;
+
+    if (reader.look().test('dot')) {
+      var namespace = reader.expect('name');
+      reader.expect('dot'); // skip dot
+
+      var attribute = reader.expect('name');
+      return NamespaceRef(name: namespace.value, attribute: attribute.value);
+    }
+
+    var name = parsePrimary(reader);
+
+    if (name is Name) {
+      return name.copyWith(context: AssignContext.store);
+    }
+
+    fail("Can't assign to ${name.runtimeType}", line);
+  }
+
   Expression parseAssignTarget(
     TokenReader reader, {
     List<String>? extraEndRules,
-    bool nameOnly = false,
-    bool withNamespace = false,
     bool withTuple = true,
+    AssignContext context = AssignContext.store,
   }) {
     var line = reader.current.line;
     Expression target;
 
-    if (withNamespace && reader.look().test('dot')) {
-      var namespace = reader.expect('name');
-      reader.next(); // skip dot
-
-      var attribute = reader.expect('name');
-      target = NamespaceRef(name: namespace.value, attribute: attribute.value);
-    } else if (nameOnly) {
-      var name = reader.expect('name');
-      target = Name(name: name.value, context: AssignContext.store);
+    if (withTuple) {
+      target = parseTuple(
+        reader,
+        simplified: true,
+        extraEndRules: extraEndRules,
+      );
     } else {
-      if (withTuple) {
-        target = parseTuple(
-          reader,
-          simplified: true,
-          extraEndRules: extraEndRules,
-        );
-      } else {
-        target = parsePrimary(reader);
-      }
-
-      // TODO(parser): move upper
-      if (target is Assignable) {
-        target = target.copyWith(context: AssignContext.store);
-      } else {
-        fail("Can't assign to ${target.runtimeType}", line);
-      }
+      target = parsePrimary(reader);
     }
 
-    return target;
+    if (target is Name) {
+      return target.copyWith(context: context);
+    }
+
+    if (target is Tuple && target.values.any((value) => value is Name)) {
+      return target.copyWith(
+        values: <Expression>[
+          for (var value in target.values.cast<Name>())
+            value.copyWith(context: context)
+        ],
+      );
+    }
+
+    fail("Can't assign to ${target.runtimeType}", line);
   }
 
   Do parseDo(TokenReader reader) {
@@ -605,6 +623,7 @@ class Parser {
     const operators = <String>['eq', 'ne', 'lt', 'lteq', 'gt', 'gteq'];
 
     var left = parseMath1(reader);
+    Expression right;
 
     outer:
     while (true) {
@@ -627,7 +646,7 @@ class Parser {
         break outer;
       }
 
-      var right = parseMath1(reader);
+      right = parseMath1(reader);
       left = Compare(operator: operator, left: left, right: right);
     }
 
@@ -1073,7 +1092,8 @@ class Parser {
 
     for (var filter in filters) {
       var calling = filter.calling;
-      calling = calling.copyWith(arguments: <Expression>[expression]);
+      var arguments = <Expression>[expression, ...calling.arguments];
+      calling = calling.copyWith(arguments: arguments);
       expression = filter.copyWith(calling: calling);
     }
 

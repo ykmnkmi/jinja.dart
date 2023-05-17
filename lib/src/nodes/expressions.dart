@@ -1,36 +1,17 @@
 part of '../nodes.dart';
 
-abstract class Expression extends Node {
-  const Expression();
-}
-
 enum AssignContext {
   load,
   store,
   parameter,
 }
 
-abstract class Assignable implements Expression {
-  bool get canAssign;
-
-  AssignContext get context;
-
-  @override
-  Assignable copyWith({AssignContext? context});
-}
-
-class Name extends Expression implements Assignable {
+class Name extends Expression {
   const Name({required this.name, this.context = AssignContext.load});
 
   final String name;
 
-  @override
   final AssignContext context;
-
-  @override
-  bool get canAssign {
-    return context == AssignContext.store;
-  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -103,22 +84,10 @@ class Constant extends Literal {
   }
 }
 
-class Tuple extends Literal implements Assignable {
-  const Tuple({required this.values, this.context = AssignContext.load});
+class Tuple extends Literal {
+  const Tuple({required this.values});
 
   final List<Expression> values;
-
-  @override
-  final AssignContext context;
-
-  @override
-  bool get canAssign {
-    bool test(Expression value) {
-      return value is Assignable && value.canAssign;
-    }
-
-    return values.every(test);
-  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -126,10 +95,9 @@ class Tuple extends Literal implements Assignable {
   }
 
   @override
-  Tuple copyWith({List<Expression>? values, AssignContext? context}) {
+  Tuple copyWith({List<Expression>? values}) {
     return Tuple(
       values: values ?? this.values,
-      context: context ?? this.context,
     );
   }
 
@@ -262,6 +230,16 @@ class Calling extends Expression {
       dKeywords: dKeywords ?? this.dKeywords,
     );
   }
+
+  @override
+  String toString() {
+    return <Object?>[
+      ...arguments,
+      for (var (:key, :value) in keywords) '$key: $value',
+      if (dArguments case var dArguments?) '*$dArguments',
+      if (dKeywords case var dKeywords?) '**$dKeywords',
+    ].join(', ');
+  }
 }
 
 class Call extends Expression {
@@ -289,7 +267,7 @@ class Call extends Expression {
 
   @override
   String toString() {
-    return 'Call($value)';
+    return 'Call($value, $calling)';
   }
 }
 
@@ -315,7 +293,7 @@ class Filter extends Expression {
 
   @override
   String toString() {
-    return 'Filter($name)';
+    return 'Filter($name, $calling)';
   }
 }
 
@@ -341,7 +319,7 @@ class Test extends Expression {
 
   @override
   String toString() {
-    return 'Test($name)';
+    return 'Test($name, $calling)';
   }
 }
 
