@@ -67,31 +67,31 @@ class RuntimeCompiler implements Visitor<void, Node> {
       // to `namespace([map1, ..., {'key1': value1, ...}])`, to match [namespace]
       // definition.
       case Name(name: 'namespace'):
-        var calling = node.calling;
+        var values = node.calling.arguments.toList();
 
-        var arguments = <Expression>[...calling.arguments];
-
-        if (calling.keywords.isNotEmpty) {
+        if (node.calling.keywords.isNotEmpty) {
           var pairs = <Pair>[
-            for (var (:key, :value) in calling.keywords)
+            for (var (:key, :value) in node.calling.keywords)
               (key: Constant(value: key), value: value)
           ];
 
-          arguments.add(Dict(pairs: pairs));
+          values.add(Dict(pairs: pairs));
         }
 
-        if (calling.dArguments case var dArguments?) {
-          arguments.add(dArguments);
+        if (node.calling.dArguments case var dArguments?) {
+          values.add(dArguments);
         }
 
-        if (calling.dKeywords case var dKeywords?) {
-          arguments.add(dKeywords);
+        if (node.calling.dKeywords case var dKeywords?) {
+          values.add(dKeywords);
         }
 
         return node.copyWith(
           value: visitNode(node.value),
           calling: Calling(
-            arguments: visitNodes(<Expression>[Array(values: arguments)]),
+            arguments: <Expression>[
+              if (values.isNotEmpty) Array(values: values)
+            ],
           ),
         );
 

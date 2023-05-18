@@ -3,13 +3,16 @@ import 'package:jinja/src/compiler.dart';
 import 'package:jinja/src/context.dart';
 import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/optimizer.dart';
-import 'package:jinja/src/utils.dart';
 import 'package:jinja/src/visitor.dart';
 import 'package:stack_trace/stack_trace.dart';
 
 const String source = '''
-{% for item in seq %}{{ loop.cycle('<1>', '<2>') }}{% endfor %}
-{% for item in seq %}{{ loop.cycle(*through) }}{% endfor %}''';
+{% set ns = namespace() %}{% set ns.bar = "hi" %}
+''';
+
+final Map<String, Object?> context = <String, Object?>{
+  'namespace': () => <String, Object?>{},
+};
 
 void main() {
   try {
@@ -39,7 +42,7 @@ void main() {
     var template = Template.fromNode(environment, body: body);
 
     print('\nrender:');
-    print(template.render({'seq': range(4), 'through': ['<1>', '<2>']}));
+    print(template.render(context));
   } catch (error, trace) {
     print(error);
     print(Trace.format(trace, terse: true));

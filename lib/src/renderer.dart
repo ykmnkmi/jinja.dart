@@ -385,6 +385,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
       // TODO: replace with Filter { BlockExpression ( AssignBlock ) }
       for (var Filter(name: name, calling: calling) in filters) {
         var (positional, named) = calling.accept(this, context) as Parameters;
+        positional = [value, ...positional];
         value = context.filter(name, positional, named);
       }
 

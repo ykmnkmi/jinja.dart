@@ -1094,10 +1094,11 @@ class Parser {
     var filters = parseFilters(reader);
 
     for (var filter in filters) {
-      var calling = filter.calling;
-      var arguments = <Expression>[expression, ...calling.arguments];
-      calling = calling.copyWith(arguments: arguments);
-      expression = filter.copyWith(calling: calling);
+      expression = filter.copyWith(
+        calling: filter.calling.copyWith(
+          arguments: <Expression>[expression, ...filter.calling.arguments],
+        ),
+      );
     }
 
     return expression;

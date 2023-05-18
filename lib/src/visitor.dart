@@ -270,13 +270,23 @@ class ThrowingVisitor<C, R> implements Visitor<C, R> {
 }
 
 class Printer extends ThrowingVisitor<StringBuffer, void> {
-  Printer(this.environment);
+  Printer(Environment environment)
+      : variableStart = environment.variableStart,
+        variableEnd = environment.variableEnd,
+        blockStart = environment.blockStart,
+        blockEnd = environment.blockEnd;
 
-  final Environment environment;
+  final String variableStart;
+
+  final String variableEnd;
+
+  final String blockStart;
+
+  final String blockEnd;
 
   String visit(Node body) {
     var buffer = StringBuffer();
-    body.accept(Printer(environment), buffer);
+    body.accept(this, buffer);
     return '$buffer';
   }
 
@@ -287,7 +297,7 @@ class Printer extends ThrowingVisitor<StringBuffer, void> {
   ]) {
     nodes.first.accept(this, context);
 
-    for (var node in nodes) {
+    for (var node in nodes.skip(1)) {
       context.write(delimeter);
       node.accept(this, context);
     }
@@ -378,6 +388,23 @@ class Printer extends ThrowingVisitor<StringBuffer, void> {
   }
 
   @override
+  void visitDict(Dict node, StringBuffer context) {
+    if (node.pairs.isEmpty) {
+      context.write('{}');
+    } else {
+      context.write('{');
+
+      for (var (:key, :value) in node.pairs) {
+        key.accept(this, context);
+        context.write(': ');
+        value.accept(this, context);
+      }
+
+      context.write('}');
+    }
+  }
+
+  @override
   void visitItem(Item node, StringBuffer context) {
     node.value.accept(this, context);
     context.write('[');
@@ -390,7 +417,36 @@ class Printer extends ThrowingVisitor<StringBuffer, void> {
     context.write(node.name);
   }
 
+  @override
+  void visitNamespaceRef(NamespaceRef node, StringBuffer context) {
+    context.write('${node.name}.${node.attribute}');
+  }
+
   // Statements
+
+  @override
+  void visitAssign(Assign node, StringBuffer context) {
+    context.write('$variableStart set ');
+    node.target.accept(this, context);
+    context.write(' = ');
+    node.value.accept(this, context);
+    context.write(' $blockEnd');
+  }
+
+  @override
+  void visitAssignBlock(AssignBlock node, StringBuffer context) {
+    context.write('$variableStart set ');
+    node.target.accept(this, context);
+
+    for (var filter in node.filters) {
+      context.write(' | ${filter.name}');
+      filter.calling.accept(this, context);
+    }
+
+    context.write(' $blockEnd');
+    node.body.accept(this, context);
+    context.write('$blockStart endset $blockEnd');
+  }
 
   @override
   void visitData(Data node, StringBuffer context) {
@@ -399,7 +455,7 @@ class Printer extends ThrowingVisitor<StringBuffer, void> {
 
   @override
   void visitFor(For node, StringBuffer context) {
-    context.write('${environment.blockStart} for ');
+    context.write('$blockStart for ');
     node.target.accept(this, context);
     context.write(' in ');
     node.iterable.accept(this, context);
@@ -413,22 +469,22 @@ class Printer extends ThrowingVisitor<StringBuffer, void> {
       context.write(' recursive');
     }
 
-    context.write(' ${environment.blockEnd}');
+    context.write(' $blockEnd');
     node.body.accept(this, context);
 
     if (node.orElse case var orElse?) {
-      context.write('${environment.blockStart} else ${environment.blockEnd}');
+      context.write('$blockStart else $blockEnd');
       orElse.accept(this, context);
     }
 
-    context.write('${environment.blockStart} endfor ${environment.blockEnd}');
+    context.write('$blockStart endfor $blockEnd');
   }
 
   @override
   void visitInterpolation(Interpolation node, StringBuffer context) {
-    context.write('${environment.variableStart} ');
+    context.write('$variableStart ');
     node.value.accept(this, context);
-    context.write(' ${environment.variableEnd}');
+    context.write(' $variableEnd');
   }
 
   @override
