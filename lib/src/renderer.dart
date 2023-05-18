@@ -207,20 +207,31 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
   }
 
   @override
-  Object? visitCompare(Compare node, StringSinkRenderContext context) {
-    var left = node.left.accept(this, context);
-    var right = node.right.accept(this, context);
+  bool visitCompare(Compare node, StringSinkRenderContext context) {
+    var left = node.value.accept(this, context);
 
-    return switch (node.operator) {
-      CompareOperator.equal => isEqual(left, right),
-      CompareOperator.notEqual => isNotEqual(left, right),
-      CompareOperator.lessThan => isLessThan(left, right),
-      CompareOperator.lessThanOrEqual => isLessThanOrEqual(left, right),
-      CompareOperator.greaterThan => isGreaterThan(left, right),
-      CompareOperator.greaterThanOrEqual => isGreaterThanOrEqual(left, right),
-      CompareOperator.contains => isIn(left, right),
-      CompareOperator.notContains => !isIn(left, right),
-    };
+    for (var (operator, value) in node.operands) {
+      var right = value.accept(this, context);
+
+      var result = switch (operator) {
+        CompareOperator.equal => isEqual(left, right),
+        CompareOperator.notEqual => isNotEqual(left, right),
+        CompareOperator.lessThan => isLessThan(left, right),
+        CompareOperator.lessThanOrEqual => isLessThanOrEqual(left, right),
+        CompareOperator.greaterThan => isGreaterThan(left, right),
+        CompareOperator.greaterThanOrEqual => isGreaterThanOrEqual(left, right),
+        CompareOperator.contains => isIn(left, right),
+        CompareOperator.notContains => !isIn(left, right),
+      };
+
+      if (!result) {
+        return false;
+      }
+
+      left = right;
+    }
+
+    return true;
   }
 
   @override

@@ -69,13 +69,11 @@ class Context {
       return context[key];
     }
 
-    var parent = this.parent;
-
-    if (parent == null) {
-      return null;
+    if (parent case var parent?) {
+      return parent[key];
     }
 
-    return parent[key];
+    return null;
   }
 
   Object? item(Object? key, Object? value) {

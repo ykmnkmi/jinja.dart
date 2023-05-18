@@ -22,15 +22,6 @@ class Name extends Expression {
   Name copyWith({String? name, AssignContext? context}) {
     return Name(name: name ?? this.name, context: context ?? this.context);
   }
-
-  @override
-  String toString() {
-    if (context == AssignContext.load) {
-      return 'Name($name)';
-    }
-
-    return 'Name($name, $context)';
-  }
 }
 
 class NamespaceRef extends Expression {
@@ -52,11 +43,6 @@ class NamespaceRef extends Expression {
       attribute: attribute ?? this.attribute,
     );
   }
-
-  @override
-  String toString() {
-    return 'NamespaceRef($name, $attribute)';
-  }
 }
 
 abstract class Literal extends Expression {
@@ -77,11 +63,6 @@ class Constant extends Literal {
   Constant copyWith({Object? value}) {
     return Constant(value: value ?? this.value);
   }
-
-  @override
-  String toString() {
-    return 'Constant($value)';
-  }
 }
 
 class Tuple extends Literal {
@@ -100,11 +81,6 @@ class Tuple extends Literal {
       values: values ?? this.values,
     );
   }
-
-  @override
-  String toString() {
-    return 'Tuple(${values.join(', ')})';
-  }
 }
 
 class Array extends Literal {
@@ -120,11 +96,6 @@ class Array extends Literal {
   @override
   Array copyWith({List<Expression>? values}) {
     return Array(values: values ?? this.values);
-  }
-
-  @override
-  String toString() {
-    return 'Array(${values.join(', ')})';
   }
 }
 
@@ -146,11 +117,6 @@ class Dict extends Literal {
   @override
   Dict copyWith({List<Pair>? pairs}) {
     return Dict(pairs: pairs ?? this.pairs);
-  }
-
-  @override
-  String toString() {
-    return 'Dict(${pairs.join(', ')})';
   }
 }
 
@@ -183,11 +149,6 @@ class Condition extends Expression {
       trueValue: trueValue ?? this.trueValue,
       falseValue: falseValue ?? this.falseValue,
     );
-  }
-
-  @override
-  String toString() {
-    return 'Condition($test, $trueValue, $falseValue)';
   }
 }
 
@@ -230,16 +191,6 @@ class Calling extends Expression {
       dKeywords: dKeywords ?? this.dKeywords,
     );
   }
-
-  @override
-  String toString() {
-    return <Object?>[
-      ...arguments,
-      for (var (:key, :value) in keywords) '$key: $value',
-      if (dArguments case var dArguments?) '*$dArguments',
-      if (dKeywords case var dKeywords?) '**$dKeywords',
-    ].join(', ');
-  }
 }
 
 class Call extends Expression {
@@ -264,11 +215,6 @@ class Call extends Expression {
       calling: calling ?? this.calling,
     );
   }
-
-  @override
-  String toString() {
-    return 'Call($value, $calling)';
-  }
 }
 
 class Filter extends Expression {
@@ -289,11 +235,6 @@ class Filter extends Expression {
   @override
   Filter copyWith({String? name, Calling? calling}) {
     return Filter(name: name ?? this.name, calling: calling ?? this.calling);
-  }
-
-  @override
-  String toString() {
-    return 'Filter($name, $calling)';
   }
 }
 
@@ -316,11 +257,6 @@ class Test extends Expression {
   Test copyWith({String? name, Calling? calling}) {
     return Test(name: name ?? this.name, calling: calling ?? this.calling);
   }
-
-  @override
-  String toString() {
-    return 'Test($name, $calling)';
-  }
 }
 
 class Item extends Expression {
@@ -338,11 +274,6 @@ class Item extends Expression {
   @override
   Item copyWith({Expression? key, Expression? value}) {
     return Item(key: key ?? this.key, value: value ?? this.value);
-  }
-
-  @override
-  String toString() {
-    return 'Item($key, $value)';
   }
 }
 
@@ -365,11 +296,6 @@ class Attribute extends Expression {
       value: value ?? this.value,
     );
   }
-
-  @override
-  String toString() {
-    return 'Attribute($attribute, $value)';
-  }
 }
 
 class Concat extends Expression {
@@ -386,22 +312,21 @@ class Concat extends Expression {
   Concat copyWith({List<Expression>? values}) {
     return Concat(values: values ?? this.values);
   }
-
-  @override
-  String toString() {
-    return 'Concat(${values.join(', ')})';
-  }
 }
 
 enum CompareOperator {
-  equal,
-  notEqual,
-  lessThan,
-  lessThanOrEqual,
-  greaterThan,
-  greaterThanOrEqual,
-  contains,
-  notContains;
+  equal('=='),
+  notEqual('!='),
+  lessThan('<'),
+  lessThanOrEqual('<='),
+  greaterThan('>'),
+  greaterThanOrEqual('>='),
+  contains('in'),
+  notContains('not in');
+
+  const CompareOperator(this.symbol);
+
+  final String symbol;
 
   static CompareOperator parse(String operator) {
     return switch (operator) {
@@ -419,14 +344,17 @@ enum CompareOperator {
   }
 }
 
-typedef Operand = ({CompareOperator operator, Expression value});
+typedef Operand = (CompareOperator operator, Expression value);
 
-class Compare extends Binary<CompareOperator> {
+class Compare extends Expression {
   const Compare({
-    required super.operator,
-    required super.left,
-    required super.right,
+    required this.value,
+    this.operands = const <Operand>[],
   });
+
+  final Expression value;
+
+  final List<Operand> operands;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -435,27 +363,24 @@ class Compare extends Binary<CompareOperator> {
 
   @override
   Compare copyWith({
-    CompareOperator? operator,
-    Expression? left,
-    Expression? right,
+    Expression? value,
+    List<Operand>? operands,
   }) {
     return Compare(
-      operator: operator ?? this.operator,
-      left: left ?? this.left,
-      right: right ?? this.right,
+      value: value ?? this.value,
+      operands: operands ?? this.operands,
     );
-  }
-
-  @override
-  String toString() {
-    return 'Compare(${operator.name}, $left, $right)';
   }
 }
 
 enum UnaryOperator {
-  plus,
-  minus,
-  not,
+  plus('+'),
+  minus('-'),
+  not('not');
+
+  const UnaryOperator(this.symbol);
+
+  final String symbol;
 }
 
 class Unary extends Expression {
@@ -477,11 +402,6 @@ class Unary extends Expression {
       value: value ?? this.value,
     );
   }
-
-  @override
-  String toString() {
-    return 'Unary(${operator.name}, $value)';
-  }
 }
 
 abstract class Binary<T extends Enum> extends Expression {
@@ -502,13 +422,17 @@ abstract class Binary<T extends Enum> extends Expression {
 }
 
 enum ScalarOperator {
-  power,
-  module,
-  floorDivision,
-  division,
-  multiple,
-  minus,
-  plus,
+  power('**'),
+  module('%'),
+  floorDivision('~/'),
+  division('/'),
+  multiple('*'),
+  minus('-'),
+  plus('+');
+
+  const ScalarOperator(this.symbol);
+
+  final String symbol;
 }
 
 class Scalar extends Binary<ScalarOperator> {
@@ -534,11 +458,6 @@ class Scalar extends Binary<ScalarOperator> {
       left: left ?? this.left,
       right: right ?? this.right,
     );
-  }
-
-  @override
-  String toString() {
-    return 'Binary(${operator.name}, $left, $right)';
   }
 }
 
@@ -570,10 +489,5 @@ class Logical extends Binary<LogicalOperator> {
       left: left ?? this.left,
       right: right ?? this.right,
     );
-  }
-
-  @override
-  String toString() {
-    return 'Logical(${operator.name}, $left, $right)';
   }
 }

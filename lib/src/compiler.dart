@@ -43,75 +43,64 @@ class RuntimeCompiler implements Visitor<void, Node> {
 
   @override
   Call visitCall(Call node, void _) {
-    const loopCycle = Attribute(attribute: 'cycle', value: Name(name: 'loop'));
+    switch (node.value) {
+      // Modifies Template AST from `loop.cycle(first, second, *list)`
+      // to `loop['cycle']([first, second], list)`, which matches
+      // [LoopContext.cycle] definition.
+      //
+      // TODO(compiler): check name arguments
+      case Attribute(attribute: 'cycle', value: Name(name: 'loop')):
+        var calling = node.calling;
 
-    // Modifies Template AST from `loop.cycle(first, second, *list)`
-    // to `loop['cycle']([first, second], list)`, which matches
-    // [LoopContext.cycle] definition.
-    //
-    // TODO(compiler): check name arguments
-    if (node case Call(value: loopCycle, calling: var calling)) {
-      var arguments = <Expression>[Array(values: calling.arguments)];
+        var arguments = <Expression>[Array(values: calling.arguments)];
 
-      if (calling.dArguments case var dArguments?) {
-        arguments.add(dArguments);
-      }
+        if (calling.dArguments case var dArguments?) {
+          arguments.add(dArguments);
+        }
 
-      return node.copyWith(
-        value: visitNode(node.value),
-        // calling: calling.copyWith(
-        //   arguments: visitNodes(arguments),
-        //   keywords: const <Keyword>[],
-        //   dArguments: null,
-        //   dKeywords: null,
-        // ),
-        calling: Calling(arguments: visitNodes(arguments)),
-      );
+        return node.copyWith(
+          value: visitNode(node.value),
+          calling: Calling(arguments: visitNodes(arguments)),
+        );
+
+      // Modifies Template AST from `namespace(map1, ..., key1=value1, ...)`
+      // to `namespace([map1, ..., {'key1': value1, ...}])`, to match [namespace]
+      // definition.
+      case Name(name: 'namespace'):
+        var calling = node.calling;
+
+        var arguments = <Expression>[...calling.arguments];
+
+        if (calling.keywords.isNotEmpty) {
+          var pairs = <Pair>[
+            for (var (:key, :value) in calling.keywords)
+              (key: Constant(value: key), value: value)
+          ];
+
+          arguments.add(Dict(pairs: pairs));
+        }
+
+        if (calling.dArguments case var dArguments?) {
+          arguments.add(dArguments);
+        }
+
+        if (calling.dKeywords case var dKeywords?) {
+          arguments.add(dKeywords);
+        }
+
+        return node.copyWith(
+          value: visitNode(node.value),
+          calling: Calling(
+            arguments: visitNodes(<Expression>[Array(values: arguments)]),
+          ),
+        );
+
+      default:
+        return node.copyWith(
+          value: visitNode(node.value),
+          calling: visitNode(node.calling),
+        );
     }
-
-    // Modifies Template AST from `namespace(map1, ..., key1=value1, ...)`
-    // to `namespace([map1, ..., {'key1': value1, ...}])`, to match [namespace]
-    // definition.
-    if (node.value case Name(name: 'namespace')) {
-      var calling = node.calling;
-
-      var arguments = <Expression>[...calling.arguments];
-
-      if (calling.keywords.isNotEmpty) {
-        var pairs = <Pair>[
-          for (var (:key, :value) in calling.keywords)
-            (key: Constant(value: key), value: value)
-        ];
-
-        arguments.add(Dict(pairs: pairs));
-      }
-
-      if (calling.dArguments case var dArguments?) {
-        arguments.add(dArguments);
-      }
-
-      if (calling.dKeywords case var dKeywords?) {
-        arguments.add(dKeywords);
-      }
-
-      return node.copyWith(
-        value: visitNode(node.value),
-        // calling: calling.copyWith(
-        //   arguments: visitNodes(arguments),
-        //   keywords: <Keyword>[],
-        //   dArguments: null,
-        //   dKeywords: null,
-        // ),
-        calling: Calling(
-          arguments: visitNodes(<Expression>[Array(values: arguments)]),
-        ),
-      );
-    }
-
-    return node.copyWith(
-      value: visitNode(node.value),
-      calling: visitNode(node.calling),
-    );
   }
 
   @override
@@ -135,8 +124,11 @@ class RuntimeCompiler implements Visitor<void, Node> {
   @override
   Compare visitCompare(Compare node, void _) {
     return node.copyWith(
-      left: visitNode(node.left),
-      right: visitNode(node.right),
+      value: visitNode(node.value),
+      operands: <Operand>[
+        for (var (operator, value) in node.operands)
+          (operator, value.accept(this, null) as Expression)
+      ],
     );
   }
 

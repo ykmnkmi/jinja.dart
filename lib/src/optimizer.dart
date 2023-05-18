@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:jinja/src/context.dart';
 import 'package:jinja/src/nodes.dart';
-import 'package:jinja/src/tests.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:jinja/src/visitor.dart';
 
@@ -74,27 +73,13 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   Expression visitCompare(Compare node, Context context) {
-    var left = node.left.accept(this, context) as Expression;
-    var right = node.right.accept(this, context) as Expression;
-
-    if (left is Constant && right is Constant) {
-      return Constant(
-        value: switch (node.operator) {
-          CompareOperator.equal => isEqual(left.value, right.value),
-          CompareOperator.notEqual => isNotEqual(left.value, right.value),
-          CompareOperator.lessThan => isLessThan(left.value, right.value),
-          CompareOperator.lessThanOrEqual =>
-            isLessThanOrEqual(left.value, right.value),
-          CompareOperator.greaterThan => isGreaterThan(left.value, right.value),
-          CompareOperator.greaterThanOrEqual =>
-            isGreaterThanOrEqual(left.value, right.value),
-          CompareOperator.contains => isIn(left.value, right.value),
-          CompareOperator.notContains => !isIn(left.value, right.value),
-        },
-      );
-    }
-
-    return node.copyWith(left: left, right: right);
+    return node.copyWith(
+      value: node.value.accept(this, context) as Expression,
+      operands: <Operand>[
+        for (var (operator, value) in node.operands)
+          (operator, value.accept(this, context) as Expression)
+      ],
+    );
   }
 
   @override
@@ -121,7 +106,7 @@ class Optimizer implements Visitor<Context, Node> {
       } else {
         newValues
           ..add(Constant(value: pack.join()))
-          ..add(node);
+          ..add(value);
 
         pack.clear();
       }

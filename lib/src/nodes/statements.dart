@@ -18,34 +18,29 @@ class Extends extends Statement {
   Extends copyWith({String? path}) {
     return Extends(path: path ?? this.path);
   }
-
-  @override
-  String toString() {
-    return 'Extends ($path)';
-  }
 }
 
 class For extends Statement {
   For({
     required this.target,
     required this.iterable,
-    required this.body,
     this.test,
-    this.orElse,
     this.recursive = false,
+    required this.body,
+    this.orElse,
   });
 
   final Expression target;
 
   final Expression iterable;
 
-  final Node body;
-
   final Expression? test;
 
-  final Node? orElse;
-
   final bool recursive;
+
+  final Node body;
+
+  final Node? orElse;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -56,40 +51,19 @@ class For extends Statement {
   For copyWith({
     Expression? target,
     Expression? iterable,
-    Node? body,
     Expression? test,
-    Node? orElse,
     bool? recursive,
+    Node? body,
+    Node? orElse,
   }) {
     return For(
       target: target ?? this.target,
       iterable: iterable ?? this.iterable,
-      body: body ?? this.body,
       test: test ?? this.test,
-      orElse: orElse ?? this.orElse,
       recursive: recursive ?? this.recursive,
+      body: body ?? this.body,
+      orElse: orElse ?? this.orElse,
     );
-  }
-
-  @override
-  String toString() {
-    var result = 'For ($target, $iterable';
-
-    if (test != null) {
-      result = '$result, $test';
-    }
-
-    if (recursive) {
-      result = '$result, recursive';
-    }
-
-    result = '$result) $body';
-
-    if (orElse == null) {
-      return result;
-    }
-
-    return '$result Else $orElse';
   }
 }
 
@@ -122,15 +96,6 @@ class If extends Statement {
       body: body ?? this.body,
       orElse: orElse ?? this.orElse,
     );
-  }
-
-  @override
-  String toString() {
-    if (orElse == null) {
-      return 'If ($test) $body';
-    }
-
-    return 'If ($test) $body Else $orElse';
   }
 }
 
@@ -189,11 +154,6 @@ class Macro extends MacroCall {
       body: body ?? this.body,
     );
   }
-
-  @override
-  String toString() {
-    return 'Macro ($name, $arguments, $defaults) $body';
-  }
 }
 
 class CallBlock extends MacroCall {
@@ -225,11 +185,6 @@ class CallBlock extends MacroCall {
       body: body ?? this.body,
     );
   }
-
-  @override
-  String toString() {
-    return 'CallBlock ($call, $arguments, $defaults) $body';
-  }
 }
 
 class FilterBlock extends Statement {
@@ -250,11 +205,6 @@ class FilterBlock extends Statement {
       filters: filters ?? this.filters,
       body: body ?? this.body,
     );
-  }
-
-  @override
-  String toString() {
-    return 'FilterBlock ($filters) $body';
   }
 }
 
@@ -287,11 +237,6 @@ class With extends Statement {
       values: values ?? this.values,
       body: body ?? this.body,
     );
-  }
-
-  @override
-  String toString() {
-    return 'With ($targets, $values) $body';
   }
 }
 
@@ -330,17 +275,6 @@ class Block extends Statement {
       body: body ?? this.body,
     );
   }
-
-  @override
-  String toString() {
-    var result = 'Block ($name';
-
-    if (scoped) {
-      result = '$result, scoped';
-    }
-
-    return '$result) $body';
-  }
 }
 
 class Include extends Statement implements ImportContext {
@@ -363,17 +297,6 @@ class Include extends Statement implements ImportContext {
       withContext: withContext ?? this.withContext,
     );
   }
-
-  @override
-  String toString() {
-    var result = 'Include ($template';
-
-    if (withContext) {
-      result = '$result, withContext';
-    }
-
-    return '$result)';
-  }
 }
 
 class Do extends Statement {
@@ -391,11 +314,6 @@ class Do extends Statement {
     return Do(
       value: value ?? this.value,
     );
-  }
-
-  @override
-  String toString() {
-    return 'Do ($value)';
   }
 }
 
@@ -417,11 +335,6 @@ class Assign extends Statement {
       target: target ?? this.target,
       value: value ?? this.value,
     );
-  }
-
-  @override
-  String toString() {
-    return 'Assign ($target, $value)';
   }
 }
 
@@ -455,17 +368,6 @@ class AssignBlock extends Statement {
       body: body ?? this.body,
     );
   }
-
-  @override
-  String toString() {
-    var result = 'AssignBlock ($target';
-
-    if (filters.isNotEmpty) {
-      result = '$result, $filters';
-    }
-
-    return '$result) $body';
-  }
 }
 
 class AutoEscape extends Statement {
@@ -489,10 +391,5 @@ class AutoEscape extends Statement {
       value: value ?? this.value,
       body: body ?? this.body,
     );
-  }
-
-  @override
-  String toString() {
-    return 'AutoEscape ($value) $body';
   }
 }

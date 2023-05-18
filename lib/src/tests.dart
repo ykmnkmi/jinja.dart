@@ -116,7 +116,7 @@ bool isEscaped(Object? value) {
 /// Check if value is in sequence.
 bool isIn(Object? value, Object? values) {
   if (values is String) {
-    if (value is String) {
+    if (value is Pattern) {
       return values.contains(value);
     }
 

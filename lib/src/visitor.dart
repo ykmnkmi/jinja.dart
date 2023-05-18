@@ -1,4 +1,4 @@
-import 'package:jinja/src/context.dart';
+import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/nodes.dart';
 
 abstract class Visitor<C, R> {
@@ -269,7 +269,172 @@ class ThrowingVisitor<C, R> implements Visitor<C, R> {
   }
 }
 
-class ExpressionResolver<C extends Context>
-    extends ThrowingVisitor<C, Object?> {
-  const ExpressionResolver();
+class Printer extends ThrowingVisitor<StringBuffer, void> {
+  Printer(this.environment);
+
+  final Environment environment;
+
+  String visit(Node body) {
+    var buffer = StringBuffer();
+    body.accept(Printer(environment), buffer);
+    return '$buffer';
+  }
+
+  void writeAll(
+    StringBuffer context,
+    List<Node> nodes, [
+    String delimeter = ', ',
+  ]) {
+    nodes.first.accept(this, context);
+
+    for (var node in nodes) {
+      context.write(delimeter);
+      node.accept(this, context);
+    }
+  }
+
+  // Expressions
+
+  @override
+  void visitArray(Array node, StringBuffer context) {
+    if (node.values.isEmpty) {
+      context.write('[]');
+    } else {
+      writeAll(context, node.values);
+    }
+  }
+
+  @override
+  void visitAttribute(Attribute node, StringBuffer context) {
+    node.value.accept(this, context);
+    context.write('.${node.attribute}');
+  }
+
+  @override
+  void visitCall(Call node, StringBuffer context) {
+    node.value.accept(this, context);
+    node.calling.accept(this, context);
+  }
+
+  @override
+  void visitCalling(Calling node, StringBuffer context) {
+    context.write('(');
+
+    var comma = '';
+
+    if (node.arguments.isNotEmpty) {
+      writeAll(context, node.arguments);
+      comma = ', ';
+    }
+
+    if (node.keywords.isNotEmpty) {
+      context.write(comma);
+
+      var (:key, :value) = node.keywords.first;
+      context.write('$key=');
+      value.accept(this, context);
+
+      for (var (:key, :value) in node.keywords.skip(1)) {
+        context.write(', $key=');
+        value.accept(this, context);
+      }
+    }
+
+    if (node.dArguments case var dArguments?) {
+      context.write('$comma*');
+      dArguments.accept(this, context);
+    }
+
+    if (node.dKeywords case var dKeywords?) {
+      context.write('$comma**');
+      dKeywords.accept(this, context);
+    }
+
+    context.write(')');
+  }
+
+  @override
+  void visitCompare(Compare node, StringBuffer context) {
+    node.value.accept(this, context);
+
+    for (var (operator, value) in node.operands) {
+      context.write(' ${operator.symbol} ');
+      value.accept(this, context);
+    }
+  }
+
+  @override
+  void visitConcat(Concat node, StringBuffer context) {
+    writeAll(context, node.values, ' ~ ');
+  }
+
+  @override
+  void visitConstant(Constant node, StringBuffer context) {
+    if (node.value case String value) {
+      context.write('"${value.replaceAll('"', r'\"')}"');
+    } else {
+      context.write(node.value);
+    }
+  }
+
+  @override
+  void visitItem(Item node, StringBuffer context) {
+    node.value.accept(this, context);
+    context.write('[');
+    node.key.accept(this, context);
+    context.write(']');
+  }
+
+  @override
+  void visitName(Name node, StringBuffer context) {
+    context.write(node.name);
+  }
+
+  // Statements
+
+  @override
+  void visitData(Data node, StringBuffer context) {
+    context.write(node.data);
+  }
+
+  @override
+  void visitFor(For node, StringBuffer context) {
+    context.write('${environment.blockStart} for ');
+    node.target.accept(this, context);
+    context.write(' in ');
+    node.iterable.accept(this, context);
+
+    if (node.test case var test?) {
+      context.write(' ');
+      test.accept(this, context);
+    }
+
+    if (node.recursive) {
+      context.write(' recursive');
+    }
+
+    context.write(' ${environment.blockEnd}');
+    node.body.accept(this, context);
+
+    if (node.orElse case var orElse?) {
+      context.write('${environment.blockStart} else ${environment.blockEnd}');
+      orElse.accept(this, context);
+    }
+
+    context.write('${environment.blockStart} endfor ${environment.blockEnd}');
+  }
+
+  @override
+  void visitInterpolation(Interpolation node, StringBuffer context) {
+    context.write('${environment.variableStart} ');
+    node.value.accept(this, context);
+    context.write(' ${environment.variableEnd}');
+  }
+
+  @override
+  void visitOutput(Output node, StringBuffer context) {
+    for (var node in node.nodes) {
+      node.accept(this, context);
+    }
+  }
 }

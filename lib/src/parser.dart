@@ -622,8 +622,8 @@ class Parser {
   Expression parseCompare(TokenReader reader) {
     const operators = <String>['eq', 'ne', 'lt', 'lteq', 'gt', 'gteq'];
 
-    var left = parseMath1(reader);
-    Expression right;
+    var value = parseMath1(reader);
+    var operands = <Operand>[];
 
     outer:
     while (true) {
@@ -646,11 +646,14 @@ class Parser {
         break outer;
       }
 
-      right = parseMath1(reader);
-      left = Compare(operator: operator, left: left, right: right);
+      operands.add((operator, parseMath1(reader)));
     }
 
-    return left;
+    if (operands.isEmpty) {
+      return value;
+    }
+
+    return Compare(value: value, operands: operands);
   }
 
   Expression parseMath1(TokenReader reader) {
