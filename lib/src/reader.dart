@@ -1,11 +1,11 @@
 import 'package:jinja/src/exceptions.dart';
 import 'package:jinja/src/lexer.dart';
 
-class TokenReader {
+final class TokenReader {
   TokenReader(Iterable<Token> tokens)
       : iterator = tokens.iterator,
         pushed = <Token>[] {
-    current = Token.simple(0, 'initial');
+    current = const Token.simple(0, 'initial');
     next();
   }
 

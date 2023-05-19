@@ -6,7 +6,7 @@ enum AssignContext {
   parameter,
 }
 
-class Name extends Expression {
+final class Name extends Expression {
   const Name({required this.name, this.context = AssignContext.load});
 
   final String name;
@@ -24,7 +24,7 @@ class Name extends Expression {
   }
 }
 
-class NamespaceRef extends Expression {
+final class NamespaceRef extends Expression {
   const NamespaceRef({required this.name, required this.attribute});
 
   final String name;
@@ -45,11 +45,11 @@ class NamespaceRef extends Expression {
   }
 }
 
-abstract class Literal extends Expression {
+abstract final class Literal extends Expression {
   const Literal();
 }
 
-class Constant extends Literal {
+final class Constant extends Literal {
   const Constant({required this.value});
 
   final Object? value;
@@ -65,7 +65,7 @@ class Constant extends Literal {
   }
 }
 
-class Tuple extends Literal {
+final class Tuple extends Literal {
   const Tuple({required this.values});
 
   final List<Expression> values;
@@ -83,7 +83,7 @@ class Tuple extends Literal {
   }
 }
 
-class Array extends Literal {
+final class Array extends Literal {
   const Array({required this.values});
 
   final List<Expression> values;
@@ -104,7 +104,7 @@ typedef Pair = ({
   Expression value,
 });
 
-class Dict extends Literal {
+final class Dict extends Literal {
   const Dict({required this.pairs});
 
   final List<Pair> pairs;
@@ -120,7 +120,7 @@ class Dict extends Literal {
   }
 }
 
-class Condition extends Expression {
+final class Condition extends Expression {
   const Condition({
     required this.test,
     required this.trueValue,
@@ -156,7 +156,7 @@ typedef Keyword = ({String key, Expression value});
 
 typedef Parameters = (List<Object?>, Map<Symbol, Object?>);
 
-class Calling extends Expression {
+final class Calling extends Expression {
   const Calling({
     this.arguments = const <Expression>[],
     this.keywords = const <Keyword>[],
@@ -193,7 +193,7 @@ class Calling extends Expression {
   }
 }
 
-class Call extends Expression {
+final class Call extends Expression {
   const Call({
     required this.value,
     this.calling = const Calling(),
@@ -217,7 +217,7 @@ class Call extends Expression {
   }
 }
 
-class Filter extends Expression {
+final class Filter extends Expression {
   const Filter({
     required this.name,
     this.calling = const Calling(),
@@ -238,7 +238,7 @@ class Filter extends Expression {
   }
 }
 
-class Test extends Expression {
+final class Test extends Expression {
   const Test({
     required this.name,
     this.calling = const Calling(),
@@ -259,7 +259,7 @@ class Test extends Expression {
   }
 }
 
-class Item extends Expression {
+final class Item extends Expression {
   const Item({required this.key, required this.value});
 
   final Expression key;
@@ -277,7 +277,7 @@ class Item extends Expression {
   }
 }
 
-class Attribute extends Expression {
+final class Attribute extends Expression {
   const Attribute({required this.attribute, required this.value});
 
   final String attribute;
@@ -298,7 +298,7 @@ class Attribute extends Expression {
   }
 }
 
-class Concat extends Expression {
+final class Concat extends Expression {
   const Concat({required this.values});
 
   final List<Expression> values;
@@ -346,7 +346,7 @@ enum CompareOperator {
 
 typedef Operand = (CompareOperator operator, Expression value);
 
-class Compare extends Expression {
+final class Compare extends Expression {
   const Compare({
     required this.value,
     this.operands = const <Operand>[],
@@ -383,7 +383,7 @@ enum UnaryOperator {
   final String symbol;
 }
 
-class Unary extends Expression {
+final class Unary extends Expression {
   const Unary({required this.operator, required this.value});
 
   final UnaryOperator operator;
@@ -404,7 +404,7 @@ class Unary extends Expression {
   }
 }
 
-abstract class Binary<T extends Enum> extends Expression {
+abstract final class Binary<T extends Enum> extends Expression {
   const Binary({
     required this.operator,
     required this.left,
@@ -435,7 +435,7 @@ enum ScalarOperator {
   final String symbol;
 }
 
-class Scalar extends Binary<ScalarOperator> {
+final class Scalar extends Binary<ScalarOperator> {
   const Scalar({
     required super.operator,
     required super.left,
@@ -466,7 +466,7 @@ enum LogicalOperator {
   and,
 }
 
-class Logical extends Binary<LogicalOperator> {
+final class Logical extends Binary<LogicalOperator> {
   const Logical({
     required super.operator,
     required super.left,

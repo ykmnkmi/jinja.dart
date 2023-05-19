@@ -30,7 +30,7 @@ String unescape(String text) {
   return htmlUnescape.convert(text);
 }
 
-class Markup {
+final class Markup {
   factory Markup(Object? value) {
     if (value case Markup markup) {
       return markup;
@@ -61,7 +61,7 @@ class Markup {
   }
 }
 
-class Escaped implements Markup {
+final class Escaped implements Markup {
   const Escaped(this.value);
 
   @override

@@ -4,7 +4,7 @@ import 'package:jinja/src/visitor.dart';
 part 'nodes/expressions.dart';
 part 'nodes/statements.dart';
 
-abstract class Node {
+abstract final class Node {
   const Node();
 
   R accept<C, R>(Visitor<C, R> visitor, C context);
@@ -12,7 +12,7 @@ abstract class Node {
   Node copyWith();
 }
 
-class Data extends Node {
+final class Data extends Node {
   const Data({this.data = ''});
 
   final String data;
@@ -45,11 +45,11 @@ class Data extends Node {
   }
 }
 
-abstract class Expression extends Node {
+abstract final class Expression extends Node {
   const Expression();
 }
 
-class Callback extends Expression {
+final class Callback extends Expression {
   const Callback({required this.callback});
 
   final Object? Function(Context context) callback;
@@ -70,11 +70,11 @@ class Callback extends Expression {
   }
 }
 
-abstract class Statement extends Node {
+abstract final class Statement extends Node {
   const Statement();
 }
 
-class Interpolation extends Node {
+final class Interpolation extends Node {
   const Interpolation({required this.value});
 
   final Expression value;
@@ -95,7 +95,7 @@ class Interpolation extends Node {
   }
 }
 
-class Output extends Node {
+final class Output extends Node {
   const Output({this.nodes = const <Node>[]});
 
   final List<Node> nodes;
@@ -116,7 +116,7 @@ class Output extends Node {
   }
 }
 
-class TemplateNode extends Node {
+final class TemplateNode extends Node {
   const TemplateNode({this.blocks = const <Block>[], required this.body});
 
   final List<Block> blocks;

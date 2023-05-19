@@ -1,6 +1,8 @@
 import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/visitor.dart';
+import 'package:meta/meta.dart';
 
+@doNotStore
 class RuntimeCompiler implements Visitor<void, Node> {
   const RuntimeCompiler();
 
@@ -43,6 +45,7 @@ class RuntimeCompiler implements Visitor<void, Node> {
 
   @override
   Call visitCall(Call node, void _) {
+    // TODO(compiler): handle super call
     switch (node.value) {
       // Modifies Template AST from `loop.cycle(first, second, *list)`
       // to `loop['cycle']([first, second], list)`, which matches

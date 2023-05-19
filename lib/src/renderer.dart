@@ -10,7 +10,7 @@ import 'package:jinja/src/tests.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:jinja/src/visitor.dart';
 
-class RenderContext extends Context {
+abstract base class RenderContext extends Context {
   RenderContext(
     super.environment, {
     Map<String, List<Block>>? blocks,
@@ -24,14 +24,7 @@ class RenderContext extends Context {
   RenderContext derived({
     Map<String, List<Block>>? blocks,
     Map<String, Object?>? data,
-  }) {
-    return RenderContext(
-      environment,
-      blocks: blocks ?? this.blocks,
-      parent: context,
-      data: data,
-    );
-  }
+  });
 
   Map<String, Object?> save(Map<String, Object?> map) {
     var save = <String, Object?>{};
@@ -107,7 +100,7 @@ class RenderContext extends Context {
   }
 }
 
-class StringSinkRenderContext extends RenderContext {
+final class StringSinkRenderContext extends RenderContext {
   StringSinkRenderContext(
     super.environment,
     this.sink, {
@@ -153,7 +146,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
   @override
   Object? visitAttribute(Attribute node, StringSinkRenderContext context) {
     var value = node.value.accept(this, context);
-    return context.environment.getAttribute(value, node.attribute);
+    return context.attribute(value, node.attribute);
   }
 
   @override
@@ -277,7 +270,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
   Object? visitItem(Item node, StringSinkRenderContext context) {
     var key = node.key.accept(this, context);
     var value = node.value.accept(this, context);
-    return context.environment.getItem(value, key);
+    return context.item(value, key);
   }
 
   @override
@@ -421,7 +414,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
       var first = blocks[0];
       var index = 0;
 
-      // TODO(renderer): move to Context
+      // TODO(renderer): move to context
       String parent() {
         if (index < blocks.length - 1) {
           var parentBlock = blocks[index += 1];

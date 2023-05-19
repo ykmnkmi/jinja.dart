@@ -4,7 +4,7 @@ abstract class ImportContext {
   bool get withContext;
 }
 
-class Extends extends Statement {
+final class Extends extends Statement {
   const Extends({required this.path});
 
   final String path;
@@ -20,7 +20,7 @@ class Extends extends Statement {
   }
 }
 
-class For extends Statement {
+final class For extends Statement {
   For({
     required this.target,
     required this.iterable,
@@ -67,7 +67,7 @@ class For extends Statement {
   }
 }
 
-class If extends Statement {
+final class If extends Statement {
   const If({
     required this.test,
     required this.body,
@@ -104,7 +104,7 @@ typedef MacroSignature = ({
   List<Expression> defaults,
 });
 
-abstract class MacroCall extends Statement {
+abstract final class MacroCall extends Statement {
   const MacroCall({
     this.arguments = const <Expression>[],
     this.defaults = const <Expression>[],
@@ -125,7 +125,7 @@ abstract class MacroCall extends Statement {
   });
 }
 
-class Macro extends MacroCall {
+final class Macro extends MacroCall {
   const Macro({
     required this.name,
     super.arguments,
@@ -156,7 +156,7 @@ class Macro extends MacroCall {
   }
 }
 
-class CallBlock extends MacroCall {
+final class CallBlock extends MacroCall {
   CallBlock({
     required this.call,
     super.arguments,
@@ -187,7 +187,7 @@ class CallBlock extends MacroCall {
   }
 }
 
-class FilterBlock extends Statement {
+final class FilterBlock extends Statement {
   const FilterBlock({required this.filters, required this.body});
 
   final List<Filter> filters;
@@ -208,7 +208,7 @@ class FilterBlock extends Statement {
   }
 }
 
-class With extends Statement {
+final class With extends Statement {
   const With({
     required this.targets,
     required this.values,
@@ -240,7 +240,7 @@ class With extends Statement {
   }
 }
 
-class Block extends Statement {
+final class Block extends Statement {
   const Block({
     required this.name,
     required this.scoped,
@@ -277,7 +277,7 @@ class Block extends Statement {
   }
 }
 
-class Include extends Statement implements ImportContext {
+final class Include extends Statement implements ImportContext {
   const Include({required this.template, this.withContext = true});
 
   final String template;
@@ -299,7 +299,7 @@ class Include extends Statement implements ImportContext {
   }
 }
 
-class Do extends Statement {
+final class Do extends Statement {
   Do({required this.value});
 
   final Expression value;
@@ -317,7 +317,7 @@ class Do extends Statement {
   }
 }
 
-class Assign extends Statement {
+final class Assign extends Statement {
   const Assign({required this.target, required this.value});
 
   final Expression target;
@@ -338,7 +338,7 @@ class Assign extends Statement {
   }
 }
 
-class AssignBlock extends Statement {
+final class AssignBlock extends Statement {
   AssignBlock({
     required this.target,
     this.filters = const <Filter>[],
@@ -370,7 +370,7 @@ class AssignBlock extends Statement {
   }
 }
 
-class AutoEscape extends Statement {
+final class AutoEscape extends Statement {
   const AutoEscape({required this.value, required this.body});
 
   final Expression value;
