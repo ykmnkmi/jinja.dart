@@ -22,7 +22,7 @@ class Data extends Node {
   }
 
   String get literal {
-    return "'${data.replaceAll("'", r"\'").replaceAll('\r\n', r'\n').replaceAll('\n', r'\n')}'";
+    return '"${data.replaceAll('"', r'\"').replaceAll('\r\n', r'\n').replaceAll('\n', r'\n')}"';
   }
 
   String get trimmed {

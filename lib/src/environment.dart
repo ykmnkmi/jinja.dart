@@ -110,23 +110,23 @@ class Environment {
       throw ArgumentError.value(newLine);
     }
 
-    if (globals != null) {
+    if (globals case var globals?) {
       this.globals.addAll(globals);
     }
 
-    if (filters != null) {
+    if (filters case var filters?) {
       this.filters.addAll(filters);
     }
 
-    if (tests != null) {
+    if (tests case var tests?) {
       this.tests.addAll(tests);
     }
 
-    if (modifiers != null) {
+    if (modifiers case var modifiers?) {
       this.modifiers.addAll(modifiers);
     }
 
-    if (templates != null) {
+    if (templates case var templates?) {
       this.templates.addAll(templates);
     }
   }
@@ -299,13 +299,11 @@ class Environment {
     Map<Symbol, Object?> named = const <Symbol, Object?>{},
     Context? context,
   ]) {
-    var function = filters[name];
-
-    if (function == null) {
-      throw TemplateRuntimeError("No filter named '$name'");
+    if (filters[name] case var function?) {
+      return callCommon(function, positional, named, context);
     }
 
-    return callCommon(function, positional, named, context);
+    throw TemplateRuntimeError("No filter named '$name'");
   }
 
   /// If [name] not found throws [TemplateRuntimeError].
@@ -316,13 +314,11 @@ class Environment {
     Map<Symbol, Object?> named = const <Symbol, Object?>{},
     Context? context,
   ]) {
-    var function = tests[name];
-
-    if (function == null) {
-      throw TemplateRuntimeError("No test named '$name'");
+    if (tests[name] case var function?) {
+      return callCommon(function, positional, named, context) as bool;
     }
 
-    return callCommon(function, positional, named, context) as bool;
+    throw TemplateRuntimeError("No test named '$name'");
   }
 
   /// Lex the given source and return a list of tokens.
@@ -343,16 +339,15 @@ class Environment {
   ///
   /// This can be useful for debugging or to extract information from templates.
   Node parse(String source, {String? path}) {
-    var tokens = lex(source);
-    return scan(tokens, path: path);
+    return scan(lex(source), path: path);
   }
 
   /// Load a template from a source string without using [loader].
   Template fromString(String source, {String? path}) {
-    var body = Parser(this, path: path).parse(source);
+    var body = parse(source, path: path);
 
     for (var modifier in modifiers) {
-      modifier(body);
+      body = modifier(body);
     }
 
     if (optimize) {
@@ -367,17 +362,15 @@ class Environment {
   ///
   /// If the template does not exist a [TemplateNotFound] exception is thrown.
   Template getTemplate(String template) {
-    var loader = this.loader;
+    if (loader case var loader?) {
+      if (autoReload) {
+        return templates[template] = loader.load(this, template);
+      }
 
-    if (loader == null) {
-      throw StateError('No loader for this environment specified');
+      return templates[template] ??= loader.load(this, template);
     }
 
-    if (autoReload) {
-      return templates[template] = loader.load(this, template);
-    }
-
-    return templates[template] ??= loader.load(this, template);
+    throw StateError('No loader for this environment specified');
   }
 
   /// Returns a list of templates for this environment.
@@ -385,30 +378,28 @@ class Environment {
   /// This requires that the loader supports the loader's
   /// [Loader.listTemplates] method.
   List<String> listTemplates() {
-    var loader = this.loader;
-
-    if (loader == null) {
-      throw StateError('No loader for this environment specified');
+    if (loader case var loader?) {
+      return loader.listTemplates();
     }
 
-    return loader.listTemplates();
+    throw StateError('No loader for this environment specified');
   }
 
   @protected
   static ContextFinalizer wrapFinalizer(Function function) {
-    if (function is ContextFinalizer) {
-      return function;
+    if (function case ContextFinalizer contextFinalizer) {
+      return contextFinalizer;
     }
 
-    if (function is Object Function(Environment environment, Object? value)) {
+    if (function case EnvironmentFinalizer environmentFinalizer) {
       return (context, value) {
-        return function(context.environment, value);
+        return environmentFinalizer(context.environment, value);
       };
     }
 
-    if (function is Object Function(Object? value)) {
+    if (function case Finalizer finalizer) {
       return (context, value) {
-        return function(value);
+        return finalizer(value);
       };
     }
 

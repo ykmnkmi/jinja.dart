@@ -66,35 +66,35 @@ class RenderContext extends Context {
   }
 
   void assignTargets(Object? target, Object? current) {
-    if (target is String) {
-      set(target, current);
+    if (target case String string) {
+      set(string, current);
       return;
     }
 
-    if (target is List<String>) {
+    if (target case List<String> strings) {
       var values = list(current);
 
-      if (values.length < target.length) {
+      if (values.length < strings.length) {
         // TODO: update error
         throw StateError('Not enough values to unpack');
       }
 
-      if (values.length > target.length) {
+      if (values.length > strings.length) {
         // TODO: update error
         throw StateError('Too many values to unpack.');
       }
 
-      for (var i = 0; i < target.length; i++) {
-        set(target[i], values[i]);
+      for (var i = 0; i < strings.length; i++) {
+        set(strings[i], values[i]);
       }
 
       return;
     }
 
-    if (target is NamespaceValue) {
-      var namespace = resolve(target.name);
+    if (target case NamespaceValue namespaceValue) {
+      var value = resolve(namespaceValue.name);
 
-      if (namespace is Namespace) {
+      if (value case Namespace namespace) {
         namespace[target.item] = current;
         return;
       }
@@ -610,11 +610,11 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
 }
 
 Map<String, Object?> getDataForTargets(Object? targets, Object? current) {
-  if (targets is String) {
-    return <String, Object?>{targets: current};
+  if (targets case String string) {
+    return <String, Object?>{string: current};
   }
 
-  if (targets is List) {
+  if (targets case List<Object?> targets) {
     var names = targets.cast<String>();
     var values = list(current);
 

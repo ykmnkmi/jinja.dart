@@ -203,7 +203,7 @@ class Parser {
 
     var target = parseAssignTarget(reader, extraEndRules: <String>['name:in']);
 
-    if (target is Name && target.name == 'loop') {
+    if (target case Name(name: 'loop')) {
       fail("Can't assign to special loop variable in for-loop target");
     }
 
@@ -329,11 +329,13 @@ class Parser {
 
     if (required) {
       switch (body) {
-        case Data() when body.isLeaf:
+        case Data data when data.isLeaf:
+        case Output(nodes: <Node>[]):
           break;
 
         default:
-          fail('...', token.line);
+          fail('Required blocks can only contain comments or whitespace',
+              token.line);
       }
     }
 
@@ -512,7 +514,7 @@ class Parser {
 
     var name = parsePrimary(reader);
 
-    if (name is Name) {
+    if (name case Name name) {
       return name.copyWith(context: AssignContext.store);
     }
 
@@ -538,11 +540,12 @@ class Parser {
       target = parsePrimary(reader);
     }
 
-    if (target is Name) {
-      return target.copyWith(context: context);
+    if (target case Name name) {
+      return name.copyWith(context: context);
     }
 
-    if (target is Tuple && target.values.any((value) => value is Name)) {
+    if (target case Tuple(values: var values)
+        when values.any((value) => value is Name)) {
       return target.copyWith(
         values: <Expression>[
           for (var value in target.values.cast<Name>())

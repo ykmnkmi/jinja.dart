@@ -1,4 +1,3 @@
-import 'package:jinja/reflection.dart';
 import 'package:jinja/src/compiler.dart';
 import 'package:jinja/src/context.dart';
 import 'package:jinja/src/environment.dart';
@@ -7,23 +6,21 @@ import 'package:jinja/src/visitor.dart';
 import 'package:stack_trace/stack_trace.dart';
 
 const String source = '''
-{% set ns = namespace() %}{% set ns.bar = "hi" %}
+{{ ["1", "2", "3"]|map("int")|sum }}
 ''';
 
-final Map<String, Object?> context = <String, Object?>{
-  'namespace': () => <String, Object?>{},
-};
+const Map<String, Object?> context = <String, Object?>{};
 
 void main() {
   try {
-    var environment = Environment(getAttribute: getAttribute);
+    var environment = Environment();
 
     var tokens = environment.lex(source);
-    print('tokens:');
+    // print('tokens:');
 
-    for (var token in tokens) {
-      print('${token.type}: ${token.value}');
-    }
+    // for (var token in tokens) {
+    //   print('${token.type}: ${token.value}');
+    // }
 
     var printer = Printer(environment);
 
@@ -40,7 +37,6 @@ void main() {
     print(printer.visit(body));
 
     var template = Template.fromNode(environment, body: body);
-
     print('\nrender:');
     print(template.render(context));
   } catch (error, trace) {

@@ -62,12 +62,17 @@ RegExp compileRe(String pattern) {
   return RegExp(pattern, dotAll: true, multiLine: true);
 }
 
+enum RuleState {
+  pop,
+  group,
+}
+
 abstract class Rule {
   Rule(this.regExp, [this.newState]);
 
   final RegExp regExp;
 
-  final String? newState;
+  final RuleState? newState;
 }
 
 class SingleTokenRule extends Rule {
@@ -177,7 +182,7 @@ class Lexer {
         MultiTokenRule.optionalLStrip(
           data,
           <String>['data', '#group'],
-          '#group',
+          RuleState.group,
         ),
         SingleTokenRule(
           compileRe('.+'),
@@ -188,7 +193,7 @@ class Lexer {
         MultiTokenRule(
           commentEnd,
           <String>['comment', 'comment_end'],
-          '#pop',
+          RuleState.pop,
         ),
         MultiTokenRule(
           compileRe('(.)'),
@@ -199,7 +204,7 @@ class Lexer {
         SingleTokenRule(
           variableEnd,
           'variable_end',
-          '#pop',
+          RuleState.pop,
         ),
         ...tagRules,
       ],
@@ -207,7 +212,7 @@ class Lexer {
         SingleTokenRule(
           blockEnd,
           'block_end',
-          '#pop',
+          RuleState.pop,
         ),
         ...tagRules,
       ],
@@ -215,7 +220,7 @@ class Lexer {
         MultiTokenRule.optionalLStrip(
           rawEnd,
           <String>['data', 'raw_end'],
-          '#pop',
+          RuleState.pop,
         ),
         MultiTokenRule(
           compileRe('(.)'),
@@ -227,7 +232,7 @@ class Lexer {
           MultiTokenRule(
             compileRe('(.*?)()(?=\n|\$)'),
             <String>['linecomment', 'linecomment_end'],
-            '#pop',
+            RuleState.pop,
           ),
         ],
       if (environment.lineStatementPrefix != null)
@@ -235,7 +240,7 @@ class Lexer {
           SingleTokenRule(
             compileRe('\\s*(\n|\$)'),
             'linestatement_end',
-            '#pop',
+            RuleState.pop,
           ),
           ...tagRules,
         ],
@@ -301,7 +306,7 @@ class Lexer {
 
         var match = scanner.lastMatch as RegExpMatch;
 
-        if (rule is MultiTokenRule) {
+        if (rule case MultiTokenRule rule) {
           var indexes = List<int>.generate(match.groupCount, (i) => i + 1);
           var groups = match.groups(indexes);
 
@@ -374,11 +379,7 @@ class Lexer {
                     'dynamically but no group matched');
               }
             } else {
-              var data = groups[i];
-
-              if (data == null) {
-                tokens.add(Token.simple(line, token));
-              } else {
+              if (groups[i] case var data?) {
                 if (data.isNotEmpty || !ignoreIfEmpty.contains(token)) {
                   tokens.add(Token(line, token, data));
                 }
@@ -391,10 +392,12 @@ class Lexer {
 
                 line += newLinesStripped;
                 newLinesStripped = 0;
+              } else {
+                tokens.add(Token.simple(line, token));
               }
             }
           }
-        } else if (rule is SingleTokenRule) {
+        } else if (rule case SingleTokenRule rule) {
           if (balancingStack.isNotEmpty && endTokens.contains(rule.token)) {
             scanner.position = match.start;
             continue;
@@ -442,39 +445,33 @@ class Lexer {
           throw Exception();
         }
 
-        var position2 = match.end;
         lineStarting = match[0]!.endsWith('\n');
 
-        if (rule.newState != null) {
-          if (rule.newState == '#pop') {
-            stack.removeLast();
-          } else if (rule.newState == '#group') {
-            var notFound = true;
+        if (rule.newState == RuleState.pop) {
+          stack.removeLast();
+        } else if (rule.newState == RuleState.group) {
+          var notFound = true;
 
-            for (var name in match.groupNames) {
-              var group = match.namedGroup(name);
+          for (var name in match.groupNames) {
+            var group = match.namedGroup(name);
 
-              if (group != null) {
-                stack.add(name);
-                notFound = false;
-              }
+            if (group != null) {
+              stack.add(name);
+              notFound = false;
             }
-
-            if (notFound) {
-              // TODO: update error
-              throw Exception();
-            }
-          } else {
-            stack.add(rule.newState!);
           }
 
-          stateRules = rules[stack.last]!;
-        } else if (position == position2) {
-          // TODO: update error
-          throw Exception();
+          if (notFound) {
+            // TODO: update error message
+            throw TemplateSyntaxError('');
+          }
+        } else if (position == match.end) {
+          // TODO: update error message
+          throw TemplateSyntaxError('');
         }
 
-        position = position2;
+        stateRules = rules[stack.last]!;
+        position = match.end;
         notBreak = false;
         break;
       }

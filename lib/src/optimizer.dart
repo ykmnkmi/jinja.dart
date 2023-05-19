@@ -31,9 +31,9 @@ class Optimizer implements Visitor<Context, Node> {
   Expression visitAttribute(Attribute node, Context context) {
     var value = node.value.accept(this, context) as Expression;
 
-    if (value is Constant) {
+    if (value case Constant constant) {
       return Constant(
-        value: context.attribute(node.attribute, value.value),
+        value: context.attribute(node.attribute, constant.value),
       );
     }
 
@@ -101,8 +101,8 @@ class Optimizer implements Visitor<Context, Node> {
     var pack = <Object?>[];
 
     for (var value in values) {
-      if (value is Constant) {
-        pack.add(value.value);
+      if (value case Constant constant) {
+        pack.add(constant.value);
       } else {
         newValues
           ..add(Constant(value: pack.join()))
@@ -125,8 +125,8 @@ class Optimizer implements Visitor<Context, Node> {
     var trueValue = node.trueValue.accept(this, context) as Expression;
     var falseValue = node.falseValue?.accept(this, context) as Expression?;
 
-    if (test is Constant) {
-      if (boolean(test.value)) {
+    if (test case Constant constant) {
+      if (boolean(constant.value)) {
         return trueValue;
       } else {
         return falseValue ?? const Constant(value: null);
@@ -192,10 +192,10 @@ class Optimizer implements Visitor<Context, Node> {
     var left = node.left.accept(this, context) as Expression;
     var right = node.right.accept(this, context) as Expression;
 
-    if (left is Constant) {
+    if (left case Constant constant) {
       return switch (node.operator) {
-        LogicalOperator.and => boolean(left.value) ? right : left,
-        LogicalOperator.or => boolean(left.value) ? left : right,
+        LogicalOperator.and => boolean(constant.value) ? right : constant,
+        LogicalOperator.or => boolean(constant.value) ? constant : right,
       };
     }
 
@@ -269,13 +269,13 @@ class Optimizer implements Visitor<Context, Node> {
   Expression visitUnary(Unary node, Context context) {
     var value = node.value.accept(this, context) as Expression;
 
-    if (value is Constant) {
+    if (value case Constant constant) {
       return Constant(
         value: switch (node.operator) {
-          UnaryOperator.plus => value.value,
+          UnaryOperator.plus => constant.value,
           // ignore: avoid_dynamic_calls
-          UnaryOperator.minus => -(value.value as dynamic),
-          UnaryOperator.not => !boolean(value.value),
+          UnaryOperator.minus => -(constant.value as dynamic),
+          UnaryOperator.not => !boolean(constant.value),
         },
       );
     }

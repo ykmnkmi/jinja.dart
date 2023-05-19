@@ -115,21 +115,21 @@ bool isEscaped(Object? value) {
 
 /// Check if value is in sequence.
 bool isIn(Object? value, Object? values) {
-  if (values is String) {
-    if (value is Pattern) {
-      return values.contains(value);
+  if (values case String strings) {
+    if (value case Pattern pattern) {
+      return strings.contains(pattern);
     }
 
     // TODO: update error
     throw TypeError();
   }
 
-  if (values is Iterable) {
+  if (values case Iterable<Object?> values) {
     return values.contains(value);
   }
 
-  if (values is Map) {
-    return values.containsKey(value);
+  if (values case Map<Object?, Object?> map) {
+    return map.containsKey(value);
   }
 
   // TODO: update error

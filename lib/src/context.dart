@@ -51,13 +51,11 @@ class Context {
       return true;
     }
 
-    var parent = this.parent;
-
-    if (parent == null) {
-      return false;
+    if (parent case var parent?) {
+      return parent.containsKey(key);
     }
 
-    return parent.containsKey(key);
+    return false;
   }
 
   Object? get(String key) {

@@ -310,7 +310,9 @@ class Printer extends ThrowingVisitor<StringBuffer, void> {
     if (node.values.isEmpty) {
       context.write('[]');
     } else {
+      context.write('[');
       writeAll(context, node.values);
+      context.write(']');
     }
   }
 
@@ -405,6 +407,15 @@ class Printer extends ThrowingVisitor<StringBuffer, void> {
   }
 
   @override
+  void visitFilter(Filter node, StringBuffer context) {
+    node.calling.arguments.first.accept(this, context);
+    context.write(' | ${node.name}');
+    node.calling
+        .copyWith(arguments: node.calling.arguments.sublist(1))
+        .accept(this, context);
+  }
+
+  @override
   void visitItem(Item node, StringBuffer context) {
     node.value.accept(this, context);
     context.write('[');
@@ -454,6 +465,11 @@ class Printer extends ThrowingVisitor<StringBuffer, void> {
   }
 
   @override
+  void visitExtends(Extends node, StringBuffer context) {
+    context.write('$blockStart extends "${node.path}" $blockEnd');
+  }
+
+  @override
   void visitFor(For node, StringBuffer context) {
     context.write('$blockStart for ');
     node.target.accept(this, context);
@@ -492,5 +508,10 @@ class Printer extends ThrowingVisitor<StringBuffer, void> {
     for (var node in node.nodes) {
       node.accept(this, context);
     }
+  }
+
+  @override
+  void visitTemplateNode(TemplateNode node, StringBuffer context) {
+    node.body.accept(this, context);
   }
 }
