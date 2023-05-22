@@ -106,21 +106,17 @@ typedef MacroSignature = ({
 
 abstract final class MacroCall extends Statement {
   const MacroCall({
-    this.arguments = const <Expression>[],
-    this.defaults = const <Expression>[],
+    this.arguments = const <(Expression, Expression?)>[],
     required this.body,
   });
 
-  final List<Expression> arguments;
-
-  final List<Expression> defaults;
+  final List<(Expression, Expression?)> arguments;
 
   final Node body;
 
   @override
   MacroCall copyWith({
-    List<Expression>? arguments,
-    List<Expression>? defaults,
+    List<(Expression, Expression?)>? arguments,
     Node? body,
   });
 }
@@ -129,7 +125,6 @@ final class Macro extends MacroCall {
   const Macro({
     required this.name,
     super.arguments,
-    super.defaults,
     required super.body,
   });
 
@@ -143,14 +138,12 @@ final class Macro extends MacroCall {
   @override
   Macro copyWith({
     String? name,
-    List<Expression>? arguments,
-    List<Expression>? defaults,
+    List<(Expression, Expression?)>? arguments,
     Node? body,
   }) {
     return Macro(
       name: name ?? this.name,
       arguments: arguments ?? this.arguments,
-      defaults: defaults ?? this.defaults,
       body: body ?? this.body,
     );
   }
@@ -160,7 +153,6 @@ final class CallBlock extends MacroCall {
   CallBlock({
     required this.call,
     super.arguments,
-    super.defaults,
     required super.body,
   });
 
@@ -174,14 +166,12 @@ final class CallBlock extends MacroCall {
   @override
   CallBlock copyWith({
     Expression? call,
-    List<Expression>? arguments,
-    List<Expression>? defaults,
+    List<(Expression, Expression?)>? arguments,
     Node? body,
   }) {
     return CallBlock(
       call: call ?? this.call,
       arguments: arguments ?? this.arguments,
-      defaults: defaults ?? this.defaults,
       body: body ?? this.body,
     );
   }

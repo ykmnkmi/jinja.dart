@@ -288,8 +288,13 @@ class RuntimeCompiler implements Visitor<void, Node> {
   CallBlock visitCallBlock(CallBlock node, void _) {
     return node.copyWith(
       call: visitNode(node.call),
-      arguments: visitNodes(node.arguments),
-      defaults: visitNodes(node.defaults),
+      arguments: <(Expression, Expression?)>[
+        for (var (argument, default_) in node.arguments)
+          (
+            argument.accept(this, null) as Expression,
+            default_?.accept(this, null) as Expression?
+          )
+      ],
       body: visitNode(node.body),
     );
   }
@@ -349,8 +354,13 @@ class RuntimeCompiler implements Visitor<void, Node> {
   @override
   Macro visitMacro(Macro node, void _) {
     return node.copyWith(
-      arguments: visitNodes(node.arguments),
-      defaults: visitNodes(node.defaults),
+      arguments: <(Expression, Expression?)>[
+        for (var (argument, default_) in node.arguments)
+          (
+            argument.accept(this, null) as Expression,
+            default_?.accept(this, null) as Expression?
+          )
+      ],
       body: visitNode(node.body),
     );
   }

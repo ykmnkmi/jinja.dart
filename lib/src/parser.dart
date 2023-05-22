@@ -407,35 +407,35 @@ class Parser {
 
   // TODO: add parseFrom
 
-  MacroSignature parseSignature(TokenReader reader) {
-    var arguments = <Expression>[];
-    var defaults = <Expression>[];
+  List<(Expression, Expression?)> parseSignature(TokenReader reader) {
+    var names = <Expression>[];
+    var defaults = <Expression?>[];
 
     reader.expect('lparen');
 
     while (!reader.current.test('rparen')) {
-      if (arguments.isNotEmpty) {
+      if (names.isNotEmpty) {
         reader.expect('comma');
       }
 
-      var argument = parseAssignName(reader);
-      argument = Name(name: argument.name, context: AssignContext.parameter);
+      var name = parseAssignName(reader, AssignContext.parameter);
 
       if (reader.skipIf('assign')) {
         defaults.add(parseExpression(reader));
-      } else if (defaults.isNotEmpty) {
+      } else if (defaults.isNotEmpty && defaults.last != null) {
         fail('non-default argument follows default argument');
+      } else {
+        defaults.add(null);
       }
 
-      arguments.add(argument);
+      names.add(name);
     }
 
     reader.expect('rparen');
 
-    return (
-      arguments: arguments,
-      defaults: defaults,
-    );
+    return <(Expression, Expression?)>[
+      for (var i = 0; i < names.length; i += 1) (names[i], defaults[i])
+    ];
   }
 
   CallBlock parseCallBlock(TokenReader reader) {
@@ -443,12 +443,12 @@ class Parser {
 
     var token = reader.next();
 
-    MacroSignature signature;
+    List<(Expression, Expression?)> arguments;
 
     if (reader.current.test('lparen')) {
-      signature = parseSignature(reader);
+      arguments = parseSignature(reader);
     } else {
-      signature = const (arguments: <Expression>[], defaults: <Expression>[]);
+      arguments = const <(Expression, Expression?)>[];
     }
 
     var call = parseExpression(reader);
@@ -458,13 +458,7 @@ class Parser {
     }
 
     var body = parseStatements(reader, endCall, true);
-
-    return CallBlock(
-      call: call,
-      arguments: signature.arguments,
-      defaults: signature.defaults,
-      body: body,
-    );
+    return CallBlock(call: call, arguments: arguments, body: body);
   }
 
   FilterBlock parseFilterBlock(TokenReader reader) {
@@ -483,22 +477,19 @@ class Parser {
     reader.next();
 
     var name = parseAssignName(reader);
-    var signature = parseSignature(reader);
+    var arguments = parseSignature(reader);
     var body = parseStatements(reader, endMacro, true);
-
-    return Macro(
-      name: name.name,
-      arguments: signature.arguments,
-      defaults: signature.defaults,
-      body: body,
-    );
+    return Macro(name: name.name, arguments: arguments, body: body);
   }
 
   // TODO: add parsePrint
 
-  Name parseAssignName(TokenReader reader) {
+  Name parseAssignName(
+    TokenReader reader, [
+    AssignContext context = AssignContext.store,
+  ]) {
     var name = reader.expect('name');
-    return Name(name: name.value, context: AssignContext.store);
+    return Name(name: name.value, context: context);
   }
 
   Expression parseAssignNameSpace(TokenReader reader) {

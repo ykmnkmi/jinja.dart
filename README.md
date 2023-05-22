@@ -20,7 +20,11 @@ _work in progress_.
 - The `defined` and `undefined` tests compare values with `null`.
 - The `map` filter also compares values with `null`.
   Use `attribute` for fields and `item` for items.
-  Support for nested attributes and items is not available.
+- Not yet supported:
+  - nested attributes and items
+  - slices and negative indexes
+  - conditional and variable `extends` statement variants
+  - choice, ignore missing and variable `include` statement variants
 - If `Environment({getAttribute})` is not passed, `getItem` will be used.
   This allows you to use `{{ map.key }}` as an expression equivalent to `{{ map['key'] }}`.
 - _work in progress_
@@ -29,8 +33,7 @@ _work in progress_.
 - `[]`, `+`, `-`, `*`, `/`, `~/`, `%` operators
 - `object.length` getter
 - `object.call` getter
-- _work in progress_
-- also `Function.apply(function, ...)`
+- `Function.apply(function, ...)`
 
 ## Example
 ```dart

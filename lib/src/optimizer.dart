@@ -325,13 +325,12 @@ class Optimizer implements Visitor<Context, Node> {
   CallBlock visitCallBlock(CallBlock node, Context context) {
     return node.copyWith(
       call: node.call.accept(this, context) as Expression,
-      arguments: <Expression>[
-        for (var argument in node.arguments)
-          argument.accept(this, context) as Expression
-      ],
-      defaults: <Expression>[
-        for (var default_ in node.defaults)
-          default_.accept(this, context) as Expression
+      arguments: <(Expression, Expression?)>[
+        for (var (argument, default_) in node.arguments)
+          (
+            argument.accept(this, context) as Expression,
+            default_?.accept(this, context) as Expression?
+          )
       ],
       body: node.body.accept(this, context),
     );
@@ -400,13 +399,12 @@ class Optimizer implements Visitor<Context, Node> {
   @override
   Macro visitMacro(Macro node, Context context) {
     return node.copyWith(
-      arguments: <Expression>[
-        for (var argument in node.arguments)
-          argument.accept(this, context) as Expression
-      ],
-      defaults: <Expression>[
-        for (var default_ in node.defaults)
-          default_.accept(this, context) as Expression
+      arguments: <(Expression, Expression?)>[
+        for (var (argument, default_) in node.arguments)
+          (
+            argument.accept(this, context) as Expression,
+            default_?.accept(this, context) as Expression?
+          )
       ],
       body: node.body.accept(this, context),
     );

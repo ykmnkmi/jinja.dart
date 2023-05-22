@@ -6,8 +6,8 @@ import 'package:jinja/src/visitor.dart';
 import 'package:stack_trace/stack_trace.dart';
 
 const String source = '''
-{{ ["1", "2", "3"]|map("int")|sum }}
-''';
+{% macro say_hello(name) %}Hello {{ name }}!{% endmacro %}
+{{ say_hello('Peter') }}''';
 
 const Map<String, Object?> context = <String, Object?>{};
 
