@@ -52,16 +52,6 @@ const List<String> ignoreIfEmpty = <String>[
   'linecomment',
 ];
 
-/// Shorthand for [RegExp.escape].
-String escapeRe(String pattern) {
-  return RegExp.escape(pattern);
-}
-
-/// Shorthand for [RegExp].
-RegExp compileRe(String pattern) {
-  return RegExp(pattern, dotAll: true, multiLine: true);
-}
-
 enum RuleState {
   pop,
   group,
@@ -94,6 +84,18 @@ class MultiTokenRule extends Rule {
 }
 
 class Lexer {
+  static final RegExp newLineRe = RegExp('(\r\n|\r|\n)');
+  static final RegExp leftStripUnlessRe = RegExp('[^ \\t]');
+  static final RegExp whitespaceRe = RegExp(r'\s+');
+  static final RegExp nameRe = RegExp('[a-zA-Z\$_][a-zA-Z0-9\$_]*');
+  static final RegExp stringRe = RegExp(
+      '(\'([^\'\\\\]*(?:\\\\.[^\'\\\\]*)*)\'|"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)")');
+  static final RegExp integerRe = RegExp('(0[xX](_?[\\da-fA-F])+|\\d(_?\\d)*)');
+  static final RegExp floatRe = RegExp(
+      '(?<!\\.)(\\d+_)*\\d+((\\.(\\d+_)*\\d+)?[eE][+\\-]?(\\d+_)*\\d+|\\.(\\d+_)*\\d+)');
+  static final RegExp operatorRe = RegExp(
+      '\\+|-|\\/\\/|\\/|\\*\\*|\\*|%|~|\\[|\\]|\\(|\\)|{|}|==|!=|<=|>=|=|<|>|\\.|:|\\||,|;');
+
   /// Cached [Lexer]'s
   static final Expando<Lexer> lexers = Expando<Lexer>();
 
@@ -101,37 +103,23 @@ class Lexer {
     return lexers[environment] ??= Lexer(environment);
   }
 
-  Lexer(Environment environment)
-      : newLineRe = RegExp('(\r\n|\r|\n)'),
-        whitespaceRe = RegExp(r'\s+'),
-        nameRe = RegExp('[a-zA-Z\$_][a-zA-Z0-9\$_]*'),
-        stringRe = RegExp(
-            '(\'([^\'\\\\]*(?:\\\\.[^\'\\\\]*)*)\'|"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)")',
-            dotAll: true),
-        integerRe = RegExp('(0[xX](_?[\\da-fA-F])+|\\d(_?\\d)*)'),
-        floatRe = RegExp(
-            '(?<!\\.)(\\d+_)*\\d+((\\.(\\d+_)*\\d+)?[eE][+\\-]?(\\d+_)*\\d+|\\.(\\d+_)*\\d+)'),
-        operatorRe = RegExp(
-            '\\+|-|\\/\\/|\\/|\\*\\*|\\*|%|~|\\[|\\]|\\(|\\)|{|}|==|!=|<=|>=|=|<|>|\\.|:|\\||,|;'),
-        leftStripUnlessRe =
-            environment.leftStripBlocks ? compileRe('[^ \\t]') : null,
-        newLine = environment.newLine,
-        keepTrailingNewLine = environment.keepTrailingNewLine {
+  factory Lexer(Environment environment) {
     var blockSuffixRe = environment.trimBlocks ? '\\n?' : '';
 
-    var commentStartRe = escapeRe(environment.commentStart);
-    var commentEndRe = escapeRe(environment.commentEnd);
-    var commentEnd = compileRe(
-        '(.*?)((?:\\+$commentEndRe|-$commentEndRe\\s*|$commentEndRe$blockSuffixRe))');
+    var commentStartRe = RegExp.escape(environment.commentStart);
+    var commentEndRe = RegExp.escape(environment.commentEnd);
+    var commentEnd = RegExp(
+        '(.*?)((?:\\+$commentEndRe|-$commentEndRe\\s*|$commentEndRe$blockSuffixRe))',
+        dotAll: true);
 
-    var variableStartRe = escapeRe(environment.variableStart);
-    var variableEndRe = escapeRe(environment.variableEnd);
-    var variableEnd = compileRe('-$variableEndRe\\s*|$variableEndRe');
+    var variableStartRe = RegExp.escape(environment.variableStart);
+    var variableEndRe = RegExp.escape(environment.variableEnd);
+    var variableEnd = RegExp('-$variableEndRe\\s*|$variableEndRe');
 
-    var blockStartRe = escapeRe(environment.blockStart);
-    var blockEndRe = escapeRe(environment.blockEnd);
-    var blockEnd = compileRe(
-        '(?:\\+$blockEndRe|-$blockEndRe\\s*|$blockEndRe$blockSuffixRe)');
+    var blockStartRe = RegExp.escape(environment.blockStart);
+    var blockEndRe = RegExp.escape(environment.blockEnd);
+    var blockEnd =
+        RegExp('(?:\\+$blockEndRe|-$blockEndRe\\s*|$blockEndRe$blockSuffixRe)');
 
     var tagRules = <Rule>[
       SingleTokenRule(whitespaceRe, 'whitespace'),
@@ -142,42 +130,34 @@ class Lexer {
       SingleTokenRule(operatorRe, 'operator'),
     ];
 
-    var lineCommentPrefix = environment.lineCommentPrefix;
-
-    var rootTagRules = <List<String>>[
-      <String>['comment_start', environment.commentStart, commentStartRe],
-      <String>['variable_start', environment.variableStart, variableStartRe],
-      <String>['block_start', environment.blockStart, blockStartRe],
-      if (lineCommentPrefix != null)
-        <String>[
-          'linecomment_start',
-          lineCommentPrefix,
-          '(?:^|(?<=\\S))[^\\S\r\n]*$lineCommentPrefix',
-        ],
-      if (environment.lineStatementPrefix != null)
-        <String>[
-          'linestatement_start',
-          environment.lineStatementPrefix!,
-          '^[ \t\v]*${environment.lineStatementPrefix!}',
-        ],
+    var rootTagRules = <(String, String, Pattern?)>[
+      ('comment_start', environment.commentStart, commentStartRe),
+      ('variable_start', environment.variableStart, variableStartRe),
+      ('block_start', environment.blockStart, blockStartRe),
+      if (environment.lineCommentPrefix case var prefix?)
+        ('linecomment_start', prefix, '(?:^|(?<=\\S))[^\\S\r\n]*$prefix'),
+      if (environment.lineStatementPrefix case var prefix?)
+        ('linestatement_start', prefix, '^[ \t\v]*$prefix'),
     ];
 
-    rootTagRules.sort((a, b) => b[1].length.compareTo(a[1].length));
+    rootTagRules.sort((a, b) => b.$2.length.compareTo(a.$2.length));
 
-    var rawStart = compileRe(
+    var rawStart = RegExp(
         '(?<raw_start>$blockStartRe(-|\\+|)\\s*raw\\s*(?:-$blockEndRe\\s*|$blockEndRe))');
-    var rawEnd = compileRe('(.*?)((?:$blockStartRe(-|\\+|))\\s*endraw\\s*'
-        '(?:\\+$blockEndRe|-$blockEndRe\\s*|$blockEndRe$blockSuffixRe))');
+    var rawEnd = RegExp(
+        '(.*?)((?:$blockStartRe(-|\\+|))\\s*endraw\\s*'
+        '(?:\\+$blockEndRe|-$blockEndRe\\s*|$blockEndRe$blockSuffixRe))',
+        dotAll: true);
 
     var rootParts = <String>[
       rawStart.pattern,
-      for (var rule in rootTagRules) '(?<${rule.first}>${rule.last}(-|\\+|))',
+      for (var rule in rootTagRules) '(?<${rule.$1}>${rule.$3}(-|\\+|))',
     ];
 
     var rootPartsRe = rootParts.join('|');
-    var data = compileRe('(.*?)(?:$rootPartsRe)');
+    var data = RegExp('(.*?)(?:$rootPartsRe)', dotAll: true, multiLine: true);
 
-    rules = <String, List<Rule>>{
+    var rules = <String, List<Rule>>{
       'root': <Rule>[
         MultiTokenRule.optionalLStrip(
           data,
@@ -185,7 +165,7 @@ class Lexer {
           RuleState.group,
         ),
         SingleTokenRule(
-          compileRe('.+'),
+          RegExp('.+', dotAll: true),
           'data',
         ),
       ],
@@ -196,7 +176,7 @@ class Lexer {
           RuleState.pop,
         ),
         MultiTokenRule(
-          compileRe('(.)'),
+          RegExp('(.)', dotAll: true),
           <String>['@missing end of comment tag'],
         ),
       ],
@@ -223,14 +203,14 @@ class Lexer {
           RuleState.pop,
         ),
         MultiTokenRule(
-          compileRe('(.)'),
+          RegExp('(.)', dotAll: true),
           <String>['@missing end of raw directive'],
         ),
       ],
-      if (lineCommentPrefix != null)
+      if (environment.lineCommentPrefix != null)
         'linecomment_start': <Rule>[
           MultiTokenRule(
-            compileRe('(.*?)()(?=\n|\$)'),
+            RegExp('(.*?)()(?=\n|\$)', dotAll: true),
             <String>['linecomment', 'linecomment_end'],
             RuleState.pop,
           ),
@@ -238,36 +218,36 @@ class Lexer {
       if (environment.lineStatementPrefix != null)
         'linestatement_start': <Rule>[
           SingleTokenRule(
-            compileRe('\\s*(\n|\$)'),
+            RegExp('\\s*(\n|\$)'),
             'linestatement_end',
             RuleState.pop,
           ),
           ...tagRules,
         ],
     };
+
+    return Lexer.from(
+      rules: rules,
+      leftStripBlocks: environment.leftStripBlocks,
+      newLine: environment.newLine,
+      keepTrailingNewLine: environment.keepTrailingNewLine,
+    );
   }
 
-  final RegExp newLineRe;
+  const Lexer.from({
+    required this.rules,
+    required this.newLine,
+    this.leftStripBlocks = false,
+    this.keepTrailingNewLine = false,
+  });
 
-  final RegExp whitespaceRe;
+  final Map<String, List<Rule>> rules;
 
-  final RegExp nameRe;
-
-  final RegExp stringRe;
-
-  final RegExp integerRe;
-
-  final RegExp floatRe;
-
-  final RegExp operatorRe;
-
-  final RegExp? leftStripUnlessRe;
-
-  final String newLine;
+  final bool leftStripBlocks;
 
   final bool keepTrailingNewLine;
 
-  late Map<String, List<Rule>> rules;
+  final String newLine;
 
   String normalizeNewLines(String value) {
     return value.replaceAll(newLineRe, newLine);
@@ -333,14 +313,14 @@ class Lexer {
 
               groups[0] = stripped;
             } else if (stripSign != '+' &&
-                leftStripUnlessRe != null &&
+                leftStripBlocks &&
                 (!match.groupNames.contains('variable_start') ||
                     match.namedGroup('variable_start') == null)) {
               var lastPosition = text.lastIndexOf('\n') + 1;
 
               if (lastPosition > 0 || lineStarting) {
                 var index =
-                    text.substring(lastPosition).indexOf(leftStripUnlessRe!);
+                    text.substring(lastPosition).indexOf(leftStripUnlessRe);
 
                 if (index == -1) {
                   groups[0] = groups[0]!.substring(0, lastPosition);
@@ -450,21 +430,17 @@ class Lexer {
         if (rule.newState == RuleState.pop) {
           stack.removeLast();
         } else if (rule.newState == RuleState.group) {
-          var notFound = true;
+          var names = <String>[
+            for (var name in match.groupNames)
+              if (match.namedGroup(name) != null) name
+          ];
 
-          for (var name in match.groupNames) {
-            var group = match.namedGroup(name);
-
-            if (group != null) {
-              stack.add(name);
-              notFound = false;
-            }
-          }
-
-          if (notFound) {
+          if (names.isEmpty) {
             // TODO: update error message
             throw TemplateSyntaxError('');
           }
+
+          stack.addAll(names);
         } else if (position == match.end) {
           // TODO: update error message
           throw TemplateSyntaxError('');
