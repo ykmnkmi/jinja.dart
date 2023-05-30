@@ -157,11 +157,6 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
   }
 
   @override
-  Object? visitCallback(Callback node, StringSinkRenderContext context) {
-    return node.callback(context);
-  }
-
-  @override
   Parameters visitCalling(Calling node, StringSinkRenderContext context) {
     var positional = <Object?>[
       for (var argument in node.arguments) argument.accept(this, context)
@@ -556,7 +551,29 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
 
   @override
   void visitMacro(Macro node, StringSinkRenderContext context) {
-    throw UnimplementedError();
+    // TODO(render): check macro signature
+    void callback(List<Object?> positional, Map<Object?, Object?> named) {
+      var derived = context.derived();
+      var iterator = positional.iterator;
+
+      for (var (argument, default_) in node.arguments) {
+        var key = argument.accept(this, context) as String;
+
+        if (iterator.moveNext()) {
+          derived.set(key, iterator.current);
+        } else {
+          if (named.containsKey(key)) {
+            derived.set(key, named[key]);
+          } else {
+            derived.set(key, default_?.accept(this, context));
+          }
+        }
+      }
+
+      node.body.accept(this, derived);
+    }
+
+    context.set(node.name, callback);
   }
 
   @override

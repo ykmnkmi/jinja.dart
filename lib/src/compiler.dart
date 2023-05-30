@@ -3,31 +3,31 @@ import 'package:jinja/src/visitor.dart';
 import 'package:meta/meta.dart';
 
 @doNotStore
-class RuntimeCompiler implements Visitor<void, Node> {
+class RuntimeCompiler implements Visitor<Set<String>, Node> {
   const RuntimeCompiler();
 
-  T visitNode<T extends Node?>(Node? node) {
-    return node?.accept(this, null) as T;
+  T visitNode<T extends Node?>(Node? node, Set<String> context) {
+    return node?.accept(this, context) as T;
   }
 
-  List<T> visitNodes<T extends Node>(List<Node> nodes) {
-    return <T>[for (var node in nodes) visitNode(node)];
+  List<T> visitNodes<T extends Node>(List<Node> nodes, Set<String> context) {
+    return <T>[for (var node in nodes) visitNode(node, context)];
   }
 
   // Expressions
 
   @override
-  Array visitArray(Array node, void _) {
-    return node.copyWith(values: visitNodes(node.values));
+  Array visitArray(Array node, Set<String> context) {
+    return node.copyWith(values: visitNodes(node.values, context));
   }
 
   @override
-  Node visitAttribute(Attribute node, void _) {
+  Node visitAttribute(Attribute node, Set<String> context) {
     // Modifies Template AST from `self.block()` to `self['block']()`.
     if (node.value case Name(name: 'self')) {
       return Item(
         key: Constant(value: node.attribute),
-        value: visitNode(node.value),
+        value: visitNode(node.value, context),
       );
     }
 
@@ -36,23 +36,22 @@ class RuntimeCompiler implements Visitor<void, Node> {
     if (node.value case Name(name: 'loop')) {
       return Item(
         key: Constant(value: node.attribute),
-        value: visitNode(node.value),
+        value: visitNode(node.value, context),
       );
     }
 
-    return node.copyWith(value: visitNode(node.value));
+    return node.copyWith(value: visitNode(node.value, context));
   }
 
   @override
-  Call visitCall(Call node, void _) {
-    // TODO(compiler): handle super call
-    switch (node.value) {
-      // Modifies Template AST from `loop.cycle(first, second, *list)`
-      // to `loop['cycle']([first, second], list)`, which matches
-      // [LoopContext.cycle] definition.
-      //
-      // TODO(compiler): check name arguments
-      case Attribute(attribute: 'cycle', value: Name(name: 'loop')):
+  Call visitCall(Call node, Set<String> context) {
+    // Modifies Template AST from `loop.cycle(first, second, *list)`
+    // to `loop['cycle']([first, second], list)`, which matches
+    // [LoopContext.cycle] definition.
+    //
+    // TODO(compiler): check name arguments
+    if (node.value case Attribute(attribute: 'cycle', value: var value)) {
+      if (value case Name(name: 'loop')) {
         var calling = node.calling;
 
         var arguments = <Expression>[Array(values: calling.arguments)];
@@ -62,14 +61,19 @@ class RuntimeCompiler implements Visitor<void, Node> {
         }
 
         return node.copyWith(
-          value: visitNode(node.value),
-          calling: Calling(arguments: visitNodes(arguments)),
+          value: visitNode(node.value, context),
+          calling: Calling(arguments: visitNodes(arguments, context)),
         );
+      }
+    }
 
-      // Modifies Template AST from `namespace(map1, ..., key1=value1, ...)`
-      // to `namespace([map1, ..., {'key1': value1, ...}])`, to match [namespace]
-      // definition.
-      case Name(name: 'namespace'):
+    // Modifies Template AST from `namespace(map1, ..., key1=value1, ...)`
+    // to `namespace([map1, ..., {'key1': value1, ...}])`, to match [namespace]
+    // definition.
+    //
+    // TODO(compiler): handle super call
+    if (node.value case Name(name: var name)) {
+      if (name == 'namespace') {
         var values = node.calling.arguments.toList();
 
         if (node.calling.keywords.isNotEmpty) {
@@ -90,82 +94,97 @@ class RuntimeCompiler implements Visitor<void, Node> {
         }
 
         return node.copyWith(
-          value: visitNode(node.value),
+          value: visitNode(node.value, context),
           calling: Calling(
             arguments: <Expression>[
               if (values.isNotEmpty) Array(values: values)
             ],
           ),
         );
+      }
 
-      default:
+      // Is it a macro call?
+      // TODO(compiler): need to handle named arguments too.
+      if (context.contains(name)) {
+        var values = node.calling.arguments.toList();
+
+        if (node.calling.dArguments case var dArguments?) {
+          values.add(dArguments);
+        }
+
         return node.copyWith(
-          value: visitNode(node.value),
-          calling: visitNode(node.calling),
+          value: visitNode(node.value, context),
+          calling: Calling(
+            arguments: <Expression>[
+              Array(values: values),
+              const Constant(value: <Object?, Object?>{}),
+            ],
+          ),
         );
+      }
     }
-  }
 
-  @override
-  Callback visitCallback(Callback node, void _) {
-    return node;
-  }
-
-  @override
-  Calling visitCalling(Calling node, void _) {
     return node.copyWith(
-      arguments: visitNodes(node.arguments),
+      value: visitNode(node.value, context),
+      calling: visitNode(node.calling, context),
+    );
+  }
+
+  @override
+  Calling visitCalling(Calling node, Set<String> context) {
+    return node.copyWith(
+      arguments: visitNodes(node.arguments, context),
       keywords: <Keyword>[
         for (var (:key, :value) in node.keywords)
-          (key: key, value: visitNode(value))
+          (key: key, value: visitNode(value, context))
       ],
-      dArguments: visitNode(node.dArguments),
-      dKeywords: visitNode(node.dKeywords),
+      dArguments: visitNode(node.dArguments, context),
+      dKeywords: visitNode(node.dKeywords, context),
     );
   }
 
   @override
-  Compare visitCompare(Compare node, void _) {
+  Compare visitCompare(Compare node, Set<String> context) {
     return node.copyWith(
-      value: visitNode(node.value),
+      value: visitNode(node.value, context),
       operands: <Operand>[
         for (var (operator, value) in node.operands)
-          (operator, value.accept(this, null) as Expression)
+          (operator, value.accept(this, context) as Expression)
       ],
     );
   }
 
   @override
-  Concat visitConcat(Concat node, void _) {
-    return node.copyWith(values: visitNodes(node.values));
+  Concat visitConcat(Concat node, Set<String> context) {
+    return node.copyWith(values: visitNodes(node.values, context));
   }
 
   @override
-  Condition visitCondition(Condition node, void _) {
+  Condition visitCondition(Condition node, Set<String> context) {
     return node.copyWith(
-      test: visitNode(node.test),
-      trueValue: visitNode(node.trueValue),
-      falseValue: visitNode(node.falseValue),
+      test: visitNode(node.test, context),
+      trueValue: visitNode(node.trueValue, context),
+      falseValue: visitNode(node.falseValue, context),
     );
   }
 
   @override
-  Constant visitConstant(Constant node, void _) {
+  Constant visitConstant(Constant node, Set<String> context) {
     return node;
   }
 
   @override
-  Dict visitDict(Dict node, void _) {
+  Dict visitDict(Dict node, Set<String> context) {
     return node.copyWith(
       pairs: <Pair>[
         for (var (:key, :value) in node.pairs)
-          (key: visitNode(key), value: visitNode(value))
+          (key: visitNode(key, context), value: visitNode(value, context))
       ],
     );
   }
 
   @override
-  Filter visitFilter(Filter node, void _) {
+  Filter visitFilter(Filter node, Set<String> context) {
     // Modifies Template AST from `map('filter', *args, **kwargs)`
     // to `map(filter='filter', positional=args, named=kwargs)`
     // to match [doMap] definition.
@@ -198,192 +217,195 @@ class RuntimeCompiler implements Visitor<void, Node> {
         ..add((key: 'positional', value: Array(values: values)))
         ..add((key: 'named', value: Dict(pairs: pairs)));
 
+      calling = Calling(arguments: arguments, keywords: keywords);
       return node.copyWith(
-        calling: visitNode(Calling(arguments: arguments, keywords: keywords)),
+        calling: visitNode(calling, context),
       );
     }
 
-    return node.copyWith(calling: visitNode(node.calling));
+    return node.copyWith(calling: visitNode(node.calling, context));
   }
 
   @override
-  Item visitItem(Item node, void _) {
-    return node.copyWith(value: visitNode(node.value));
+  Item visitItem(Item node, Set<String> context) {
+    return node.copyWith(value: visitNode(node.value, context));
   }
 
   @override
-  Logical visitLogical(Logical node, void _) {
+  Logical visitLogical(Logical node, Set<String> context) {
     return node.copyWith(
-      left: visitNode(node.left),
-      right: visitNode(node.right),
+      left: visitNode(node.left, context),
+      right: visitNode(node.right, context),
     );
   }
 
   @override
-  Name visitName(Name node, void _) {
+  Name visitName(Name node, Set<String> context) {
     return node;
   }
 
   @override
-  NamespaceRef visitNamespaceRef(NamespaceRef node, void _) {
+  NamespaceRef visitNamespaceRef(NamespaceRef node, Set<String> context) {
     return node;
   }
 
   @override
-  Scalar visitScalar(Scalar node, void _) {
+  Scalar visitScalar(Scalar node, Set<String> context) {
     return node.copyWith(
-      left: visitNode(node.left),
-      right: visitNode(node.right),
+      left: visitNode(node.left, context),
+      right: visitNode(node.right, context),
     );
   }
 
   @override
-  Test visitTest(Test node, void _) {
-    return node.copyWith(calling: visitNode(node.calling));
+  Test visitTest(Test node, Set<String> context) {
+    return node.copyWith(calling: visitNode(node.calling, context));
   }
 
   @override
-  Tuple visitTuple(Tuple node, void _) {
-    return node.copyWith(values: visitNodes(node.values));
+  Tuple visitTuple(Tuple node, Set<String> context) {
+    return node.copyWith(values: visitNodes(node.values, context));
   }
 
   @override
-  Unary visitUnary(Unary node, void _) {
-    return node.copyWith(value: visitNode(node.value));
+  Unary visitUnary(Unary node, Set<String> context) {
+    return node.copyWith(value: visitNode(node.value, context));
   }
 
   // Statements
 
   @override
-  Assign visitAssign(Assign node, void _) {
+  Assign visitAssign(Assign node, Set<String> context) {
     return node.copyWith(
-      target: visitNode(node.target),
-      value: visitNode(node.value),
+      target: visitNode(node.target, context),
+      value: visitNode(node.value, context),
     );
   }
 
   @override
-  AssignBlock visitAssignBlock(AssignBlock node, void _) {
+  AssignBlock visitAssignBlock(AssignBlock node, Set<String> context) {
     return node.copyWith(
-      target: visitNode(node.target),
-      filters: visitNodes(node.filters),
-      body: visitNode(node.body),
+      target: visitNode(node.target, context),
+      filters: visitNodes(node.filters, context),
+      body: visitNode(node.body, context),
     );
   }
 
   @override
-  AutoEscape visitAutoEscape(AutoEscape node, void _) {
+  AutoEscape visitAutoEscape(AutoEscape node, Set<String> context) {
     return node.copyWith(
-      value: visitNode(node.value),
-      body: visitNode(node.body),
+      value: visitNode(node.value, context),
+      body: visitNode(node.body, context),
     );
   }
 
   @override
-  Block visitBlock(Block node, void _) {
-    return node.copyWith(body: visitNode(node.body));
+  Block visitBlock(Block node, Set<String> context) {
+    return node.copyWith(body: visitNode(node.body, context));
   }
 
   @override
-  CallBlock visitCallBlock(CallBlock node, void _) {
+  CallBlock visitCallBlock(CallBlock node, Set<String> context) {
     return node.copyWith(
-      call: visitNode(node.call),
+      call: visitNode(node.call, context),
       arguments: <(Expression, Expression?)>[
         for (var (argument, default_) in node.arguments)
           (
-            argument.accept(this, null) as Expression,
-            default_?.accept(this, null) as Expression?
+            argument.accept(this, context) as Expression,
+            default_?.accept(this, context) as Expression?
           )
       ],
-      body: visitNode(node.body),
+      body: visitNode(node.body, context),
     );
   }
 
   @override
-  Data visitData(Data node, void _) {
+  Data visitData(Data node, Set<String> context) {
     return node;
   }
 
   @override
-  Do visitDo(Do node, void _) {
-    return node.copyWith(value: visitNode(node.value));
+  Do visitDo(Do node, Set<String> context) {
+    return node.copyWith(value: visitNode(node.value, context));
   }
 
   @override
-  Extends visitExtends(Extends node, void _) {
+  Extends visitExtends(Extends node, Set<String> context) {
     return node;
   }
 
   @override
-  FilterBlock visitFilterBlock(FilterBlock node, void _) {
+  FilterBlock visitFilterBlock(FilterBlock node, Set<String> context) {
     return node.copyWith(
-      filters: visitNodes(node.filters),
-      body: visitNode(node.body),
+      filters: visitNodes(node.filters, context),
+      body: visitNode(node.body, context),
     );
   }
 
   @override
-  For visitFor(For node, void _) {
+  For visitFor(For node, Set<String> context) {
     return node.copyWith(
-      target: visitNode(node.target),
-      iterable: visitNode(node.iterable),
-      body: visitNode(node.body),
-      test: visitNode(node.test),
-      orElse: visitNode(node.orElse),
+      target: visitNode(node.target, context),
+      iterable: visitNode(node.iterable, context),
+      body: visitNode(node.body, context),
+      test: visitNode(node.test, context),
+      orElse: visitNode(node.orElse, context),
     );
   }
 
   @override
-  If visitIf(If node, void _) {
+  If visitIf(If node, Set<String> context) {
     return node.copyWith(
-      test: visitNode(node.test),
-      body: visitNode(node.body),
+      test: visitNode(node.test, context),
+      body: visitNode(node.body, context),
     );
   }
 
   @override
-  Include visitInclude(Include node, void _) {
+  Include visitInclude(Include node, Set<String> context) {
     return node;
   }
 
   @override
-  Interpolation visitInterpolation(Interpolation node, void _) {
-    return node.copyWith(value: visitNode(node.value));
+  Interpolation visitInterpolation(Interpolation node, Set<String> context) {
+    return node.copyWith(value: visitNode(node.value, context));
   }
 
   @override
-  Macro visitMacro(Macro node, void _) {
+  Macro visitMacro(Macro node, Set<String> context) {
+    context.add(node.name);
+
     return node.copyWith(
       arguments: <(Expression, Expression?)>[
         for (var (argument, default_) in node.arguments)
           (
-            argument.accept(this, null) as Expression,
-            default_?.accept(this, null) as Expression?
+            argument.accept(this, context) as Expression,
+            default_?.accept(this, context) as Expression?
           )
       ],
-      body: visitNode(node.body),
+      body: visitNode(node.body, context),
     );
   }
 
   @override
-  Output visitOutput(Output node, void _) {
-    return node.copyWith(nodes: visitNodes(node.nodes));
+  Output visitOutput(Output node, Set<String> context) {
+    return node.copyWith(nodes: visitNodes(node.nodes, context));
   }
 
   @override
-  TemplateNode visitTemplateNode(TemplateNode node, void _) {
+  TemplateNode visitTemplateNode(TemplateNode node, Set<String> context) {
     return node.copyWith(
-      // blocks: visitNodes(node.blocks),
-      body: visitNode(node.body),
+      blocks: visitNodes(node.blocks, context),
+      body: visitNode(node.body, context),
     );
   }
 
   @override
-  With visitWith(With node, void _) {
+  With visitWith(With node, Set<String> context) {
     return node.copyWith(
-      targets: visitNodes(node.targets),
-      values: visitNodes(node.values),
-      body: visitNode(node.body),
+      targets: visitNodes(node.targets, context),
+      values: visitNodes(node.values, context),
+      body: visitNode(node.body, context),
     );
   }
 }

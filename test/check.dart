@@ -32,7 +32,9 @@ void main() {
     print('\noptimized body:');
     print(printer.visit(body));
 
-    body = body.accept(const RuntimeCompiler(), null);
+    var macroses = <String>{};
+    body = body.accept(const RuntimeCompiler(), macroses);
+    print('\nmacroses: ${macroses.join(', ')}');
     print('\ncompiled body:');
     print(printer.visit(body));
 

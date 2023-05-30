@@ -12,8 +12,6 @@ abstract class Visitor<C, R> {
 
   R visitCall(Call node, C context);
 
-  R visitCallback(Callback node, C context);
-
   R visitCalling(Calling node, C context);
 
   R visitCompare(Compare node, C context);
@@ -103,11 +101,6 @@ class ThrowingVisitor<C, R> implements Visitor<C, R> {
 
   @override
   R visitCall(Call node, C context) {
-    throw UnimplementedError('$node');
-  }
-
-  @override
-  R visitCallback(Callback node, C context) {
     throw UnimplementedError('$node');
   }
 
@@ -509,7 +502,7 @@ class Printer extends ThrowingVisitor<StringBuffer, void> {
 
     var (argument, default_) = node.arguments.first;
 
-    argument.accept(this, context);
+    context.write(argument);
 
     if (default_ != null) {
       context.write('=');
@@ -517,8 +510,7 @@ class Printer extends ThrowingVisitor<StringBuffer, void> {
     }
 
     for (var (argument, default_) in node.arguments.skip(1)) {
-      context.write(', ');
-      argument.accept(this, context);
+      context.write(', $argument');
 
       if (default_ != null) {
         context.write('=');

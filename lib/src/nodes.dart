@@ -1,4 +1,3 @@
-import 'package:jinja/src/context.dart';
 import 'package:jinja/src/visitor.dart';
 
 part 'nodes/expressions.dart';
@@ -47,27 +46,6 @@ final class Data extends Node {
 
 abstract final class Expression extends Node {
   const Expression();
-}
-
-final class Callback extends Expression {
-  const Callback({required this.callback});
-
-  final Object? Function(Context context) callback;
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitCallback(this, context);
-  }
-
-  @override
-  Callback copyWith({Object? Function(Context)? callback}) {
-    return Callback(callback: callback ?? this.callback);
-  }
-
-  @override
-  String toString() {
-    return 'Callback';
-  }
 }
 
 abstract final class Statement extends Node {

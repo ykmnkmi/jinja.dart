@@ -110,6 +110,8 @@ abstract final class MacroCall extends Statement {
     required this.body,
   });
 
+  // TODO(nodes): change argument to String
+  // TODO(nodes): split arguments and defaults
   final List<(Expression, Expression?)> arguments;
 
   final Node body;

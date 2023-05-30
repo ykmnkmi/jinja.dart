@@ -50,11 +50,6 @@ class Optimizer implements Visitor<Context, Node> {
   }
 
   @override
-  Callback visitCallback(Callback node, Context context) {
-    return node;
-  }
-
-  @override
   Calling visitCalling(Calling node, Context context) {
     return node.copyWith(
       arguments: <Expression>[
