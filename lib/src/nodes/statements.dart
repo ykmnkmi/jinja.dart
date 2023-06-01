@@ -2,16 +2,12 @@ part of '../nodes.dart';
 
 abstract class ImportContext {
   bool get withContext;
-
-  set withContext(bool withContext);
 }
 
-abstract class Statement extends Node {}
+final class Extends extends Statement {
+  const Extends({required this.path});
 
-class Extends extends Statement {
-  Extends(this.path);
-
-  String path;
+  final String path;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -19,52 +15,32 @@ class Extends extends Statement {
   }
 
   @override
-  String toString() {
-    return 'Extends($path)';
+  Extends copyWith({String? path}) {
+    return Extends(path: path ?? this.path);
   }
 }
 
-class For extends Statement {
-  For(
-    this.target,
-    this.iterable,
-    this.body, {
-    this.orElse,
+final class For extends Statement {
+  For({
+    required this.target,
+    required this.iterable,
     this.test,
     this.recursive = false,
-  }) : hasLoop = false {
-    for (var nameNode in findAll<Name>()) {
-      if (nameNode.name == 'loop') {
-        hasLoop = true;
-        break;
-      }
-    }
-  }
+    required this.body,
+    this.orElse,
+  });
 
-  Expression target;
+  final Expression target;
 
-  Expression iterable;
+  final Expression iterable;
 
-  Node body;
+  final Expression? test;
 
-  bool hasLoop;
+  final bool recursive;
 
-  Node? orElse;
+  final Node body;
 
-  Expression? test;
-
-  bool recursive;
-
-  @override
-  List<Node> get childrens {
-    return <Node>[
-      target,
-      iterable,
-      body,
-      if (orElse != null) orElse!,
-      if (test != null) test!,
-    ];
-  }
+  final Node? orElse;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -72,42 +48,37 @@ class For extends Statement {
   }
 
   @override
-  String toString() {
-    var result = 'For';
-
-    if (recursive) {
-      result = '$result.recursive';
-    }
-
-    result = '$result($target, $iterable';
-
-    if (test != null) {
-      result = '$result, $test';
-    }
-
-    result = '$result, $body';
-
-    if (orElse != null) {
-      result = '$result, orElse: $orElse';
-    }
-
-    return '$result)';
+  For copyWith({
+    Expression? target,
+    Expression? iterable,
+    Expression? test,
+    bool? recursive,
+    Node? body,
+    Node? orElse,
+  }) {
+    return For(
+      target: target ?? this.target,
+      iterable: iterable ?? this.iterable,
+      test: test ?? this.test,
+      recursive: recursive ?? this.recursive,
+      body: body ?? this.body,
+      orElse: orElse ?? this.orElse,
+    );
   }
 }
 
-class If extends Statement {
-  If(this.test, this.body, {this.orElse});
+final class If extends Statement {
+  const If({
+    required this.test,
+    required this.body,
+    this.orElse,
+  });
 
-  Expression test;
+  final Expression test;
 
-  Node body;
+  final Node body;
 
-  Node? orElse;
-
-  @override
-  List<Node> get childrens {
-    return <Node>[test, body, if (orElse != null) orElse!];
-  }
+  final Node? orElse;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -115,28 +86,105 @@ class If extends Statement {
   }
 
   @override
-  String toString() {
-    var result = 'If($test, $body';
-
-    if (orElse != null) {
-      result = '$result, orElse: $orElse';
-    }
-
-    return '$result)';
+  If copyWith({
+    Expression? test,
+    Node? body,
+    Node? orElse,
+  }) {
+    return If(
+      test: test ?? this.test,
+      body: body ?? this.body,
+      orElse: orElse ?? this.orElse,
+    );
   }
 }
 
-class FilterBlock extends Statement {
-  FilterBlock(this.filters, this.body);
+typedef MacroSignature = ({
+  List<Expression> arguments,
+  List<Expression> defaults,
+});
 
-  List<Filter> filters;
+abstract final class MacroCall extends Statement {
+  const MacroCall({
+    this.arguments = const <(Expression, Expression?)>[],
+    required this.body,
+  });
 
-  Node body;
+  // TODO(nodes): change argument to String
+  // TODO(nodes): split arguments and defaults
+  final List<(Expression, Expression?)> arguments;
+
+  final Node body;
 
   @override
-  List<Node> get childrens {
-    return <Node>[...filters, body];
+  MacroCall copyWith({
+    List<(Expression, Expression?)>? arguments,
+    Node? body,
+  });
+}
+
+final class Macro extends MacroCall {
+  const Macro({
+    required this.name,
+    super.arguments,
+    required super.body,
+  });
+
+  final String name;
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitMacro(this, context);
   }
+
+  @override
+  Macro copyWith({
+    String? name,
+    List<(Expression, Expression?)>? arguments,
+    Node? body,
+  }) {
+    return Macro(
+      name: name ?? this.name,
+      arguments: arguments ?? this.arguments,
+      body: body ?? this.body,
+    );
+  }
+}
+
+final class CallBlock extends MacroCall {
+  CallBlock({
+    required this.call,
+    super.arguments,
+    required super.body,
+  });
+
+  final Expression call;
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitCallBlock(this, context);
+  }
+
+  @override
+  CallBlock copyWith({
+    Expression? call,
+    List<(Expression, Expression?)>? arguments,
+    Node? body,
+  }) {
+    return CallBlock(
+      call: call ?? this.call,
+      arguments: arguments ?? this.arguments,
+      body: body ?? this.body,
+    );
+  }
+}
+
+final class FilterBlock extends Statement {
+  const FilterBlock({required this.filters, required this.body});
+
+  final List<Filter> filters;
+
+  final Node body;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -144,24 +192,26 @@ class FilterBlock extends Statement {
   }
 
   @override
-  String toString() {
-    return 'FilterBlock($filters, $body)';
+  FilterBlock copyWith({List<Filter>? filters, Node? body}) {
+    return FilterBlock(
+      filters: filters ?? this.filters,
+      body: body ?? this.body,
+    );
   }
 }
 
-class With extends Statement {
-  With(this.targets, this.values, this.body);
+final class With extends Statement {
+  const With({
+    required this.targets,
+    required this.values,
+    required this.body,
+  });
 
-  List<Expression> targets;
+  final List<Expression> targets;
 
-  List<Expression> values;
+  final List<Expression> values;
 
-  Node body;
-
-  @override
-  List<Node> get childrens {
-    return <Node>[...targets, ...values, body];
-  }
+  final Node body;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -169,35 +219,34 @@ class With extends Statement {
   }
 
   @override
-  String toString() {
-    return 'With($targets, $values, $body)';
+  With copyWith({
+    List<Expression>? targets,
+    List<Expression>? values,
+    Node? body,
+  }) {
+    return With(
+      targets: targets ?? this.targets,
+      values: values ?? this.values,
+      body: body ?? this.body,
+    );
   }
 }
 
-class Block extends Statement {
-  Block(this.name, this.scoped, this.required, this.body) : hasSuper = false {
-    for (var nameNode in findAll<Name>()) {
-      if (nameNode.name == 'super') {
-        hasSuper = true;
-        break;
-      }
-    }
-  }
+final class Block extends Statement {
+  const Block({
+    required this.name,
+    required this.scoped,
+    required this.required,
+    required this.body,
+  });
 
-  String name;
+  final String name;
 
-  bool scoped;
+  final bool scoped;
 
-  bool required;
+  final bool required;
 
-  bool hasSuper;
-
-  Node body;
-
-  @override
-  List<Node> get childrens {
-    return <Node>[body];
-  }
+  final Node body;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -205,28 +254,28 @@ class Block extends Statement {
   }
 
   @override
-  String toString() {
-    var result = 'Block($name';
-
-    if (scoped) {
-      result = '$result, scoped';
-    }
-
-    if (hasSuper) {
-      result = '$result, super';
-    }
-
-    return '$result, $body)';
+  Block copyWith({
+    String? name,
+    bool? scoped,
+    bool? required,
+    Node? body,
+  }) {
+    return Block(
+      name: name ?? this.name,
+      scoped: scoped ?? this.scoped,
+      required: required ?? this.required,
+      body: body ?? this.body,
+    );
   }
 }
 
-class Include extends Statement implements ImportContext {
-  Include(this.template, {this.withContext = true});
+final class Include extends Statement implements ImportContext {
+  const Include({required this.template, this.withContext = true});
 
-  String template;
+  final String template;
 
   @override
-  bool withContext;
+  final bool withContext;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -234,26 +283,18 @@ class Include extends Statement implements ImportContext {
   }
 
   @override
-  String toString() {
-    var prefix = 'Include';
-
-    if (withContext) {
-      prefix = '${prefix}withContext';
-    }
-
-    return '$prefix($template)';
+  Include copyWith({String? template, bool? withContext}) {
+    return Include(
+      template: template ?? this.template,
+      withContext: withContext ?? this.withContext,
+    );
   }
 }
 
-class Do extends Statement {
-  Do(this.expression);
+final class Do extends Statement {
+  Do({required this.value});
 
-  Expression expression;
-
-  @override
-  List<Node> get childrens {
-    return <Node>[expression];
-  }
+  final Expression value;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -261,22 +302,19 @@ class Do extends Statement {
   }
 
   @override
-  String toString() {
-    return 'Do($expression)';
+  Do copyWith({Expression? value}) {
+    return Do(
+      value: value ?? this.value,
+    );
   }
 }
 
-class Assign extends Statement {
-  Assign(this.target, this.value);
+final class Assign extends Statement {
+  const Assign({required this.target, required this.value});
 
-  Expression target;
+  final Expression target;
 
-  Expression value;
-
-  @override
-  List<Node> get childrens {
-    return <Node>[target, value];
-  }
+  final Expression value;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -284,24 +322,26 @@ class Assign extends Statement {
   }
 
   @override
-  String toString() {
-    return 'Assign($target, $value)';
+  Assign copyWith({Expression? target, Expression? value}) {
+    return Assign(
+      target: target ?? this.target,
+      value: value ?? this.value,
+    );
   }
 }
 
-class AssignBlock extends Statement {
-  AssignBlock(this.target, this.body, [this.filters]);
+final class AssignBlock extends Statement {
+  AssignBlock({
+    required this.target,
+    this.filters = const <Filter>[],
+    required this.body,
+  });
 
-  Expression target;
+  final Expression target;
 
-  Node body;
+  final List<Filter> filters;
 
-  List<Filter>? filters;
-
-  @override
-  List<Node> get childrens {
-    return <Node>[target, body, ...?filters];
-  }
+  final Node body;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -309,28 +349,25 @@ class AssignBlock extends Statement {
   }
 
   @override
-  String toString() {
-    var result = 'AssignBlock($target, $body';
-
-    if (filters != null && filters!.isNotEmpty) {
-      result = '$result, $filters';
-    }
-
-    return '$result)';
+  AssignBlock copyWith({
+    Expression? target,
+    List<Filter>? filters,
+    Node? body,
+  }) {
+    return AssignBlock(
+      target: target ?? this.target,
+      filters: filters ?? this.filters,
+      body: body ?? this.body,
+    );
   }
 }
 
-class AutoEscape extends Statement {
-  AutoEscape(this.value, this.body);
+final class AutoEscape extends Statement {
+  const AutoEscape({required this.value, required this.body});
 
-  Expression value;
+  final Expression value;
 
-  Node body;
-
-  @override
-  List<Node> get childrens {
-    return <Node>[value, body];
-  }
+  final Node body;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -338,7 +375,13 @@ class AutoEscape extends Statement {
   }
 
   @override
-  String toString() {
-    return 'AutoEscape($value, $body)';
+  AutoEscape copyWith({
+    Expression? value,
+    Node? body,
+  }) {
+    return AutoEscape(
+      value: value ?? this.value,
+      body: body ?? this.body,
+    );
   }
 }

@@ -6,1219 +6,458 @@ enum AssignContext {
   parameter,
 }
 
-class Impossible implements Exception {}
+final class Name extends Expression {
+  const Name({required this.name, this.context = AssignContext.load});
 
-abstract class Expression extends Node {
-  const Expression();
+  final String name;
+
+  final AssignContext context;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitExpression(this, context);
-  }
-
-  Object? asConst(Context context) {
-    throw Impossible();
-  }
-
-  Object? resolve(Context context) {
-    return null;
-  }
-
-  void update(ExpressionUpdater updater) {}
-}
-
-mixin Assignable on Expression {
-  bool get canAssign;
-
-  abstract AssignContext context;
-}
-
-class Name extends Expression implements Assignable {
-  Name(this.name, {this.context = AssignContext.load});
-
-  String name;
-
-  @override
-  AssignContext context;
-
-  @override
-  bool get canAssign {
-    return context == AssignContext.store;
+    return visitor.visitName(this, context);
   }
 
   @override
-  Object? asConst(Context context) {
-    throw Impossible();
-  }
-
-  @override
-  Object? resolve(Context context) {
-    switch (this.context) {
-      case AssignContext.load:
-        return context.resolve(name);
-      case AssignContext.store:
-      case AssignContext.parameter:
-        return name;
-    }
-  }
-
-  @override
-  String toString() {
-    if (context == AssignContext.load) {
-      return 'Name($name)';
-    }
-
-    return 'Name($name, $context)';
+  Name copyWith({String? name, AssignContext? context}) {
+    return Name(name: name ?? this.name, context: context ?? this.context);
   }
 }
 
-class NamespaceRef extends Expression {
-  NamespaceRef(this.name, this.attribute);
+final class NamespaceRef extends Expression {
+  const NamespaceRef({required this.name, required this.attribute});
 
-  String name;
+  final String name;
 
-  String attribute;
+  final String attribute;
 
   @override
-  NamespaceValue resolve(Context context) {
-    return NamespaceValue(name, attribute);
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitNamespaceRef(this, context);
   }
 
   @override
-  String toString() {
-    return 'NamespaceRef($name, $attribute)';
-  }
-}
-
-abstract class Literal extends Expression {}
-
-class Constant extends Literal {
-  Constant(this.value);
-
-  Object? value;
-
-  @override
-  Object? asConst(Context context) {
-    return value;
-  }
-
-  @override
-  Object? resolve(Context context) {
-    return value;
-  }
-
-  @override
-  String toString() {
-    return 'Constant($value)';
-  }
-}
-
-class Tuple extends Literal implements Assignable {
-  Tuple(this.values, [AssignContext? context]) {
-    context = context ?? AssignContext.load;
-  }
-
-  List<Expression> values;
-
-  @override
-  AssignContext get context {
-    if (values.isEmpty) {
-      return AssignContext.load;
-    }
-
-    var first = values.first;
-
-    if (first is Assignable) {
-      return first.context;
-    }
-
-    return AssignContext.load;
-  }
-
-  @override
-  set context(AssignContext context) {
-    if (values.isEmpty) {
-      return;
-    }
-
-    for (var value in values) {
-      if (value is! Assignable) {
-        throw TypeError();
-      }
-
-      value.context = context;
-    }
-  }
-
-  @override
-  bool get canAssign {
-    bool test(Expression value) {
-      return value is Assignable && !value.canAssign;
-    }
-
-    return values.every(test);
-  }
-
-  @override
-  List<Node> get childrens {
-    return values;
-  }
-
-  @override
-  List<Object?> asConst(Context context) {
-    Object? generator(int index) {
-      return values[index].asConst(context);
-    }
-
-    return List<Object?>.generate(values.length, generator);
-  }
-
-  @override
-  List<Object?> resolve(Context context) {
-    Object? generator(int index) {
-      return values[index].resolve(context);
-    }
-
-    return List<Object?>.generate(values.length, generator);
-  }
-
-  @override
-  void update(ExpressionUpdater updater) {
-    for (var index = 0; index < values.length; index += 1) {
-      values[index].update(updater);
-      values[index] = updater(values[index]);
-    }
-  }
-
-  @override
-  String toString() {
-    return 'Tuple(${values.join(', ')})';
-  }
-}
-
-class Array extends Literal {
-  Array(this.values);
-
-  List<Expression> values;
-
-  @override
-  List<Node> get childrens {
-    return values;
-  }
-
-  @override
-  List<Object?> asConst(Context context) {
-    Object? generator(int index) {
-      return values[index].asConst(context);
-    }
-
-    return List<Object?>.generate(values.length, generator);
-  }
-
-  @override
-  List<Object?> resolve(Context context) {
-    Object? generator(int index) {
-      return values[index].resolve(context);
-    }
-
-    return List<Object?>.generate(values.length, generator);
-  }
-
-  @override
-  void update(ExpressionUpdater updater) {
-    for (var index = 0; index < values.length; index += 1) {
-      values[index].update(updater);
-      values[index] = updater(values[index]);
-    }
-  }
-
-  @override
-  String toString() {
-    return 'Array(${values.join(', ')})';
-  }
-}
-
-class Pair extends Expression {
-  Pair(this.key, this.value);
-
-  Expression key;
-
-  Expression value;
-
-  @override
-  List<Node> get childrens {
-    return <Node>[key, value];
-  }
-
-  @override
-  MapEntry<Object?, Object?> asConst(Context context) {
-    return MapEntry<Object?, Object?>(
-      key.asConst(context),
-      value.asConst(context),
+  NamespaceRef copyWith({String? name, String? attribute}) {
+    return NamespaceRef(
+      name: name ?? this.name,
+      attribute: attribute ?? this.attribute,
     );
   }
+}
+
+abstract final class Literal extends Expression {
+  const Literal();
+}
+
+final class Constant extends Literal {
+  const Constant({required this.value});
+
+  final Object? value;
 
   @override
-  MapEntry<Object?, Object?> resolve(Context context) {
-    return MapEntry<Object?, Object?>(
-      key.resolve(context),
-      value.resolve(context),
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitConstant(this, context);
+  }
+
+  @override
+  Constant copyWith({Object? value}) {
+    return Constant(value: value ?? this.value);
+  }
+}
+
+final class Tuple extends Literal {
+  const Tuple({required this.values});
+
+  final List<Expression> values;
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitTuple(this, context);
+  }
+
+  @override
+  Tuple copyWith({List<Expression>? values}) {
+    return Tuple(
+      values: values ?? this.values,
     );
   }
+}
+
+final class Array extends Literal {
+  const Array({required this.values});
+
+  final List<Expression> values;
 
   @override
-  void update(ExpressionUpdater updater) {
-    key = updater(key);
-    value = updater(value);
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitArray(this, context);
   }
 
   @override
-  String toString() {
-    return 'Pair($key, $value)';
+  Array copyWith({List<Expression>? values}) {
+    return Array(values: values ?? this.values);
   }
 }
 
-class Dict extends Literal {
-  Dict(this.pairs);
+typedef Pair = ({
+  Expression key,
+  Expression value,
+});
 
-  List<Pair> pairs;
+final class Dict extends Literal {
+  const Dict({required this.pairs});
+
+  final List<Pair> pairs;
 
   @override
-  List<Node> get childrens {
-    return pairs;
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitDict(this, context);
   }
 
   @override
-  Map<Object?, Object?> asConst(Context context) {
-    MapEntry<Object?, Object?> toElement(Pair pair) {
-      return pair.asConst(context);
-    }
-
-    var entries = pairs.map<MapEntry<Object?, Object?>>(toElement);
-    return Map<Object?, Object?>.fromEntries(entries);
-  }
-
-  @override
-  Map<Object?, Object?> resolve(Context context) {
-    MapEntry<Object?, Object?> toElement(Pair pair) {
-      return pair.resolve(context);
-    }
-
-    var entries = pairs.map<MapEntry<Object?, Object?>>(toElement);
-    return Map<Object?, Object?>.fromEntries(entries);
-  }
-
-  @override
-  void update(ExpressionUpdater updater) {
-    for (var index = 0; index < pairs.length; index += 1) {
-      pairs[index].update(updater);
-    }
-  }
-
-  @override
-  String toString() {
-    return 'Dict(${pairs.join(', ')})';
+  Dict copyWith({List<Pair>? pairs}) {
+    return Dict(pairs: pairs ?? this.pairs);
   }
 }
 
-class Condition extends Expression {
-  Condition(this.test, this.value, [this.orElse]);
+final class Condition extends Expression {
+  const Condition({
+    required this.test,
+    required this.trueValue,
+    this.falseValue,
+  });
 
-  Expression test;
+  final Expression test;
 
-  Expression value;
+  final Expression trueValue;
 
-  Expression? orElse;
+  final Expression? falseValue;
 
   @override
-  List<Node> get childrens {
-    var orElse = this.orElse;
-    return <Node>[test, value, if (orElse != null) orElse];
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitCondition(this, context);
   }
 
   @override
-  Object? asConst(Context context) {
-    if (boolean(test.asConst(context))) {
-      return value.asConst(context);
-    }
-
-    return orElse?.asConst(context);
-  }
-
-  @override
-  Object? resolve(Context context) {
-    if (boolean(test.resolve(context))) {
-      return value.resolve(context);
-    }
-
-    return orElse?.resolve(context);
-  }
-
-  @override
-  void update(ExpressionUpdater updater) {
-    test.update(updater);
-    test = updater(test);
-    value.update(updater);
-    value = updater(value);
-
-    var orElse = this.orElse;
-
-    if (orElse != null) {
-      orElse.update(updater);
-      this.orElse = updater(orElse);
-    }
-  }
-
-  @override
-  String toString() {
-    if (orElse == null) {
-      return 'Condition($test, $value)';
-    }
-
-    return 'Condition($test, $value, $orElse)';
+  Condition copyWith({
+    Expression? test,
+    Expression? trueValue,
+    Expression? falseValue,
+  }) {
+    return Condition(
+      test: test ?? this.test,
+      trueValue: trueValue ?? this.trueValue,
+      falseValue: falseValue ?? this.falseValue,
+    );
   }
 }
 
-class Keyword extends Expression {
-  Keyword(this.key, this.value);
+typedef Keyword = ({String key, Expression value});
 
-  String key;
+typedef Parameters = (List<Object?>, Map<Symbol, Object?>);
 
-  Expression value;
-
-  @override
-  List<Node> get childrens {
-    return <Node>[value];
-  }
-
-  @override
-  Object? asConst(Context context) {
-    return value.asConst(context);
-  }
-
-  @override
-  Object? resolve(Context context) {
-    return value.resolve(context);
-  }
-
-  Pair toPair() {
-    return Pair(Constant(key), value);
-  }
-
-  @override
-  void update(ExpressionUpdater updater) {
-    value = updater(value);
-  }
-
-  @override
-  String toString() {
-    return 'Keyword($key, $value)';
-  }
-}
-
-typedef Callback<T> = T Function(List<Object?>, Map<Symbol, Object?>);
-
-class Callable extends Expression {
-  Callable({
-    List<Expression>? arguments,
-    List<Keyword>? keywords,
+final class Calling extends Expression {
+  const Calling({
+    this.arguments = const <Expression>[],
+    this.keywords = const <Keyword>[],
     this.dArguments,
     this.dKeywords,
-  })  : arguments = arguments ?? <Expression>[],
-        keywords = keywords ?? <Keyword>[];
-
-  List<Expression> arguments;
-
-  List<Keyword> keywords;
-
-  Expression? dArguments;
-
-  Expression? dKeywords;
-
-  @override
-  List<Node> get childrens {
-    return <Node>[
-      ...arguments,
-      ...keywords,
-      if (dArguments != null) dArguments!,
-      if (dKeywords != null) dKeywords!
-    ];
-  }
-
-  Object? applyAsConst(Context context, Callback<Object?> callback) {
-    List<Object?> positional;
-
-    if (arguments.isEmpty) {
-      positional = <Object?>[];
-    } else {
-      Object? generator(int index) {
-        return arguments[index].asConst(context);
-      }
-
-      positional = List<Object?>.generate(arguments.length, generator);
-    }
-
-    var named = <Symbol, Object?>{};
-
-    for (var argument in keywords) {
-      named[Symbol(argument.key)] = argument.asConst(context);
-    }
-
-    var dArguments = this.dArguments;
-
-    if (dArguments != null) {
-      var arguments = dArguments.asConst(context);
-
-      if (arguments is! Iterable) {
-        throw TypeError();
-      }
-
-      positional.addAll(arguments);
-    }
-
-    var dKeywords = this.dKeywords;
-
-    if (dKeywords != null) {
-      var resolvedKeywords = dKeywords.asConst(context);
-
-      if (resolvedKeywords is! Map) {
-        throw TypeError();
-      }
-
-      void action(String key, Object? value) {
-        named[Symbol(key)] = value;
-      }
-
-      resolvedKeywords.cast<String, Object?>().forEach(action);
-    }
-
-    return callback(positional, named);
-  }
-
-  T apply<T extends Object?>(Context context, Callback<T> callback) {
-    List<Object?> positional;
-
-    if (arguments.isEmpty) {
-      positional = <Object?>[];
-    } else {
-      Object? generator(int index) {
-        return arguments[index].resolve(context);
-      }
-
-      positional = List<Object?>.generate(arguments.length, generator);
-    }
-
-    var named = <Symbol, Object?>{};
-
-    for (var keyword in keywords) {
-      named[Symbol(keyword.key)] = keyword.resolve(context);
-    }
-
-    var dArguments = this.dArguments;
-
-    if (dArguments != null) {
-      positional.addAll(dArguments.resolve(context) as Iterable<Object?>);
-    }
-
-    var dKeywords = this.dKeywords;
-
-    if (dKeywords != null) {
-      var resolvedKeywords = dKeywords.resolve(context);
-
-      if (resolvedKeywords is! Map) {
-        throw TypeError();
-      }
-
-      void action(String key, Object? value) {
-        named[Symbol(key)] = value;
-      }
-
-      resolvedKeywords.cast<String, Object?>().forEach(action);
-    }
-
-    return callback(positional, named);
-  }
-
-  String format({bool comma = false}) {
-    var result = '';
-
-    if (arguments.isNotEmpty) {
-      if (comma) {
-        result = '$result, ';
-      } else {
-        comma = true;
-      }
-
-      result = '$result${arguments.join(', ')}';
-    }
-
-    if (keywords.isNotEmpty) {
-      if (comma) {
-        result = '$result, ';
-      } else {
-        comma = true;
-      }
-
-      result = '$result${keywords.join(', ')}';
-    }
-
-    if (dArguments != null) {
-      if (comma) {
-        result = '$result, ';
-      } else {
-        comma = true;
-      }
-
-      result = '$result*$dArguments';
-    }
-
-    if (dKeywords != null) {
-      if (comma) {
-        result = '$result, ';
-      }
-
-      result = '$result**$dKeywords';
-    }
-
-    return result;
-  }
-
-  @override
-  void update(ExpressionUpdater updater) {
-    for (var i = 0; i < arguments.length; i += 1) {
-      arguments[i] = updater(arguments[i]);
-      arguments[i].update(updater);
-    }
-
-    for (var i = 0; i < keywords.length; i += 1) {
-      keywords[i].update(updater);
-    }
-
-    var dArguments = this.dArguments;
-
-    if (dArguments != null) {
-      dArguments = updater(dArguments);
-      dArguments.update(updater);
-      this.dArguments = dArguments;
-    }
-
-    var dKeywords = this.dKeywords;
-
-    if (dKeywords != null) {
-      dKeywords = updater(dKeywords);
-      dKeywords.update(updater);
-      this.dKeywords = dKeywords;
-    }
-  }
-}
-
-class Call extends Callable {
-  Call(
-    this.expression, {
-    super.arguments,
-    super.keywords,
-    super.dArguments,
-    super.dKeywords,
   });
 
-  Expression expression;
+  final List<Expression> arguments;
+
+  final List<Keyword> keywords;
+
+  final Expression? dArguments;
+
+  final Expression? dKeywords;
 
   @override
-  List<Node> get childrens {
-    return <Node>[expression, ...super.childrens];
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitCalling(this, context);
   }
 
   @override
-  Object? asConst(Context context) {
-    var function = expression.asConst(context);
-
-    Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
-      return context(function, positional, named);
-    }
-
-    return applyAsConst(context, callback);
-  }
-
-  @override
-  Object? resolve(Context context) {
-    var function = expression.resolve(context);
-
-    Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
-      return context(function, positional, named);
-    }
-
-    return apply<Object?>(context, callback);
-  }
-
-  @override
-  void update(ExpressionUpdater updater) {
-    expression = updater(expression);
-    expression.update(updater);
-    super.update(updater);
-  }
-
-  @override
-  String toString() {
-    return 'Call($expression${format(comma: true)})';
+  Calling copyWith({
+    List<Expression>? arguments,
+    List<Keyword>? keywords,
+    Expression? dArguments,
+    Expression? dKeywords,
+  }) {
+    return Calling(
+      arguments: arguments ?? this.arguments,
+      keywords: keywords ?? this.keywords,
+      dArguments: dArguments ?? this.dArguments,
+      dKeywords: dKeywords ?? this.dKeywords,
+    );
   }
 }
 
-class Filter extends Callable {
-  Filter(
-    this.name, {
-    Expression? expression,
-    super.arguments,
-    super.keywords,
-    super.dArguments,
-    super.dKeywords,
-  })
-  // remove after better null safety promotion
-  // ignore: prefer_initializing_formals
-  : hasExpression = expression != null;
-
-  String name;
-
-  bool hasExpression;
-
-  set expression(Expression? expression) {
-    if (hasExpression) {
-      if (expression == null) {
-        hasExpression = false;
-        arguments = arguments.sublist(1);
-        return;
-      }
-
-      arguments[0] = expression;
-    } else if (expression != null) {
-      hasExpression = true;
-      arguments = <Expression>[expression, ...arguments];
-    }
-  }
-
-  @override
-  Object? asConst(Context context) {
-    throw Impossible();
-  }
-
-  @override
-  Object? resolve(Context context) {
-    Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
-      return context.filter(name, positional, named);
-    }
-
-    return apply(context, callback);
-  }
-
-  @override
-  String toString() {
-    return 'Filter.$name(${format()})';
-  }
-}
-
-class Test extends Callable {
-  Test(
-    this.name, {
-    super.arguments,
-    super.keywords,
-    super.dArguments,
-    super.dKeywords,
+final class Call extends Expression {
+  const Call({
+    required this.value,
+    this.calling = const Calling(),
   });
 
-  String name;
+  final Expression value;
+
+  final Calling calling;
 
   @override
-  Object? asConst(Context context) {
-    if (context.environment.tests.containsKey(name)) {
-      Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
-        return context.test(name, positional, named);
-      }
-
-      return applyAsConst(context, callback);
-    }
-
-    throw Impossible();
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitCall(this, context);
   }
 
   @override
-  bool resolve(Context context) {
-    bool callback(List<Object?> positional, Map<Symbol, Object?> named) {
-      return context.test(name, positional, named);
-    }
-
-    return apply<bool>(context, callback);
-  }
-
-  @override
-  String toString() {
-    return 'Test.$name(${format()})';
+  Call copyWith({Expression? value, Calling? calling}) {
+    return Call(
+      value: value ?? this.value,
+      calling: calling ?? this.calling,
+    );
   }
 }
 
-class Item extends Expression {
-  factory Item.string(String key, Expression value) = ItemString;
+final class Filter extends Expression {
+  const Filter({
+    required this.name,
+    this.calling = const Calling(),
+  });
 
-  Item(this.key, this.value);
+  final String name;
 
-  Expression key;
-
-  Expression value;
+  final Calling calling;
 
   @override
-  List<Node> get childrens {
-    return <Node>[key, value];
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitFilter(this, context);
   }
 
   @override
-  Object? asConst(Context context) {
-    var key = this.key.asConst(context);
-    var value = this.value.asConst(context);
-    return context.environment.getItem(value, key);
-  }
-
-  @override
-  Object? resolve(Context context) {
-    var key = this.key.resolve(context);
-    var value = this.value.resolve(context);
-    return context.environment.getItem(value, key);
-  }
-
-  @override
-  void update(ExpressionUpdater updater) {
-    key = updater(key);
-    key.update(updater);
-    value = updater(value);
-    value.update(updater);
-  }
-
-  @override
-  String toString() {
-    return 'Item($key, $value)';
+  Filter copyWith({String? name, Calling? calling}) {
+    return Filter(name: name ?? this.name, calling: calling ?? this.calling);
   }
 }
 
-class ItemString extends Expression implements Item {
-  ItemString(this.keyString, this.value);
+final class Test extends Expression {
+  const Test({
+    required this.name,
+    this.calling = const Calling(),
+  });
 
-  String keyString;
+  final String name;
+
+  final Calling calling;
 
   @override
-  Expression value;
-
-  @override
-  Expression get key {
-    return Constant(keyString);
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitTest(this, context);
   }
 
   @override
-  set key(Expression key) {
-    if (key is! Constant) {
-      throw TypeError();
-    }
-
-    var value = key.value;
-
-    if (value is! String) {
-      throw TypeError();
-    }
-
-    keyString = value;
-  }
-
-  @override
-  List<Node> get childrens {
-    return <Node>[key, value];
-  }
-
-  @override
-  Object? asConst(Context context) {
-    var value = this.value.asConst(context);
-    return context.environment.getItem(value, keyString);
-  }
-
-  @override
-  Object? resolve(Context context) {
-    var value = this.value.resolve(context);
-    return context.environment.getItem(value, keyString);
-  }
-
-  @override
-  void update(ExpressionUpdater updater) {
-    value = updater(value);
-    value.update(updater);
-  }
-
-  @override
-  String toString() {
-    return 'Item.string($keyString, $value)';
+  Test copyWith({String? name, Calling? calling}) {
+    return Test(name: name ?? this.name, calling: calling ?? this.calling);
   }
 }
 
-class Attribute extends Expression {
-  Attribute(this.attribute, this.value);
+final class Item extends Expression {
+  const Item({required this.key, required this.value});
 
-  String attribute;
+  final Expression key;
 
-  Expression value;
+  final Expression value;
 
   @override
-  List<Node> get childrens {
-    return <Node>[value];
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitItem(this, context);
   }
 
   @override
-  Object? asConst(Context context) {
-    var value = this.value.asConst(context);
-    return context.environment.getAttribute(value, attribute);
-  }
-
-  @override
-  Object? resolve(Context context) {
-    var value = this.value.resolve(context);
-    return context.environment.getAttribute(value, attribute);
-  }
-
-  @override
-  void update(ExpressionUpdater updater) {
-    value = updater(value);
-    value.update(updater);
-  }
-
-  @override
-  String toString() {
-    return 'Attribute($attribute, $value)';
+  Item copyWith({Expression? key, Expression? value}) {
+    return Item(key: key ?? this.key, value: value ?? this.value);
   }
 }
 
-class Concat extends Expression {
-  Concat(this.values);
+final class Attribute extends Expression {
+  const Attribute({required this.attribute, required this.value});
 
-  List<Expression> values;
+  final String attribute;
+
+  final Expression value;
 
   @override
-  List<Node> get childrens {
-    return values;
-  }
-
-  // TODO: try reduce operands if imposible
-  @override
-  Object? asConst(Context context) {
-    Object? toElement(Expression expression) {
-      return expression.asConst(context);
-    }
-
-    return values.map<Object?>(toElement).join();
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitAttribute(this, context);
   }
 
   @override
-  String resolve(Context context) {
-    var buffer = StringBuffer();
+  Attribute copyWith({String? attribute, Expression? value}) {
+    return Attribute(
+      attribute: attribute ?? this.attribute,
+      value: value ?? this.value,
+    );
+  }
+}
 
-    for (var expression in values) {
-      buffer.write(expression.resolve(context));
-    }
+final class Concat extends Expression {
+  const Concat({required this.values});
 
-    return buffer.toString();
+  final List<Expression> values;
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitConcat(this, context);
   }
 
   @override
-  void update(ExpressionUpdater updater) {
-    for (var i = 0; i < values.length; i += 1) {
-      values[i] = updater(values[i]);
-      values[i].update(updater);
-    }
-  }
-
-  @override
-  String toString() {
-    return 'Concat(${values.join(', ')})';
+  Concat copyWith({List<Expression>? values}) {
+    return Concat(values: values ?? this.values);
   }
 }
 
 enum CompareOperator {
-  equal,
-  notEqual,
-  lessThan,
-  lessThanOrEqual,
-  greaterThan,
-  greaterThanOrEqual,
-  contains,
-  notContains,
-}
+  equal('=='),
+  notEqual('!='),
+  lessThan('<'),
+  lessThanOrEqual('<='),
+  greaterThan('>'),
+  greaterThanOrEqual('>='),
+  contains('in'),
+  notContains('not in');
 
-class Operand extends Expression {
-  Operand(this.operator, this.value);
+  const CompareOperator(this.symbol);
 
-  CompareOperator operator;
+  final String symbol;
 
-  Expression value;
-
-  @override
-  List<Node> get childrens {
-    return <Node>[value];
-  }
-
-  @override
-  Object? asConst(Context context) {
-    return value.asConst(context);
-  }
-
-  @override
-  Object? resolve(Context context) {
-    return value.resolve(context);
-  }
-
-  @override
-  void update(ExpressionUpdater updater) {
-    value = updater(value);
-    value.update(updater);
-  }
-
-  @override
-  String toString() {
-    return 'Operand(${operator.name}, $value)';
-  }
-
-  static CompareOperator? operatorFrom(String operator) {
-    switch (operator) {
-      case 'eq':
-        return CompareOperator.equal;
-      case 'ne':
-        return CompareOperator.notEqual;
-      case 'lt':
-        return CompareOperator.lessThan;
-      case 'lteq':
-        return CompareOperator.lessThanOrEqual;
-      case 'gt':
-        return CompareOperator.greaterThan;
-      case 'gteq':
-        return CompareOperator.greaterThanOrEqual;
-      case 'in':
-        return CompareOperator.contains;
-      case 'notin':
-        return CompareOperator.notContains;
-      default:
-        return null;
-    }
+  static CompareOperator parse(String operator) {
+    return switch (operator) {
+      'eq' => CompareOperator.equal,
+      'ne' => CompareOperator.notEqual,
+      'lt' => CompareOperator.lessThan,
+      'lteq' => CompareOperator.lessThanOrEqual,
+      'gt' => CompareOperator.greaterThan,
+      'gteq' => CompareOperator.greaterThanOrEqual,
+      'in' => CompareOperator.contains,
+      'notin' => CompareOperator.notContains,
+      // TODO(expressions): update error message
+      _ => throw UnsupportedError(operator),
+    };
   }
 }
 
-class Compare extends Expression {
-  Compare(this.value, this.operands);
+typedef Operand = (CompareOperator operator, Expression value);
 
-  Expression value;
+final class Compare extends Expression {
+  const Compare({
+    required this.value,
+    this.operands = const <Operand>[],
+  });
 
-  List<Operand> operands;
+  final Expression value;
+
+  final List<Operand> operands;
 
   @override
-  List<Node> get childrens {
-    return <Node>[value, ...operands];
-  }
-
-  // TODO: try reduce operands if imposible
-  @override
-  Object? asConst(Context context) {
-    var temp = value.asConst(context);
-
-    for (var operand in operands) {
-      if (!calc(operand.operator, temp, temp = operand.asConst(context))) {
-        return false;
-      }
-    }
-
-    return true;
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitCompare(this, context);
   }
 
   @override
-  Object? resolve(Context context) {
-    var temp = value.resolve(context);
-
-    for (var operand in operands) {
-      if (!calc(operand.operator, temp, temp = operand.resolve(context))) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  @override
-  void update(ExpressionUpdater updater) {
-    value = updater(value);
-    value.update(updater);
-
-    for (var i = 0; i < operands.length; i += 1) {
-      operands[i].update(updater);
-    }
-  }
-
-  @override
-  String toString() {
-    return 'Compare($value, $operands)';
-  }
-
-  static bool calc(CompareOperator operator, Object? left, Object? right) {
-    switch (operator) {
-      case CompareOperator.equal:
-        return isEqual(left, right);
-      case CompareOperator.notEqual:
-        return isNotEqual(left, right);
-      case CompareOperator.lessThan:
-        return isLessThan(left, right);
-      case CompareOperator.lessThanOrEqual:
-        return isLessThanOrEqual(left, right);
-      case CompareOperator.greaterThan:
-        return isGreaterThan(left, right);
-      case CompareOperator.greaterThanOrEqual:
-        return isGreaterThanOrEqual(left, right);
-      case CompareOperator.contains:
-        return isIn(left, right);
-      case CompareOperator.notContains:
-        return !isIn(left, right);
-    }
+  Compare copyWith({
+    Expression? value,
+    List<Operand>? operands,
+  }) {
+    return Compare(
+      value: value ?? this.value,
+      operands: operands ?? this.operands,
+    );
   }
 }
 
 enum UnaryOperator {
-  plus,
-  minus,
-  not,
+  plus('+'),
+  minus('-'),
+  not('not');
+
+  const UnaryOperator(this.symbol);
+
+  final String symbol;
 }
 
-class Unary extends Expression {
-  Unary(this.operator, this.value);
+final class Unary extends Expression {
+  const Unary({required this.operator, required this.value});
 
-  UnaryOperator operator;
+  final UnaryOperator operator;
 
-  Expression value;
+  final Expression value;
 
   @override
-  List<Node> get childrens {
-    return <Node>[value];
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitUnary(this, context);
   }
 
   @override
-  Object? asConst(Context context) {
-    try {
-      return calc(operator, value.asConst(context));
-    } catch (error) {
-      throw Impossible();
-    }
-  }
-
-  @override
-  Object? resolve(Context context) {
-    return calc(operator, value.resolve(context));
-  }
-
-  @override
-  void update(ExpressionUpdater updater) {
-    value = updater(value);
-    value.update(updater);
-  }
-
-  @override
-  String toString() {
-    return 'Unary(${operator.name}, $value)';
-  }
-
-  static Object? calc(UnaryOperator operator, dynamic value) {
-    switch (operator) {
-      case UnaryOperator.plus:
-        // how i should implement this?
-        return value;
-      case UnaryOperator.minus:
-        // TODO: dynamic invocation
-        // ignore: avoid_dynamic_calls
-        return -value;
-      case UnaryOperator.not:
-        return !boolean(value);
-    }
+  Unary copyWith({UnaryOperator? operator, Expression? value}) {
+    return Unary(
+      operator: operator ?? this.operator,
+      value: value ?? this.value,
+    );
   }
 }
 
-abstract class Binary<T extends Enum> extends Expression {
-  Binary(this.operator, this.left, this.right);
+abstract final class Binary<T extends Enum> extends Expression {
+  const Binary({
+    required this.operator,
+    required this.left,
+    required this.right,
+  });
 
-  T operator;
+  final T operator;
 
-  Expression left;
+  final Expression left;
 
-  Expression right;
+  final Expression right;
 
   @override
-  List<Node> get childrens {
-    return <Node>[left, right];
-  }
-
-  @override
-  void update(ExpressionUpdater updater) {
-    left = updater(left);
-    left.update(updater);
-    right = updater(right);
-    right.update(updater);
-  }
+  Binary<T> copyWith({T? operator, Expression? left, Expression? right});
 }
 
 enum ScalarOperator {
-  power,
-  module,
-  floorDivision,
-  division,
-  multiple,
-  minus,
-  plus,
+  power('**'),
+  module('%'),
+  floorDivision('~/'),
+  division('/'),
+  multiple('*'),
+  minus('-'),
+  plus('+');
+
+  const ScalarOperator(this.symbol);
+
+  final String symbol;
 }
 
-class Scalar extends Binary<ScalarOperator> {
-  Scalar(super.operator, super.left, super.right);
+final class Scalar extends Binary<ScalarOperator> {
+  const Scalar({
+    required super.operator,
+    required super.left,
+    required super.right,
+  });
 
   @override
-  Object? asConst(Context context) {
-    try {
-      var left = this.left.asConst(context);
-      var right = this.right.asConst(context);
-      return calc(operator, left, right);
-    } catch (error) {
-      throw Impossible();
-    }
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitScalar(this, context);
   }
 
   @override
-  Object? resolve(Context context) {
-    var left = this.left.resolve(context);
-    var right = this.right.resolve(context);
-    return calc(operator, left, right);
-  }
-
-  @override
-  String toString() {
-    return 'Binary(${operator.name}, $left, $right)';
-  }
-
-  // TODO: dynamic invocation
-  static Object? calc(ScalarOperator operator, dynamic left, dynamic right) {
-    switch (operator) {
-      case ScalarOperator.power:
-        return math.pow(left as num, right as num);
-      case ScalarOperator.module:
-        // ignore: avoid_dynamic_calls
-        return left % right;
-      case ScalarOperator.floorDivision:
-        // ignore: avoid_dynamic_calls
-        return left ~/ right;
-      case ScalarOperator.division:
-        // ignore: avoid_dynamic_calls
-        return left / right;
-      case ScalarOperator.multiple:
-        // ignore: avoid_dynamic_calls
-        return left * right;
-      case ScalarOperator.minus:
-        // ignore: avoid_dynamic_calls
-        return left - right;
-      case ScalarOperator.plus:
-        // ignore: avoid_dynamic_calls
-        return left + right;
-    }
+  Scalar copyWith({
+    ScalarOperator? operator,
+    Expression? left,
+    Expression? right,
+  }) {
+    return Scalar(
+      operator: operator ?? this.operator,
+      left: left ?? this.left,
+      right: right ?? this.right,
+    );
   }
 }
 
@@ -1227,40 +466,28 @@ enum LogicalOperator {
   and,
 }
 
-class Logical extends Binary<LogicalOperator> {
-  Logical(super.operator, super.left, super.right);
+final class Logical extends Binary<LogicalOperator> {
+  const Logical({
+    required super.operator,
+    required super.left,
+    required super.right,
+  });
 
   @override
-  Object? asConst(Context context) {
-    try {
-      var left = this.left.asConst(context);
-
-      switch (operator) {
-        case LogicalOperator.or:
-          return boolean(left) ? left : right.asConst(context);
-        case LogicalOperator.and:
-          return boolean(left) ? right.asConst(context) : left;
-      }
-    } catch (error) {
-      throw Impossible();
-    }
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitLogical(this, context);
   }
 
   @override
-  Object? resolve(Context context) {
-    var left = this.left.resolve(context);
-
-    switch (operator) {
-      case LogicalOperator.or:
-        return boolean(left) ? left : right.resolve(context);
-
-      case LogicalOperator.and:
-        return boolean(left) ? right.resolve(context) : left;
-    }
-  }
-
-  @override
-  String toString() {
-    return 'Logical(${operator.name}, $left, $right)';
+  Logical copyWith({
+    LogicalOperator? operator,
+    Expression? left,
+    Expression? right,
+  }) {
+    return Logical(
+      operator: operator ?? this.operator,
+      left: left ?? this.left,
+      right: right ?? this.right,
+    );
   }
 }

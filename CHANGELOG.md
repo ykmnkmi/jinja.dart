@@ -1,3 +1,21 @@
+## 0.5.0-dev
+- minimal SDK version: 3.0.0.
+- internal changes.
+- added:
+  - `Template`
+    - `Template.fromNode(Environment environment, {String? path, required Node body})` constructor
+- changed:
+  - `Environment`
+    - `Environment({modifiers})` from `List<NodeVisitor>` to `List<Node Function(Node)>`
+    - `Environment.modifiers` from `List<NodeVisitor>` to `List<Node Function(Node)>`
+    - `Environment.scan(...)` from `List<Node>` to `Node`
+    - `Environment.parse(...)` from `List<Node>` to `Node`
+  - `Template`
+    - `Template({modifiers})` from `List<NodeVisitor>` to `List<Node Function(Node)>`
+- removed:
+  - `Template`
+    - `Template.fromNodes(Environment environment, List<Node> nodes, {String? path})` constructor
+
 ## 0.4.2
 - internal changes.
 
@@ -5,9 +23,9 @@
 - update links.
 
 ## 0.4.0
-- minimal SDK version: 2.18.0
+- minimal SDK version: 2.18.0.
 - added:
-  - `passContext` and `passEnvironment` ...
+  - `passContext` and `passEnvironment` functions
   - `print` to globals: `{{ do print(name) }}`
   - `Environment`
     - `Environment({lineCommentPrefix, lineStatementPrefix, newLine, autoReload, modifiers, templates})`

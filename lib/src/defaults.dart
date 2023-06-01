@@ -3,7 +3,6 @@ import 'package:jinja/src/namespace.dart';
 import 'package:jinja/src/utils.dart';
 
 export 'package:jinja/src/filters.dart' show filters;
-export 'package:jinja/src/modifiers.dart' show modifiers;
 export 'package:jinja/src/tests.dart' show tests;
 
 const Map<String, Object?> globals = <String, Object?>{

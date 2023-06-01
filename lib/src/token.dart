@@ -66,7 +66,7 @@ String describeExpression(String expression) {
   return describeTokenType(expression);
 }
 
-abstract class Token {
+abstract final class Token {
   static const Map<String, String> common = <String, String>{
     'add': '+',
     'assign': '=',
@@ -134,7 +134,7 @@ abstract class Token {
   bool testAny(Iterable<String> expressions);
 }
 
-abstract class BaseToken implements Token {
+abstract final class BaseToken implements Token {
   const BaseToken();
 
   @override
@@ -185,7 +185,7 @@ abstract class BaseToken implements Token {
   }
 }
 
-class SimpleToken extends BaseToken {
+final class SimpleToken extends BaseToken {
   const SimpleToken(this.line, this.type);
 
   @override
@@ -200,7 +200,7 @@ class SimpleToken extends BaseToken {
   }
 }
 
-class ValueToken extends BaseToken {
+final class ValueToken extends BaseToken {
   const ValueToken(this.line, this.type, this.value);
 
   @override

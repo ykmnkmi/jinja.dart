@@ -52,14 +52,6 @@ bool boolean(Object? value) {
   return value != null;
 }
 
-/// Shorthand for [List.generate].
-List<R> generate<T, R>(
-  List<T> list,
-  R Function(int) generator,
-) {
-  return List<R>.generate(list.length, generator);
-}
-
 /// Serialize an object to a string of JSON with [JsonEncoder], then replace
 /// HTML-unsafe characters with Unicode escapes and mark the result safe with
 /// [Markup].

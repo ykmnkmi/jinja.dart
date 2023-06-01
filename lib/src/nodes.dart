@@ -1,56 +1,27 @@
-import 'dart:math' as math;
-
-import 'package:jinja/src/context.dart';
-import 'package:jinja/src/namespace.dart';
-import 'package:jinja/src/tests.dart';
-import 'package:jinja/src/utils.dart';
 import 'package:jinja/src/visitor.dart';
 
 part 'nodes/expressions.dart';
 part 'nodes/statements.dart';
 
-typedef NodeVisitor = void Function(Node node);
-
-abstract class Node {
+abstract final class Node {
   const Node();
-
-  List<Node> get childrens {
-    return const <Node>[];
-  }
 
   R accept<C, R>(Visitor<C, R> visitor, C context);
 
-  Iterable<T> findAll<T extends Node>() sync* {
-    for (var child in childrens) {
-      if (child is T) {
-        yield child;
-      }
-
-      yield* child.findAll<T>();
-    }
-  }
-
-  T findOne<T extends Node>() {
-    var all = findAll<T>();
-    return all.first;
-  }
-
-  void visitChildrens(NodeVisitor visitor) {
-    childrens.forEach(visitor);
-  }
+  Node copyWith();
 }
 
-class Data extends Node {
-  Data([this.data = '']);
+final class Data extends Node {
+  const Data({this.data = ''});
 
-  String data;
+  final String data;
 
   bool get isLeaf {
     return trimmed.isEmpty;
   }
 
   String get literal {
-    return "'${data.replaceAll("'", r"\'").replaceAll('\r\n', r'\n').replaceAll('\n', r'\n')}'";
+    return '"${data.replaceAll('"', r'\"').replaceAll('\r\n', r'\n').replaceAll('\n', r'\n')}"';
   }
 
   String get trimmed {
@@ -63,20 +34,49 @@ class Data extends Node {
   }
 
   @override
+  Data copyWith({String? data}) {
+    return Data(data: data ?? this.data);
+  }
+
+  @override
   String toString() {
-    return 'Data($literal)';
+    return 'Data $literal';
   }
 }
 
-class Output extends Node {
-  Output(this.nodes);
+abstract final class Expression extends Node {
+  const Expression();
+}
 
-  List<Node> nodes;
+abstract final class Statement extends Node {
+  const Statement();
+}
+
+final class Interpolation extends Node {
+  const Interpolation({required this.value});
+
+  final Expression value;
 
   @override
-  List<Node> get childrens {
-    return nodes;
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitInterpolation(this, context);
   }
+
+  @override
+  Interpolation copyWith({Expression? value}) {
+    return Interpolation(value: value ?? this.value);
+  }
+
+  @override
+  String toString() {
+    return 'Interpolation $value';
+  }
+}
+
+final class Output extends Node {
+  const Output({this.nodes = const <Node>[]});
+
+  final List<Node> nodes;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -84,18 +84,35 @@ class Output extends Node {
   }
 
   @override
-  String toString() {
-    return 'Output(${nodes.join(', ')})';
+  Output copyWith({List<Node>? nodes}) {
+    return Output(nodes: nodes ?? this.nodes);
   }
 
-  static Node orSingle(List<Node> nodes) {
-    switch (nodes.length) {
-      case 0:
-        return Data();
-      case 1:
-        return nodes[0];
-      default:
-        return Output(nodes);
-    }
+  @override
+  String toString() {
+    return '{ ${nodes.join(', ')} }';
+  }
+}
+
+final class TemplateNode extends Node {
+  const TemplateNode({this.blocks = const <Block>[], required this.body});
+
+  final List<Block> blocks;
+
+  final Node body;
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitTemplateNode(this, context);
+  }
+
+  @override
+  TemplateNode copyWith({List<Block>? blocks, Node? body}) {
+    return TemplateNode(blocks: blocks ?? this.blocks, body: body ?? this.body);
+  }
+
+  @override
+  String toString() {
+    return 'TemplateNode $body';
   }
 }

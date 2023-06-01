@@ -3,7 +3,7 @@ import 'package:jinja/src/markup.dart';
 
 typedef ContextCallback<C extends Context> = void Function(C context);
 
-class Context {
+base class Context {
   Context(this.environment, {this.parent, Map<String, Object?>? data})
       : context = <String, Object?>{...environment.globals, ...?data},
         autoEscape = environment.autoEscape;
@@ -51,13 +51,11 @@ class Context {
       return true;
     }
 
-    var parent = this.parent;
-
-    if (parent == null) {
-      return false;
+    if (parent case var parent?) {
+      return parent.containsKey(key);
     }
 
-    return parent.containsKey(key);
+    return false;
   }
 
   Object? get(String key) {
@@ -69,21 +67,19 @@ class Context {
       return context[key];
     }
 
-    var parent = this.parent;
-
-    if (parent == null) {
-      return null;
+    if (parent case var parent?) {
+      return parent[key];
     }
 
-    return parent[key];
-  }
-
-  Object? item(Object? value, Object? key) {
-    return environment.getItem(value, key);
+    return null;
   }
 
   Object? attribute(Object? value, String key) {
     return environment.getAttribute(value, key);
+  }
+
+  Object? item(Object? value, Object? key) {
+    return environment.getItem(value, key);
   }
 
   Object? filter(

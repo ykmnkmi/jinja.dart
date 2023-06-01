@@ -1,4 +1,4 @@
-class LoopContext extends Iterable<Object?> {
+final class LoopContext extends Iterable<Object?> {
   LoopContext(this.values, this.depth0, this.recurse)
       : length = values.length,
         index0 = -1;
@@ -129,7 +129,7 @@ class LoopContext extends Iterable<Object?> {
   }
 }
 
-class LoopIterator extends Iterator<Object?> {
+final class LoopIterator implements Iterator<Object?> {
   LoopIterator(this.context);
 
   final LoopContext context;
@@ -150,7 +150,7 @@ class LoopIterator extends Iterator<Object?> {
   }
 }
 
-class Cycler extends Iterable<Object?> {
+final class Cycler extends Iterable<Object?> {
   Cycler(List<Object?> values)
       : values = List<Object?>.of(values),
         length = values.length,
@@ -183,7 +183,7 @@ class Cycler extends Iterable<Object?> {
   }
 }
 
-class CyclerIterator extends Iterator<Object?> {
+final class CyclerIterator implements Iterator<Object?> {
   CyclerIterator(this.cycler);
 
   final Cycler cycler;

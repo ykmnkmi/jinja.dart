@@ -1,6 +1,7 @@
 import 'dart:collection' show HashMap;
 import 'dart:math' show Random;
 
+import 'package:jinja/src/compiler.dart';
 import 'package:jinja/src/context.dart';
 import 'package:jinja/src/defaults.dart' as defaults;
 import 'package:jinja/src/exceptions.dart';
@@ -11,7 +12,6 @@ import 'package:jinja/src/optimizer.dart';
 import 'package:jinja/src/parser.dart';
 import 'package:jinja/src/renderer.dart';
 import 'package:jinja/src/utils.dart';
-import 'package:jinja/src/visitor.dart';
 import 'package:meta/meta.dart';
 
 /// {@template finalizer}
@@ -41,7 +41,7 @@ typedef AttributeGetter = Object? Function(Object? object, String attribute);
 /// A [Function] that can be used to get object item.
 ///
 /// Used by `object['item']` expression.
-typedef ItemGetter = Object? Function(Object? object, Object? item);
+typedef ItemGetter = Object? Function(Object? object, Object? key);
 
 /// Pass the [Context] as the first argument to the applied function when
 /// called while rendering a template.
@@ -92,7 +92,7 @@ class Environment {
     Map<String, Object?>? globals,
     Map<String, Function>? filters,
     Map<String, Function>? tests,
-    List<NodeVisitor>? modifiers,
+    List<Node Function(Node)>? modifiers,
     Map<String, Template>? templates,
     Random? random,
     AttributeGetter? getAttribute,
@@ -101,32 +101,32 @@ class Environment {
         globals = HashMap<String, Object?>.of(defaults.globals),
         filters = HashMap<String, Function>.of(defaults.filters),
         tests = HashMap<String, Function>.of(defaults.tests),
-        modifiers = List<NodeVisitor>.of(defaults.modifiers),
+        modifiers = <Node Function(Node)>[],
         templates = HashMap<String, Template>(),
         random = random ?? Random(),
         getAttribute = wrapGetAttribute(getAttribute, getItem) {
     if (newLine != '\r' && newLine != '\n' && newLine != '\r\n') {
-      // TODO: add error message
-      throw ArgumentError.value(newLine, 'newLine');
+      // TODO(environment): update error
+      throw ArgumentError.value(newLine);
     }
 
-    if (globals != null) {
+    if (globals case var globals?) {
       this.globals.addAll(globals);
     }
 
-    if (filters != null) {
+    if (filters case var filters?) {
       this.filters.addAll(filters);
     }
 
-    if (tests != null) {
+    if (tests case var tests?) {
       this.tests.addAll(tests);
     }
 
-    if (modifiers != null) {
+    if (modifiers case var modifiers?) {
       this.modifiers.addAll(modifiers);
     }
 
-    if (templates != null) {
+    if (templates case var templates?) {
       this.templates.addAll(templates);
     }
   }
@@ -214,7 +214,7 @@ class Environment {
   final Map<String, Function> tests;
 
   /// A list of template modifiers.
-  final List<NodeVisitor> modifiers;
+  final List<Node Function(Node)> modifiers;
 
   /// A map of parsed templates loaded by the environment.
   final Map<String, Template> templates;
@@ -299,13 +299,11 @@ class Environment {
     Map<Symbol, Object?> named = const <Symbol, Object?>{},
     Context? context,
   ]) {
-    var function = filters[name];
-
-    if (function == null) {
-      throw TemplateRuntimeError("No filter named '$name'");
+    if (filters[name] case var function?) {
+      return callCommon(function, positional, named, context);
     }
 
-    return callCommon(function, positional, named, context);
+    throw TemplateRuntimeError("No filter named '$name'");
   }
 
   /// If [name] not found throws [TemplateRuntimeError].
@@ -316,13 +314,11 @@ class Environment {
     Map<Symbol, Object?> named = const <Symbol, Object?>{},
     Context? context,
   ]) {
-    var function = tests[name];
-
-    if (function == null) {
-      throw TemplateRuntimeError("No test named '$name'");
+    if (tests[name] case var function?) {
+      return callCommon(function, positional, named, context) as bool;
     }
 
-    return callCommon(function, positional, named, context) as bool;
+    throw TemplateRuntimeError("No test named '$name'");
   }
 
   /// Lex the given source and return a list of tokens.
@@ -335,48 +331,46 @@ class Environment {
   /// Parse the list of tokens and return the AST nodes.
   ///
   /// This can be useful for debugging or to extract information from templates.
-  List<Node> scan(List<Token> tokens, {String? path}) {
+  Node scan(List<Token> tokens, {String? path}) {
     return Parser(this, path: path).scan(tokens);
   }
 
   /// Parse the source code and return the AST nodes.
   ///
   /// This can be useful for debugging or to extract information from templates.
-  List<Node> parse(String source, {String? path}) {
-    var tokens = lex(source);
-    return scan(tokens, path: path);
+  Node parse(String source, {String? path}) {
+    return scan(lex(source), path: path);
   }
 
   /// Load a template from a source string without using [loader].
   Template fromString(String source, {String? path}) {
-    var body = Parser(this, path: path).parse(source);
+    var body = parse(source, path: path);
 
     for (var modifier in modifiers) {
-      modifier(body);
+      body = modifier(body);
     }
 
     if (optimize) {
-      body.accept(const Optimizer(), Context(this));
+      body = body.accept(const Optimizer(), Context(this));
     }
 
-    return Template.parsed(this, body, path: path);
+    body = body.accept(const RuntimeCompiler(), <String>{});
+    return Template.fromNode(this, body: body);
   }
 
   /// Load a template by name with `loader` and return a [Template].
   ///
   /// If the template does not exist a [TemplateNotFound] exception is thrown.
   Template getTemplate(String template) {
-    var loader = this.loader;
+    if (loader case var loader?) {
+      if (autoReload) {
+        return templates[template] = loader.load(this, template);
+      }
 
-    if (loader == null) {
-      throw StateError('No loader for this environment specified');
+      return templates[template] ??= loader.load(this, template);
     }
 
-    if (autoReload) {
-      return templates[template] = loader.load(this, template);
-    }
-
-    return templates[template] ??= loader.load(this, template);
+    throw StateError('No loader for this environment specified');
   }
 
   /// Returns a list of templates for this environment.
@@ -384,35 +378,29 @@ class Environment {
   /// This requires that the loader supports the loader's
   /// [Loader.listTemplates] method.
   List<String> listTemplates() {
-    var loader = this.loader;
-
-    if (loader == null) {
-      throw StateError('No loader for this environment specified');
+    if (loader case var loader?) {
+      return loader.listTemplates();
     }
 
-    return loader.listTemplates();
+    throw StateError('No loader for this environment specified');
   }
 
   @protected
   static ContextFinalizer wrapFinalizer(Function function) {
-    if (function is ContextFinalizer) {
-      return function;
+    if (function case ContextFinalizer contextFinalizer) {
+      return contextFinalizer;
     }
 
-    if (function is Object Function(Environment environment, Object? value)) {
-      Object finalize(Context context, Object? value) {
-        return function(context.environment, value);
-      }
-
-      return finalize;
+    if (function case EnvironmentFinalizer environmentFinalizer) {
+      return (context, value) {
+        return environmentFinalizer(context.environment, value);
+      };
     }
 
-    if (function is Object Function(Object? value)) {
-      Object finalize(Context context, Object? value) {
-        return function(value);
-      }
-
-      return finalize;
+    if (function case Finalizer finalizer) {
+      return (context, value) {
+        return finalizer(value);
+      };
     }
 
     // TODO: add error message
@@ -428,23 +416,20 @@ class Environment {
       return itemGetter;
     }
 
-    Object? getAttribute(Object? object, String field) {
+    return (object, field) {
       try {
         return attributeGetter(object, field);
       } on NoSuchMethodError {
         return itemGetter(object, field);
       }
-    }
-
-    return getAttribute;
+    };
   }
 }
 
 /// {@template template}
 /// The base `Template` class.
 /// {@endtemplate}
-// TODO(template): add note about environment modification
-class Template extends Node {
+class Template {
   /// {@macro template}
   factory Template(
     String source, {
@@ -468,7 +453,7 @@ class Template extends Node {
     Map<String, Object?>? globals,
     Map<String, Function>? filters,
     Map<String, Function>? tests,
-    List<NodeVisitor>? modifiers,
+    List<Node Function(Node)>? modifiers,
     Random? random,
     AttributeGetter? getAttribute,
     ItemGetter getItem = defaults.getItem,
@@ -502,48 +487,7 @@ class Template extends Node {
     return environment.fromString(source, path: path);
   }
 
-  factory Template.fromNodes(
-    Environment environment,
-    List<Node> nodes, {
-    String? path,
-  }) {
-    Node body;
-
-    if (nodes.isEmpty) {
-      body = Data();
-    } else if (nodes.first is Extends) {
-      body = nodes.first;
-    } else {
-      body = Output.orSingle(nodes);
-    }
-
-    var blocks = <Block>[for (var node in nodes) ...node.findAll<Block>()];
-
-    var template = Template.parsed(
-      environment,
-      body,
-      path: path,
-      blocks: blocks,
-    );
-
-    for (var modifier in environment.modifiers) {
-      modifier(template);
-    }
-
-    if (environment.optimize) {
-      template.accept(const Optimizer(), Context(environment));
-    }
-
-    return template;
-  }
-
-  @internal
-  Template.parsed(
-    this.environment,
-    this.body, {
-    this.path,
-    List<Block>? blocks,
-  }) : blocks = blocks ?? <Block>[];
+  Template.fromNode(this.environment, {this.path, required this.body});
 
   /// The environment used to parse and render template.
   final Environment environment;
@@ -554,30 +498,16 @@ class Template extends Node {
   /// Template body node.
   final Node body;
 
-  /// Template blocks.
-  final List<Block> blocks;
-
-  @override
-  List<Node> get childrens {
-    return <Node>[body];
-  }
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitTemplate(this, context);
-  }
-
   /// If no arguments are given the context will be empty.
   String render([Map<String, Object?>? data]) {
     var buffer = StringBuffer();
-    var context = StringSinkRenderContext(environment, buffer, data: data);
-    accept(const StringSinkRenderer(), context);
+    renderTo(buffer, data);
     return buffer.toString();
   }
 
   /// If no arguments are given the context will be empty.
   void renderTo(StringSink sink, [Map<String, Object?>? data]) {
     var context = StringSinkRenderContext(environment, sink, data: data);
-    accept(const StringSinkRenderer(), context);
+    body.accept(const StringSinkRenderer(), context);
   }
 }

@@ -6,11 +6,11 @@ abstract class TemplateError implements Exception {
 
   @override
   String toString() {
-    if (message == null) {
-      return runtimeType.toString();
+    if (message case var message?) {
+      return '$runtimeType: $message';
     }
 
-    return '$runtimeType: $message';
+    return '$runtimeType';
   }
 }
 
@@ -37,7 +37,7 @@ class TemplateSyntaxError extends TemplateError {
   String toString() {
     var result = runtimeType.toString();
 
-    if (path != null) {
+    if (path case var path?) {
       if (result.contains(',')) {
         result += ', file: $path';
       }
@@ -45,7 +45,7 @@ class TemplateSyntaxError extends TemplateError {
       result += ' file: $path';
     }
 
-    if (line != null) {
+    if (line case var line?) {
       if (result.contains(',')) {
         result += ', line: $line';
       } else {
@@ -53,11 +53,11 @@ class TemplateSyntaxError extends TemplateError {
       }
     }
 
-    if (message == null) {
-      return result;
+    if (message case var message?) {
+      return '$result: $message';
     }
 
-    return '$result: $message';
+    return result;
   }
 }
 

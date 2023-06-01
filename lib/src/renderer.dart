@@ -1,14 +1,16 @@
+import 'dart:math' as math;
+
 import 'package:jinja/src/context.dart';
-import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/exceptions.dart';
 import 'package:jinja/src/loop.dart';
 import 'package:jinja/src/markup.dart';
 import 'package:jinja/src/namespace.dart';
 import 'package:jinja/src/nodes.dart';
+import 'package:jinja/src/tests.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:jinja/src/visitor.dart';
 
-class RenderContext extends Context {
+abstract base class RenderContext extends Context {
   RenderContext(
     super.environment, {
     Map<String, List<Block>>? blocks,
@@ -22,14 +24,7 @@ class RenderContext extends Context {
   RenderContext derived({
     Map<String, List<Block>>? blocks,
     Map<String, Object?>? data,
-  }) {
-    return RenderContext(
-      environment,
-      blocks: blocks ?? this.blocks,
-      parent: context,
-      data: data,
-    );
-  }
+  });
 
   Map<String, Object?> save(Map<String, Object?> map) {
     var save = <String, Object?>{};
@@ -64,35 +59,35 @@ class RenderContext extends Context {
   }
 
   void assignTargets(Object? target, Object? current) {
-    if (target is String) {
-      set(target, current);
+    if (target case String string) {
+      set(string, current);
       return;
     }
 
-    if (target is List<String>) {
+    if (target case List<String> strings) {
       var values = list(current);
 
-      if (values.length < target.length) {
+      if (values.length < strings.length) {
         // TODO: update error
         throw StateError('Not enough values to unpack');
       }
 
-      if (values.length > target.length) {
+      if (values.length > strings.length) {
         // TODO: update error
         throw StateError('Too many values to unpack.');
       }
 
-      for (var i = 0; i < target.length; i++) {
-        set(target[i], values[i]);
+      for (var i = 0; i < strings.length; i++) {
+        set(strings[i], values[i]);
       }
 
       return;
     }
 
-    if (target is NamespaceValue) {
-      var namespace = resolve(target.name);
+    if (target case NamespaceValue namespaceValue) {
+      var value = resolve(namespaceValue.name);
 
-      if (namespace is Namespace) {
+      if (value case Namespace namespace) {
         namespace[target.item] = current;
         return;
       }
@@ -105,7 +100,7 @@ class RenderContext extends Context {
   }
 }
 
-class StringSinkRenderContext extends RenderContext {
+final class StringSinkRenderContext extends RenderContext {
   StringSinkRenderContext(
     super.environment,
     this.sink, {
@@ -136,63 +131,264 @@ class StringSinkRenderContext extends RenderContext {
   }
 }
 
-class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
+class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
   const StringSinkRenderer();
 
+  // Expressions
+
   @override
-  void visitAll(List<Node> nodes, StringSinkRenderContext context) {
-    for (var node in nodes) {
-      node.accept(this, context);
-    }
+  List<Object?> visitArray(Array node, StringSinkRenderContext context) {
+    return <Object?>[
+      for (var value in node.values) value.accept(this, context)
+    ];
   }
 
   @override
+  Object? visitAttribute(Attribute node, StringSinkRenderContext context) {
+    var value = node.value.accept(this, context);
+    return context.attribute(value, node.attribute);
+  }
+
+  @override
+  Object? visitCall(Call node, StringSinkRenderContext context) {
+    var function = node.value.accept(this, context);
+    var (positional, named) = node.calling.accept(this, context) as Parameters;
+    return context.call(function, positional, named);
+  }
+
+  @override
+  Parameters visitCalling(Calling node, StringSinkRenderContext context) {
+    var positional = <Object?>[
+      for (var argument in node.arguments) argument.accept(this, context)
+    ];
+
+    if (node.dArguments case var dArguments?) {
+      var values = dArguments.accept(this, context);
+
+      if (values is! Iterable) {
+        throw TypeError();
+      }
+
+      positional.addAll(values);
+    }
+
+    var named = <Symbol, Object?>{
+      for (var (:key, :value) in node.keywords)
+        Symbol(key): value.accept(this, context)
+    };
+
+    if (node.dKeywords case var dKeywords?) {
+      var values = dKeywords.accept(this, context);
+
+      if (values is! Map) {
+        throw TypeError();
+      }
+
+      var castedValues = values.cast<String, Object?>();
+
+      for (var MapEntry(key: key, value: value) in castedValues.entries) {
+        named[Symbol(key)] = value;
+      }
+    }
+
+    return (positional, named);
+  }
+
+  @override
+  bool visitCompare(Compare node, StringSinkRenderContext context) {
+    var left = node.value.accept(this, context);
+
+    for (var (operator, value) in node.operands) {
+      var right = value.accept(this, context);
+
+      var result = switch (operator) {
+        CompareOperator.equal => isEqual(left, right),
+        CompareOperator.notEqual => isNotEqual(left, right),
+        CompareOperator.lessThan => isLessThan(left, right),
+        CompareOperator.lessThanOrEqual => isLessThanOrEqual(left, right),
+        CompareOperator.greaterThan => isGreaterThan(left, right),
+        CompareOperator.greaterThanOrEqual => isGreaterThanOrEqual(left, right),
+        CompareOperator.contains => isIn(left, right),
+        CompareOperator.notContains => !isIn(left, right),
+      };
+
+      if (!result) {
+        return false;
+      }
+
+      left = right;
+    }
+
+    return true;
+  }
+
+  @override
+  Object? visitConcat(Concat node, StringSinkRenderContext context) {
+    var buffer = StringBuffer();
+
+    for (var value in node.values) {
+      buffer.write(value.accept(this, context));
+    }
+
+    return '$buffer';
+  }
+
+  @override
+  Object? visitCondition(Condition node, StringSinkRenderContext context) {
+    if (boolean(node.test.accept(this, context))) {
+      return node.trueValue.accept(this, context);
+    }
+
+    return node.falseValue?.accept(this, context);
+  }
+
+  @override
+  Object? visitConstant(Constant node, StringSinkRenderContext context) {
+    return node.value;
+  }
+
+  @override
+  Map<Object?, Object?> visitDict(Dict node, StringSinkRenderContext context) {
+    return <Object?, Object?>{
+      for (var (:key, :value) in node.pairs)
+        key.accept(this, context): value.accept(this, context)
+    };
+  }
+
+  @override
+  Object? visitFilter(Filter node, StringSinkRenderContext context) {
+    var (positional, named) = node.calling.accept(this, context) as Parameters;
+    return context.filter(node.name, positional, named);
+  }
+
+  @override
+  Object? visitItem(Item node, StringSinkRenderContext context) {
+    var key = node.key.accept(this, context);
+    var value = node.value.accept(this, context);
+    return context.item(value, key);
+  }
+
+  @override
+  Object? visitLogical(Logical node, StringSinkRenderContext context) {
+    var left = node.left.accept(this, context);
+
+    return switch (node.operator) {
+      LogicalOperator.and =>
+        boolean(left) ? node.right.accept(this, context) : left,
+      LogicalOperator.or =>
+        boolean(left) ? left : node.right.accept(this, context),
+    };
+  }
+
+  @override
+  Object? visitName(Name node, StringSinkRenderContext context) {
+    return switch (node.context) {
+      AssignContext.load => context.resolve(node.name),
+      AssignContext.store || AssignContext.parameter => node.name,
+    };
+  }
+
+  @override
+  NamespaceValue visitNamespaceRef(
+    NamespaceRef node,
+    StringSinkRenderContext context,
+  ) {
+    return NamespaceValue(node.name, node.attribute);
+  }
+
+  @override
+  Object? visitScalar(Scalar node, StringSinkRenderContext context) {
+    var left = node.left.accept(this, context);
+    var right = node.right.accept(this, context);
+
+    return switch (node.operator) {
+      ScalarOperator.power => math.pow(left as num, right as num),
+      // ignore: avoid_dynamic_calls
+      ScalarOperator.module => (left as dynamic) % right,
+      // ignore: avoid_dynamic_calls
+      ScalarOperator.floorDivision => (left as dynamic) ~/ right,
+      // ignore: avoid_dynamic_calls
+      ScalarOperator.division => (left as dynamic) / right,
+      // ignore: avoid_dynamic_calls
+      ScalarOperator.multiple => (left as dynamic) * right,
+      // ignore: avoid_dynamic_calls
+      ScalarOperator.minus => (left as dynamic) - right,
+      // ignore: avoid_dynamic_calls
+      ScalarOperator.plus => (left as dynamic) + right,
+    };
+  }
+
+  @override
+  Object? visitTest(Test node, StringSinkRenderContext context) {
+    var (positional, named) = node.calling.accept(this, context) as Parameters;
+    return context.test(node.name, positional, named);
+  }
+
+  @override
+  List<Object?> visitTuple(Tuple node, StringSinkRenderContext context) {
+    return <Object?>[
+      for (var value in node.values) value.accept(this, context)
+    ];
+  }
+
+  @override
+  Object? visitUnary(Unary node, StringSinkRenderContext context) {
+    var value = node.value.accept(this, context);
+
+    return switch (node.operator) {
+      UnaryOperator.plus => value,
+      // ignore: avoid_dynamic_calls
+      UnaryOperator.minus => -(value as dynamic),
+      UnaryOperator.not => !boolean(value),
+    };
+  }
+
+  // Statements
+
+  @override
   void visitAssign(Assign node, StringSinkRenderContext context) {
-    var target = node.target.resolve(context);
-    var values = node.value.resolve(context);
+    var target = node.target.accept(this, context);
+    var values = node.value.accept(this, context);
     context.assignTargets(target, values);
   }
 
   @override
   void visitAssignBlock(AssignBlock node, StringSinkRenderContext context) {
-    var target = node.target.resolve(context);
+    var target = node.target.accept(this, context);
     var buffer = StringBuffer();
     var derived = context.derived(sink: buffer);
     node.body.accept(this, derived);
 
-    Object? value = buffer.toString();
+    Object? value = '$buffer';
+
     var filters = node.filters;
 
-    if (filters == null || filters.isEmpty) {
+    if (filters.isEmpty) {
       if (context.autoEscape) {
         value = Markup.escaped(value);
       }
 
       context.assignTargets(target, value);
-      return;
-    }
-
-    // TODO: replace with Filter { BlockExpression ( AssignBlock ) }
-    for (var filter in filters) {
-      Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
-        positional = <Object?>[value, ...positional];
-        return context.filter(filter.name, positional, named);
+    } else {
+      // TODO: replace with Filter { BlockExpression ( AssignBlock ) }
+      for (var Filter(name: name, calling: calling) in filters) {
+        var (positional, named) = calling.accept(this, context) as Parameters;
+        positional = [value, ...positional];
+        value = context.filter(name, positional, named);
       }
 
-      value = filter.apply(context, callback);
-    }
+      if (context.autoEscape) {
+        value = Markup.escaped(value);
+      }
 
-    if (context.autoEscape) {
-      value = Markup.escaped(value);
+      context.assignTargets(target, value);
     }
-
-    context.assignTargets(target, value);
   }
 
   @override
   void visitAutoEscape(AutoEscape node, StringSinkRenderContext context) {
     var current = context.autoEscape;
-    context.autoEscape = boolean(node.value.resolve(context));
+    context.autoEscape = boolean(node.value.accept(this, context));
     node.body.accept(this, context);
     context.autoEscape = current;
   }
@@ -213,25 +409,27 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
       var first = blocks[0];
       var index = 0;
 
-      if (first.hasSuper) {
-        String parent() {
-          if (index < blocks.length - 1) {
-            var parentBlock = blocks[index += 1];
-            parentBlock.body.accept(this, context);
-            return '';
-          }
-
-          // TODO: add error message
-          throw TemplateRuntimeError();
+      // TODO(renderer): move to context
+      String parent() {
+        if (index < blocks.length - 1) {
+          var parentBlock = blocks[index += 1];
+          parentBlock.body.accept(this, context);
+          return '';
         }
 
-        context.set('super', parent);
-        first.body.accept(this, context);
-        context.remove('super');
-      } else {
-        first.body.accept(this, context);
+        // TODO(renderer): add error message
+        throw TemplateRuntimeError();
       }
+
+      context.set('super', parent);
+      first.body.accept(this, context);
+      context.remove('super');
     }
+  }
+
+  @override
+  void visitCallBlock(CallBlock node, StringSinkRenderContext context) {
+    throw UnimplementedError();
   }
 
   @override
@@ -241,15 +439,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
 
   @override
   void visitDo(Do node, StringSinkRenderContext context) {
-    node.expression.resolve(context);
-  }
-
-  @override
-  void visitExpression(Expression node, StringSinkRenderContext context) {
-    var resolved = node.resolve(context);
-    var finalized = context.finalize(resolved);
-    var escaped = context.escape(finalized);
-    context.write(escaped);
+    node.value.accept(this, context);
   }
 
   @override
@@ -261,17 +451,15 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
   @override
   void visitFilterBlock(FilterBlock node, StringSinkRenderContext context) {
     var buffer = StringBuffer();
-    node.body.accept(this, context.derived(sink: buffer));
+    var derived = context.derived(sink: buffer);
+    node.body.accept(this, derived);
 
-    Object? value = buffer.toString();
+    Object? value = '$buffer';
 
-    for (var filter in node.filters) {
-      Object? callback(List<Object?> positional, Map<Symbol, Object?> named) {
-        positional = <Object?>[value, ...positional];
-        return context.filter(filter.name, positional, named);
-      }
-
-      value = filter.apply(context, callback);
+    for (var Filter(name: name, calling: calling) in node.filters) {
+      var (positional, named) = calling.accept(this, context) as Parameters;
+      positional = <Object?>[value, ...positional];
+      value = context.filter(name, positional, named);
     }
 
     context.write(value);
@@ -279,9 +467,8 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
 
   @override
   void visitFor(For node, StringSinkRenderContext context) {
-    var targets = node.target.resolve(context);
-    var iterable = node.iterable.resolve(context);
-    var orElse = node.orElse;
+    var targets = node.target.accept(this, context);
+    var iterable = node.iterable.accept(this, context);
 
     if (iterable == null) {
       // TODO: update error
@@ -292,7 +479,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
       var values = list(iterable);
 
       if (values.isEmpty) {
-        if (orElse != null) {
+        if (node.orElse case var orElse?) {
           orElse.accept(this, context);
         }
 
@@ -307,7 +494,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
           var data = getDataForTargets(targets, value);
           data = context.save(data);
 
-          if (boolean(test.resolve(context))) {
+          if (boolean(test.accept(this, context))) {
             filtered.add(value);
           }
 
@@ -336,14 +523,9 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
 
   @override
   void visitIf(If node, StringSinkRenderContext context) {
-    if (boolean(node.test.resolve(context))) {
+    if (boolean(node.test.accept(this, context))) {
       node.body.accept(this, context);
-      return;
-    }
-
-    var orElse = node.orElse;
-
-    if (orElse != null) {
+    } else if (node.orElse case var orElse?) {
       orElse.accept(this, context);
     }
   }
@@ -352,21 +534,57 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
   void visitInclude(Include node, StringSinkRenderContext context) {
     var template = context.environment.getTemplate(node.template);
 
-    if (node.withContext) {
-      template.body.accept(this, context);
-    } else {
+    if (!node.withContext) {
       context = StringSinkRenderContext(context.environment, context.sink);
-      template.body.accept(this, context);
     }
+
+    template.body.accept(this, context);
+  }
+
+  @override
+  void visitInterpolation(Interpolation node, StringSinkRenderContext context) {
+    var resolved = node.value.accept(this, context);
+    var finalized = context.finalize(resolved);
+    var escaped = context.escape(finalized);
+    context.write(escaped);
+  }
+
+  @override
+  void visitMacro(Macro node, StringSinkRenderContext context) {
+    // TODO(render): check macro signature
+    void callback(List<Object?> positional, Map<Object?, Object?> named) {
+      var derived = context.derived();
+      var iterator = positional.iterator;
+
+      for (var (argument, default_) in node.arguments) {
+        var key = argument.accept(this, context) as String;
+
+        if (iterator.moveNext()) {
+          derived.set(key, iterator.current);
+        } else {
+          if (named.containsKey(key)) {
+            derived.set(key, named[key]);
+          } else {
+            derived.set(key, default_?.accept(this, context));
+          }
+        }
+      }
+
+      node.body.accept(this, derived);
+    }
+
+    context.set(node.name, callback);
   }
 
   @override
   void visitOutput(Output node, StringSinkRenderContext context) {
-    visitAll(node.nodes, context);
+    for (var node in node.nodes) {
+      node.accept(this, context);
+    }
   }
 
   @override
-  void visitTemplate(Template node, StringSinkRenderContext context) {
+  void visitTemplateNode(TemplateNode node, StringSinkRenderContext context) {
     var self = Namespace();
 
     for (var block in node.blocks) {
@@ -387,16 +605,14 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
 
   @override
   void visitWith(With node, StringSinkRenderContext context) {
-    Object? target(int index) {
-      return node.targets[index].resolve(context);
-    }
+    var targets = <Object?>[
+      for (var target in node.targets) target.accept(this, context)
+    ];
 
-    Object? value(int index) {
-      return node.values[index].resolve(context);
-    }
+    var values = <Object?>[
+      for (var value in node.values) value.accept(this, context)
+    ];
 
-    var targets = generate(node.targets, target);
-    var values = generate(node.values, value);
     var data = context.save(getDataForTargets(targets, values));
     node.body.accept(this, context);
     context.restore(data);
@@ -404,11 +620,11 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, void> {
 }
 
 Map<String, Object?> getDataForTargets(Object? targets, Object? current) {
-  if (targets is String) {
-    return <String, Object?>{targets: current};
+  if (targets case String string) {
+    return <String, Object?>{string: current};
   }
 
-  if (targets is List) {
+  if (targets case List<Object?> targets) {
     var names = targets.cast<String>();
     var values = list(current);
 
@@ -429,9 +645,5 @@ Map<String, Object?> getDataForTargets(Object? targets, Object? current) {
   }
 
   // TODO: update error
-  throw ArgumentError.value(
-    targets,
-    'targets',
-    'must be String or List<String>',
-  );
+  throw ArgumentError.value(targets, 'targets', 'must be ListOr<String>');
 }

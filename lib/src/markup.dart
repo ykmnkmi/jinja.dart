@@ -19,8 +19,8 @@ String escape(String text) {
 }
 
 String escapeSafe(Object? object) {
-  if (object is Markup) {
-    return object.value.toString();
+  if (object case Markup markup) {
+    return markup.value.toString();
   }
 
   return escape(object.toString());
@@ -30,10 +30,10 @@ String unescape(String text) {
   return htmlUnescape.convert(text);
 }
 
-class Markup {
+final class Markup {
   factory Markup(Object? value) {
-    if (value is Markup) {
-      return value;
+    if (value case Markup markup) {
+      return markup;
     }
 
     return Markup.escape(value);
@@ -61,7 +61,7 @@ class Markup {
   }
 }
 
-class Escaped implements Markup {
+final class Escaped implements Markup {
   const Escaped(this.value);
 
   @override

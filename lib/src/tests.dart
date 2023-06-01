@@ -115,21 +115,21 @@ bool isEscaped(Object? value) {
 
 /// Check if value is in sequence.
 bool isIn(Object? value, Object? values) {
-  if (values is String) {
-    if (value is String) {
-      return values.contains(value);
+  if (values case String strings) {
+    if (value case Pattern pattern) {
+      return strings.contains(pattern);
     }
 
     // TODO: update error
     throw TypeError();
   }
 
-  if (values is Iterable) {
+  if (values case Iterable<Object?> values) {
     return values.contains(value);
   }
 
-  if (values is Map) {
-    return values.containsKey(value);
+  if (values case Map<Object?, Object?> map) {
+    return map.containsKey(value);
   }
 
   // TODO: update error
@@ -142,13 +142,15 @@ bool isNotEqual(Object? value, Object? other) {
 }
 
 /// Same as `a < b`.
-bool isLessThan(Object? value, Object? other) {
-  return (value as Comparable<Object?>).compareTo(other) < 0;
+bool isLessThan(dynamic value, Object? other) {
+  // ignore: avoid_dynamic_calls
+  return (value < other) as bool;
 }
 
 /// Same as `a <= b`.
-bool isLessThanOrEqual(Object? value, Object? other) {
-  return (value as Comparable<Object?>).compareTo(other) <= 0;
+bool isLessThanOrEqual(dynamic value, Object? other) {
+  // ignore: avoid_dynamic_calls
+  return (value <= other) as bool;
 }
 
 /// Same as `a == b`.
@@ -157,13 +159,15 @@ bool isEqual(Object? value, Object? other) {
 }
 
 /// Same as `a > b`.
-bool isGreaterThan(Object? value, Object? other) {
-  return (value as Comparable<Object?>).compareTo(other) > 0;
+bool isGreaterThan(dynamic value, Object? other) {
+  // ignore: avoid_dynamic_calls
+  return (value > other) as bool;
 }
 
 /// Same as `a >= b`.
-bool isGreaterThanOrEqual(Object? value, Object? other) {
-  return (value as Comparable<Object?>).compareTo(other) >= 0;
+bool isGreaterThanOrEqual(dynamic value, Object? other) {
+  // ignore: avoid_dynamic_calls
+  return (value >= other) as bool;
 }
 
 /// Return whether the object is callable (i.e., some kind of function).

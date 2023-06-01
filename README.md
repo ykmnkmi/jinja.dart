@@ -7,30 +7,33 @@
 [Jinja][jinja] server-side template engine port for Dart 2.
 Variables, expressions, control structures and template inheritance.
 
-## 0.4.0 version is breaking
+## Version 0.4.0 introduces breaking changes
 See `CHANGELOG.md`.
 
 ## Documentation
-Mostly same as [Jinja][jinja_templates] template documentation.
+Mostly the same as the [Jinja][jinja_templates] template documentation.
 _work in progress_.
 
 ## Differences with Python version
 - `BigInt` and complex numbers are not supported.
-- The `default` filter compares values with `null`, no `boolean` parameter.
-- The `defined` and `undefined` tests compares values with `null`.
-- The `map` filter compares values with `null`.
+- The `default` filter compares values with `null`; there is no `boolean` parameter.
+- The `defined` and `undefined` tests compare values with `null`.
+- The `map` filter also compares values with `null`.
   Use `attribute` for fields and `item` for items.
-  Nested attributes and items are not supported.
-- If  `Environment({getAttribute})` is not passed, `getItem` will be used.
-  This allows you to use `{{ map.key }}` as `{{ map['key'] }}` expression.
+- Not yet supported:
+  - nested attributes and items
+  - slices and negative indexes
+  - conditional and variable `extends` statement variants
+  - choice, ignore missing and variable `include` statement variants
+- If `Environment({getAttribute})` is not passed, the `getItem` method will be used.
+  This allows you to use `{{ map.key }}` as an expression equivalent to `{{ map['key'] }}`.
 - _work in progress_
 
 ## Dynamically invoked members
 - `[]`, `+`, `-`, `*`, `/`, `~/`, `%` operators
 - `object.length` getter
 - `object.call` getter
-- _work in progress_
-- also `Function.apply(function, ...)`
+- `Function.apply(function, ...)`
 
 ## Example
 ```dart
@@ -57,9 +60,15 @@ See also examples with [conduit][conduit_example] and
   - addExtension
   - compileExpression
   - policies
+- Template:
+  - generate
+  - stream
+  - `await` support
+- HTML Escaping
+  - Automatic
 - List of Control Structures
-  - Macros
-  - Call
+  - Macros 🔥
+  - Call 🔥
   - Import
 - Loaders
   - PackageLoader (VM)
@@ -69,7 +78,7 @@ See also examples with [conduit][conduit_example] and
   - Expression Statement
   - Loop Controls
   - Debug Statement
-- Template compiler
+- Template compiler (builder)
 - ...
 
 ### Done:
@@ -91,7 +100,6 @@ See also examples with [conduit][conduit_example] and
   - Block Nesting and Scope
 - HTML Escaping
   - Manual
-  - Automatic
 - List of Control Structures
   - For
   - If
@@ -102,6 +110,7 @@ See also examples with [conduit][conduit_example] and
   - Blocks
   - Include
 - Import Context Behavior
+  - Include
 - Expressions with [filters][filters] (not all) and [tests][tests]
 - List of Global Functions
   - list
@@ -116,10 +125,8 @@ See also examples with [conduit][conduit_example] and
   - With Statement
 - Autoescape Overrides
 
-## Contributing
-If you found a bug, typo or you have better description or comment
-for documentation, just create a [new issue][new_issue] or even better
-fork and issue a pull request with your fix.
+## Support
+Post issues and feature requests on the GitHub [issue tracker][issues].
 
 [pub_icon]: https://img.shields.io/pub/v/jinja.svg
 [pub]: https://pub.dev/packages/jinja
@@ -133,4 +140,4 @@ fork and issue a pull request with your fix.
 [reflectable_example]: https://github.com/ykmnkmi/jinja_reflectable_example
 [filters]: https://github.com/ykmnkmi/jinja.dart/blob/master/lib/src/filters.dart
 [tests]: https://github.com/ykmnkmi/jinja.dart/blob/master/lib/src/tests.dart
-[new_issue]: https://github.com/ykmnkmi/jinja.dart/issues
+[issues]: https://github.com/ykmnkmi/jinja.dart/issues

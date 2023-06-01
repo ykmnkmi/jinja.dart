@@ -15,7 +15,7 @@ Object? Function(Object?) makeAttributeGetter(
   String attribute, {
   Object? defaultValue,
 }) {
-  return (Object? object) {
+  return (object) {
     return environment.getAttribute(object, attribute) ?? defaultValue;
   };
 }
@@ -27,7 +27,7 @@ Object? Function(Object?) makeItemGetter(
   Object item, {
   Object? defaultValue,
 }) {
-  return (Object? object) {
+  return (object) {
     return environment.getItem(object, item) ?? defaultValue;
   };
 }
@@ -44,12 +44,12 @@ Object? doEscape(Object? value) {
 ///
 /// This will probably double escape variables.
 Markup doForceEscape(Object? value) {
-  return Markup(value.toString());
+  return Markup('$value');
 }
 
 /// A string representation of this object.
 String doString(Object? value) {
-  return value.toString();
+  return '$value';
 }
 
 /// Return a copy of the value with all occurrences of a substring
@@ -114,54 +114,36 @@ List<Object?> doDictSort(
   String by = 'key',
   bool reverse = false,
 }) {
-  int position;
-
-  switch (by) {
-    case 'key':
-      position = 0;
-      break;
-    case 'value':
-      position = 1;
-      break;
-    default:
-      throw FilterArgumentError("You can only sort by either 'key' or 'value'");
-  }
+  var position = switch (by) {
+    'key' => 0,
+    'value' => 1,
+    _ =>
+      throw FilterArgumentError("You can only sort by either 'key' or 'value'"),
+  };
 
   var order = reverse ? -1 : 1;
 
-  List<Object?> map(MapEntry<Object?, Object?> entry) {
-    return <Object?>[entry.key, entry.value];
-  }
-
-  var entities = dict.entries.map<List<Object?>>(map).toList();
+  var entities = dict.entries
+      .map<List<Object?>>((entry) => <Object?>[entry.key, entry.value])
+      .toList();
 
   Comparable<Object?> Function(List<Object?> values) get;
 
   if (caseSensetive) {
-    Comparable<Object?> getter(List<Object?> values) {
-      return values[position] as Comparable<Object?>;
-    }
-
-    get = getter;
+    get = (values) => values[position] as Comparable<Object?>;
   } else {
-    Comparable<Object?> getter(List<Object?> values) {
+    get = (values) {
       var value = values[position];
 
-      if (value is String) {
-        return value.toLowerCase();
+      if (value case String string) {
+        return string.toLowerCase();
       }
 
       return value as Comparable<Object?>;
-    }
-
-    get = getter;
+    };
   }
 
-  int sort(List<Object?> left, List<Object?> right) {
-    return get(left).compareTo(get(right)) * order;
-  }
-
-  entities.sort(sort);
+  entities.sort((left, right) => get(left).compareTo(get(right)) * order);
   return entities;
 }
 
@@ -228,8 +210,8 @@ Object? doRandom(Environment environment, Object? value) {
   var index = environment.random.nextInt(values.length);
   var result = values[index];
 
-  if (value is Map) {
-    return value[result];
+  if (value case Map<Object?, Object?> map) {
+    return map[result];
   }
 
   return result;
@@ -252,16 +234,13 @@ String doFileSizeFormat(Object? value, [bool binary = false]) {
   ];
 
   var base = binary ? 1024 : 1000;
-  double bytes;
 
-  if (value is num) {
-    bytes = value.toDouble();
-  } else if (value is String) {
-    bytes = double.parse(value);
-  } else {
+  var bytes = switch (value) {
+    num number => number.toDouble(),
+    String string => double.parse(string),
     // or FilterArgumentError?
-    throw TypeError();
-  }
+    _ => throw TypeError(),
+  };
 
   if (bytes == 1.0) {
     return '1 Byte';
@@ -269,6 +248,7 @@ String doFileSizeFormat(Object? value, [bool binary = false]) {
 
   if (bytes < base) {
     const suffix = ' Bytes';
+
     var size = bytes.toStringAsFixed(1);
 
     if (size.endsWith('.0')) {
@@ -418,12 +398,7 @@ List<List<Object?>> doSlice(Object? value, int slices, [Object? fillWith]) {
     }
 
     var end = offset + (i + 1) * perSlice;
-
-    Object? generator(int i) {
-      return values[start + i];
-    }
-
-    var tmp = List<Object?>.generate(end - start, generator);
+    var tmp = values.sublist(start, end);
 
     if (fillWith != null && i >= withExtra) {
       tmp.add(fillWith);
@@ -504,7 +479,7 @@ Markup doMarkSafe(String value) {
 ///
 /// This is the reverse operation for `safe`.
 String doMarkUnsafe(Object? value) {
-  return value.toString();
+  return '$value';
 }
 
 /// Reverse the object or return an iterator that iterates over it the other
@@ -564,17 +539,15 @@ Iterable<Object?>? doMap(
 
   var symbols = <Symbol, Object?>{};
 
-  void action(String key, Object? value) {
-    symbols[Symbol(key)] = value;
+  if (named.isNotEmpty) {
+    named.cast<String, Object?>().forEach((key, value) {
+      symbols[Symbol(key)] = value;
+    });
   }
 
-  named.cast<String, Object?>().forEach(action);
-
-  Object? map(Object? value) {
+  return values.map<Object?>((value) {
     return context.filter(filter, <Object?>[value, ...positional], symbols);
-  }
-
-  return values.map<Object?>(map);
+  });
 }
 
 /// Get an attribute of an object.
