@@ -4,14 +4,14 @@
 [![Test Status][test_ci_icon]][test_ci]
 [![CodeCov][codecov_icon]][codecov]
 
-[Jinja][jinja] server-side template engine port for Dart 2.
+[Jinja][jinja] (3.x) server-side template engine port for Dart 2.
 Variables, expressions, control structures and template inheritance.
 
 ## Version 0.4.0 introduces breaking changes
 See `CHANGELOG.md`.
 
 ## Documentation
-Mostly the same as the [Jinja][jinja_templates] template documentation.
+It is mostly similar to [Jinja][jinja_templates] templates documentation, differences provided below.
 _work in progress_.
 
 ## Differences with Python version
@@ -19,12 +19,11 @@ _work in progress_.
 - The `default` filter compares values with `null`; there is no `boolean` parameter.
 - The `defined` and `undefined` tests compare values with `null`.
 - The `map` filter also compares values with `null`.
-  Use `attribute` for fields and `item` for items.
+  Use `attribute` for `object.attribute` and `item` for `object[item]` expressions.
 - Not yet supported:
-  - nested attributes and items
-  - slices and negative indexes
-  - conditional and variable `extends` statement variants
-  - choice, ignore missing and variable `include` statement variants
+  - Slices and negative indexes
+  - Conditional and variable `extends` statement variants
+  - Choice, ignore missing and variable `include` statement variants
 - If `Environment({getAttribute})` is not passed, the `getItem` method will be used.
   This allows you to use `{{ map.key }}` as an expression equivalent to `{{ map['key'] }}`.
 - _work in progress_

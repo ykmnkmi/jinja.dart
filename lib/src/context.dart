@@ -74,12 +74,12 @@ base class Context {
     return null;
   }
 
-  Object? attribute(Object? value, String key) {
-    return environment.getAttribute(value, key);
+  Object? attribute(String key, Object? value) {
+    return environment.getAttribute(key, value);
   }
 
-  Object? item(Object? value, Object? key) {
-    return environment.getItem(value, key);
+  Object? item(Object key, Object? value) {
+    return environment.getItem(key, value);
   }
 
   Object? filter(

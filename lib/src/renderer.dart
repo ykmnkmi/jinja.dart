@@ -146,7 +146,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
   @override
   Object? visitAttribute(Attribute node, StringSinkRenderContext context) {
     var value = node.value.accept(this, context);
-    return context.attribute(value, node.attribute);
+    return context.attribute(node.attribute, value);
   }
 
   @override
@@ -265,7 +265,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
   Object? visitItem(Item node, StringSinkRenderContext context) {
     var key = node.key.accept(this, context);
     var value = node.value.accept(this, context);
-    return context.item(value, key);
+    return context.item(key!, value);
   }
 
   @override

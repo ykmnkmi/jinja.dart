@@ -191,33 +191,17 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
     if (node.name == 'map') {
       var calling = node.calling;
 
-      var arguments = <Expression>[calling.arguments.first];
-      var keywords = <Keyword>[];
+      calling = Calling(
+        arguments: <Expression>[
+          calling.arguments.first,
+          Array(values: calling.arguments.sublist(1)),
+          Dict(pairs: <Pair>[
+            for (var (:key, :value) in calling.keywords)
+              (key: Constant(value: key), value: value)
+          ]),
+        ],
+      );
 
-      var values = <Expression>[];
-      var pairs = <Pair>[];
-
-      if (calling.arguments.length > 1) {
-        keywords.add((key: 'filter', value: calling.arguments[1]));
-        values.addAll(calling.arguments.skip(2));
-      }
-
-      for (var (:key, :value) in calling.keywords) {
-        switch (key) {
-          case 'attribute' || 'item' || 'defaultValue':
-            keywords.add((key: key, value: value));
-            break;
-
-          default:
-            pairs.add((key: Constant(value: key), value: value));
-        }
-      }
-
-      keywords
-        ..add((key: 'positional', value: Array(values: values)))
-        ..add((key: 'named', value: Dict(pairs: pairs)));
-
-      calling = Calling(arguments: arguments, keywords: keywords);
       return node.copyWith(
         calling: visitNode(calling, context),
       );

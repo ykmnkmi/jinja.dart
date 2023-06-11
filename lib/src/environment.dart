@@ -36,12 +36,12 @@ typedef EnvironmentFinalizer = Object Function(
 /// A [Function] that can be used to get object atribute.
 ///
 /// Used by `object.attribute` expression.
-typedef AttributeGetter = Object? Function(Object? object, String attribute);
+typedef AttributeGetter = Object? Function(String attribute, Object? object);
 
 /// A [Function] that can be used to get object item.
 ///
 /// Used by `object['item']` expression.
-typedef ItemGetter = Object? Function(Object? object, Object? key);
+typedef ItemGetter = Object? Function(Object key, Object? object);
 
 /// Pass the [Context] as the first argument to the applied function when
 /// called while rendering a template.
@@ -416,11 +416,11 @@ class Environment {
       return itemGetter;
     }
 
-    return (object, field) {
+    return (attribute, object) {
       try {
-        return attributeGetter(object, field);
+        return attributeGetter(attribute, object);
       } on NoSuchMethodError {
-        return itemGetter(object, field);
+        return itemGetter(attribute, object);
       }
     };
   }

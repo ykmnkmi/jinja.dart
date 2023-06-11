@@ -35,7 +35,7 @@ class Optimizer implements Visitor<Context, Node> {
 
     if (value case Constant constant) {
       return Constant(
-        value: context.attribute(constant.value, node.attribute),
+        value: context.attribute(node.attribute, constant.value),
       );
     }
 
@@ -178,7 +178,7 @@ class Optimizer implements Visitor<Context, Node> {
     var value = node.value;
 
     if (key is Constant && value is Constant) {
-      return Constant(value: context.item(value.value, key.value));
+      return Constant(value: context.item(key.value!, value.value));
     }
 
     return node.copyWith(key: key, value: value);

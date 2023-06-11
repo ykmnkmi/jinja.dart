@@ -360,7 +360,7 @@ void main() {
     });
 
     test('sum attributes nested', () {
-      var tmpl = env.fromString('{{ values|map(item="real.value")|sum }}');
+      var tmpl = env.fromString('{{ values|map(attribute="real.value")|sum }}');
 
       var values = [
         {
@@ -375,7 +375,7 @@ void main() {
       ];
 
       expect(tmpl.render({'values': values}), equals('42'));
-    }, skip: 'Nested attributes and items not supported.');
+    });
 
     test('sum attributes tuple', () {
       var tmpl =

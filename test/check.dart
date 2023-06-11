@@ -1,3 +1,4 @@
+import 'package:jinja/reflection.dart';
 import 'package:jinja/src/compiler.dart';
 import 'package:jinja/src/context.dart';
 import 'package:jinja/src/environment.dart';
@@ -6,14 +7,17 @@ import 'package:jinja/src/visitor.dart';
 import 'package:stack_trace/stack_trace.dart';
 
 const String source = '''
-{% macro say_hello(name) %}Hello {{ name }}!{% endmacro %}
-{{ say_hello('Peter') }}''';
+{% set ns = namespace(d, self=37) %}
+{% set ns.b = 42 %}
+{{ ns.a }}|{{ ns.self }}|{{ ns.b }}''';
 
-const Map<String, Object?> context = <String, Object?>{};
+const Map<String, Object?> context = <String, Object?>{
+  'd': {'a': 13}
+};
 
 void main() {
   try {
-    var environment = Environment();
+    var environment = Environment(getAttribute: getAttribute);
 
     var tokens = environment.lex(source);
     // print('tokens:');

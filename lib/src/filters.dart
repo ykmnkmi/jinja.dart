@@ -8,16 +8,47 @@ import 'package:jinja/src/markup.dart';
 import 'package:jinja/src/utils.dart' as utils;
 import 'package:textwrap/textwrap.dart' show TextWrapper;
 
-/// Returns a callable that looks up the given attribute from a passed object
-/// with the rules of the environment.
-Object? Function(Object?) makeAttributeGetter(
+/// {@nodoc}
+List<Object> prepareAttributeParts(Object? attribute) {
+  if (attribute == null) {
+    return <Object>[];
+  }
+
+  if (attribute is String) {
+    return <Object>[
+      for (var part in attribute.split('.')) int.tryParse(part) ?? part
+    ];
+  }
+
+  return <Object>[attribute];
+}
+
+/// Returns a callable that looks up the given attribute from a
+/// passed object with the rules of the environment.
+///
+/// Dots are allowed to access attributes of attributes.
+/// Integer parts in paths are looked up as integers.
+// TODO(filters): add postprocess
+Object? Function(Object? object) makeAttributeGetter(
   Environment environment,
-  String attribute, {
+  Object attribute, {
   Object? defaultValue,
 }) {
-  return (object) {
-    return environment.getAttribute(object, attribute) ?? defaultValue;
-  };
+  var parts = prepareAttributeParts(attribute);
+
+  Object? getter(Object? object) {
+    for (var part in parts) {
+      if (part is String) {
+        object = environment.getAttribute(part, object) ?? defaultValue;
+      } else {
+        object = environment.getItem(part, object) ?? defaultValue;
+      }
+    }
+
+    return object;
+  }
+
+  return getter;
 }
 
 /// Returns a callable that looks up the given item from a passed object with
@@ -27,9 +58,11 @@ Object? Function(Object?) makeItemGetter(
   Object item, {
   Object? defaultValue,
 }) {
-  return (object) {
-    return environment.getItem(object, item) ?? defaultValue;
-  };
+  Object? getter(Object? object) {
+    return environment.getItem(item, object) ?? defaultValue;
+  }
+
+  return getter;
 }
 
 /// Replace the characters `&`, `<`, `>`, `'`, and `"`
@@ -117,8 +150,8 @@ List<Object?> doDictSort(
   var position = switch (by) {
     'key' => 0,
     'value' => 1,
-    _ =>
-      throw FilterArgumentError("You can only sort by either 'key' or 'value'"),
+    _ => throw FilterArgumentError(
+        "You can only sort by either 'key' or 'value'."),
   };
 
   var order = reverse ? -1 : 1;
@@ -289,8 +322,9 @@ String doTruncate(
   String end = '...',
   int leeway = 5,
 }) {
-  assert(length >= end.length, 'expected length >= ${end.length}, got $length');
-  assert(leeway >= 0, 'expected leeway >= 0, got $leeway');
+  assert(
+      length >= end.length, 'Expected length >= ${end.length}, got $length.');
+  assert(leeway >= 0, 'Expected leeway >= 0, got $leeway.');
 
   if (value.length <= length + leeway) {
     return value;
@@ -479,7 +513,7 @@ Markup doMarkSafe(String value) {
 ///
 /// This is the reverse operation for `safe`.
 String doMarkUnsafe(Object? value) {
-  return '$value';
+  return value.toString();
 }
 
 /// Reverse the object or return an iterator that iterates over it the other
@@ -489,79 +523,89 @@ Object? doReverse(Object? value) {
   return values.reversed;
 }
 
+/// {@nodoc}
+Object? Function(Object? object) prepareMap(
+  Context context,
+  List<Object?> positional,
+  Map<String, Object?> named,
+) {
+  if (positional.isEmpty) {
+    if (named.remove('attribute') case String attribute?) {
+      var defaultValue = named.remove('defaultValue');
+
+      if (named.isNotEmpty) {
+        throw FilterArgumentError(
+            'Unexpected keyword argument ${named.keys.first}.');
+      }
+
+      return makeAttributeGetter(context.environment, attribute,
+          defaultValue: defaultValue);
+    }
+
+    if (named.remove('item') case Object item?) {
+      var defaultValue = named.remove('defaultValue');
+
+      if (named.isNotEmpty) {
+        throw FilterArgumentError(
+            'Unexpected keyword argument ${named.keys.first}.');
+      }
+
+      return makeItemGetter(context.environment, item,
+          defaultValue: defaultValue);
+    }
+  }
+
+  try {
+    // TODO(filters): catch cast error
+    var name = positional.first as String;
+    positional = positional.sublist(1);
+
+    var symbols = <Symbol, Object?>{
+      for (var MapEntry(:key, :value) in named.entries) Symbol(key): value
+    };
+
+    Object? getter(Object? object) {
+      return context.filter(name, <Object?>[object, ...positional], symbols);
+    }
+
+    return getter;
+  } on RangeError {
+    throw FilterArgumentError('Map requires a filter argument.');
+  }
+}
+
 /// Applies a filter on a sequence of objects or looks up an attribute.
 /// This is useful when dealing with lists of objects but you are really
 /// only interested in a certain value of it.
 ///
 /// The basic usage is mapping on an attribute or item.
-Iterable<Object?>? doMap(
+Iterable<Object?> doMap(
   Context context,
-  Iterable<Object?>? values, {
-  String? filter,
-  String? attribute,
-  Object? item,
-  Object? defaultValue,
-  List<Object?> positional = const <Object?>[],
-  Map<Object?, Object?> named = const <Object?, Object?>{},
-}) {
-  if (values == null) {
-    return null;
-  }
+  Iterable<Object?>? values,
+  List<Object?> positional,
+  Map<Object?, Object?> named,
+) sync* {
+  if (values != null) {
+    var func = prepareMap(context, positional, named.cast<String, Object?>());
 
-  Object? Function(Object?)? getter;
-
-  if (attribute != null) {
-    getter = makeAttributeGetter(
-      context.environment,
-      attribute,
-      defaultValue: defaultValue,
-    );
-  } else if (item != null) {
-    getter = makeItemGetter(
-      context.environment,
-      item,
-      defaultValue: defaultValue,
-    );
-  }
-
-  if (getter != null) {
-    if (named.isNotEmpty) {
-      var name = named.keys.first;
-      throw FilterArgumentError('Unexpected keyword argument $name');
+    for (var value in values) {
+      yield func(value);
     }
-
-    return values.map<Object?>(getter);
   }
-
-  if (filter == null) {
-    throw FilterArgumentError('Map requires a filter argument');
-  }
-
-  var symbols = <Symbol, Object?>{};
-
-  if (named.isNotEmpty) {
-    named.cast<String, Object?>().forEach((key, value) {
-      symbols[Symbol(key)] = value;
-    });
-  }
-
-  return values.map<Object?>((value) {
-    return context.filter(filter, <Object?>[value, ...positional], symbols);
-  });
 }
 
 /// Get an attribute of an object.
 ///
 /// `foo | attr('bar')` works like `foo.bar`.
 Object? doAttribute(Environment environment, Object? value, String attribute) {
-  return environment.getAttribute(value, attribute);
+  return environment.getAttribute(attribute, value);
 }
 
 /// Get an item of an object.
 ///
 /// `foo | item('bar')` works like `foo['bar']`.
-Object? doItem(Environment environment, Object? value, Object? item) {
-  return environment.getItem(value, item);
+Object? doItem(Environment environment, Object? value, Object item) {
+  return environment.getItem(item, value);
 }
 
 /// Serialize an object to a string of JSON, and mark it safe to render in
