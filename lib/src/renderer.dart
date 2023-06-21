@@ -476,7 +476,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
     }
 
     String render(Object? iterable, [int depth = 0]) {
-      var values = list(iterable);
+      var values = list(iterable is Map ? iterable.entries : iterable);
 
       if (values.isEmpty) {
         if (node.orElse case var orElse?) {

@@ -82,8 +82,7 @@ Object? identity(Object? value) {
 /// Convert value to [Iterable]
 /// - [Iterable] returns as is
 /// - [String] returns chars split by `''`
-/// - [MapEntry] returns `[key, value]` list
-/// - [Map] returns [Map.entries]
+/// - [Map] returns [Map.keys]
 /// - otherwise throws [TypeError].
 Iterable<Object?> iterate(Object? value) {
   if (value is Iterable) {
@@ -94,12 +93,12 @@ Iterable<Object?> iterate(Object? value) {
     return value.split('');
   }
 
-  if (value is MapEntry) {
-    return <Object?>[value.key, value.value];
+  if (value is Map) {
+    return value.keys;
   }
 
-  if (value is Map) {
-    return value.entries;
+  if (value is MapEntry) {
+    return <Object?>[value.key, value.value];
   }
 
   throw TypeError();
