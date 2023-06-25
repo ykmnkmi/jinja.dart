@@ -104,20 +104,22 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
       }
 
       // Is it a macro call?
-      // TODO(compiler): need to handle named arguments too.
       if (context.contains(name)) {
-        var values = node.calling.arguments.toList();
+        // TODO(compiler): handle *varargs
+        var arguments = node.calling.arguments;
 
-        if (node.calling.dArguments case var dArguments?) {
-          values.add(dArguments);
-        }
+        // TODO(compiler): handle *kvargs
+        var keywords = node.calling.keywords;
 
         return node.copyWith(
           value: visitNode(node.value, context),
           calling: Calling(
             arguments: <Expression>[
-              Array(values: values),
-              const Constant(value: <Object?, Object?>{}),
+              Array(values: arguments.toList()),
+              Dict(pairs: <Pair>[
+                for (var (:key, :value) in keywords)
+                  (key: Constant(value: key), value: value),
+              ]),
             ],
           ),
         );
@@ -365,7 +367,7 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
           (
             argument.accept(this, context) as Expression,
             default_?.accept(this, context) as Expression?
-          )
+          ),
       ],
       body: visitNode(node.body, context),
     );

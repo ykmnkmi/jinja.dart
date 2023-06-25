@@ -81,6 +81,17 @@ final class Tuple extends Literal {
       values: values ?? this.values,
     );
   }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    for (var value in values) {
+      if (value case T value) {
+        yield value;
+      }
+
+      yield* value.findAll<T>();
+    }
+  }
 }
 
 final class Array extends Literal {
@@ -96,6 +107,17 @@ final class Array extends Literal {
   @override
   Array copyWith({List<Expression>? values}) {
     return Array(values: values ?? this.values);
+  }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    for (var value in values) {
+      if (value case T value) {
+        yield value;
+      }
+
+      yield* value.findAll<T>();
+    }
   }
 }
 
@@ -117,6 +139,23 @@ final class Dict extends Literal {
   @override
   Dict copyWith({List<Pair>? pairs}) {
     return Dict(pairs: pairs ?? this.pairs);
+  }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    for (var (:key, :value) in pairs) {
+      if (key case T key) {
+        yield key;
+      }
+
+      yield* key.findAll<T>();
+
+      if (value case T value) {
+        yield value;
+      }
+
+      yield* value.findAll<T>();
+    }
   }
 }
 
@@ -149,6 +188,29 @@ final class Condition extends Expression {
       trueValue: trueValue ?? this.trueValue,
       falseValue: falseValue ?? this.falseValue,
     );
+  }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (test case T test) {
+      yield test;
+    }
+
+    yield* test.findAll<T>();
+
+    if (trueValue case T trueValue) {
+      yield trueValue;
+    }
+
+    yield* trueValue.findAll<T>();
+
+    if (falseValue case T falseValue) {
+      yield falseValue;
+    }
+
+    if (falseValue case Expression falseValue?) {
+      yield* falseValue.findAll<T>();
+    }
   }
 }
 
@@ -191,6 +253,41 @@ final class Calling extends Expression {
       dKeywords: dKeywords ?? this.dKeywords,
     );
   }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    for (var argument in arguments) {
+      if (argument case T argument) {
+        yield argument;
+      }
+
+      yield* argument.findAll<T>();
+    }
+
+    for (var (key: _, :value) in keywords) {
+      if (value case T value) {
+        yield value;
+      }
+
+      yield* value.findAll<T>();
+    }
+
+    if (dArguments case T dArguments) {
+      yield dArguments;
+    }
+
+    if (dArguments case Expression dArguments?) {
+      yield* dArguments.findAll<T>();
+    }
+
+    if (dKeywords case T dKeywords) {
+      yield dKeywords;
+    }
+
+    if (dKeywords case Expression dKeywords?) {
+      yield* dKeywords.findAll<T>();
+    }
+  }
 }
 
 final class Call extends Expression {
@@ -215,6 +312,21 @@ final class Call extends Expression {
       calling: calling ?? this.calling,
     );
   }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (value case T value) {
+      yield value;
+    }
+
+    yield* value.findAll<T>();
+
+    if (calling case T calling) {
+      yield calling;
+    }
+
+    yield* calling.findAll<T>();
+  }
 }
 
 final class Filter extends Expression {
@@ -235,6 +347,15 @@ final class Filter extends Expression {
   @override
   Filter copyWith({String? name, Calling? calling}) {
     return Filter(name: name ?? this.name, calling: calling ?? this.calling);
+  }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (calling case T calling) {
+      yield calling;
+    }
+
+    yield* calling.findAll<T>();
   }
 }
 
@@ -257,6 +378,15 @@ final class Test extends Expression {
   Test copyWith({String? name, Calling? calling}) {
     return Test(name: name ?? this.name, calling: calling ?? this.calling);
   }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (calling case T calling) {
+      yield calling;
+    }
+
+    yield* calling.findAll<T>();
+  }
 }
 
 final class Item extends Expression {
@@ -274,6 +404,21 @@ final class Item extends Expression {
   @override
   Item copyWith({Expression? key, Expression? value}) {
     return Item(key: key ?? this.key, value: value ?? this.value);
+  }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (key case T key) {
+      yield key;
+    }
+
+    yield* key.findAll<T>();
+
+    if (value case T value) {
+      yield value;
+    }
+
+    yield* value.findAll<T>();
   }
 }
 
@@ -296,6 +441,15 @@ final class Attribute extends Expression {
       value: value ?? this.value,
     );
   }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (value case T value) {
+      yield value;
+    }
+
+    yield* value.findAll<T>();
+  }
 }
 
 final class Concat extends Expression {
@@ -311,6 +465,17 @@ final class Concat extends Expression {
   @override
   Concat copyWith({List<Expression>? values}) {
     return Concat(values: values ?? this.values);
+  }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    for (var value in values) {
+      if (value case T value) {
+        yield value;
+      }
+
+      yield* value.findAll<T>();
+    }
   }
 }
 
@@ -371,6 +536,23 @@ final class Compare extends Expression {
       operands: operands ?? this.operands,
     );
   }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (value case T value) {
+      yield value;
+    }
+
+    yield* value.findAll<T>();
+
+    for (var (_, value) in operands) {
+      if (value case T value) {
+        yield value;
+      }
+
+      yield* value.findAll<T>();
+    }
+  }
 }
 
 enum UnaryOperator {
@@ -402,23 +584,47 @@ final class Unary extends Expression {
       value: value ?? this.value,
     );
   }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (value case T value) {
+      yield value;
+    }
+
+    yield* value.findAll<T>();
+  }
 }
 
-abstract final class Binary<T extends Enum> extends Expression {
+abstract final class Binary<E extends Enum> extends Expression {
   const Binary({
     required this.operator,
     required this.left,
     required this.right,
   });
 
-  final T operator;
+  final E operator;
 
   final Expression left;
 
   final Expression right;
 
   @override
-  Binary<T> copyWith({T? operator, Expression? left, Expression? right});
+  Binary<E> copyWith({E? operator, Expression? left, Expression? right});
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (left case T left) {
+      yield left;
+    }
+
+    yield* left.findAll<T>();
+
+    if (right case T right) {
+      yield right;
+    }
+
+    yield* right.findAll<T>();
+  }
 }
 
 enum ScalarOperator {

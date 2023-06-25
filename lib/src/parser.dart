@@ -479,7 +479,32 @@ class Parser {
     var name = parseAssignName(reader);
     var arguments = parseSignature(reader);
     var body = parseStatements(reader, endMacro, true);
-    return Macro(name: name.name, arguments: arguments, body: body);
+
+    var varargs = false, kwargs = false, caller = false;
+
+    for (var name in body.findAll<Name>()) {
+      switch (name.name) {
+        case 'varargs':
+          varargs = true;
+          break;
+        case 'kwargs':
+          kwargs = true;
+          break;
+        case 'caller':
+          caller = true;
+          break;
+        default:
+      }
+    }
+
+    return Macro(
+      name: name.name,
+      arguments: arguments,
+      varargs: varargs,
+      kwargs: kwargs,
+      caller: caller,
+      body: body,
+    );
   }
 
   // TODO: add parsePrint

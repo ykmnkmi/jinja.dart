@@ -9,6 +9,8 @@ abstract final class Node {
   R accept<C, R>(Visitor<C, R> visitor, C context);
 
   Node copyWith();
+
+  Iterable<T> findAll<T extends Node>() sync* {}
 }
 
 final class Data extends Node {
@@ -37,11 +39,6 @@ final class Data extends Node {
   Data copyWith({String? data}) {
     return Data(data: data ?? this.data);
   }
-
-  @override
-  String toString() {
-    return 'Data $literal';
-  }
 }
 
 abstract final class Expression extends Node {
@@ -68,8 +65,12 @@ final class Interpolation extends Node {
   }
 
   @override
-  String toString() {
-    return 'Interpolation $value';
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (value case T value) {
+      yield value;
+    }
+
+    yield* value.findAll<T>();
   }
 }
 
@@ -89,8 +90,14 @@ final class Output extends Node {
   }
 
   @override
-  String toString() {
-    return '{ ${nodes.join(', ')} }';
+  Iterable<T> findAll<T extends Node>() sync* {
+    for (var node in nodes) {
+      if (node is T) {
+        yield node;
+      }
+
+      yield* node.findAll<T>();
+    }
   }
 }
 
@@ -112,7 +119,19 @@ final class TemplateNode extends Node {
   }
 
   @override
-  String toString() {
-    return 'TemplateNode $body';
+  Iterable<T> findAll<T extends Node>() sync* {
+    for (var block in blocks) {
+      if (block case T block) {
+        yield block;
+      }
+
+      yield* block.findAll<T>();
+    }
+
+    if (body case T body) {
+      yield body;
+    }
+
+    yield* body.findAll<T>();
   }
 }

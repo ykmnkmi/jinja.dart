@@ -1,4 +1,3 @@
-import 'package:jinja/reflection.dart';
 import 'package:jinja/src/compiler.dart';
 import 'package:jinja/src/context.dart';
 import 'package:jinja/src/environment.dart';
@@ -7,9 +6,10 @@ import 'package:jinja/src/visitor.dart';
 import 'package:stack_trace/stack_trace.dart';
 
 const String source = '''
-{% set ns = namespace(d, self=37) %}
-{% set ns.b = 42 %}
-{{ ns.a }}|{{ ns.self }}|{{ ns.b }}''';
+{% macro test() %}
+  {{ varargs }}
+{% endmacro %}
+{{ test(1, 2) }}''';
 
 const Map<String, Object?> context = <String, Object?>{
   'd': {'a': 13}
@@ -17,7 +17,7 @@ const Map<String, Object?> context = <String, Object?>{
 
 void main() {
   try {
-    var environment = Environment(getAttribute: getAttribute);
+    var environment = Environment();
 
     var tokens = environment.lex(source);
     // print('tokens:');
@@ -38,7 +38,6 @@ void main() {
 
     var macroses = <String>{};
     body = body.accept(const RuntimeCompiler(), macroses);
-    print('\nmacroses: ${macroses.join(', ')}');
     print('\ncompiled body:');
     print(printer.visit(body));
 

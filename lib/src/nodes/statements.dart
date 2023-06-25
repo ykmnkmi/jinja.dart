@@ -65,6 +65,43 @@ final class For extends Statement {
       orElse: orElse ?? this.orElse,
     );
   }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (target case T target) {
+      yield target;
+    }
+
+    yield* target.findAll<T>();
+
+    if (iterable case T iterable) {
+      yield iterable;
+    }
+
+    yield* iterable.findAll<T>();
+
+    if (test case Expression test?) {
+      if (test case T test) {
+        yield test;
+      }
+
+      yield* test.findAll<T>();
+    }
+
+    if (body case T body) {
+      yield body;
+    }
+
+    yield* body.findAll<T>();
+
+    if (orElse case Node orElse?) {
+      if (orElse case T orElse) {
+        yield orElse;
+      }
+
+      yield* orElse.findAll<T>();
+    }
+  }
 }
 
 final class If extends Statement {
@@ -97,6 +134,29 @@ final class If extends Statement {
       orElse: orElse ?? this.orElse,
     );
   }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (test case T test) {
+      yield test;
+    }
+
+    yield* test.findAll<T>();
+
+    if (body case T body) {
+      yield body;
+    }
+
+    yield* body.findAll<T>();
+
+    if (orElse case Node orElse?) {
+      if (orElse case T orElse) {
+        yield orElse;
+      }
+
+      yield* orElse.findAll<T>();
+    }
+  }
 }
 
 typedef MacroSignature = ({
@@ -121,16 +181,50 @@ abstract final class MacroCall extends Statement {
     List<(Expression, Expression?)>? arguments,
     Node? body,
   });
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    for (var (argument, default_) in arguments) {
+      if (argument case T argument) {
+        yield argument;
+      }
+
+      yield* argument.findAll<T>();
+
+      if (default_ case Expression default_?) {
+        if (default_ case T default_) {
+          yield default_;
+        }
+
+        yield* default_.findAll<T>();
+      }
+    }
+
+    if (body case T body) {
+      yield body;
+    }
+
+    yield* body.findAll<T>();
+  }
 }
 
 final class Macro extends MacroCall {
   const Macro({
     required this.name,
     super.arguments,
+    this.varargs = false,
+    this.kwargs = false,
+    this.caller = false,
     required super.body,
   });
 
   final String name;
+
+  final bool varargs;
+
+  final bool kwargs;
+
+  final bool caller;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -141,11 +235,17 @@ final class Macro extends MacroCall {
   Macro copyWith({
     String? name,
     List<(Expression, Expression?)>? arguments,
+    bool? varargs,
+    bool? kwargs,
+    bool? caller,
     Node? body,
   }) {
     return Macro(
       name: name ?? this.name,
       arguments: arguments ?? this.arguments,
+      varargs: varargs ?? this.varargs,
+      kwargs: kwargs ?? this.kwargs,
+      caller: caller ?? this.caller,
       body: body ?? this.body,
     );
   }
@@ -177,6 +277,16 @@ final class CallBlock extends MacroCall {
       body: body ?? this.body,
     );
   }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (call case T call) {
+      yield call;
+    }
+
+    yield* call.findAll<T>();
+    yield* super.findAll<T>();
+  }
 }
 
 final class FilterBlock extends Statement {
@@ -197,6 +307,23 @@ final class FilterBlock extends Statement {
       filters: filters ?? this.filters,
       body: body ?? this.body,
     );
+  }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    for (var filter in filters) {
+      if (filter case T filter) {
+        yield filter;
+      }
+
+      yield* filter.findAll<T>();
+    }
+
+    if (body case T body) {
+      yield body;
+    }
+
+    yield* body.findAll<T>();
   }
 }
 
@@ -229,6 +356,31 @@ final class With extends Statement {
       values: values ?? this.values,
       body: body ?? this.body,
     );
+  }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    for (var target in targets) {
+      if (target case T target) {
+        yield target;
+      }
+
+      yield* target.findAll<T>();
+    }
+
+    for (var value in values) {
+      if (value case T vaue) {
+        yield vaue;
+      }
+
+      yield* value.findAll<T>();
+    }
+
+    if (body case T body) {
+      yield body;
+    }
+
+    yield* body.findAll<T>();
   }
 }
 
@@ -266,6 +418,15 @@ final class Block extends Statement {
       required: required ?? this.required,
       body: body ?? this.body,
     );
+  }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (body case T body) {
+      yield body;
+    }
+
+    yield* body.findAll<T>();
   }
 }
 
@@ -307,6 +468,15 @@ final class Do extends Statement {
       value: value ?? this.value,
     );
   }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (value case T vaue) {
+      yield vaue;
+    }
+
+    yield* value.findAll<T>();
+  }
 }
 
 final class Assign extends Statement {
@@ -327,6 +497,21 @@ final class Assign extends Statement {
       target: target ?? this.target,
       value: value ?? this.value,
     );
+  }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (target case T target) {
+      yield target;
+    }
+
+    yield* target.findAll<T>();
+
+    if (value case T vaue) {
+      yield vaue;
+    }
+
+    yield* value.findAll<T>();
   }
 }
 
@@ -360,6 +545,29 @@ final class AssignBlock extends Statement {
       body: body ?? this.body,
     );
   }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (target case T target) {
+      yield target;
+    }
+
+    yield* target.findAll<T>();
+
+    for (var filter in filters) {
+      if (filter case T filter) {
+        yield filter;
+      }
+
+      yield* filter.findAll<T>();
+    }
+
+    if (body case T body) {
+      yield body;
+    }
+
+    yield* body.findAll<T>();
+  }
 }
 
 final class AutoEscape extends Statement {
@@ -383,5 +591,20 @@ final class AutoEscape extends Statement {
       value: value ?? this.value,
       body: body ?? this.body,
     );
+  }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (value case T vaue) {
+      yield vaue;
+    }
+
+    yield* value.findAll<T>();
+
+    if (body case T body) {
+      yield body;
+    }
+
+    yield* body.findAll<T>();
   }
 }

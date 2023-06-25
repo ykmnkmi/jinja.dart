@@ -497,24 +497,34 @@ class Printer extends ThrowingVisitor<StringBuffer, void> {
   }
 
   @override
+  void visitLogical(Logical node, StringBuffer context) {
+    node.left.accept(this, context);
+    context.write(' ${node.operator.name} ');
+    node.right.accept(this, context);
+  }
+
+  @override
   void visitMacro(Macro node, StringBuffer context) {
     context.write('$blockStart macro ${node.name}(');
 
-    var (argument, default_) = node.arguments.first;
+    if (node.arguments.isNotEmpty) {
+      var (argument, default_) = node.arguments.first;
 
-    context.write(argument);
-
-    if (default_ != null) {
-      context.write('=');
-      default_.accept(this, context);
-    }
-
-    for (var (argument, default_) in node.arguments.skip(1)) {
-      context.write(', $argument');
+      argument.accept(this, context);
 
       if (default_ != null) {
         context.write('=');
         default_.accept(this, context);
+      }
+
+      for (var (argument, default_) in node.arguments.skip(1)) {
+        context.write(', ');
+        argument.accept(this, context);
+
+        if (default_ != null) {
+          context.write('=');
+          default_.accept(this, context);
+        }
       }
     }
 

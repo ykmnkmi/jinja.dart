@@ -45,28 +45,28 @@ void main() {
 {% macro a() %}{{ caller() }}{% endmacro %}
 {% call(x, y=1, z) a() %}{% endcall %}''');
       }, throwsA(isA<TemplateSyntaxError>()));
-    }, skip: 'macro caller is not implemented');
+    });
 
     test('varargs', () {
       var tmpl = environment.fromString('''
 {% macro test() %}{{ varargs|join('|') }}{% endmacro -%}
 {{ test(1, 2, 3) }}''');
       expect(tmpl.render(), equals('1|2|3'));
-    }, skip: 'macro varargs is not implemented');
+    });
 
     test('simple call', () {
       var tmpl = environment.fromString('''
 {% macro test() %}[[{{ caller() }}]]{% endmacro -%}
 {% call test() %}data{% endcall %}''');
       expect(tmpl.render(), equals('[[data]]'));
-    }, skip: 'macro caller is not implemented');
+    }, skip: true);
 
     test('complex call', () {
       var tmpl = environment.fromString('''
 {% macro test() %}[[{{ caller('data') }}]]{% endmacro -%}
 {% call(data) test() %}{{ data }}{% endcall %}''');
       expect(tmpl.render(), equals('[[data]]'));
-    }, skip: 'macro caller is not implemented');
+    }, skip: true);
 
     test('caller undefined', () {
       var tmpl = environment.fromString('''
@@ -74,6 +74,6 @@ void main() {
 {% macro test() %}{{ caller is not defined }}{% endmacro -%}
 {{ test() }}''');
       expect(tmpl.render(), equals('true'));
-    }, skip: 'macro caller is not implemented');
+    }, skip: true);
   });
 }

@@ -551,22 +551,48 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
 
   @override
   void visitMacro(Macro node, StringSinkRenderContext context) {
-    // TODO(render): check macro signature
+    // TODO(renderer): handle kwargs
+    // TODO(renderer): handle caller
     void callback(List<Object?> positional, Map<Object?, Object?> named) {
       var derived = context.derived();
-      var iterator = positional.iterator;
+      var iterator = node.arguments.iterator;
+      var length = positional.length;
+      var index = 0;
 
-      for (var (argument, default_) in node.arguments) {
+      for (; index < length; index += 1) {
+        if (iterator.moveNext()) {
+          var (argument, _) = iterator.current;
+          var key = argument.accept(this, context) as String;
+          derived.set(key, positional[index]);
+        } else {
+          break;
+        }
+      }
+
+      if (node.varargs) {
+        derived.set('varargs', positional.sublist(index));
+      } else if (index < length) {
+        throw TypeError();
+      }
+
+      if (node.kwargs) {
+        throw UnimplementedError();
+      }
+
+      if (node.caller) {
+        throw UnimplementedError();
+      }
+
+      var remaining = named.keys.toSet();
+
+      while (iterator.moveNext()) {
+        var (argument, defaultValue) = iterator.current;
         var key = argument.accept(this, context) as String;
 
-        if (iterator.moveNext()) {
-          derived.set(key, iterator.current);
+        if (remaining.remove(key)) {
+          derived.set(key, named[key]);
         } else {
-          if (named.containsKey(key)) {
-            derived.set(key, named[key]);
-          } else {
-            derived.set(key, default_?.accept(this, context));
-          }
+          derived.set(key, defaultValue?.accept(this, context));
         }
       }
 
