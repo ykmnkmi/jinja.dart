@@ -4,7 +4,13 @@ import 'package:meta/meta.dart';
 
 @doNotStore
 class RuntimeCompiler implements Visitor<Set<String>, Node> {
-  const RuntimeCompiler();
+  RuntimeCompiler();
+
+  int macroDepth = 0;
+
+  bool get isMacro {
+    return macroDepth > 0;
+  }
 
   T visitNode<T extends Node?>(Node? node, Set<String> context) {
     return node?.accept(this, context) as T;
@@ -104,7 +110,7 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
       }
 
       // Is it a macro call?
-      if (context.contains(name)) {
+      if (context.contains(name) || isMacro && name == 'caller') {
         // TODO(compiler): handle *varargs
         var arguments = node.calling.arguments;
 
@@ -359,9 +365,9 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
 
   @override
   Macro visitMacro(Macro node, Set<String> context) {
+    macroDepth += 1;
     context.add(node.name);
-
-    return node.copyWith(
+    node = node.copyWith(
       arguments: <(Expression, Expression?)>[
         for (var (argument, default_) in node.arguments)
           (
@@ -371,6 +377,8 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
       ],
       body: visitNode(node.body, context),
     );
+    macroDepth -= 1;
+    return node;
   }
 
   @override

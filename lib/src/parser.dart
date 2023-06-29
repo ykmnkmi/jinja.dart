@@ -7,7 +7,7 @@ import 'package:textwrap/textwrap.dart';
 
 class Parser {
   Parser(this.environment, {this.path})
-      : endTokensStack = <List<String>>[],
+      : endTokensStack = <List<(String, String?)>>[],
         tagStack = <String>[],
         blocks = <Block>[];
 
@@ -15,7 +15,7 @@ class Parser {
 
   final String? path;
 
-  final List<List<String>> endTokensStack;
+  final List<List<(String, String?)>> endTokensStack;
 
   final List<String> tagStack;
 
@@ -29,7 +29,7 @@ class Parser {
 
   Never failUnknownTagEof(
     String? name,
-    List<List<String>> endTokensStack, [
+    List<List<(String, String?)>> endTokensStack, [
     int? line,
   ]) {
     var expected = <String>[];
@@ -78,13 +78,16 @@ class Parser {
     failUnknownTagEof(name, endTokensStack, line);
   }
 
-  Never failEof(List<String> endTokens, [int? line]) {
+  Never failEof(List<(String, String?)> endTokens, [int? line]) {
     var stack = endTokensStack.toList();
     stack.add(endTokens);
     failUnknownTagEof(null, stack, line);
   }
 
-  bool isTupleEnd(TokenReader reader, [List<String>? extraEndRules]) {
+  bool isTupleEnd(
+    TokenReader reader, [
+    List<(String, String?)>? extraEndRules,
+  ]) {
     return switch (reader.current.type) {
       'variable_end' || 'block_end' || 'rparen' => true,
       _ => extraEndRules != null && extraEndRules.isNotEmpty
@@ -156,7 +159,7 @@ class Parser {
 
   Node parseStatements(
     TokenReader reader,
-    List<String> endTokens, [
+    List<(String, String?)> endTokens, [
     bool dropNeedle = false,
   ]) {
     reader.skipIf('colon');
@@ -172,15 +175,15 @@ class Parser {
       reader.next();
     }
 
-    if (nodes.length == 1) {
-      return nodes.first;
+    if (nodes case <Node>[Node node]) {
+      return node;
     }
 
     return Output(nodes: nodes);
   }
 
   Statement parseSet(TokenReader reader) {
-    const endSet = <String>['name:endset'];
+    const endSet = <(String, String?)>[('name', 'endset')];
 
     reader.expect('name', 'set');
 
@@ -197,11 +200,16 @@ class Parser {
   }
 
   For parseFor(TokenReader reader) {
-    const endForElse = <String>['name:endfor', 'name:else'];
+    const endIn = <(String, String?)>[('name', 'in')];
+    const endFor = <(String, String?)>[('name', 'endfor')];
+    const endForElse = <(String, String?)>[
+      ('name', 'endfor'),
+      ('name', 'else'),
+    ];
 
     reader.expect('name', 'for');
 
-    var target = parseAssignTarget(reader, extraEndRules: <String>['name:in']);
+    var target = parseAssignTarget(reader, extraEndRules: endIn);
 
     if (target case Name(name: 'loop')) {
       fail("Can't assign to special loop variable in for-loop target");
@@ -221,7 +229,7 @@ class Parser {
     Node? orElse;
 
     if (reader.next().test('name', 'else')) {
-      orElse = parseStatements(reader, <String>['name:endfor'], true);
+      orElse = parseStatements(reader, endFor, true);
     }
 
     return For(
@@ -235,8 +243,12 @@ class Parser {
   }
 
   If parseIf(TokenReader reader) {
-    const endIf = <String>['name:endif'];
-    const endIfElseEndIf = <String>['name:elif', 'name:else', 'name:endif'];
+    const endIf = <(String, String?)>[('name', 'endif')];
+    const endIfElseEndIf = <(String, String?)>[
+      ('name', 'elif'),
+      ('name', 'else'),
+      ('name', 'endif'),
+    ];
 
     reader.expect('name', 'if');
 
@@ -276,7 +288,7 @@ class Parser {
   }
 
   With parseWith(TokenReader reader) {
-    const endWith = <String>['name:endwith'];
+    const endWith = <(String, String?)>[('name', 'endwith')];
 
     reader.expect('name', 'with');
 
@@ -299,7 +311,7 @@ class Parser {
   }
 
   AutoEscape parseAutoEscape(TokenReader reader) {
-    const endAutoEscape = <String>['name:endautoescape'];
+    const endAutoEscape = <(String, String?)>[('name', 'endautoescape')];
 
     reader.expect('name', 'autoescape');
 
@@ -309,7 +321,7 @@ class Parser {
   }
 
   Block parseBlock(TokenReader reader) {
-    const endBlock = <String>['name:endblock'];
+    const endBlock = <(String, String?)>[('name', 'endblock')];
 
     var token = reader.next();
     var name = reader.expect('name');
@@ -381,7 +393,11 @@ class Parser {
     TokenReader reader, [
     bool defaultValue = true,
   ]) {
-    var keywords = <String>['name:with', 'name:without'];
+    const keywords = <(String, String?)>[
+      ('name', 'with'),
+      ('name', 'without'),
+    ];
+
     bool withContext;
 
     if (reader.current.testAny(keywords) &&
@@ -439,7 +455,7 @@ class Parser {
   }
 
   CallBlock parseCallBlock(TokenReader reader) {
-    const endCall = <String>['name:endcall'];
+    const endCall = <(String, String?)>[('name', 'endcall')];
 
     var token = reader.next();
 
@@ -462,7 +478,7 @@ class Parser {
   }
 
   FilterBlock parseFilterBlock(TokenReader reader) {
-    const endFilter = <String>['name:endfilter'];
+    const endFilter = <(String, String?)>[('name', 'endfilter')];
 
     reader.next();
 
@@ -472,7 +488,7 @@ class Parser {
   }
 
   Macro parseMacro(TokenReader reader) {
-    const endMacro = <String>['name:endmacro'];
+    const endMacro = <(String, String?)>[('name', 'endmacro')];
 
     reader.next();
 
@@ -539,7 +555,7 @@ class Parser {
 
   Expression parseAssignTarget(
     TokenReader reader, {
-    List<String>? extraEndRules,
+    List<(String, String?)>? extraEndRules,
     bool withTuple = true,
     AssignContext context = AssignContext.store,
   }) {
@@ -639,7 +655,14 @@ class Parser {
   }
 
   Expression parseCompare(TokenReader reader) {
-    const operators = <String>['eq', 'ne', 'lt', 'lteq', 'gt', 'gteq'];
+    const operators = <(String, String?)>[
+      ('eq', null),
+      ('ne', null),
+      ('lt', null),
+      ('lteq', null),
+      ('gt', null),
+      ('gteq', null)
+    ];
 
     var value = parseMath1(reader);
     var operands = <Operand>[];
@@ -883,7 +906,7 @@ class Parser {
     TokenReader reader, {
     bool simplified = false,
     bool withCondition = true,
-    List<String>? extraEndRules,
+    List<(String, String?)>? extraEndRules,
     bool explicitParentheses = false,
   }) {
     Expression Function(TokenReader) parse;
@@ -1147,12 +1170,19 @@ class Parser {
   }
 
   Expression parseTest(TokenReader reader, Expression expression) {
-    const allow = <String>[
-      'name', 'string', 'integer', //
-      'float', 'lbracket', 'lbrace',
+    const allow = <(String, String?)>[
+      ('name', null),
+      ('string', null),
+      ('integer', null),
+      ('float', null),
+      ('lbracket', null),
+      ('lbrace', null),
     ];
-
-    const deny = <String>['name:else', 'name:or', 'name:and'];
+    const deny = <(String, String?)>[
+      ('name', 'else'),
+      ('name', 'or'),
+      ('name', 'and')
+    ];
 
     reader.expect('name', 'is');
 
@@ -1166,6 +1196,7 @@ class Parser {
 
     var token = reader.expect('name');
     var current = reader.current;
+
     Calling calling;
 
     if (current.test('lparen')) {
@@ -1212,7 +1243,10 @@ class Parser {
     return TemplateNode(blocks: blocks.toList(), body: Output(nodes: nodes));
   }
 
-  List<Node> subParse(TokenReader reader, {List<String>? endTokens}) {
+  List<Node> subParse(
+    TokenReader reader, {
+    List<(String, String?)>? endTokens,
+  }) {
     var nodes = <Node>[];
 
     if (endTokens != null) {

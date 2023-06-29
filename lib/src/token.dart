@@ -53,17 +53,14 @@ String describeToken(Token token) {
   return describeTokenType(token.type);
 }
 
-String describeExpression(String expression) {
-  if (expression.contains(':')) {
-    var parts = expression.split(':');
-    assert(parts.length == 2);
+String describeExpression((String, String?) expression) {
+  var (type, value) = expression;
 
-    if (parts.first == 'name') {
-      return parts.last;
-    }
+  if (type == 'name' && value != null) {
+    return value;
   }
 
-  return describeTokenType(expression);
+  return describeTokenType(type);
 }
 
 abstract final class Token {
@@ -131,7 +128,7 @@ abstract final class Token {
 
   bool test(String type, [String? value]);
 
-  bool testAny(Iterable<String> expressions);
+  bool testAny(Iterable<(String, String?)> expressions);
 }
 
 abstract final class BaseToken implements Token {
@@ -164,19 +161,9 @@ abstract final class BaseToken implements Token {
   }
 
   @override
-  bool testAny(Iterable<String> expressions) {
-    for (var expression in expressions) {
-      if (!expression.contains(':')) {
-        if (test(expression)) {
-          return true;
-        }
-
-        continue;
-      }
-
-      var parts = expression.split(':');
-
-      if (test(parts[0], parts[1])) {
+  bool testAny(Iterable<(String, String?)> expressions) {
+    for (var (type, value) in expressions) {
+      if (test(type, value)) {
         return true;
       }
     }

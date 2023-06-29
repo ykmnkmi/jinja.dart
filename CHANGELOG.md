@@ -1,4 +1,4 @@
-## 0.5.0-dev.25
+## 0.5.0-dev.26
 - minimal SDK version: 3.0.0.
 - internal changes.
 - added:
@@ -9,6 +9,7 @@
       - `varargs`
       - <del>`kwargs`</del>
       - <del>`caller`</del>
+    - <del>`call`</del>
 - changed:
   - `Environment`:
     - `Environment({modifiers})` from `List<NodeVisitor>` to `List<Node Function(Node)>`

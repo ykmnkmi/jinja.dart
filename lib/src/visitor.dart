@@ -453,6 +453,38 @@ class Printer extends ThrowingVisitor<StringBuffer, void> {
   }
 
   @override
+  void visitCallBlock(CallBlock node, StringBuffer context) {
+    context.write('$blockStart call(');
+
+    if (node.arguments.isNotEmpty) {
+      var (argument, default_) = node.arguments.first;
+
+      argument.accept(this, context);
+
+      if (default_ != null) {
+        context.write('=');
+        default_.accept(this, context);
+      }
+
+      for (var (argument, default_) in node.arguments.skip(1)) {
+        context.write(', ');
+        argument.accept(this, context);
+
+        if (default_ != null) {
+          context.write('=');
+          default_.accept(this, context);
+        }
+      }
+    }
+
+    context.write(') ');
+    node.call.accept(this, context);
+    context.write(' $blockEnd');
+    node.body.accept(this, context);
+    context.write('$blockStart endmacro $blockEnd');
+  }
+
+  @override
   void visitData(Data node, StringBuffer context) {
     context.write(node.data);
   }

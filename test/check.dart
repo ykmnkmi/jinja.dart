@@ -6,10 +6,8 @@ import 'package:jinja/src/visitor.dart';
 import 'package:stack_trace/stack_trace.dart';
 
 const String source = '''
-{% macro test() %}
-  {{ varargs }}
-{% endmacro %}
-{{ test(1, 2) }}''';
+{% macro test() %}[[{{ caller() }}]]{% endmacro %}
+{% call test() %}data{% endcall %}''';
 
 const Map<String, Object?> context = <String, Object?>{
   'd': {'a': 13}
@@ -37,7 +35,7 @@ void main() {
     print(printer.visit(body));
 
     var macroses = <String>{};
-    body = body.accept(const RuntimeCompiler(), macroses);
+    body = body.accept(RuntimeCompiler(), macroses);
     print('\ncompiled body:');
     print(printer.visit(body));
 

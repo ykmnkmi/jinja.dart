@@ -575,14 +575,6 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
         throw TypeError();
       }
 
-      if (node.kwargs) {
-        throw UnimplementedError();
-      }
-
-      if (node.caller) {
-        throw UnimplementedError();
-      }
-
       var remaining = named.keys.toSet();
 
       while (iterator.moveNext()) {
@@ -594,6 +586,14 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
         } else {
           derived.set(key, defaultValue?.accept(this, context));
         }
+      }
+
+      if (node.kwargs) {
+        throw UnimplementedError();
+      }
+
+      if (node.caller) {
+        throw UnimplementedError();
       }
 
       node.body.accept(this, derived);
