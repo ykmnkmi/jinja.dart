@@ -9,6 +9,12 @@ enum AssignContext {
 final class Name extends Expression {
   const Name({required this.name, this.context = AssignContext.load});
 
+  const Name.store({required String name})
+      : this(name: name, context: AssignContext.store);
+
+  const Name.parameter({required String name})
+      : this(name: name, context: AssignContext.parameter);
+
   final String name;
 
   final AssignContext context;

@@ -1,3 +1,4 @@
+import 'package:jinja/src/exceptions.dart';
 import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/visitor.dart';
 import 'package:meta/meta.dart';
@@ -109,7 +110,6 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
         );
       }
 
-      // Is it a macro call?
       if (context.contains(name) || isMacro && name == 'caller') {
         // TODO(compiler): handle *varargs
         var arguments = node.calling.arguments;
@@ -300,11 +300,15 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
   CallBlock visitCallBlock(CallBlock node, Set<String> context) {
     return node.copyWith(
       call: visitNode(node.call, context),
-      arguments: <(Expression, Expression?)>[
-        for (var (argument, default_) in node.arguments)
+      positional: <Expression>[
+        for (var argument in node.positional)
+          argument.accept(this, context) as Expression,
+      ],
+      named: <(Expression, Expression)>[
+        for (var (argument, defaultValue) in node.named)
           (
             argument.accept(this, context) as Expression,
-            default_?.accept(this, context) as Expression?
+            defaultValue.accept(this, context) as Expression,
           )
       ],
       body: visitNode(node.body, context),
@@ -367,16 +371,42 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
   Macro visitMacro(Macro node, Set<String> context) {
     macroDepth += 1;
     context.add(node.name);
+
+    var positional = <Expression>[];
+    var named = <(Expression, Expression)>[];
+    var explicitCaller = false;
+
+    for (var argument in node.positional) {
+      if (argument case Name(name: 'caller')) {
+        throw TemplateAssertionError('When defining macros or call blocks '
+            'the special "caller" argument must be omitted or be given a '
+            'default.');
+      }
+
+      positional.add(argument.accept(this, context) as Expression);
+    }
+
+    for (var (argument, defaultValue) in node.named) {
+      if (argument case Name(name: 'caller')) {
+        explicitCaller = true;
+      }
+
+      named.add((
+        argument.accept(this, context) as Expression,
+        defaultValue.accept(this, context) as Expression,
+      ));
+    }
+
+    if (node.caller && !explicitCaller) {
+      named.add((Name.parameter(name: 'caller'), Constant(value: null)));
+    }
+
     node = node.copyWith(
-      arguments: <(Expression, Expression?)>[
-        for (var (argument, default_) in node.arguments)
-          (
-            argument.accept(this, context) as Expression,
-            default_?.accept(this, context) as Expression?
-          ),
-      ],
+      positional: positional,
+      named: named,
       body: visitNode(node.body, context),
     );
+
     macroDepth -= 1;
     return node;
   }

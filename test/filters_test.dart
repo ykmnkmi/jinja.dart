@@ -27,18 +27,18 @@ class FirstName {
   String? first;
 }
 
+bool noFilterNamedF(TemplateError error) {
+  return error.message == "No filter named 'f'";
+}
+
 void main() {
   group('Filter', () {
     var aNoFilterNamedF = throwsA(
-      predicate<TemplateAssertionError>(
-        (error) => error.message == "No filter named 'f'",
-      ),
+      predicate<TemplateAssertionError>(noFilterNamedF),
     );
 
     var rNoFilterNamedF = throwsA(
-      predicate<TemplateRuntimeError>(
-        (error) => error.message == "No filter named 'f'",
-      ),
+      predicate<TemplateRuntimeError>(noFilterNamedF),
     );
 
     test('filter calling', () {
@@ -577,7 +577,7 @@ void main() {
     // TODO(compiler): enable test
     test('filter undefined', () {
       expect(() => env.fromString('{{ var|f }}'), aNoFilterNamedF);
-    }, skip: 'Assertion checks not yet implemented.');
+    }, skip: true);
 
     test('filter undefined in if', () {
       var t1 = env.fromString(

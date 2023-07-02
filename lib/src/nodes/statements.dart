@@ -18,6 +18,14 @@ final class Extends extends Statement {
   Extends copyWith({String? path}) {
     return Extends(path: path ?? this.path);
   }
+
+  @override
+  Map<String, Object> toJson() {
+    return <String, Object>{
+      'class': 'Extends',
+      'path': path,
+    };
+  }
 }
 
 final class For extends Statement {
@@ -102,6 +110,19 @@ final class For extends Statement {
       yield* orElse.findAll<T>();
     }
   }
+
+  @override
+  Map<String, Object> toJson() {
+    return <String, Object>{
+      'class': 'For',
+      'target': target.toJson(),
+      'iterable': iterable.toJson(),
+      if (test case var test?) 'test': test.toJson(),
+      if (recursive) 'recursive': recursive,
+      'body': body.toJson(),
+      if (orElse case var orElse?) 'orElse': orElse.toJson(),
+    };
+  }
 }
 
 final class If extends Statement {
@@ -157,6 +178,16 @@ final class If extends Statement {
       yield* orElse.findAll<T>();
     }
   }
+
+  @override
+  Map<String, Object> toJson() {
+    return <String, Object>{
+      'class': 'If',
+      'test': test.toJson(),
+      'body': body.toJson(),
+      if (orElse case var orElse?) 'orElse': orElse.toJson(),
+    };
+  }
 }
 
 typedef MacroSignature = ({
@@ -164,40 +195,48 @@ typedef MacroSignature = ({
   List<Expression> defaults,
 });
 
+// TODO(nodes): change argument to String
 abstract final class MacroCall extends Statement {
   const MacroCall({
-    this.arguments = const <(Expression, Expression?)>[],
+    this.varargs = false,
+    this.kwargs = false,
+    this.positional = const <Expression>[],
+    this.named = const <(Expression, Expression)>[],
     required this.body,
   });
 
-  // TODO(nodes): change argument to String
+  final bool varargs;
+
+  final bool kwargs;
+
+  final List<Expression> positional;
+
   // TODO(nodes): split arguments and defaults
-  final List<(Expression, Expression?)> arguments;
+  final List<(Expression, Expression)> named;
 
   final Node body;
 
   @override
   MacroCall copyWith({
-    List<(Expression, Expression?)>? arguments,
+    List<Expression>? positional,
+    List<(Expression, Expression)>? named,
     Node? body,
   });
 
   @override
   Iterable<T> findAll<T extends Node>() sync* {
-    for (var (argument, default_) in arguments) {
+    for (var (argument, defaultValue) in named) {
       if (argument case T argument) {
         yield argument;
       }
 
       yield* argument.findAll<T>();
 
-      if (default_ case Expression default_?) {
-        if (default_ case T default_) {
-          yield default_;
-        }
-
-        yield* default_.findAll<T>();
+      if (defaultValue case T defaultValue) {
+        yield defaultValue;
       }
+
+      yield* defaultValue.findAll<T>();
     }
 
     if (body case T body) {
@@ -211,18 +250,15 @@ abstract final class MacroCall extends Statement {
 final class Macro extends MacroCall {
   const Macro({
     required this.name,
-    super.arguments,
-    this.varargs = false,
-    this.kwargs = false,
+    super.varargs,
+    super.kwargs,
     this.caller = false,
+    super.positional,
+    super.named,
     required super.body,
   });
 
   final String name;
-
-  final bool varargs;
-
-  final bool kwargs;
 
   final bool caller;
 
@@ -234,7 +270,8 @@ final class Macro extends MacroCall {
   @override
   Macro copyWith({
     String? name,
-    List<(Expression, Expression?)>? arguments,
+    List<Expression>? positional,
+    List<(Expression, Expression)>? named,
     bool? varargs,
     bool? kwargs,
     bool? caller,
@@ -242,23 +279,48 @@ final class Macro extends MacroCall {
   }) {
     return Macro(
       name: name ?? this.name,
-      arguments: arguments ?? this.arguments,
+      positional: positional ?? this.positional,
+      named: named ?? this.named,
       varargs: varargs ?? this.varargs,
       kwargs: kwargs ?? this.kwargs,
       caller: caller ?? this.caller,
       body: body ?? this.body,
     );
   }
+
+  @override
+  Map<String, Object> toJson() {
+    return <String, Object>{
+      'class': 'Macro',
+      if (varargs) 'varargs': varargs,
+      if (kwargs) 'kwargs': kwargs,
+      if (caller) 'caller': caller,
+      'positional': <Map<String, Object>>[
+        for (var argument in positional) argument.toJson(),
+      ],
+      'named': <Map<String, Object>>[
+        for (var (argument, defaultValue) in named)
+          <String, Object>{
+            'argument': argument.toJson(),
+            'defaultValue': defaultValue.toJson(),
+          },
+      ],
+      'body': body.toJson(),
+    };
+  }
 }
 
 final class CallBlock extends MacroCall {
   CallBlock({
     required this.call,
-    super.arguments,
+    super.varargs,
+    super.kwargs,
+    super.positional,
+    super.named,
     required super.body,
   });
 
-  final Expression call;
+  final Call call;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -267,13 +329,15 @@ final class CallBlock extends MacroCall {
 
   @override
   CallBlock copyWith({
-    Expression? call,
-    List<(Expression, Expression?)>? arguments,
+    Call? call,
+    List<Expression>? positional,
+    List<(Expression, Expression)>? named,
     Node? body,
   }) {
     return CallBlock(
       call: call ?? this.call,
-      arguments: arguments ?? this.arguments,
+      positional: positional ?? this.positional,
+      named: named ?? this.named,
       body: body ?? this.body,
     );
   }
@@ -286,6 +350,26 @@ final class CallBlock extends MacroCall {
 
     yield* call.findAll<T>();
     yield* super.findAll<T>();
+  }
+
+  @override
+  Map<String, Object> toJson() {
+    return <String, Object>{
+      'class': 'CallBlock',
+      if (varargs) 'varargs': varargs,
+      if (kwargs) 'kwargs': kwargs,
+      'positional': <Map<String, Object>>[
+        for (var argument in positional) argument.toJson(),
+      ],
+      'named': <Map<String, Object>>[
+        for (var (argument, defaultValue) in named)
+          <String, Object>{
+            'argument': argument.toJson(),
+            'defaultValue': defaultValue.toJson(),
+          },
+      ],
+      'body': body.toJson(),
+    };
   }
 }
 
@@ -324,6 +408,17 @@ final class FilterBlock extends Statement {
     }
 
     yield* body.findAll<T>();
+  }
+
+  @override
+  Map<String, Object> toJson() {
+    return <String, Object>{
+      'class': 'FilterBlock',
+      'filters': <Map<String, Object>>[
+        for (var filter in filters) filter.toJson(),
+      ],
+      'body': body.toJson(),
+    };
   }
 }
 
@@ -382,6 +477,20 @@ final class With extends Statement {
 
     yield* body.findAll<T>();
   }
+
+  @override
+  Map<String, Object> toJson() {
+    return <String, Object>{
+      'class': 'With',
+      'targets': <Map<String, Object>>[
+        for (var target in targets) target.toJson(),
+      ],
+      'values': <Map<String, Object>>[
+        for (var value in values) value.toJson(),
+      ],
+      'body': body.toJson(),
+    };
+  }
 }
 
 final class Block extends Statement {
@@ -428,6 +537,16 @@ final class Block extends Statement {
 
     yield* body.findAll<T>();
   }
+
+  @override
+  Map<String, Object> toJson() {
+    return <String, Object>{
+      'class': 'Block',
+      if (scoped) 'scoped': scoped,
+      if (required) 'required': required,
+      'body': body.toJson(),
+    };
+  }
 }
 
 final class Include extends Statement implements ImportContext {
@@ -449,6 +568,15 @@ final class Include extends Statement implements ImportContext {
       template: template ?? this.template,
       withContext: withContext ?? this.withContext,
     );
+  }
+
+  @override
+  Map<String, Object> toJson() {
+    return <String, Object>{
+      'class': 'Include',
+      'template': template,
+      if (withContext) 'withContext': withContext,
+    };
   }
 }
 
@@ -476,6 +604,14 @@ final class Do extends Statement {
     }
 
     yield* value.findAll<T>();
+  }
+
+  @override
+  Map<String, Object> toJson() {
+    return <String, Object>{
+      'class': 'Do',
+      'value': value,
+    };
   }
 }
 
@@ -512,6 +648,15 @@ final class Assign extends Statement {
     }
 
     yield* value.findAll<T>();
+  }
+
+  @override
+  Map<String, Object> toJson() {
+    return <String, Object>{
+      'class': 'Assign',
+      'target': target.toJson(),
+      'value': value.toJson(),
+    };
   }
 }
 
@@ -568,6 +713,18 @@ final class AssignBlock extends Statement {
 
     yield* body.findAll<T>();
   }
+
+  @override
+  Map<String, Object> toJson() {
+    return <String, Object>{
+      'class': 'AssignBlock',
+      'target': target.toJson(),
+      'filters': <Map<String, Object>>[
+        for (var filter in filters) filter.toJson(),
+      ],
+      'body': body.toJson(),
+    };
+  }
 }
 
 final class AutoEscape extends Statement {
@@ -606,5 +763,14 @@ final class AutoEscape extends Statement {
     }
 
     yield* body.findAll<T>();
+  }
+
+  @override
+  Map<String, Object> toJson() {
+    return <String, Object>{
+      'class': 'AutoEscape',
+      'value': value.toJson(),
+      'body': body.toJson(),
+    };
   }
 }

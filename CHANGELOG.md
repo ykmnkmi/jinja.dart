@@ -1,4 +1,4 @@
-## 0.5.0-dev.26
+## 0.5.0-dev.27
 - minimal SDK version: 3.0.0.
 - internal changes.
 - added:
@@ -6,7 +6,7 @@
     - `Template.fromNode(Environment environment, {String? path, required Node body})` constructor
   - statements:
     - `macro`:
-      - `varargs`
+      - <del>`varargs`</del>
       - <del>`kwargs`</del>
       - <del>`caller`</del>
     - <del>`call`</del>

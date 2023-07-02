@@ -429,7 +429,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
 
   @override
   void visitCallBlock(CallBlock node, StringSinkRenderContext context) {
-    throw UnimplementedError();
+    node.call.accept(this, context);
   }
 
   @override
@@ -551,52 +551,44 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
 
   @override
   void visitMacro(Macro node, StringSinkRenderContext context) {
-    // TODO(renderer): handle kwargs
-    // TODO(renderer): handle caller
-    void callback(List<Object?> positional, Map<Object?, Object?> named) {
+    // TODO(renderer): handle varargs, kwargs
+    String callback(List<Object?> positional, Map<Object?, Object?> named) {
       var derived = context.derived();
-      var iterator = node.arguments.iterator;
-      var length = positional.length;
       var index = 0;
 
+      var length = node.positional.length;
+
       for (; index < length; index += 1) {
-        if (iterator.moveNext()) {
-          var (argument, _) = iterator.current;
-          var key = argument.accept(this, context) as String;
-          derived.set(key, positional[index]);
-        } else {
-          break;
-        }
+        var key = node.positional[index].accept(this, context) as String;
+        derived.set(key, positional[index]);
       }
 
       if (node.varargs) {
-        derived.set('varargs', positional.sublist(index));
-      } else if (index < length) {
+        throw UnimplementedError();
+      } else if (index < positional.length) {
         throw TypeError();
       }
 
       var remaining = named.keys.toSet();
 
-      while (iterator.moveNext()) {
-        var (argument, defaultValue) = iterator.current;
+      for (var (argument, defaultValue) in node.named) {
         var key = argument.accept(this, context) as String;
 
         if (remaining.remove(key)) {
           derived.set(key, named[key]);
         } else {
-          derived.set(key, defaultValue?.accept(this, context));
+          derived.set(key, defaultValue.accept(this, context));
         }
       }
 
       if (node.kwargs) {
         throw UnimplementedError();
-      }
-
-      if (node.caller) {
-        throw UnimplementedError();
+      } else if (remaining.isNotEmpty) {
+        throw TypeError();
       }
 
       node.body.accept(this, derived);
+      return '';
     }
 
     context.set(node.name, callback);

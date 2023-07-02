@@ -11,6 +11,8 @@ abstract final class Node {
   Node copyWith();
 
   Iterable<T> findAll<T extends Node>() sync* {}
+
+  Map<String, Object> toJson();
 }
 
 final class Data extends Node {
@@ -39,13 +41,28 @@ final class Data extends Node {
   Data copyWith({String? data}) {
     return Data(data: data ?? this.data);
   }
+
+  @override
+  Map<String, Object> toJson() {
+    return <String, Object>{
+      'class': 'Data',
+      'data': data,
+    };
+  }
 }
 
-abstract final class Expression extends Node {
+abstract base class Expression extends Node {
   const Expression();
+
+  @override
+  Map<String, Object> toJson() {
+    return <String, Object>{
+      'class': 'Expression',
+    };
+  }
 }
 
-abstract final class Statement extends Node {
+abstract base class Statement extends Node {
   const Statement();
 }
 
@@ -71,6 +88,14 @@ final class Interpolation extends Node {
     }
 
     yield* value.findAll<T>();
+  }
+
+  @override
+  Map<String, Object> toJson() {
+    return <String, Object>{
+      'class': 'Interpolation',
+      'value': value.toJson(),
+    };
   }
 }
 
@@ -98,6 +123,16 @@ final class Output extends Node {
 
       yield* node.findAll<T>();
     }
+  }
+
+  @override
+  Map<String, Object> toJson() {
+    return <String, Object>{
+      'class': 'Output',
+      'nodes': <Map<String, Object>>[
+        for (var node in nodes) node.toJson(),
+      ],
+    };
   }
 }
 
@@ -133,5 +168,16 @@ final class TemplateNode extends Node {
     }
 
     yield* body.findAll<T>();
+  }
+
+  @override
+  Map<String, Object> toJson() {
+    return <String, Object>{
+      'class': 'TemplateNode',
+      'blocks': <Map<String, Object>>[
+        for (var block in blocks) block.toJson(),
+      ],
+      'body': body.toJson(),
+    };
   }
 }

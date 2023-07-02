@@ -353,7 +353,7 @@ void main() {
       );
 
       expect(() => env.fromString('{{ x is f }}'), matcher);
-    }, skip: 'Assertion checks not yet implemented');
+    }, skip: true);
 
     test('name undefined in if', () {
       var tmpl = env.fromString('{% if x is defined %}{{ x is f }}{% endif %}');
