@@ -3,7 +3,7 @@ import 'package:jinja/src/visitor.dart';
 part 'nodes/expressions.dart';
 part 'nodes/statements.dart';
 
-abstract final class Node {
+abstract base class Node {
   const Node();
 
   R accept<C, R>(Visitor<C, R> visitor, C context);
@@ -12,7 +12,7 @@ abstract final class Node {
 
   Iterable<T> findAll<T extends Node>() sync* {}
 
-  Map<String, Object> toJson();
+  Map<String, Object?> toJson();
 }
 
 final class Data extends Node {
@@ -43,8 +43,8 @@ final class Data extends Node {
   }
 
   @override
-  Map<String, Object> toJson() {
-    return <String, Object>{
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
       'class': 'Data',
       'data': data,
     };
@@ -55,8 +55,8 @@ abstract base class Expression extends Node {
   const Expression();
 
   @override
-  Map<String, Object> toJson() {
-    return <String, Object>{
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
       'class': 'Expression',
     };
   }
@@ -91,8 +91,8 @@ final class Interpolation extends Node {
   }
 
   @override
-  Map<String, Object> toJson() {
-    return <String, Object>{
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
       'class': 'Interpolation',
       'value': value.toJson(),
     };
@@ -126,10 +126,10 @@ final class Output extends Node {
   }
 
   @override
-  Map<String, Object> toJson() {
-    return <String, Object>{
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
       'class': 'Output',
-      'nodes': <Map<String, Object>>[
+      'nodes': <Map<String, Object?>>[
         for (var node in nodes) node.toJson(),
       ],
     };
@@ -171,10 +171,10 @@ final class TemplateNode extends Node {
   }
 
   @override
-  Map<String, Object> toJson() {
-    return <String, Object>{
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
       'class': 'TemplateNode',
-      'blocks': <Map<String, Object>>[
+      'blocks': <Map<String, Object?>>[
         for (var block in blocks) block.toJson(),
       ],
       'body': body.toJson(),

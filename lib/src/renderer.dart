@@ -429,6 +429,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
 
   @override
   void visitCallBlock(CallBlock node, StringSinkRenderContext context) {
+    print(node.call.toJson());
     node.call.accept(this, context);
   }
 

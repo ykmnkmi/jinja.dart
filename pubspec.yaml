@@ -1,5 +1,5 @@
 name: jinja
-version: 0.5.0-dev.27
+version: 0.5.0-dev.28
 description: >-
   Jinja2 template engine for Dart.
   Variables, expressions, control structures and template inheritance.

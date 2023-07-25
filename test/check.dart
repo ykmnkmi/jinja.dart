@@ -11,8 +11,9 @@ import 'package:jinja/src/optimizer.dart';
 import 'package:stack_trace/stack_trace.dart';
 
 const String source = '''
-{% macro m(a, b, c='c', d='d') %}{{ a }}|{{ b }}|{{ c }}|{{ d }}{% endmacro %}
-{{ m('a', 'b') }}|{{ m(1, 2, c=3) }}''';
+{% set caller = 42 -%}
+{% macro test() %}{{ caller is eq null }}{% endmacro -%}
+{{ test() }}''';
 
 const Map<String, Object?> context = <String, Object?>{
   'd': {'a': 13}
@@ -32,24 +33,24 @@ void main() {
     // }
 
     var body = environment.scan(tokens);
-    var original = jsonEncoder.convert(body.toJson());
+    // var original = jsonEncoder.convert(body.toJson());
 
     body = body.accept(const Optimizer(), Context(environment));
 
-    var optimized = jsonEncoder.convert(body.toJson());
+    // var optimized = jsonEncoder.convert(body.toJson());
 
     var macroses = <String>{};
     body = body.accept(RuntimeCompiler(), macroses);
 
-    var compiled = jsonEncoder.convert(body.toJson());
-    compare(original, optimized, compiled);
+    // var compiled = jsonEncoder.convert(body.toJson());
+    // compare(original, optimized, compiled);
 
     var template = Template.fromNode(environment, body: body);
-    print('\nrender:');
+    print('render:');
     print(template.render(context));
   } catch (error, trace) {
     print(error);
-    print(Trace.format(trace, terse: true));
+    print(Trace.format(trace));
   }
 }
 

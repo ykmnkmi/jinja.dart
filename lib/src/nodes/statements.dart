@@ -20,8 +20,8 @@ final class Extends extends Statement {
   }
 
   @override
-  Map<String, Object> toJson() {
-    return <String, Object>{
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
       'class': 'Extends',
       'path': path,
     };
@@ -112,8 +112,8 @@ final class For extends Statement {
   }
 
   @override
-  Map<String, Object> toJson() {
-    return <String, Object>{
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
       'class': 'For',
       'target': target.toJson(),
       'iterable': iterable.toJson(),
@@ -180,8 +180,8 @@ final class If extends Statement {
   }
 
   @override
-  Map<String, Object> toJson() {
-    return <String, Object>{
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
       'class': 'If',
       'test': test.toJson(),
       'body': body.toJson(),
@@ -289,18 +289,18 @@ final class Macro extends MacroCall {
   }
 
   @override
-  Map<String, Object> toJson() {
-    return <String, Object>{
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
       'class': 'Macro',
       if (varargs) 'varargs': varargs,
       if (kwargs) 'kwargs': kwargs,
       if (caller) 'caller': caller,
-      'positional': <Map<String, Object>>[
+      'positional': <Map<String, Object?>>[
         for (var argument in positional) argument.toJson(),
       ],
-      'named': <Map<String, Object>>[
+      'named': <Map<String, Object?>>[
         for (var (argument, defaultValue) in named)
-          <String, Object>{
+          <String, Object?>{
             'argument': argument.toJson(),
             'defaultValue': defaultValue.toJson(),
           },
@@ -353,17 +353,17 @@ final class CallBlock extends MacroCall {
   }
 
   @override
-  Map<String, Object> toJson() {
-    return <String, Object>{
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
       'class': 'CallBlock',
       if (varargs) 'varargs': varargs,
       if (kwargs) 'kwargs': kwargs,
-      'positional': <Map<String, Object>>[
+      'positional': <Map<String, Object?>>[
         for (var argument in positional) argument.toJson(),
       ],
-      'named': <Map<String, Object>>[
+      'named': <Map<String, Object?>>[
         for (var (argument, defaultValue) in named)
-          <String, Object>{
+          <String, Object?>{
             'argument': argument.toJson(),
             'defaultValue': defaultValue.toJson(),
           },
@@ -411,10 +411,10 @@ final class FilterBlock extends Statement {
   }
 
   @override
-  Map<String, Object> toJson() {
-    return <String, Object>{
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
       'class': 'FilterBlock',
-      'filters': <Map<String, Object>>[
+      'filters': <Map<String, Object?>>[
         for (var filter in filters) filter.toJson(),
       ],
       'body': body.toJson(),
@@ -479,13 +479,13 @@ final class With extends Statement {
   }
 
   @override
-  Map<String, Object> toJson() {
-    return <String, Object>{
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
       'class': 'With',
-      'targets': <Map<String, Object>>[
+      'targets': <Map<String, Object?>>[
         for (var target in targets) target.toJson(),
       ],
-      'values': <Map<String, Object>>[
+      'values': <Map<String, Object?>>[
         for (var value in values) value.toJson(),
       ],
       'body': body.toJson(),
@@ -539,8 +539,8 @@ final class Block extends Statement {
   }
 
   @override
-  Map<String, Object> toJson() {
-    return <String, Object>{
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
       'class': 'Block',
       if (scoped) 'scoped': scoped,
       if (required) 'required': required,
@@ -571,8 +571,8 @@ final class Include extends Statement implements ImportContext {
   }
 
   @override
-  Map<String, Object> toJson() {
-    return <String, Object>{
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
       'class': 'Include',
       'template': template,
       if (withContext) 'withContext': withContext,
@@ -607,8 +607,8 @@ final class Do extends Statement {
   }
 
   @override
-  Map<String, Object> toJson() {
-    return <String, Object>{
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
       'class': 'Do',
       'value': value,
     };
@@ -651,8 +651,8 @@ final class Assign extends Statement {
   }
 
   @override
-  Map<String, Object> toJson() {
-    return <String, Object>{
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
       'class': 'Assign',
       'target': target.toJson(),
       'value': value.toJson(),
@@ -715,11 +715,11 @@ final class AssignBlock extends Statement {
   }
 
   @override
-  Map<String, Object> toJson() {
-    return <String, Object>{
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
       'class': 'AssignBlock',
       'target': target.toJson(),
-      'filters': <Map<String, Object>>[
+      'filters': <Map<String, Object?>>[
         for (var filter in filters) filter.toJson(),
       ],
       'body': body.toJson(),
@@ -766,8 +766,8 @@ final class AutoEscape extends Statement {
   }
 
   @override
-  Map<String, Object> toJson() {
-    return <String, Object>{
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
       'class': 'AutoEscape',
       'value': value.toJson(),
       'body': body.toJson(),

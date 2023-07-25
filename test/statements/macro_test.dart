@@ -71,9 +71,9 @@ void main() {
     test('caller undefined', () {
       var tmpl = environment.fromString('''
 {% set caller = 42 -%}
-{% macro test() %}{{ caller is not defined }}{% endmacro -%}
+{% macro test() %}{{ caller is eq null }}{% endmacro -%}
 {{ test() }}''');
       expect(tmpl.render(), equals('true'));
-    }, skip: true);
+    });
   });
 }

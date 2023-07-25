@@ -28,6 +28,15 @@ final class Name extends Expression {
   Name copyWith({String? name, AssignContext? context}) {
     return Name(name: name ?? this.name, context: context ?? this.context);
   }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'class': 'Name',
+      'name': name,
+      'context': context.name,
+    };
+  }
 }
 
 final class NamespaceRef extends Expression {
@@ -49,9 +58,18 @@ final class NamespaceRef extends Expression {
       attribute: attribute ?? this.attribute,
     );
   }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'class': 'NamespaceRef',
+      'name': name,
+      'attribute': attribute,
+    };
+  }
 }
 
-abstract final class Literal extends Expression {
+abstract base class Literal extends Expression {
   const Literal();
 }
 
@@ -68,6 +86,14 @@ final class Constant extends Literal {
   @override
   Constant copyWith({Object? value}) {
     return Constant(value: value ?? this.value);
+  }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'class': 'Constant',
+      'value': value,
+    };
   }
 }
 
@@ -98,6 +124,16 @@ final class Tuple extends Literal {
       yield* value.findAll<T>();
     }
   }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'class': 'Tuple',
+      'values': <Map<String, Object?>>[
+        for (var value in values) value.toJson(),
+      ],
+    };
+  }
 }
 
 final class Array extends Literal {
@@ -124,6 +160,16 @@ final class Array extends Literal {
 
       yield* value.findAll<T>();
     }
+  }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'class': 'Array',
+      'values': <Map<String, Object?>>[
+        for (var value in values) value.toJson(),
+      ],
+    };
   }
 }
 
@@ -162,6 +208,20 @@ final class Dict extends Literal {
 
       yield* value.findAll<T>();
     }
+  }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'class': 'Tuple',
+      'values': <Map<String, Object?>>[
+        for (var (:key, :value) in pairs)
+          <String, Object?>{
+            'key': key.toJson(),
+            'value': value.toJson(),
+          },
+      ],
+    };
   }
 }
 
@@ -217,6 +277,17 @@ final class Condition extends Expression {
     if (falseValue case Expression falseValue?) {
       yield* falseValue.findAll<T>();
     }
+  }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'class': 'Condition',
+      'test': test.toJson(),
+      'trueValue': trueValue.toJson(),
+      if (falseValue case Expression falseValue?)
+        'falseValue': falseValue.toJson(),
+    };
   }
 }
 
@@ -294,6 +365,26 @@ final class Calling extends Expression {
       yield* dKeywords.findAll<T>();
     }
   }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'class': 'Calling',
+      'arguments': <Map<String, Object?>>[
+        for (var argument in arguments) argument.toJson(),
+      ],
+      'keywords': <Map<String, Object?>>[
+        for (var (:key, :value) in keywords)
+          <String, Object?>{
+            'key': key,
+            'value': value.toJson(),
+          },
+      ],
+      if (dArguments case Expression dArguments?)
+        'dArguments': dArguments.toJson(),
+      if (dKeywords case Expression dKeywords?) 'dKeywords': dKeywords.toJson(),
+    };
+  }
 }
 
 final class Call extends Expression {
@@ -333,6 +424,15 @@ final class Call extends Expression {
 
     yield* calling.findAll<T>();
   }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'class': 'Call',
+      'value': value.toJson(),
+      'calling': calling.toJson(),
+    };
+  }
 }
 
 final class Filter extends Expression {
@@ -363,6 +463,15 @@ final class Filter extends Expression {
 
     yield* calling.findAll<T>();
   }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'class': 'Filter',
+      'name': name,
+      'calling': calling.toJson(),
+    };
+  }
 }
 
 final class Test extends Expression {
@@ -392,6 +501,15 @@ final class Test extends Expression {
     }
 
     yield* calling.findAll<T>();
+  }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'class': 'Test',
+      'name': name,
+      'calling': calling.toJson(),
+    };
   }
 }
 
@@ -426,6 +544,15 @@ final class Item extends Expression {
 
     yield* value.findAll<T>();
   }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'class': 'Item',
+      'key': key.toJson(),
+      'value': value.toJson(),
+    };
+  }
 }
 
 final class Attribute extends Expression {
@@ -456,6 +583,15 @@ final class Attribute extends Expression {
 
     yield* value.findAll<T>();
   }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'class': 'Item',
+      'attribute': attribute,
+      'value': value.toJson(),
+    };
+  }
 }
 
 final class Concat extends Expression {
@@ -482,6 +618,16 @@ final class Concat extends Expression {
 
       yield* value.findAll<T>();
     }
+  }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'class': 'Concat',
+      'values': <Map<String, Object?>>[
+        for (var value in values) value.toJson(),
+      ],
+    };
   }
 }
 
@@ -559,6 +705,21 @@ final class Compare extends Expression {
       yield* value.findAll<T>();
     }
   }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'class': 'Compare',
+      'value': value.toJson(),
+      'operands': <Map<String, Object?>>[
+        for (var (operand, value) in operands)
+          <String, Object?>{
+            'operand': operand.symbol,
+            'value': value.toJson(),
+          },
+      ],
+    };
+  }
 }
 
 enum UnaryOperator {
@@ -598,6 +759,15 @@ final class Unary extends Expression {
     }
 
     yield* value.findAll<T>();
+  }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'class': 'Unary',
+      'operator': operator.symbol,
+      'value': value.toJson(),
+    };
   }
 }
 
@@ -671,6 +841,16 @@ final class Scalar extends Binary<ScalarOperator> {
       right: right ?? this.right,
     );
   }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'class': 'Scalar',
+      'operator': operator.symbol,
+      'left': left.toJson(),
+      'right': right.toJson(),
+    };
+  }
 }
 
 enum LogicalOperator {
@@ -701,5 +881,15 @@ final class Logical extends Binary<LogicalOperator> {
       left: left ?? this.left,
       right: right ?? this.right,
     );
+  }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'class': 'Logical',
+      'operator': operator.name,
+      'left': left.toJson(),
+      'right': right.toJson(),
+    };
   }
 }
