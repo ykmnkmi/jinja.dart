@@ -429,7 +429,6 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
 
   @override
   void visitCallBlock(CallBlock node, StringSinkRenderContext context) {
-    print(node.call.toJson());
     node.call.accept(this, context);
   }
 
@@ -472,12 +471,17 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
     var iterable = node.iterable.accept(this, context);
 
     if (iterable == null) {
-      // TODO: update error
-      throw ArgumentError.notNull('${node.iterable}');
+      throw ArgumentError.notNull('iterable');
     }
 
     String render(Object? iterable, [int depth = 0]) {
-      var values = list(iterable is Map ? iterable.entries : iterable);
+      List<Object?> values;
+
+      if (iterable is Map) {
+        values = iterable.entries.toList();
+      } else {
+        values = list(iterable);
+      }
 
       if (values.isEmpty) {
         if (node.orElse case var orElse?) {

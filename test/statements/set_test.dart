@@ -2,19 +2,19 @@ import 'package:jinja/jinja.dart';
 import 'package:jinja/reflection.dart';
 import 'package:test/test.dart';
 
+import '../environment.dart';
+
 const emptyMap = <Object?, Object?>{};
 
 void main() {
   group('Set', () {
     test('normal', () {
-      var env = Environment(trimBlocks: true);
-      var tmpl = env.fromString('{% set foo = 1 %}{{ foo }}');
+      var tmpl = envTrim.fromString('{% set foo = 1 %}{{ foo }}');
       expect(tmpl.render(), equals('1'));
     });
 
     test('block', () {
-      var env = Environment(trimBlocks: true);
-      var tmpl = env.fromString('{% set foo %}42{% endset %}{{ foo }}');
+      var tmpl = envTrim.fromString('{% set foo %}42{% endset %}{{ foo }}');
       expect(tmpl.render(), equals('42'));
     });
 
@@ -27,10 +27,9 @@ void main() {
     });
 
     test('set invalid', () {
-      var env = Environment(trimBlocks: true);
-      expect(() => env.fromString('{% set foo["bar"] = 1 %}'),
+      expect(() => envTrim.fromString('{% set foo["bar"] = 1 %}'),
           throwsA(isA<TemplateSyntaxError>()));
-      var tmpl = env.fromString('{% set foo.bar = 1 %}');
+      var tmpl = envTrim.fromString('{% set foo.bar = 1 %}');
       expect(
           () => tmpl.render({'foo': emptyMap}),
           throwsA(predicate<TemplateRuntimeError>(
@@ -38,9 +37,8 @@ void main() {
     });
 
     test('namespace redefined', () {
-      var env = Environment(trimBlocks: true);
-      var tmpl =
-          env.fromString('{% set ns = namespace() %}{% set ns.bar = "hi" %}');
+      var tmpl = envTrim
+          .fromString('{% set ns = namespace() %}{% set ns.bar = "hi" %}');
       expect(
           () => tmpl.render({'namespace': () => emptyMap}),
           throwsA(predicate<TemplateRuntimeError>(
@@ -48,22 +46,19 @@ void main() {
     });
 
     test('namespace', () {
-      var env = Environment(trimBlocks: true);
-      var tmpl = env.fromString(
+      var tmpl = envTrim.fromString(
           '{% set ns = namespace() %}{% set ns.bar = "42" %}{{ ns.bar }}');
       expect(tmpl.render(), equals('42'));
     });
 
     test('namespace block', () {
-      var env = Environment(trimBlocks: true);
-      var tmpl = env.fromString(
+      var tmpl = envTrim.fromString(
           '{% set ns = namespace() %}{% set ns.bar %}42{% endset %}{{ ns.bar }}');
       expect(tmpl.render(), equals('42'));
     });
 
     test('init namespace', () {
-      var env = Environment(trimBlocks: true);
-      var tmpl = env.fromString('{% set ns = namespace(d, self=37) %}'
+      var tmpl = envTrim.fromString('{% set ns = namespace(d, self=37) %}'
           '{% set ns.b = 42 %}'
           '{{ ns.a }}|{{ ns.self }}|{{ ns.b }}');
       expect(
@@ -74,8 +69,7 @@ void main() {
     });
 
     test('namespace loop', () {
-      var env = Environment(trimBlocks: true);
-      var tmpl = env.fromString('{% set ns = namespace(found=false) %}'
+      var tmpl = envTrim.fromString('{% set ns = namespace(found=false) %}'
           '{% for x in range(4) %}'
           '{% if x == v %}'
           '{% set ns.found = true %}'
@@ -86,7 +80,16 @@ void main() {
       expect(tmpl.render({'v': 4}), equals('false'));
     });
 
-    // TODO: add test: namespace macro
+    test('namespace macro', () {
+      var tmpl = envTrim.fromString('{% set ns = namespace() %}'
+          '{% set ns.a = 13 %}'
+          '{% macro magic(x) %}'
+          '{% set x.b = 37 %}'
+          '{% endmacro %}'
+          '{{ magic(ns) }}'
+          '{{ ns.a }}|{{ ns.b }}');
+      expect(tmpl.render(), equals('13|37'));
+    });
 
     test('block escapeing filtered', () {
       var env = Environment(autoEscape: true);
@@ -97,8 +100,7 @@ void main() {
     });
 
     test('block filtered', () {
-      var env = Environment(trimBlocks: true);
-      var tmpl = env.fromString(
+      var tmpl = envTrim.fromString(
           '{% set foo | trim | length | string %} 42    {% endset %}{{ foo }}');
       expect(tmpl.render(), equals('2'));
     });

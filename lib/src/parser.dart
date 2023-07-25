@@ -482,6 +482,12 @@ class Parser {
       fail('expected call', token.line);
     }
 
+    var name = call.value;
+
+    if (name is! Name) {
+      fail('expected call macro name', token.line);
+    }
+
     var body = parseStatements(reader, endCall, true);
     var varargs = false, kwargs = false;
 

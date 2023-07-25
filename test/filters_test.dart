@@ -178,8 +178,10 @@ void main() {
       expect(tmpl.render({'value': 'abc'}), equals('1.0'));
     });
 
-    // TODO(filter): add test - format
-    // test('format', () {});
+    test('format', () {
+      var tmpl = env.fromString("{{ '%s|%s'|format('a', 'b') }}");
+      expect(tmpl.render(), equals('a|b'));
+    }, skip: true);
 
     // TODO(filter): add test - indent
     // test('indent', () {});

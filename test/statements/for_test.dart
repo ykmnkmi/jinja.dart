@@ -51,7 +51,7 @@ void main() {
     test('empty blocks', () {
       var tmpl =
           env.fromString('<{% for item in seq %}{% else %}{% endfor %}>');
-      expect(tmpl.render({'seq': range(0)}), equals('<>'));
+      expect(tmpl.render({'seq': []}), equals('<>'));
     });
 
     test('map tuple', () {
@@ -238,32 +238,30 @@ void main() {
       expect(tmpl.render({'foo': range(0)}), equals(''));
     });
 
-    // TODO: uncomment test
-    // test('call in loop', () {
-    //   var tmpl = env.fromString('''
-    //     {%- macro do_something() -%}
-    //         [{{ caller() }}]
-    //     {%- endmacro %}
+    test('call in loop', () {
+      var tmpl = env.fromString('''
+        {%- macro doSomething() -%}
+            [{{ caller() }}]
+        {%- endmacro %}
 
-    //     {%- for i in [1, 2, 3] %}
-    //         {%- call do_something() -%}
-    //             {{ i }}
-    //         {%- endcall %}
-    //     {%- endfor -%}
-    //     ''');
-    //   expect(tmpl.render(), equals('[1][2][3]'));
-    // });
+        {%- for i in [1, 2, 3] %}
+            {%- call doSomething() -%}
+                {{ i }}
+            {%- endcall %}
+        {%- endfor -%}
+        ''');
+      expect(tmpl.render(), equals('[1][2][3]'));
+    }, skip: true);
 
-    // TODO: uncomment test
-    // test('scoping bug', () {
-    //   var tmpl = env.fromString('''
-    //     {%- for item in foo %}...{{ item }}...{% endfor %}
-    //     {%- macro item(a) %}...{{ a }}...{% endmacro %}
-    //     {{- item(2) -}}
-    //     ''');
-    //   var foo = [1];
-    //   expect(tmpl.render({'foo': foo}), equals('...1......2...'));
-    // });
+    test('scoping bug', () {
+      var tmpl = env.fromString('''
+        {%- for item in foo %}...{{ item }}...{% endfor %}
+        {%- macro item(a) %}...{{ a }}...{% endmacro %}
+        {{- item(2) -}}
+        ''');
+      var foo = [1];
+      expect(tmpl.render({'foo': foo}), equals('...1......2...'));
+    });
 
     test('unpacking', () {
       var tmpl = env.fromString(

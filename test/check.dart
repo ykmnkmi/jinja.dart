@@ -10,14 +10,10 @@ import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/optimizer.dart';
 import 'package:stack_trace/stack_trace.dart';
 
-const String source = '''
-{% set caller = 42 -%}
-{% macro test() %}{{ caller is eq null }}{% endmacro -%}
-{{ test() }}''';
+const String source = '''\
+''';
 
-const Map<String, Object?> context = <String, Object?>{
-  'd': {'a': 13}
-};
+const Map<String, Object?> context = <String, Object?>{};
 
 const JsonEncoder jsonEncoder = JsonEncoder.withIndent('  ');
 
