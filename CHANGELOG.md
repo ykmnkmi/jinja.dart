@@ -1,15 +1,12 @@
-## 0.5.0-dev.29
+## 0.5.0-beta.30
 - minimal SDK version: 3.0.0.
 - internal changes.
 - added:
   - `Template`:
     - `Template.fromNode(Environment environment, {String? path, required Node body})` constructor
   - statements:
-    - `macro`:
-      - <del>`varargs`</del>
-      - <del>`kwargs`</del>
-      - <del>`caller`</del>
-    - <del>`call`</del>
+    - `macro`
+    - `call`
 - changed:
   - `Environment`:
     - `Environment({modifiers})` from `List<NodeVisitor>` to `List<Node Function(Node)>`

@@ -68,12 +68,12 @@ abstract base class RenderContext extends Context {
       var values = list(current);
 
       if (values.length < strings.length) {
-        // TODO: update error
+        // TODO(renderer): update error
         throw StateError('Not enough values to unpack');
       }
 
       if (values.length > strings.length) {
-        // TODO: update error
+        // TODO(renderer): update error
         throw StateError('Too many values to unpack.');
       }
 
@@ -95,7 +95,7 @@ abstract base class RenderContext extends Context {
       throw TemplateRuntimeError('Non-namespace object');
     }
 
-    // TODO: update error
+    // TODO(renderer): update error
     throw TypeError();
   }
 }
@@ -133,6 +133,84 @@ final class StringSinkRenderContext extends RenderContext {
 
 class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
   const StringSinkRenderer();
+
+  Map<String, Object?> getDataForTargets(Object? targets, Object? current) {
+    if (targets case String string) {
+      return <String, Object?>{string: current};
+    }
+
+    if (targets case List<Object?> targets) {
+      var names = targets.cast<String>();
+      var values = list(current);
+
+      if (values.length < names.length) {
+        // TODO(renderer): update error
+        throw StateError(
+            'Not enough values to unpack (expected ${names.length}, '
+            'got ${values.length})');
+      }
+
+      if (values.length > names.length) {
+        // TODO(renderer): update error
+        throw StateError(
+            'Too many values to unpack (expected ${names.length})');
+      }
+
+      return <String, Object?>{
+        for (var i = 0; i < names.length; i++) names[i]: values[i]
+      };
+    }
+
+    // TODO(renderer): update error
+    throw ArgumentError.value(targets, 'targets', 'must be ListOr<String>');
+  }
+
+  MacroFunction getMacroFunction(
+    MacroCall node,
+    StringSinkRenderContext context,
+  ) {
+    return (List<Object?> positional, Map<Object?, Object?> named) {
+      var buffer = StringBuffer();
+      var derived = context.derived(sink: buffer);
+      var index = 0;
+
+      var length = node.positional.length;
+
+      for (; index < length; index += 1) {
+        var key = node.positional[index].accept(this, context) as String;
+        derived.set(key, positional[index]);
+      }
+
+      if (node.varargs) {
+        derived.set('varargs', positional.sublist(index));
+      } else if (index < positional.length) {
+        throw TypeError();
+      }
+
+      var remaining = named.keys.toSet();
+
+      for (var (argument, defaultValue) in node.named) {
+        var key = argument.accept(this, context) as String;
+
+        if (remaining.remove(key)) {
+          derived.set(key, named[key]);
+        } else {
+          derived.set(key, defaultValue.accept(this, context));
+        }
+      }
+
+      if (node.kwargs) {
+        derived.set('kwargs', <Object?, Object?>{
+          for (var key in remaining) key: named[key],
+        });
+      } else if (remaining.isNotEmpty) {
+        throw TypeError();
+      }
+
+      node.body.accept(this, derived);
+      return buffer.toString();
+    };
+  }
 
   // Expressions
 
@@ -370,7 +448,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
 
       context.assignTargets(target, value);
     } else {
-      // TODO: replace with Filter { BlockExpression ( AssignBlock ) }
+      // TODO(renderer): replace with Filter { BlockExpression ( AssignBlock ) }
       for (var Filter(name: name, calling: calling) in filters) {
         var (positional, named) = calling.accept(this, context) as Parameters;
         positional = [value, ...positional];
@@ -429,7 +507,11 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
 
   @override
   void visitCallBlock(CallBlock node, StringSinkRenderContext context) {
-    node.call.accept(this, context);
+    var function = node.call.value.accept(this, context) as MacroFunction;
+    var (arguments, _) = node.call.calling.accept(this, context) as Parameters;
+    var [positional as List, named as Map] = arguments;
+    named['caller'] = getMacroFunction(node, context);
+    context.write(context.call(function, <Object?>[positional, named]));
   }
 
   @override
@@ -557,46 +639,8 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
   @override
   void visitMacro(Macro node, StringSinkRenderContext context) {
     // TODO(renderer): handle varargs, kwargs
-    String callback(List<Object?> positional, Map<Object?, Object?> named) {
-      var derived = context.derived();
-      var index = 0;
-
-      var length = node.positional.length;
-
-      for (; index < length; index += 1) {
-        var key = node.positional[index].accept(this, context) as String;
-        derived.set(key, positional[index]);
-      }
-
-      if (node.varargs) {
-        throw UnimplementedError();
-      } else if (index < positional.length) {
-        throw TypeError();
-      }
-
-      var remaining = named.keys.toSet();
-
-      for (var (argument, defaultValue) in node.named) {
-        var key = argument.accept(this, context) as String;
-
-        if (remaining.remove(key)) {
-          derived.set(key, named[key]);
-        } else {
-          derived.set(key, defaultValue.accept(this, context));
-        }
-      }
-
-      if (node.kwargs) {
-        throw UnimplementedError();
-      } else if (remaining.isNotEmpty) {
-        throw TypeError();
-      }
-
-      node.body.accept(this, derived);
-      return '';
-    }
-
-    context.set(node.name, callback);
+    var function = getMacroFunction(node, context);
+    context.set(node.name, function);
   }
 
   @override
@@ -640,33 +684,4 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
     node.body.accept(this, context);
     context.restore(data);
   }
-}
-
-Map<String, Object?> getDataForTargets(Object? targets, Object? current) {
-  if (targets case String string) {
-    return <String, Object?>{string: current};
-  }
-
-  if (targets case List<Object?> targets) {
-    var names = targets.cast<String>();
-    var values = list(current);
-
-    if (values.length < names.length) {
-      // TODO: update error
-      throw StateError('Not enough values to unpack (expected ${names.length}, '
-          'got ${values.length})');
-    }
-
-    if (values.length > names.length) {
-      // TODO: update error
-      throw StateError('Too many values to unpack (expected ${names.length})');
-    }
-
-    return <String, Object?>{
-      for (var i = 0; i < names.length; i++) names[i]: values[i]
-    };
-  }
-
-  // TODO: update error
-  throw ArgumentError.value(targets, 'targets', 'must be ListOr<String>');
 }

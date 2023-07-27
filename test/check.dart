@@ -11,7 +11,8 @@ import 'package:jinja/src/optimizer.dart';
 import 'package:stack_trace/stack_trace.dart';
 
 const String source = '''\
-''';
+{% macro test(name='world') %}{{ kwargs }}{% endmacro %}
+{{ test(a=1, name='jhon') }}''';
 
 const Map<String, Object?> context = <String, Object?>{};
 
@@ -19,7 +20,7 @@ const JsonEncoder jsonEncoder = JsonEncoder.withIndent('  ');
 
 void main() {
   try {
-    var environment = Environment(trimBlocks: true);
+    var environment = Environment(leftStripBlocks: true, trimBlocks: true);
 
     var tokens = environment.lex(source);
     // print('tokens:');
@@ -35,8 +36,7 @@ void main() {
 
     // var optimized = jsonEncoder.convert(body.toJson());
 
-    var macroses = <String>{};
-    body = body.accept(RuntimeCompiler(), macroses);
+    body = body.accept(RuntimeCompiler(), <String>{});
 
     // var compiled = jsonEncoder.convert(body.toJson());
     // compare(original, optimized, compiled);

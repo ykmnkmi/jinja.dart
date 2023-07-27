@@ -52,21 +52,21 @@ void main() {
 {% macro test() %}{{ varargs|join('|') }}{% endmacro -%}
 {{ test(1, 2, 3) }}''');
       expect(tmpl.render(), equals('1|2|3'));
-    }, skip: true);
+    });
 
     test('simple call', () {
       var tmpl = environment.fromString('''
 {% macro test() %}[[{{ caller() }}]]{% endmacro -%}
 {% call test() %}data{% endcall %}''');
       expect(tmpl.render(), equals('[[data]]'));
-    }, skip: true);
+    });
 
     test('complex call', () {
       var tmpl = environment.fromString('''
 {% macro test() %}[[{{ caller('data') }}]]{% endmacro -%}
 {% call(data) test() %}{{ data }}{% endcall %}''');
       expect(tmpl.render(), equals('[[data]]'));
-    }, skip: true);
+    });
 
     test('caller undefined', () {
       var tmpl = environment.fromString('''

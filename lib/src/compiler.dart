@@ -59,8 +59,7 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
     // TODO(compiler): check name arguments
     if (node.value case Attribute(attribute: 'cycle', value: var value)) {
       if (value case Name(name: 'loop')) {
-        var calling = node.calling;
-
+        var calling = visitNode<Calling>(node.calling, context);
         var arguments = <Expression>[Array(values: calling.arguments)];
 
         if (calling.dArguments case var dArguments?) {
@@ -81,22 +80,23 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
     // TODO(compiler): handle super call
     if (node.value case Name(name: var name)) {
       if (name == 'namespace') {
-        var values = node.calling.arguments.toList();
+        var calling = visitNode<Calling>(node.calling, context);
+        var values = calling.arguments.toList();
 
-        if (node.calling.keywords.isNotEmpty) {
+        if (calling.keywords.isNotEmpty) {
           var pairs = <Pair>[
-            for (var (:key, :value) in node.calling.keywords)
+            for (var (:key, :value) in calling.keywords)
               (key: Constant(value: key), value: value)
           ];
 
           values.add(Dict(pairs: pairs));
         }
 
-        if (node.calling.dArguments case var dArguments?) {
+        if (calling.dArguments case var dArguments?) {
           values.add(dArguments);
         }
 
-        if (node.calling.dKeywords case var dKeywords?) {
+        if (calling.dKeywords case var dKeywords?) {
           values.add(dKeywords);
         }
 
@@ -110,12 +110,12 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
         );
       }
 
+      // TODO(compiler): handle *varargs
+      // TODO(compiler): handle *kvargs
       if (context.contains(name) || isMacro && name == 'caller') {
-        // TODO(compiler): handle *varargs
-        var arguments = node.calling.arguments;
-
-        // TODO(compiler): handle *kvargs
-        var keywords = node.calling.keywords;
+        var calling = visitNode<Calling>(node.calling, context);
+        var arguments = calling.arguments;
+        var keywords = calling.keywords;
 
         return node.copyWith(
           value: visitNode(node.value, context),
