@@ -312,7 +312,7 @@ void main() {
       var matcher = throwsA(isA<TemplateSyntaxError>());
       expect(() => env.fromString('{% set true = 42 %}'), matcher);
       expect(
-          () => env.fromString('{% for none in seq %}{% endfor %}'), matcher);
+          () => env.fromString('{% for null in seq %}{% endfor %}'), matcher);
     });
 
     test('localset', () {

@@ -1,20 +1,16 @@
 import 'package:jinja/src/environment.dart';
-import 'package:jinja/src/markup.dart';
 
 typedef ContextCallback<C extends Context> = void Function(C context);
 
 base class Context {
   Context(this.environment, {this.parent, Map<String, Object?>? data})
-      : context = <String, Object?>{...environment.globals, ...?data},
-        autoEscape = environment.autoEscape;
+      : context = <String, Object?>{...environment.globals, ...?data};
 
   final Environment environment;
 
   final Map<String, Object?>? parent;
 
   final Map<String, Object?> context;
-
-  bool autoEscape;
 
   Object? call(
     dynamic object, [
@@ -36,14 +32,6 @@ base class Context {
 
   Context derived({Map<String, Object?>? data}) {
     return Context(environment, parent: context, data: data);
-  }
-
-  Object escape(Object value) {
-    if (autoEscape) {
-      return Markup(value);
-    }
-
-    return value;
   }
 
   bool has(String key) {

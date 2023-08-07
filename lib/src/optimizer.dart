@@ -302,14 +302,6 @@ class Optimizer implements Visitor<Context, Node> {
   }
 
   @override
-  AutoEscape visitAutoEscape(AutoEscape node, Context context) {
-    return node.copyWith(
-      value: node.value.accept(this, context) as Expression,
-      body: node.body.accept(this, context),
-    );
-  }
-
-  @override
   Block visitBlock(Block node, Context context) {
     return node.copyWith(
       body: node.body.accept(this, context),

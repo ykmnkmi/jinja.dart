@@ -1,5 +1,4 @@
 import 'package:jinja/src/environment.dart';
-import 'package:jinja/src/markup.dart';
 
 /// Return `true` if the variable is odd.
 bool isOdd(int value) {
@@ -108,11 +107,6 @@ bool isIterable(Object? object) {
   return object is Iterable;
 }
 
-/// Check if the value is escaped.
-bool isEscaped(Object? value) {
-  return value is Markup;
-}
-
 /// Check if value is in sequence.
 bool isIn(Object? value, Object? values) {
   if (values case String strings) {
@@ -187,6 +181,7 @@ bool isCallable(dynamic object) {
   }
 }
 
+/// {@nodoc}
 final Map<String, Function> tests = <String, Function>{
   'odd': isOdd,
   'even': isEven,
@@ -210,7 +205,6 @@ final Map<String, Function> tests = <String, Function>{
   'list': isList,
   'sameas': isSameAs,
   'iterable': isIterable,
-  'escaped': isEscaped,
   'in': isIn,
   '!=': isNotEqual,
   '<': isLessThan,

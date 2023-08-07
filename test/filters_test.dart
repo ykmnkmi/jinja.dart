@@ -1,16 +1,15 @@
 import 'dart:math' show Random;
 
 import 'package:jinja/jinja.dart';
-import 'package:jinja/src/markup.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:test/test.dart';
 
 import 'environment.dart';
 
-class User {
-  User(this.name);
+class FirstName {
+  FirstName(this.first);
 
-  String? name;
+  String? first;
 }
 
 class FullName {
@@ -21,10 +20,10 @@ class FullName {
   String? last;
 }
 
-class FirstName {
-  FirstName(this.first);
+class User {
+  User(this.name);
 
-  String? first;
+  String? name;
 }
 
 bool noFilterNamedF(TemplateError error) {
@@ -42,9 +41,11 @@ void main() {
     );
 
     test('filter calling', () {
-      var nums = [1, 2, 3];
-      var positional = [nums];
-      expect(env.callFilter('sum', positional), equals(6));
+      expect(
+          env.callFilter('sum', [
+            [1, 2, 3]
+          ]),
+          equals(6));
     });
 
     test('capitalize', () {
@@ -69,8 +70,9 @@ void main() {
     });
 
     test('dictsort', () {
-      var foo = {'aa': 0, 'AB': 3, 'b': 1, 'c': 2};
-      var data = {'foo': foo};
+      var data = {
+        'foo': {'aa': 0, 'AB': 3, 'b': 1, 'c': 2}
+      };
       var tmpl = env.fromString('{{ foo|dictsort }}');
       expect(tmpl.render(data), equals('[[aa, 0], [AB, 3], [b, 1], [c, 2]]'));
       tmpl = env.fromString('{{ foo|dictsort(caseSensetive=true) }}');
@@ -114,9 +116,9 @@ void main() {
       var foo = '  <p>just a small   \n <a href="#">'
           'example</a> link</p>\n<p>to a webpage</p> '
           '<!-- <p>and some commented stuff</p> -->';
-      var data = {'foo': foo};
-      var result = env.fromString('{{ foo|striptags }}').render(data);
-      expect(result, equals('just a small example link to a webpage'));
+      var tmpl = env.fromString('{{ foo|striptags }}');
+      expect(tmpl.render({'foo': foo}),
+          equals('just a small example link to a webpage'));
     });
 
     test('filesizeformat', () {
@@ -178,19 +180,10 @@ void main() {
       expect(tmpl.render({'value': 'abc'}), equals('1.0'));
     });
 
-    test('format', () {
-      var tmpl = env.fromString("{{ '%s|%s'|format('a', 'b') }}");
-      expect(tmpl.render(), equals('a|b'));
-    }, skip: true);
-
-    // TODO(filter): add test - indent
-    // test('indent', () {});
-
-    // TODO(filter): add test - indent markup input
-    // test('indent markup input', () {});
-
-    // TODO(filter): add test - indent width string
-    // test('indent width string', () {});
+    // TODO(filters): add format test
+    // TODO(filters): add indent test
+    // TODO(filters): add indent markup input test
+    // TODO(filters): add indent width string test
 
     test('int', () {
       var tmpl = env.fromString('{{ value|int }}');
@@ -214,17 +207,15 @@ void main() {
     test('join', () {
       var tmpl = env.fromString('{{ [1, 2, 3]|join("|") }}');
       expect(tmpl.render(), equals('1|2|3'));
-
-      var env2 = Environment(autoEscape: true);
-      tmpl = env2.fromString('{{ ["<foo>", "<span>foo</span>"|safe]|join }}');
-      expect(tmpl.render(), equals('&lt;foo&gt;<span>foo</span>'));
     });
 
     test('join attribute', () {
-      var list = [User('foo'), User('bar')];
-      var data = {'users': list};
       var tmpl = env.fromString('{{ users|map(attribute="name")|join(", ") }}');
-      expect(tmpl.render(data), equals('foo, bar'));
+      expect(
+          tmpl.render({
+            'users': [User('foo'), User('bar')]
+          }),
+          equals('foo, bar'));
     });
 
     test('last', () {
@@ -242,14 +233,18 @@ void main() {
       expect(tmpl.render(), equals('foo'));
     });
 
-    // TODO(filter): add test - items
-    // test('items', () {});
+    test('items', () {
+      var d = 'abc'.split('').asMap();
+      var tmpl = env.fromString('{{ d|items|list }}');
+      expect(tmpl.render({'d': d}), equals('[[0, a], [1, b], [2, c]]'));
+    });
 
-    // TODO(filter): add test - items unefined
-    // test('items unefined', () {});
+    test('items undefined', () {
+      var tmpl = env.fromString('{{ d|items|list }}');
+      expect(tmpl.render(), equals('[]'));
+    });
 
-    // TODO(filter): add test - pprint
-    // test('pprint', () {});
+    // TODO(filters): add pprint test
 
     test('random', () {
       var expected = '1234567890';
@@ -276,39 +271,51 @@ void main() {
       expect(tmpl.render(data), equals('${[1, 2, 3, 4, 5]}'));
     });
 
-    // TODO(filter): add test - title
-    // test('title', () {});
+    test('title', () {
+      var tmpl = env.fromString('{{ "foo bar"|title }}');
+      expect(tmpl.render(), equals('Foo Bar'));
+      tmpl = env.fromString('''{{ "foo's bar"|title }}''');
+      expect(tmpl.render(), equals("Foo's Bar"));
+      tmpl = env.fromString('{{ "foo   bar"|title }}');
+      expect(tmpl.render(), equals('Foo   Bar'));
+      tmpl = env.fromString('{{ "f bar f"|title }}');
+      expect(tmpl.render(), equals('F Bar F'));
+      tmpl = env.fromString('{{ "foo-bar"|title }}');
+      expect(tmpl.render(), equals('Foo-Bar'));
+      tmpl = env.fromString('{{ "foo\tbar"|title }}');
+      expect(tmpl.render(), equals('Foo\tBar'));
+      tmpl = env.fromString('{{ "FOO\tBAR"|title }}');
+      expect(tmpl.render(), equals('Foo\tBar'));
+      tmpl = env.fromString('{{ "foo (bar)"|title }}');
+      expect(tmpl.render(), equals('Foo (Bar)'));
+      tmpl = env.fromString('{{ "foo {bar}"|title }}');
+      expect(tmpl.render(), equals('Foo {Bar}'));
+      tmpl = env.fromString('{{ "foo [bar]"|title }}');
+      expect(tmpl.render(), equals('Foo [Bar]'));
+      tmpl = env.fromString('''{{ "foo <bar>"|title }}''');
+      expect(tmpl.render(), equals('Foo <Bar>'));
+    });
 
     test('truncate', () {
       var data = {'data': 'foobar baz bar' * 10, 'smalldata': 'foobar baz bar'};
-
-      var tmpl = env.fromString(
-        '{{ data|truncate(length=15, killWords=true, end=">>>") }}',
-      );
-
+      var tmpl = env.fromString('{{ data|truncate(15, true, ">>>") }}');
       expect(tmpl.render(data), equals('foobar baz b>>>'));
-      tmpl = env.fromString('{{ data|truncate(length=15, end=">>>") }}');
+      tmpl = env.fromString('{{ data|truncate(15, false, ">>>") }}');
       expect(tmpl.render(data), equals('foobar baz>>>'));
-      tmpl = env.fromString('{{ smalldata|truncate(length=15) }}');
+      tmpl = env.fromString('{{ smalldata|truncate(15) }}');
       expect(tmpl.render(data), equals('foobar baz bar'));
     });
 
     test('truncate very short', () {
-      var tmpl = env.fromString('{{ "foo bar baz"|truncate(length=9) }}');
+      var tmpl = env.fromString('{{ "foo bar baz"|truncate(9) }}');
       expect(tmpl.render(), equals('foo bar baz'));
 
-      tmpl = env.fromString(
-        '{{ "foo bar"|truncate(length=6, killWords=true) }}',
-      );
-
+      tmpl = env.fromString('{{ "foo bar"|truncate(6, true) }}');
       expect(tmpl.render(), equals('foo bar'));
     });
 
     test('truncate end length', () {
-      var tmpl = env.fromString(
-        '{{ "Joel is a slug"|truncate(length=7, killWords=true) }}',
-      );
-
+      var tmpl = env.fromString('{{ "Joel is a slug"|truncate(7, true) }}');
       expect(tmpl.render(), equals('Joel...'));
     });
 
@@ -317,17 +324,10 @@ void main() {
       expect(tmpl.render(), equals('FOO'));
     });
 
-    // TODO(filter): add test - urlize
-    // test('urlize', () {});
-
-    // TODO(filter): add test - urlize rel policy
-    // test('urlize rel policy', () {});
-
-    // TODO(filter): add test - urlize target parameter
-    // test('urlize target parameter', () {});
-
-    // TODO(filter): add test - urlize extra schemes parameter
-    // test('urlize extra schemes parameter', () {});
+    // TODO(filters): add urlize test
+    // TODO(filters): add urlize rel policy test
+    // TODO(filters): add urlize target parameter test
+    // TODO(filters): add urlize extra schemes parameter test
 
     test('wordcount', () {
       var tmpl = env.fromString('{{ "foo bar baz"|wordcount }}');
@@ -351,39 +351,44 @@ void main() {
 
     test('sum attributes', () {
       var tmpl = env.fromString('{{ values|map(item="value")|sum }}');
-
-      var values = [
-        {'value': 23},
-        {'value': 1},
-        {'value': 18},
-      ];
-
-      expect(tmpl.render({'values': values}), equals('42'));
+      expect(
+          tmpl.render({
+            'values': [
+              {'value': 23},
+              {'value': 1},
+              {'value': 18},
+            ]
+          }),
+          equals('42'));
     });
 
     test('sum attributes nested', () {
       var tmpl = env.fromString('{{ values|map(attribute="real.value")|sum }}');
-
-      var values = [
-        {
-          'real': {'value': 23}
-        },
-        {
-          'real': {'value': 1}
-        },
-        {
-          'real': {'value': 18}
-        },
-      ];
-
-      expect(tmpl.render({'values': values}), equals('42'));
+      expect(
+          tmpl.render({
+            'values': [
+              {
+                'real': {'value': 23}
+              },
+              {
+                'real': {'value': 1}
+              },
+              {
+                'real': {'value': 18}
+              },
+            ]
+          }),
+          equals('42'));
     });
 
     test('sum attributes tuple', () {
       var tmpl =
           env.fromString('{{ values.entries|map("list")|map(item=1)|sum }}');
-      var values = {'foo': 23, 'bar': 1, 'baz': 18};
-      expect(tmpl.render({'values': values}), equals('42'));
+      expect(
+          tmpl.render({
+            'values': {'foo': 23, 'bar': 1, 'baz': 18}
+          }),
+          equals('42'));
     });
 
     test('abs', () {
@@ -391,84 +396,44 @@ void main() {
       expect(tmpl.render(), equals('1|1'));
     });
 
-    // TODO(filter): add test - round positive
-    // test('round positive', () {});
-
-    // TODO(filter): add test - round negative
-    // test('round negative', () {});
-
-    // TODO(filter): add test - xmlattr
-    // test('xmlattr', () {});
-
-    // TODO(filter): add test - sortN
-    // test('sortN', () {});
-
-    // TODO(filter): add test - unique
-    // test('unique', () {});
-
-    // TODO(filter): add test - unique case sensitive
-    // test('unique case sensitive', () {});
-
-    // TODO(filter): add test - unique attribute
-    // test('unique attribute', () {});
-
-    // TODO(filter): add test - min max
-    // test('min max', () {});
-
-    // TODO(filter): add test - min max attribute
-    // test('min max attribute', () {});
-
-    // TODO(filter): add test - groupby
-    // test('groupby', () {});
-
-    // TODO(filter): add test - groupby tuple index
-    // test('groupby tuple index', () {});
-
-    // TODO(filter): add test - groupby multidot
-    // test('groupby multidot', () {});
-
-    // TODO(filter): add test - groupby default
-    // test('groupby default', () {});
-
-    // TODO(filter): add test - groupby case
-    // test('groupby case', () {});
+    // TODO(filters): add round positive test
+    // TODO(filters): add round negative test
+    // TODO(filters): add xmlattr test
+    // TODO(filters): add sort1 test
+    // TODO(filters): add sort2 test
+    // TODO(filters): add sort3 test
+    // TODO(filters): add sort4 test
+    // TODO(filters): add sort5 test
+    // TODO(filters): add sort6 test
+    // TODO(filters): add sort7 test
+    // TODO(filters): add sort8 test
+    // TODO(filters): add unique test
+    // TODO(filters): add unique case sensitive test
+    // TODO(filters): add unique attribute test
+    // TODO(filters): add min max test
+    // TODO(filters): add min max attribute test
+    // TODO(filters): add groupby test
+    // TODO(filters): add groupby tuple index test
+    // TODO(filters): add groupby multidot test
+    // TODO(filters): add groupby default test
+    // TODO(filters): add groupby case test
 
     test('filtertag', () {
       var tmpl = env.fromString(
-        '{% filter upper|replace("FOO", "foo") %}foobar{% endfilter %}',
-      );
-
+          '{% filter upper|replace("FOO", "foo") %}foobar{% endfilter %}');
       expect(tmpl.render(), equals('fooBAR'));
     });
 
     test('replace', () {
       var tmpl = env.fromString('{{ string|replace("o", "42") }}');
       expect(tmpl.render({'string': '<foo>'}), equals('<f4242>'));
-
-      var env2 = Environment(autoEscape: true);
-      tmpl = env2.fromString('{{ string|replace("o", "42") }}');
-      expect(tmpl.render({'string': '<foo>'}), equals('&lt;f4242&gt;'));
-      tmpl = env2.fromString('{{ string|replace("<", "42") }}');
-      expect(tmpl.render({'string': '<foo>'}), equals('42foo&gt;'));
-      tmpl = env2.fromString('{{ string|replace("o", ">x<") }}');
-      expect(tmpl.render({'string': 'foo'}), equals('f&gt;x&lt;&gt;x&lt;'));
     });
 
-    test('forceescape', () {
-      var tmpl = env.fromString('{{ x|forceescape }}');
-      var div = Markup.escaped('<div />');
-      expect(tmpl.render({'x': div}), equals('&lt;div /&gt;'));
-    });
+    test('forceescape', () {}, skip: 'unsupported');
 
-    test('safe', () {
-      var env = Environment(autoEscape: true);
-      var tmpl = env.fromString('{{ "<div>foo</div>"|safe }}');
-      expect(tmpl.render(), equals('<div>foo</div>'));
-      tmpl = env.fromString('{{ "<div>foo</div>" }}');
-      expect(tmpl.render(), equals('&lt;div&gt;foo&lt;/div&gt;'));
-    });
+    test('safe', () {}, skip: 'unsupported');
 
-    // TODO(filter): add test - urlencode
+    // TODO(filters): add urlencode test
     // test('urlencode', () {});
 
     test('simple map', () {
@@ -535,32 +500,31 @@ void main() {
       expect(tmpl.render(data), equals('lennon, , '));
     });
 
-    // TODO(filter): add test - simple select
+    // TODO(filters): add simple select test
     // test('simple select', () {});
 
-    // TODO(filter): add test - bool select
+    // TODO(filters): add bool select test
     // test('bool select', () {});
 
-    // TODO(filter): add test - simple reject
+    // TODO(filters): add simple reject test
     // test('simple reject', () {});
 
-    // TODO(filter): add test - bool reject
+    // TODO(filters): add bool reject test
     // test('bool reject', () {});
 
-    // TODO(filter): add test - simple select attr
+    // TODO(filters): add simple select attr test
     // test('simple select attr', () {});
 
-    // TODO(filter): add test - simple reject attr
+    // TODO(filters): add simple reject attr test
     // test('simple reject attr', () {});
 
-    // TODO(filter): add test - func select attr
+    // TODO(filters): add func select attr test
     // test('func select attr', () {});
 
-    // TODO(filter): add test - func reject attr
+    // TODO(filters): add func reject attr test
     // test('func reject attr', () {});
 
     test('json dump', () {
-      var env = Environment(autoEscape: true);
       var tmpl = env.fromString('{{ x|tojson }}');
       var x = {'foo': 'bar'};
       expect(tmpl.render({'x': x}), equals('{"foo":"bar"}'));

@@ -47,8 +47,6 @@ abstract class Visitor<C, R> {
 
   R visitAssignBlock(AssignBlock node, C context);
 
-  R visitAutoEscape(AutoEscape node, C context);
-
   R visitBlock(Block node, C context);
 
   R visitCallBlock(CallBlock node, C context);
@@ -90,11 +88,6 @@ class ThrowingVisitor<C, R> implements Visitor<C, R> {
 
   @override
   R visitAttribute(Attribute node, C context) {
-    throw UnimplementedError('$node');
-  }
-
-  @override
-  R visitAutoEscape(AutoEscape node, C context) {
     throw UnimplementedError('$node');
   }
 

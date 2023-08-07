@@ -173,7 +173,7 @@ void main() {
 
     test('lstrip', () {
       var env = Environment(leftStripBlocks: true, trimBlocks: false);
-      var tmpl = env.fromString('    {% if True %}\n    {% endif %}');
+      var tmpl = env.fromString('    {% if true %}\n    {% endif %}');
       expect(tmpl.render(), equals('\n'));
     });
 
@@ -191,34 +191,34 @@ void main() {
 
     test('lstrip blocks false with no lstrip', () {
       var env = Environment(leftStripBlocks: false, trimBlocks: false);
-      var tmpl = env.fromString('    {% if True %}\n    {% endif %}');
+      var tmpl = env.fromString('    {% if true %}\n    {% endif %}');
       expect(tmpl.render(), equals('    \n    '));
-      tmpl = env.fromString('    {%+ if True %}\n    {%+ endif %}');
+      tmpl = env.fromString('    {%+ if true %}\n    {%+ endif %}');
       expect(tmpl.render(), equals('    \n    '));
     });
 
     test('lstrip endline', () {
       var env = Environment(leftStripBlocks: true, trimBlocks: false);
-      var tmpl = env.fromString('  hello{% if True %}\n  goodbye{% endif %}');
+      var tmpl = env.fromString('  hello{% if true %}\n  goodbye{% endif %}');
       expect(tmpl.render(), equals('  hello\n  goodbye'));
     });
 
     test('lstrip inline', () {
       var env = Environment(leftStripBlocks: true, trimBlocks: false);
-      var tmpl = env.fromString('    {% if True %}hello    {% endif %}');
+      var tmpl = env.fromString('    {% if true %}hello    {% endif %}');
       expect(tmpl.render(), equals('hello    '));
     });
 
     test('lstrip nested', () {
       var env = Environment(leftStripBlocks: true, trimBlocks: false);
       var tmpl = env.fromString(
-          '    {% if True %}a {% if True %}b {% endif %}c {% endif %}');
+          '    {% if true %}a {% if true %}b {% endif %}c {% endif %}');
       expect(tmpl.render(), equals('a b c '));
     });
 
     test('lstrip left chars', () {
       var env = Environment(leftStripBlocks: true, trimBlocks: false);
-      var tmpl = env.fromString('''    abc {% if True %}
+      var tmpl = env.fromString('''    abc {% if true %}
         hello{% endif %}''');
       expect(tmpl.render(), equals('    abc \n        hello'));
     });
@@ -237,7 +237,7 @@ void main() {
 
     test('lstrip comment', () {
       var env = Environment(leftStripBlocks: true);
-      var tmpl = env.fromString('''    {# if True #}
+      var tmpl = env.fromString('''    {# if true #}
 hello
     {#endif#}''');
       expect(tmpl.render(), equals('\nhello\n'));
@@ -255,7 +255,7 @@ hello
           lineStatementPrefix: '%',
           leftStripBlocks: true,
           trimBlocks: true);
-      var tmpl = env.fromString('    <% if True %>hello    <% endif %>');
+      var tmpl = env.fromString('    <% if true %>hello    <% endif %>');
       expect(tmpl.render(), equals('hello    '));
     });
 
@@ -271,7 +271,7 @@ hello
           lineStatementPrefix: '%',
           leftStripBlocks: true,
           trimBlocks: true);
-      var tmpl = env.fromString('    <%# if True %>hello    <%# endif %>');
+      var tmpl = env.fromString('    <%# if true %>hello    <%# endif %>');
       expect(tmpl.render(), equals('hello    '));
     });
 
@@ -525,33 +525,33 @@ ${item} ## the rest of the stuff
   group('TrimBlocks', () {
     test('trim', () {
       var env = Environment(trimBlocks: true);
-      var tmpl = env.fromString('    {% if True %}\n    {% endif %}');
+      var tmpl = env.fromString('    {% if true %}\n    {% endif %}');
       expect(tmpl.render(), equals('        '));
     });
 
     test('no trim', () {
       var env = Environment(trimBlocks: true);
-      var tmpl = env.fromString('    {% if True +%}\n    {% endif %}');
+      var tmpl = env.fromString('    {% if true +%}\n    {% endif %}');
       expect(tmpl.render(), equals('    \n    '));
     });
 
     test('no trim outer', () {
       var env = Environment(trimBlocks: true);
-      var tmpl = env.fromString('{% if True %}X{% endif +%}\nmore things');
+      var tmpl = env.fromString('{% if true %}X{% endif +%}\nmore things');
       expect(tmpl.render(), equals('X\nmore things'));
     });
 
     test('lstrip no trim', () {
       var env = Environment(leftStripBlocks: true, trimBlocks: true);
-      var tmpl = env.fromString('    {% if True +%}\n    {% endif %}');
+      var tmpl = env.fromString('    {% if true +%}\n    {% endif %}');
       expect(tmpl.render(), equals('\n'));
     });
 
     test('trim blocks false with no trim', () {
       var env = Environment(leftStripBlocks: false, trimBlocks: false);
-      var tmpl = env.fromString('    {% if True %}\n    {% endif %}');
+      var tmpl = env.fromString('    {% if true %}\n    {% endif %}');
       expect(tmpl.render(), equals('    \n    '));
-      tmpl = env.fromString('    {% if True +%}\n    {% endif %}');
+      tmpl = env.fromString('    {% if true +%}\n    {% endif %}');
       expect(tmpl.render(), equals('    \n    '));
       tmpl = env.fromString('    {# comment #}\n    ');
       expect(tmpl.render(), equals('    \n    '));
@@ -566,14 +566,14 @@ ${item} ## the rest of the stuff
     test('trim nested', () {
       var env = Environment(leftStripBlocks: true, trimBlocks: true);
       var tmpl = env.fromString(
-          '    {% if True %}\na {% if True %}\nb {% endif %}\nc {% endif %}');
+          '    {% if true %}\na {% if true %}\nb {% endif %}\nc {% endif %}');
       expect(tmpl.render(), equals('a b c '));
     });
 
     test('no trim nested', () {
       var env = Environment(leftStripBlocks: true, trimBlocks: true);
       var tmpl = env.fromString(
-          '    {% if True +%}\na {% if True +%}\nb {% endif +%}\nc {% endif %}');
+          '    {% if true +%}\na {% if true +%}\nb {% endif +%}\nc {% endif %}');
       expect(tmpl.render(), equals('\na \nb \nc '));
     });
 
@@ -626,7 +626,7 @@ ${item} ## the rest of the stuff
           commentEnd: '%>',
           leftStripBlocks: true,
           trimBlocks: true);
-      var tmpl = env.fromString('    <% if True +%>\n\n    <% endif %>');
+      var tmpl = env.fromString('    <% if true +%>\n\n    <% endif %>');
       expect(tmpl.render(), equals('\n\n'));
       tmpl = env.fromString('    <%# comment +%>\n\n   ');
       expect(tmpl.render(), equals('\n\n   '));
@@ -641,7 +641,7 @@ ${item} ## the rest of the stuff
           commentStart: '<!--',
           commentEnd: '-->',
           trimBlocks: true);
-      var tmpl = env.fromString('    <? if True +?>\n\n    <? endif ?>');
+      var tmpl = env.fromString('    <? if true +?>\n\n    <? endif ?>');
       expect(tmpl.render(), equals('    \n\n    '));
       tmpl = env.fromString('    <!-- comment +-->\n\n    ');
       expect(tmpl.render(), equals('    \n\n    '));

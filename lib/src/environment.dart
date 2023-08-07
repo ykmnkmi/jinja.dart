@@ -86,7 +86,6 @@ class Environment {
     this.keepTrailingNewLine = false,
     this.optimize = true,
     Function finalize = defaults.finalize,
-    this.autoEscape = false,
     this.loader,
     this.autoReload = true,
     Map<String, Object?>? globals,
@@ -184,10 +183,6 @@ class Environment {
   /// For example one can convert `null` (`none`) implicitly into an empty
   /// string here.
   final ContextFinalizer finalize;
-
-  /// If set to `true` the XML/HTML autoescaping feature is enabled by
-  /// default.
-  final bool autoEscape;
 
   /// The template loader for this environment.
   final Loader? loader;
@@ -473,7 +468,6 @@ class Template {
       keepTrailingNewLine: keepTrailingNewLine,
       optimize: optimize,
       finalize: finalize,
-      autoEscape: autoEscape,
       autoReload: false,
       globals: globals,
       filters: filters,

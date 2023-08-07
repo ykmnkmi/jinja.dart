@@ -11,8 +11,9 @@ import 'package:jinja/src/optimizer.dart';
 import 'package:stack_trace/stack_trace.dart';
 
 const String source = '''\
-{% macro test(name='world') %}{{ kwargs }}{% endmacro %}
-{{ test(a=1, name='jhon') }}''';
+  {% if kvs %}(
+   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}
+  ){% endif %}''';
 
 const Map<String, Object?> context = <String, Object?>{};
 

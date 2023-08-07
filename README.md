@@ -7,25 +7,27 @@
 [Jinja][jinja] (3.x) server-side template engine port for Dart 2.
 Variables, expressions, control structures and template inheritance.
 
-## Version 0.4.0 introduces breaking changes
-See `CHANGELOG.md`.
+## Version 0.5.0 introduces breaking changes
+
+Auto-escaping and related filters and tests have been removed due to the impossibility of extending `String`. Use the `escape` filter manually or escape values before passing them to the template.
+
+For more information, see `CHANGELOG.md`.
 
 ## Documentation
 It is mostly similar to [Jinja][jinja_templates] templates documentation, differences provided below.
 _work in progress_.
 
 ## Differences with Python version
-- `BigInt` and complex numbers are not supported.
 - The `default` filter compares values with `null`; there is no `boolean` parameter.
 - The `defined` and `undefined` tests compare values with `null`.
 - The `map` filter also compares values with `null`.
-  Use `attribute` for `object.attribute` and `item` for `object[item]` expressions.
+  Use `attribute` and `item` filters for `object.attribute` and `object[item]` expressions.
+- If `Environment({getAttribute})` is not passed, the `getItem` method will be used.
+  This allows you to use `{{ map.key }}` as an expression equivalent to `{{ map['key'] }}`.
 - Not yet supported:
   - Slices and negative indexes
   - Conditional and variable `extends` statement variants
   - Choice, ignore missing and variable `include` statement variants
-- If `Environment({getAttribute})` is not passed, the `getItem` method will be used.
-  This allows you to use `{{ map.key }}` as an expression equivalent to `{{ map['key'] }}`.
 - _work in progress_
 
 ## Dynamically invoked members
@@ -52,19 +54,12 @@ See also examples with [conduit][conduit_example] and
 
 ## Status:
 ### TODO:
-- Environment
-  - constructor
-    - extensions
-    - selectAutoescape
-  - addExtension
-  - compileExpression
-  - policies
-- Template:
-  - generate
-  - stream
+- `Template`:
+  - `generate`
+  - `stream`
   - `await` support
-- HTML Escaping
-  - Automatic
+- Template Inheritance
+  - Template Objects
 - List of Control Structures
   - Macros 🔥
   - Call 🔥
@@ -72,21 +67,30 @@ See also examples with [conduit][conduit_example] and
 - Loaders
   - PackageLoader (VM)
   - ...
+- List of Global Functions
+  - `lipsum`
+  - `dict`
+  - `cycler`
+  - `joiner`
 - Extensions
   - i18n
-  - Expression Statement
   - Loop Controls
   - Debug Statement
 - Template compiler (builder)
 - ...
 
 ### Done:
+**Note**: ~~item~~ - _unsupported_
 - Variables
 - Filters
+  - ~~`forceescape`~~
+  - ~~`safe`~~
+  - ~~`unsafe`~~
 - Tests
+  - ~~`escaped`~~
 - Comments
 - Whitespace Control
-- Escaping
+- Escaping (only `escape` filter)
 - Line Statements
   - Comments
   - Blocks
@@ -97,8 +101,8 @@ See also examples with [conduit][conduit_example] and
   - Nesting extends
   - Named Block End-Tags
   - Block Nesting and Scope
-- HTML Escaping
-  - Manual
+  - Required Blocks
+- ~~HTML Escaping~~
 - List of Control Structures
   - For
   - If
@@ -110,19 +114,26 @@ See also examples with [conduit][conduit_example] and
   - Include
 - Import Context Behavior
   - Include
-- Expressions with [filters][filters] (not all) and [tests][tests]
+- Expressions with [filters][filters] and [tests][tests]
+  - Literals
+  - Math
+  - Comparisons
+  - Logic
+  - Other Operators
+  - If Expression
+  - Dart Methods
 - List of Global Functions
-  - list
-  - namespace
-  - print
-  - range
+  - `print`
+  - `range`
+  - `list`
+  - `namespace`
 - Loaders
   - FileSystemLoader
   - MapLoader (DictLoader)
 - Extensions
-  - Do Statement
+  - Expression Statement
   - With Statement
-- Autoescape Overrides
+- ~~Autoescape Overrides~~
 
 ## Support
 Post issues and feature requests on the GitHub [issue tracker][issues].

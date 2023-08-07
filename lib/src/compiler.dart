@@ -284,14 +284,6 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
   }
 
   @override
-  AutoEscape visitAutoEscape(AutoEscape node, Set<String> context) {
-    return node.copyWith(
-      value: visitNode(node.value, context),
-      body: visitNode(node.body, context),
-    );
-  }
-
-  @override
   Block visitBlock(Block node, Set<String> context) {
     return node.copyWith(body: visitNode(node.body, context));
   }

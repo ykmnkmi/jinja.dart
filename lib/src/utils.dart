@@ -1,6 +1,8 @@
 import 'dart:convert';
 
-import 'package:jinja/src/markup.dart';
+import 'package:html_unescape/html_unescape.dart';
+import 'package:jinja/src/context.dart';
+import 'package:jinja/src/environment.dart';
 import 'package:textwrap/utils.dart';
 
 /// Jinja [Environment] function types.
@@ -52,31 +54,14 @@ bool boolean(Object? value) {
   return value != null;
 }
 
-/// Serialize an object to a string of JSON with [JsonEncoder], then replace
-/// HTML-unsafe characters with Unicode escapes and mark the result safe with
-/// [Markup].
-///
-/// This is available in templates as the `|tojson` filter.
-///
-/// The following characters are escaped: `<`, `>`, `&`, `'`.
-///
-/// {@macro safestring}
-Markup htmlSafeJsonEncode(Object? value, [String? indent]) {
-  var encoder = indent == null ? json.encoder : JsonEncoder.withIndent(indent);
-
-  var encoded = encoder
-      .convert(value)
-      .replaceAll('<', '\\u003c')
-      .replaceAll('>', '\\u003e')
-      .replaceAll('&', '\\u0026')
-      .replaceAll("'", '\\u0027');
-
-  return Markup.escaped(encoded);
-}
-
 /// Identity function.
 Object? identity(Object? value) {
   return value;
+}
+
+/// Return a pair of the `[key, value]` items of a mapping entry.
+List<Object?> pair(MapEntry<Object?, Object?> entry) {
+  return <Object?>[entry.key, entry.value];
 }
 
 /// Convert value to [Iterable]
@@ -98,7 +83,7 @@ Iterable<Object?> iterate(Object? value) {
   }
 
   if (value is MapEntry) {
-    return <Object?>[value.key, value.value];
+    return pair(value);
   }
 
   throw TypeError();
@@ -143,6 +128,54 @@ Iterable<int> range(int startOrStop, [int? stop, int step = 1]) sync* {
   }
 }
 
+/// HTML escape [Converter].
+final HtmlEscape htmlEscape = HtmlEscape(
+  HtmlEscapeMode(
+    escapeLtGt: true,
+    escapeQuot: true,
+    escapeApos: true,
+  ),
+);
+
+/// HTML unescape [Converter].
+final HtmlUnescape htmlUnescape = HtmlUnescape();
+
+String escape(String text) {
+  return htmlEscape.convert(text);
+}
+
+/// Serialize an object to a string of JSON with [JsonEncoder], then replace
+/// HTML-unsafe characters with Unicode escapes.
+///
+/// This is available in templates as the `|tojson` filter.
+///
+/// The following characters are escaped: `<`, `>`, `&`, `'`.
+///
+/// {@macro safestring}
+String htmlSafeJsonEncode(Object? value, [String? indent]) {
+  var encoder = indent == null ? json.encoder : JsonEncoder.withIndent(indent);
+
+  return encoder
+      .convert(value)
+      .replaceAll('<', '\\u003c')
+      .replaceAll('>', '\\u003e')
+      .replaceAll('&', '\\u0026')
+      .replaceAll("'", '\\u0027');
+}
+
+String unescape(String text) {
+  return htmlUnescape.convert(text);
+}
+
+/// Capitalize a value.
+String capitalize(String value) {
+  if (value.isEmpty) {
+    return '';
+  }
+
+  return value[0].toUpperCase() + value.substring(1).toLowerCase();
+}
+
 /// Remove tags and normalize whitespace to single spaces.
 String stripTags(String value) {
   if (value.isEmpty) {
@@ -152,4 +185,10 @@ String stripTags(String value) {
   return unescape(RegExp(r'\s+')
       .split(value.replaceAll(RegExp('(<!--.*?-->|<[^>]*>)'), ''))
       .join(' '));
+}
+
+Object? sum(dynamic left, Object? right) {
+  // TODO: dynamic invocation
+  // ignore: avoid_dynamic_calls
+  return left + right;
 }

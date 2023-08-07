@@ -4,9 +4,15 @@ import 'dart:math' as math;
 import 'package:jinja/src/context.dart';
 import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/exceptions.dart';
-import 'package:jinja/src/markup.dart';
 import 'package:jinja/src/utils.dart' as utils;
 import 'package:textwrap/textwrap.dart' show TextWrapper;
+import 'package:textwrap/utils.dart';
+
+/// {@nodoc}
+final RegExp wordBeginningSplitRe = RegExp('([-\\s({\\[<]+)');
+
+/// {@nodoc}
+final RegExp wordRe = RegExp('\\w+');
 
 /// {@nodoc}
 List<Object> prepareAttributeParts(Object? attribute) {
@@ -69,20 +75,13 @@ Object? Function(Object?) makeItemGetter(
 /// in the string with HTML-safe sequences.
 ///
 /// Use this if you need to display text that might contain such characters in HTML.
-Object? doEscape(Object? value) {
-  return Markup(value);
-}
-
-/// Enforce HTML escaping.
-///
-/// This will probably double escape variables.
-Markup doForceEscape(Object? value) {
-  return Markup('$value');
+String doEscape(String value) {
+  return utils.escape(value);
 }
 
 /// A string representation of this object.
 String doString(Object? value) {
-  return '$value';
+  return value.toString();
 }
 
 /// Return a copy of the value with all occurrences of a substring
@@ -92,32 +91,27 @@ String doString(Object? value) {
 /// the second is the replacement string.
 /// If the optional third argument [count] is given, only the first
 /// `count` occurrences are replaced.
-Object? doReplace(
-  Context context,
-  String string,
+String doReplace(
+  String value,
   String from,
   String to, [
   int? count,
 ]) {
   if (count == null) {
-    string = string.replaceAll(from, to);
+    value = value.replaceAll(from, to);
   } else {
-    var start = string.indexOf(from);
+    var start = value.indexOf(from);
     var n = 0;
 
-    while (n < count && start != -1 && start < string.length) {
-      var start = string.indexOf(from);
-      string = string.replaceRange(start, start + from.length, to);
-      start = string.indexOf(from, start + to.length);
+    while (n < count && start != -1 && start < value.length) {
+      var start = value.indexOf(from);
+      value = value.replaceRange(start, start + from.length, to);
+      start = value.indexOf(from, start + to.length);
       n += 1;
     }
   }
 
-  if (context.autoEscape) {
-    return context.escape(string);
-  }
-
-  return string;
+  return value;
 }
 
 /// Convert a value to uppercase.
@@ -126,21 +120,36 @@ String doUpper(String value) {
 }
 
 /// Convert a value to lowercase.
-String doLower(String string) {
-  return string.toLowerCase();
+String doLower(String value) {
+  return value.toLowerCase();
+}
+
+/// Return an iterator over the `[key, value]` items of a mapping.
+Iterable<List<Object?>> doItems(Map<Object?, Object?>? value) {
+  if (value == null) {
+    return <List<Object?>>[];
+  }
+
+  return value.entries.map<List<Object?>>(utils.pair);
 }
 
 /// Capitalize a value. The first character will be uppercase,
 /// all others lowercase.
-String doCapitalize(String string) {
-  if (string.isEmpty) {
+String doCapitalize(String value) {
+  return utils.capitalize(value);
+}
+
+/// Capitalize a value. The first character will be uppercase,
+/// all others lowercase.
+String doTitle(String value) {
+  if (value.isEmpty) {
     return '';
   }
 
-  return string[0].toUpperCase() + string.substring(1).toLowerCase();
+  return wordBeginningSplitRe.split(value).map<String>(utils.capitalize).join();
 }
 
-/// Sort a dict and yield `[key, value]` pairs.
+/// Sort a dict and return `[key, value]` pairs.
 List<Object?> doDictSort(
   Map<Object?, Object?> dict, {
   bool caseSensetive = false,
@@ -156,9 +165,7 @@ List<Object?> doDictSort(
 
   var order = reverse ? -1 : 1;
 
-  var entities = dict.entries
-      .map<List<Object?>>((entry) => <Object?>[entry.key, entry.value])
-      .toList();
+  var entities = dict.entries.map<List<Object?>>(utils.pair).toList();
 
   Comparable<Object?> Function(List<Object?> values) get;
 
@@ -176,7 +183,11 @@ List<Object?> doDictSort(
     };
   }
 
-  entities.sort((left, right) => get(left).compareTo(get(right)) * order);
+  int sort(List<Object?> left, List<Object?> right) {
+    return get(left).compareTo(get(right)) * order;
+  }
+
+  entities.sort(sort);
   return entities;
 }
 
@@ -200,37 +211,33 @@ Object? doDefault(
 /// The separator between elements is an empty string per
 /// default, you can define it with the optional parameter
 Object doJoin(
-  Context context,
   Iterable<Object?> values, [
   String delimiter = '',
 ]) {
-  if (context.autoEscape) {
-    values = values.map<String>(escapeSafe);
-    return Markup.escaped(values.join(escape(delimiter)));
-  }
-
   return values.join(delimiter);
 }
 
 /// Centers the value in a field of a given width.
-String doCenter(String string, int width) {
-  if (string.length >= width) {
-    return string;
+String doCenter(String value, int width) {
+  if (value.length >= width) {
+    return value;
   }
 
-  var padLength = (width - string.length) ~/ 2;
+  var padLength = (width - value.length) ~/ 2;
   var pad = ' ' * padLength;
-  return pad + string + pad;
+  return pad + value + pad;
 }
 
 /// Return the first item of a sequence.
-Object? doFirst(Iterable<Object?> values) {
-  return values.first;
+Object? doFirst(Object? values) {
+  var list = utils.list(values);
+  return list.first;
 }
 
 /// Return the last item of a sequence.
-Object? doLast(Iterable<Object?> values) {
-  return values.last;
+Object? doLast(Object? values) {
+  var list = utils.list(values);
+  return list.last;
 }
 
 /// Return a random item from the sequence.
@@ -315,16 +322,19 @@ String doFileSizeFormat(Object? value, [bool binary = false]) {
 /// that only exceed the length by the tolerance margin given in the fourth
 /// parameter will not be truncated.
 String doTruncate(
-  Environment environment,
-  String value, {
+  String value, [
   int length = 255,
   bool killWords = false,
   String end = '...',
   int leeway = 5,
-}) {
-  assert(
-      length >= end.length, 'Expected length >= ${end.length}, got $length.');
-  assert(leeway >= 0, 'Expected leeway >= 0, got $leeway.');
+]) {
+  if (length < end.length) {
+    throw ArgumentError.value(
+        value, 'leeway', 'Expected length >= ${end.length}, got $length.');
+  } else if (leeway < 0) {
+    throw ArgumentError.value(
+        value, 'leeway', 'Expected leeway >= 0, got $leeway.');
+  }
 
   if (value.length <= length + leeway) {
     return value;
@@ -350,7 +360,7 @@ String doTruncate(
 /// Existing newlines are treated as paragraphs to be wrapped separately.
 String doWordWrap(
   Environment environment,
-  String string,
+  String value,
   int width, {
   bool breakLongWords = true,
   String? wrapString,
@@ -366,14 +376,14 @@ String doWordWrap(
 
   var wrap = wrapString ?? environment.newLine;
   return const LineSplitter()
-      .convert(string)
+      .convert(value)
       .expand<String>(wrapper.wrap)
       .join(wrap);
 }
 
 /// Count the words in that string.
-int doWordCount(String string) {
-  var matches = RegExp(r'\w+').allMatches(string);
+int doWordCount(Object? value) {
+  var matches = wordRe.allMatches(value.toString());
   return matches.length;
 }
 
@@ -492,8 +502,8 @@ int? doLength(dynamic object) {
 /// `start`.
 ///
 /// When the sequence is empty it returns start.
-num doSum(Iterable<Object?> values, [num start = 0]) {
-  return values.cast<num>().fold<num>(start, (s, n) => s + n);
+dynamic doSum(Iterable<Object?> values, [num start = 0]) {
+  return values.cast<dynamic>().fold<dynamic>(start, utils.sum);
 }
 
 /// Convert the value into a list.
@@ -501,19 +511,6 @@ num doSum(Iterable<Object?> values, [num start = 0]) {
 /// If it was a string the returned list will be a list of characters.
 List<Object?> doList(Object? object) {
   return utils.list(object);
-}
-
-/// Mark the value as safe which means that in an environment
-/// with automatic escaping enabled this variable will not be escaped.
-Markup doMarkSafe(String value) {
-  return Markup.escaped(value);
-}
-
-/// Mark a value as unsafe.
-///
-/// This is the reverse operation for `safe`.
-String doMarkUnsafe(Object? value) {
-  return value.toString();
 }
 
 /// Reverse the object or return an iterator that iterates over it the other
@@ -618,22 +615,23 @@ Object? doItem(Environment environment, Object? value, Object item) {
 /// The exception is in HTML attributes that are double quoted; either use
 /// single quotes or the `|forceescape` filter.
 /// {@endtemplate}
-Markup doToJson(Object? value, [String? indent]) {
+String doToJson(Object? value, [String? indent]) {
   return utils.htmlSafeJsonEncode(value, indent);
 }
 
+/// {@nodoc}
 final Map<String, Function> filters = <String, Function>{
   'e': doEscape,
   'escape': doEscape,
-  'forceescape': doForceEscape,
   'string': doString,
   // 'urlencode': doURLEncode,
-  'replace': passContext(doReplace),
+  'replace': doReplace,
   'upper': doUpper,
   'lower': doLower,
+  'items': doItems,
   // 'xmlattr': passContext(doXMLAttr),
   'capitalize': doCapitalize,
-  // 'title': doTitle,
+  'title': doTitle,
   'dictsort': doDictSort,
   // 'sort': passEnvironment(doSort),
   // 'unique': passEnvironment(doUnique),
@@ -641,7 +639,7 @@ final Map<String, Function> filters = <String, Function>{
   // 'max': passEnvironment(doMax),
   'd': doDefault,
   'default': doDefault,
-  'join': passContext(doJoin),
+  'join': doJoin,
   'center': doCenter,
   'first': doFirst,
   'last': doLast,
@@ -650,7 +648,7 @@ final Map<String, Function> filters = <String, Function>{
   // 'pprint': doPPrint,
   // 'urlize': passContext(doUrlize),
   // 'indent': doIndent,
-  'truncate': passEnvironment(doTruncate),
+  'truncate': doTruncate,
   'wordwrap': passEnvironment(doWordWrap),
   'wordcount': doWordCount,
   'int': doInteger,
@@ -667,8 +665,6 @@ final Map<String, Function> filters = <String, Function>{
   'length': doLength,
   'sum': doSum,
   'list': doList,
-  'safe': doMarkSafe,
-  'unsafe': doMarkUnsafe,
   'reverse': doReverse,
   'attr': passEnvironment(doAttribute),
   'item': passEnvironment(doItem),

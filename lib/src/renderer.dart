@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:jinja/src/context.dart';
 import 'package:jinja/src/exceptions.dart';
 import 'package:jinja/src/loop.dart';
-import 'package:jinja/src/markup.dart';
 import 'package:jinja/src/namespace.dart';
 import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/tests.dart';
@@ -442,10 +441,6 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
     var filters = node.filters;
 
     if (filters.isEmpty) {
-      if (context.autoEscape) {
-        value = Markup.escaped(value);
-      }
-
       context.assignTargets(target, value);
     } else {
       // TODO(renderer): replace with Filter { BlockExpression ( AssignBlock ) }
@@ -455,20 +450,8 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
         value = context.filter(name, positional, named);
       }
 
-      if (context.autoEscape) {
-        value = Markup.escaped(value);
-      }
-
       context.assignTargets(target, value);
     }
-  }
-
-  @override
-  void visitAutoEscape(AutoEscape node, StringSinkRenderContext context) {
-    var current = context.autoEscape;
-    context.autoEscape = boolean(node.value.accept(this, context));
-    node.body.accept(this, context);
-    context.autoEscape = current;
   }
 
   @override
@@ -632,8 +615,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
   void visitInterpolation(Interpolation node, StringSinkRenderContext context) {
     var resolved = node.value.accept(this, context);
     var finalized = context.finalize(resolved);
-    var escaped = context.escape(finalized);
-    context.write(escaped);
+    context.write(finalized);
   }
 
   @override

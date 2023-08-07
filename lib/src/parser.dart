@@ -121,9 +121,6 @@ class Parser {
         case 'with':
           return parseWith(reader);
 
-        case 'autoescape':
-          return parseAutoEscape(reader);
-
         case 'block':
           return parseBlock(reader);
 
@@ -310,16 +307,6 @@ class Parser {
     return With(targets: targets, values: values, body: body);
   }
 
-  AutoEscape parseAutoEscape(TokenReader reader) {
-    const endAutoEscape = <(String, String?)>[('name', 'endautoescape')];
-
-    reader.expect('name', 'autoescape');
-
-    var value = parseExpression(reader);
-    var body = parseStatements(reader, endAutoEscape, true);
-    return AutoEscape(value: value, body: body);
-  }
-
   Block parseBlock(TokenReader reader) {
     const endBlock = <(String, String?)>[('name', 'endblock')];
 
@@ -441,7 +428,7 @@ class Parser {
       if (reader.skipIf('assign')) {
         defaults.add(parseExpression(reader));
       } else if (defaults.isNotEmpty) {
-        fail('non-default argument follows default argument');
+        fail('Non-default argument follows default argument');
       }
 
       names.add(name);
@@ -479,13 +466,13 @@ class Parser {
     var call = parseExpression(reader);
 
     if (call is! Call) {
-      fail('expected call', token.line);
+      fail('Expected call', token.line);
     }
 
     var name = call.value;
 
     if (name is! Name) {
-      fail('expected call macro name', token.line);
+      fail('Expected call macro name', token.line);
     }
 
     var body = parseStatements(reader, endCall, true);
@@ -587,7 +574,7 @@ class Parser {
       return name.copyWith(context: AssignContext.store);
     }
 
-    fail("Can't assign to ${name.runtimeType}", line);
+    fail("Can't assign to $name", line);
   }
 
   Expression parseAssignTarget(
@@ -617,13 +604,13 @@ class Parser {
         when values.any((value) => value is Name)) {
       return target.copyWith(
         values: <Expression>[
-          for (var value in target.values.cast<Name>())
-            value.copyWith(context: context)
+          for (var value in values.cast<Name>())
+            value.copyWith(context: context),
         ],
       );
     }
 
-    fail("Can't assign to ${target.runtimeType}", line);
+    fail("Can't assign to $target", line);
   }
 
   Do parseDo(TokenReader reader) {
@@ -874,15 +861,15 @@ class Parser {
     switch (current.type) {
       case 'name':
         switch (current.value) {
-          case 'False' || 'false':
+          case 'false':
             expression = const Constant(value: false);
             break;
 
-          case 'True' || 'true':
+          case 'true':
             expression = const Constant(value: true);
             break;
 
-          case 'None' || 'none' || 'null':
+          case 'null':
             expression = const Constant(value: null);
             break;
 

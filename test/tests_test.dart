@@ -1,7 +1,7 @@
 import 'dart:collection';
 
-import 'package:jinja/jinja.dart';
-import 'package:jinja/src/markup.dart';
+import 'package:jinja/src/environment.dart';
+import 'package:jinja/src/exceptions.dart';
 import 'package:test/test.dart';
 
 import 'environment.dart';
@@ -282,12 +282,7 @@ void main() {
       expect(tmpl.render({'foo': null}), equals('true'));
     });
 
-    test('escaped', () {
-      var tmpl = env.fromString('{{  x is escaped }}');
-      expect(tmpl.render({'x': 'foo'}), equals('false'));
-      tmpl = env.fromString('{{ y is escaped  }}');
-      expect(tmpl.render({'y': Markup('foo')}), equals('true'));
-    });
+    test('escaped', () {}, skip: 'unsupported');
 
     test('greater than', () {
       var tmpl = env.fromString('{{ 1 is greaterthan 0 }}');
@@ -313,10 +308,9 @@ void main() {
 
       var env = Environment(tests: {'matching': matching});
 
-      var tmpl = env.fromString(
-        '{{ "us-west-1" is matching "(us-east-1|ap-northeast-1)"'
-        ' or "stage" is matching "(dev|stage)" }}',
-      );
+      var tmpl = env
+          .fromString('{{ "us-west-1" is matching "(us-east-1|ap-northeast-1)"'
+              ' or "stage" is matching "(dev|stage)" }}');
 
       var result = tmpl.render();
       expect(result, equals('false'));
@@ -348,8 +342,7 @@ void main() {
     test('name undefined', () {
       var matcher = throwsA(
         predicate<TemplateAssertionError>(
-          (error) => error.message == "No test named 'f'",
-        ),
+            (error) => error.message == "No test named 'f'"),
       );
 
       expect(() => env.fromString('{{ x is f }}'), matcher);
@@ -361,8 +354,7 @@ void main() {
 
       var matcher = throwsA(
         predicate<TemplateRuntimeError>(
-          (error) => error.message == "No test named 'f'",
-        ),
+            (error) => error.message == "No test named 'f'"),
       );
 
       expect(() => tmpl.render({'x': 1}), matcher);

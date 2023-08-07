@@ -1,4 +1,4 @@
-## 0.5.0-beta.30
+## 0.5.0
 - minimal SDK version: 3.0.0.
 - internal changes.
 - added:
@@ -7,6 +7,9 @@
   - statements:
     - `macro`
     - `call`
+  - filters:
+    - `items`
+    - `title`
 - changed:
   - `Environment`:
     - `Environment({modifiers})` from `List<NodeVisitor>` to `List<Node Function(Node)>`
@@ -15,9 +18,19 @@
     - `Environment.parse(...)` from `List<Node>` to `Node`
   - `Template`:
     - `Template({modifiers})` from `List<NodeVisitor>` to `List<Node Function(Node)>`
+  - filters:
+    - `truncate` arguments are now positional
 - removed:
   - `Template`:
     - `Template.fromNodes(Environment environment, List<Node> nodes, {String? path})` constructor
+  - statements:
+    - `autoescape`
+  - filters:
+    - `forceescape`
+    - `safe`
+    - `unsafe`
+  - tests:
+    - `escaped`
 
 ## 0.4.2
 - internal changes.
