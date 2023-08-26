@@ -63,8 +63,6 @@ class Optimizer implements Visitor<Context, Node> {
             value: value.accept(this, context) as Expression,
           )
       ],
-      dArguments: node.dArguments?.accept(this, context) as Expression?,
-      dKeywords: node.dKeywords?.accept(this, context) as Expression?,
     );
   }
 

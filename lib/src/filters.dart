@@ -3,7 +3,6 @@ import 'dart:math' as math;
 
 import 'package:jinja/src/context.dart';
 import 'package:jinja/src/environment.dart';
-import 'package:jinja/src/exceptions.dart';
 import 'package:jinja/src/utils.dart' as utils;
 import 'package:textwrap/textwrap.dart' show TextWrapper;
 import 'package:textwrap/utils.dart';
@@ -159,7 +158,9 @@ List<Object?> doDictSort(
   var position = switch (by) {
     'key' => 0,
     'value' => 1,
-    _ => throw FilterArgumentError(
+    Object? value => throw ArgumentError.value(
+        value,
+        'by'
         "You can only sort by either 'key' or 'value'."),
   };
 
@@ -531,8 +532,9 @@ Object? Function(Object? object) prepareMap(
       var defaultValue = named.remove('defaultValue');
 
       if (named.isNotEmpty) {
-        throw FilterArgumentError(
-            'Unexpected keyword argument ${named.keys.first}.');
+        var first = named.keys.first;
+        throw ArgumentError.value(
+            named[first], first, 'Unexpected keyword argument.');
       }
 
       return makeAttributeGetter(context.environment, attribute,
@@ -543,8 +545,9 @@ Object? Function(Object? object) prepareMap(
       var defaultValue = named.remove('defaultValue');
 
       if (named.isNotEmpty) {
-        throw FilterArgumentError(
-            'Unexpected keyword argument ${named.keys.first}.');
+        var first = named.keys.first;
+        throw ArgumentError.value(
+            named[first], first, 'Unexpected keyword argument.');
       }
 
       return makeItemGetter(context.environment, item,
@@ -567,7 +570,7 @@ Object? Function(Object? object) prepareMap(
 
     return getter;
   } on RangeError {
-    throw FilterArgumentError('Map requires a filter argument.');
+    throw ArgumentError('Map requires a filter argument.', 'filter');
   }
 }
 

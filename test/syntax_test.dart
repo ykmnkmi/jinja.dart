@@ -42,7 +42,7 @@ void main() {
       }
 
       var env = Environment(globals: {'foo': foo});
-      var tmpl = env.fromString('{{ foo(*["a"], **{"b": "c"}) }}');
+      var tmpl = env.fromString('{{ foo("a", b="c") }}');
       expect(tmpl.render(), equals('ac'));
     });
 
@@ -213,17 +213,19 @@ void main() {
       expect(() => env.fromString('{{ foo(foo, bar) }}'), returnsNormally);
       expect(() => env.fromString('{{ foo(foo, bar=42) }}'), returnsNormally);
       expect(() => env.fromString('{{ foo(foo, bar=23, *args) }}'),
-          returnsNormally);
+          throwsA(isA<TemplateSyntaxError>()));
       expect(() => env.fromString('{{ foo(foo, *args, bar=23) }}'),
-          returnsNormally);
-      expect(
-          () => env.fromString('{{ foo(a, b=c, *d, **e) }}'), returnsNormally);
-      expect(() => env.fromString('{{ foo(*foo, bar=42) }}'), returnsNormally);
-      expect(() => env.fromString('{{ foo(*foo, **bar) }}'), returnsNormally);
+          throwsA(isA<TemplateSyntaxError>()));
+      expect(() => env.fromString('{{ foo(a, b=c, *d, **e) }}'),
+          throwsA(isA<TemplateSyntaxError>()));
+      expect(() => env.fromString('{{ foo(*foo, bar=42) }}'),
+          throwsA(isA<TemplateSyntaxError>()));
+      expect(() => env.fromString('{{ foo(*foo, **bar) }}'),
+          throwsA(isA<TemplateSyntaxError>()));
       expect(() => env.fromString('{{ foo(*foo, bar=42, **baz) }}'),
-          returnsNormally);
+          throwsA(isA<TemplateSyntaxError>()));
       expect(() => env.fromString('{{ foo(foo, *args, bar=23, **baz) }}'),
-          returnsNormally);
+          throwsA(isA<TemplateSyntaxError>()));
     });
 
     test('tuple expr', () {

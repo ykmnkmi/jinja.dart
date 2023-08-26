@@ -92,9 +92,13 @@ void main() {
     test('cycling', () {
       var tmpl = env.fromString('''{% for item in seq %}{{
             loop.cycle('<1>', '<2>') }}{% endfor %}{%
-            for item in seq %}{{ loop.cycle(*through) }}{% endfor %}''');
-      var through = ['<1>', '<2>'];
-      var output = tmpl.render({'seq': range(4), 'through': through});
+            for item in seq %}{{ loop.cycle(through) }}{% endfor %}''');
+
+      var output = tmpl.render({
+        'seq': range(4),
+        'through': ['<1>', '<2>'],
+      });
+
       expect(output, equals('<1><2>' * 4));
     });
 

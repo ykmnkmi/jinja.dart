@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:jinja/src/context.dart';
+import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/exceptions.dart';
 import 'package:jinja/src/loop.dart';
 import 'package:jinja/src/namespace.dart';
@@ -239,34 +240,10 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
       for (var argument in node.arguments) argument.accept(this, context)
     ];
 
-    if (node.dArguments case var dArguments?) {
-      var values = dArguments.accept(this, context);
-
-      if (values is! Iterable) {
-        throw TypeError();
-      }
-
-      positional.addAll(values);
-    }
-
     var named = <Symbol, Object?>{
       for (var (:key, :value) in node.keywords)
         Symbol(key): value.accept(this, context)
     };
-
-    if (node.dKeywords case var dKeywords?) {
-      var values = dKeywords.accept(this, context);
-
-      if (values is! Map) {
-        throw TypeError();
-      }
-
-      var castedValues = values.cast<String, Object?>();
-
-      for (var MapEntry(key: key, value: value) in castedValues.entries) {
-        named[Symbol(key)] = value;
-      }
-    }
 
     return (positional, named);
   }
@@ -509,7 +486,14 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
 
   @override
   void visitExtends(Extends node, StringSinkRenderContext context) {
-    var template = context.environment.getTemplate(node.path);
+    var templateOrParth = node.template.accept(this, context);
+
+    var template = switch (templateOrParth) {
+      String path => context.environment.getTemplate(path),
+      Template template => template,
+      Object? value => throw ArgumentError.value(value, 'template'),
+    };
+
     template.body.accept(this, context);
   }
 
@@ -602,7 +586,13 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
 
   @override
   void visitInclude(Include node, StringSinkRenderContext context) {
-    var template = context.environment.getTemplate(node.template);
+    var templateOrParth = node.template.accept(this, context);
+
+    var template = switch (templateOrParth) {
+      String path => context.environment.getTemplate(path),
+      Template template => template,
+      Object? value => throw ArgumentError.value(value, 'template'),
+    };
 
     if (!node.withContext) {
       context = StringSinkRenderContext(context.environment, context.sink);

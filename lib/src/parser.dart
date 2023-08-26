@@ -361,17 +361,13 @@ class Parser {
 
   Extends parseExtends(TokenReader reader) {
     var token = reader.next();
-    var primary = parsePrimary(reader);
-
-    if (primary is! Constant) {
-      fail('Template path literal expected', reader.current.line);
-    }
 
     if (extendsNode != null) {
       fail('Extended multiple times', token.line);
     }
 
-    var node = Extends(path: primary.value as String);
+    var template = parseExpression(reader);
+    var node = Extends(template: template);
     extendsNode = node;
     return node;
   }
@@ -401,9 +397,9 @@ class Parser {
   Include parseInclude(TokenReader reader) {
     reader.next();
 
-    var name = reader.expect('string');
+    var template = parseExpression(reader);
     var withContext = parseImportContext(reader, true);
-    return Include(template: name.value, withContext: withContext);
+    return Include(template: template, withContext: withContext);
   }
 
   // TODO(parser): add parseImport
@@ -1090,7 +1086,6 @@ class Parser {
     var arguments = <Expression>[];
     var keywords = <Keyword>[];
     var requireComma = false;
-    Expression? dArguments, dKeywords;
 
     void ensure(bool ensure) {
       if (!ensure) {
@@ -1107,35 +1102,21 @@ class Parser {
         }
       }
 
-      if (reader.current.test('pow')) {
-        ensure(dKeywords == null);
-        reader.next();
+      if (reader.current.test('name') && reader.look().test('assign')) {
+        var key = reader.current.value;
 
-        dKeywords = parseExpression(reader);
-      } else if (reader.current.test('mul')) {
-        ensure(dArguments == null && dKeywords == null);
-        reader.next();
+        reader.skip(2);
 
-        dArguments = parseExpression(reader);
-      } else {
-        if (reader.current.test('name') && reader.look().test('assign')) {
-          ensure(dKeywords == null);
+        var value = parseExpression(reader);
 
-          var key = reader.current.value;
-
-          reader.skip(2);
-
-          var value = parseExpression(reader);
-
-          if (key == 'default') {
-            key = 'defaultValue';
-          }
-
-          keywords.add((key: key, value: value));
-        } else {
-          ensure(dArguments == null && dKeywords == null && keywords.isEmpty);
-          arguments.add(parseExpression(reader));
+        if (key == 'default') {
+          key = 'defaultValue';
         }
+
+        keywords.add((key: key, value: value));
+      } else {
+        ensure(keywords.isEmpty);
+        arguments.add(parseExpression(reader));
       }
 
       requireComma = true;
@@ -1146,8 +1127,6 @@ class Parser {
     return Calling(
       arguments: arguments,
       keywords: keywords,
-      dArguments: dArguments,
-      dKeywords: dKeywords,
     );
   }
 

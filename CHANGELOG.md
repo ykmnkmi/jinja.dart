@@ -1,3 +1,10 @@
+## 0.6.0-dev.0
+- internal changes.
+- removed:
+  - exceptions:
+    - `FilterArgumentError`
+  - `*args` and `**kwargs` support
+
 ## 0.5.0
 - minimal SDK version: 3.0.0.
 - internal changes.

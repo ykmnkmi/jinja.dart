@@ -103,17 +103,15 @@ final class LoopContext extends Iterable<Object?> {
     return recurse(data, depth);
   }
 
-  Object? cycle(Iterable<Object?> values, [Iterable<Object?>? packed]) {
-    if (values.isEmpty && packed != null && packed.isEmpty) {
+  Object? cycle(Iterable<Object?> values) {
+    var list = values.toList();
+
+    if (list.isEmpty) {
       // TODO: update error
       throw TypeError();
     }
 
-    if (packed != null) {
-      values = values.followedBy(packed);
-    }
-
-    return values.elementAt(index0 % values.length);
+    return list[index0 % list.length];
   }
 
   bool changed(Object? item) {

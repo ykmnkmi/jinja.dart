@@ -299,17 +299,11 @@ final class Calling extends Expression {
   const Calling({
     this.arguments = const <Expression>[],
     this.keywords = const <Keyword>[],
-    this.dArguments,
-    this.dKeywords,
   });
 
   final List<Expression> arguments;
 
   final List<Keyword> keywords;
-
-  final Expression? dArguments;
-
-  final Expression? dKeywords;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -326,8 +320,6 @@ final class Calling extends Expression {
     return Calling(
       arguments: arguments ?? this.arguments,
       keywords: keywords ?? this.keywords,
-      dArguments: dArguments ?? this.dArguments,
-      dKeywords: dKeywords ?? this.dKeywords,
     );
   }
 
@@ -348,22 +340,6 @@ final class Calling extends Expression {
 
       yield* value.findAll<T>();
     }
-
-    if (dArguments case T dArguments) {
-      yield dArguments;
-    }
-
-    if (dArguments case Expression dArguments?) {
-      yield* dArguments.findAll<T>();
-    }
-
-    if (dKeywords case T dKeywords) {
-      yield dKeywords;
-    }
-
-    if (dKeywords case Expression dKeywords?) {
-      yield* dKeywords.findAll<T>();
-    }
   }
 
   @override
@@ -380,9 +356,6 @@ final class Calling extends Expression {
             'value': value.toJson(),
           },
       ],
-      if (dArguments case Expression dArguments?)
-        'dArguments': dArguments.toJson(),
-      if (dKeywords case Expression dKeywords?) 'dKeywords': dKeywords.toJson(),
     };
   }
 }

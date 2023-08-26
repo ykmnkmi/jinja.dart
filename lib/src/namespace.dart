@@ -23,7 +23,7 @@ class Namespace extends MapView<String, Object?> {
 
     for (var data in datas) {
       if (data is! Map) {
-        // TODO: update error
+        // TODO(namespace): update error
         throw TypeError();
       }
 

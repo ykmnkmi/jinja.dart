@@ -60,11 +60,9 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
     if (node.value case Attribute(attribute: 'cycle', value: var value)) {
       if (value case Name(name: 'loop')) {
         var calling = visitNode<Calling>(node.calling, context);
-        var arguments = <Expression>[Array(values: calling.arguments)];
-
-        if (calling.dArguments case var dArguments?) {
-          arguments.add(dArguments);
-        }
+        var arguments = calling.arguments.length == 1
+            ? calling.arguments
+            : <Expression>[Array(values: calling.arguments)];
 
         return node.copyWith(
           value: visitNode(node.value, context),
@@ -92,14 +90,6 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
           values.add(Dict(pairs: pairs));
         }
 
-        if (calling.dArguments case var dArguments?) {
-          values.add(dArguments);
-        }
-
-        if (calling.dKeywords case var dKeywords?) {
-          values.add(dKeywords);
-        }
-
         return node.copyWith(
           value: visitNode(node.value, context),
           calling: Calling(
@@ -110,8 +100,6 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
         );
       }
 
-      // TODO(compiler): handle *varargs
-      // TODO(compiler): handle *kvargs
       if (context.contains(name) || isMacro && name == 'caller') {
         var calling = visitNode<Calling>(node.calling, context);
         var arguments = calling.arguments;
@@ -146,8 +134,6 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
         for (var (:key, :value) in node.keywords)
           (key: key, value: visitNode(value, context))
       ],
-      dArguments: visitNode(node.dArguments, context),
-      dKeywords: visitNode(node.dKeywords, context),
     );
   }
 
@@ -193,9 +179,8 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
 
   @override
   Filter visitFilter(Filter node, Set<String> context) {
-    // Modifies Template AST from `map('filter', *args, **kwargs)`
-    // to `map(filter='filter', positional=args, named=kwargs)`
-    // to match [doMap] definition.
+    // Modifies Template AST from `map('filter', key=value)`
+    // to `map(values, ['filter'], {'key': value})` to match [doMap] definition.
     if (node.name == 'map') {
       var calling = node.calling;
 

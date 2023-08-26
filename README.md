@@ -7,7 +7,10 @@
 [Jinja][jinja] (3.x) server-side template engine port for Dart 2.
 Variables, expressions, control structures and template inheritance.
 
-## Version 0.5.0 introduces breaking changes
+## Version 0.6.0 introduces breaking changes
+- `FilterArgumentError` removed
+- `*args` and `**kwargs` not supported
+- _work in progress_
 
 Auto-escaping and related filters and tests have been removed due to the impossibility of extending `String`. Use the `escape` filter manually or escape values before passing them to the template.
 
@@ -26,8 +29,8 @@ _work in progress_.
   This allows you to use `{{ map.key }}` as an expression equivalent to `{{ map['key'] }}`.
 - Not yet supported:
   - Slices and negative indexes
-  - Conditional and variable `extends` statement variants
-  - Choice, ignore missing and variable `include` statement variants
+  - Conditional `extends` statement variant
+  - Choice and ignore missing `include` statement variants
 - _work in progress_
 
 ## Dynamically invoked members

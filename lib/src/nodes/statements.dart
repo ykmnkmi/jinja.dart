@@ -5,9 +5,9 @@ abstract class ImportContext {
 }
 
 final class Extends extends Statement {
-  const Extends({required this.path});
+  const Extends({required this.template});
 
-  final String path;
+  final Expression template;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -15,15 +15,15 @@ final class Extends extends Statement {
   }
 
   @override
-  Extends copyWith({String? path}) {
-    return Extends(path: path ?? this.path);
+  Extends copyWith({Expression? template}) {
+    return Extends(template: template ?? this.template);
   }
 
   @override
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'class': 'Extends',
-      'path': path,
+      'template': template.toJson(),
     };
   }
 }
@@ -557,7 +557,7 @@ final class Block extends Statement {
 final class Include extends Statement implements ImportContext {
   const Include({required this.template, this.withContext = true});
 
-  final String template;
+  final Expression template;
 
   @override
   final bool withContext;
@@ -568,7 +568,7 @@ final class Include extends Statement implements ImportContext {
   }
 
   @override
-  Include copyWith({String? template, bool? withContext}) {
+  Include copyWith({Expression? template, bool? withContext}) {
     return Include(
       template: template ?? this.template,
       withContext: withContext ?? this.withContext,
