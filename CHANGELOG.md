@@ -1,4 +1,4 @@
-## 0.6.0-dev.0
+## 0.6.0-dev.1
 - internal changes.
 - removed:
   - exceptions:

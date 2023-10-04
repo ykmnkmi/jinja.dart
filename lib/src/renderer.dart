@@ -161,8 +161,8 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
       };
     }
 
-    // TODO(renderer): update error
-    throw ArgumentError.value(targets, 'targets', 'must be ListOr<String>');
+    // TODO(renderer): update error message
+    throw ArgumentError.value(targets, 'targets');
   }
 
   MacroFunction getMacroFunction(

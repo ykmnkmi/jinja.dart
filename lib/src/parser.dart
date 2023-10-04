@@ -41,8 +41,7 @@ class Parser {
 
     if (endTokensStack.isNotEmpty) {
       currentlyLooking = endTokensStack.last
-          .map<String>(describeExpression)
-          .map<String>((token) => "'$token'")
+          .map<String>((token) => "'${describeExpression(token)}'")
           .join(' or ');
     }
 

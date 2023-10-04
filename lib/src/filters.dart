@@ -7,13 +7,10 @@ import 'package:jinja/src/utils.dart' as utils;
 import 'package:textwrap/textwrap.dart' show TextWrapper;
 import 'package:textwrap/utils.dart';
 
-/// {@nodoc}
-final RegExp wordBeginningSplitRe = RegExp('([-\\s({\\[<]+)');
+final RegExp _wordBeginningSplitRe = RegExp('([-\\s({\\[<]+)');
 
-/// {@nodoc}
-final RegExp wordRe = RegExp('\\w+');
+final RegExp _wordRe = RegExp('\\w+');
 
-/// {@nodoc}
 List<Object> prepareAttributeParts(Object? attribute) {
   if (attribute == null) {
     return <Object>[];
@@ -145,7 +142,10 @@ String doTitle(String value) {
     return '';
   }
 
-  return wordBeginningSplitRe.split(value).map<String>(utils.capitalize).join();
+  return _wordBeginningSplitRe
+      .split(value)
+      .map<String>(utils.capitalize)
+      .join();
 }
 
 /// Sort a dict and return `[key, value]` pairs.
@@ -279,7 +279,6 @@ String doFileSizeFormat(Object? value, [bool binary = false]) {
   var bytes = switch (value) {
     num number => number.toDouble(),
     String string => double.parse(string),
-    // or FilterArgumentError?
     _ => throw TypeError(),
   };
 
@@ -384,7 +383,7 @@ String doWordWrap(
 
 /// Count the words in that string.
 int doWordCount(Object? value) {
-  var matches = wordRe.allMatches(value.toString());
+  var matches = _wordRe.allMatches(value.toString());
   return matches.length;
 }
 
@@ -521,8 +520,7 @@ Object? doReverse(Object? value) {
   return values.reversed;
 }
 
-/// {@nodoc}
-Object? Function(Object? object) prepareMap(
+Object? Function(Object? object) _prepareMap(
   Context context,
   List<Object?> positional,
   Map<String, Object?> named,
@@ -586,7 +584,7 @@ Iterable<Object?> doMap(
   Map<Object?, Object?> named,
 ) sync* {
   if (values != null) {
-    var func = prepareMap(context, positional, named.cast<String, Object?>());
+    var func = _prepareMap(context, positional, named.cast<String, Object?>());
 
     for (var value in values) {
       yield func(value);
@@ -622,7 +620,7 @@ String doToJson(Object? value, [String? indent]) {
   return utils.htmlSafeJsonEncode(value, indent);
 }
 
-/// {@nodoc}
+/// Filters map.
 final Map<String, Function> filters = <String, Function>{
   'e': doEscape,
   'escape': doEscape,

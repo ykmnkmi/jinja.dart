@@ -181,7 +181,7 @@ bool isCallable(dynamic object) {
   }
 }
 
-/// {@nodoc}
+/// Tests map.
 final Map<String, Function> tests = <String, Function>{
   'odd': isOdd,
   'even': isEven,

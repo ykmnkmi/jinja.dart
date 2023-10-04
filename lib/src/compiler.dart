@@ -5,12 +5,10 @@ import 'package:meta/meta.dart';
 
 @doNotStore
 class RuntimeCompiler implements Visitor<Set<String>, Node> {
-  RuntimeCompiler();
+  int _macroDepth = 0;
 
-  int macroDepth = 0;
-
-  bool get isMacro {
-    return macroDepth > 0;
+  bool get _isMacro {
+    return _macroDepth > 0;
   }
 
   T visitNode<T extends Node?>(Node? node, Set<String> context) {
@@ -30,17 +28,8 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
 
   @override
   Node visitAttribute(Attribute node, Set<String> context) {
-    // Modifies Template AST from `self.block()` to `self['block']()`.
-    if (node.value case Name(name: 'self')) {
-      return Item(
-        key: Constant(value: node.attribute),
-        value: visitNode(node.value, context),
-      );
-    }
-
-    // Modifies Template AST from `loop.cycle` to `loop['cycle']`.
-
-    if (node.value case Name(name: 'loop')) {
+    // Modifies Template AST from `object.prop` to `object['prop']`.
+    if (node.value case Name(name: 'self' || 'loop')) {
       return Item(
         key: Constant(value: node.attribute),
         value: visitNode(node.value, context),
@@ -100,7 +89,7 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
         );
       }
 
-      if (context.contains(name) || isMacro && name == 'caller') {
+      if (context.contains(name) || _isMacro && name == 'caller') {
         var calling = visitNode<Calling>(node.calling, context);
         var arguments = calling.arguments;
         var keywords = calling.keywords;
@@ -346,7 +335,7 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
 
   @override
   Macro visitMacro(Macro node, Set<String> context) {
-    macroDepth += 1;
+    _macroDepth += 1;
     context.add(node.name);
 
     var positional = <Expression>[];
@@ -384,7 +373,7 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
       body: visitNode(node.body, context),
     );
 
-    macroDepth -= 1;
+    _macroDepth -= 1;
     return node;
   }
 

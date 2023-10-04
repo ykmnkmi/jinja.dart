@@ -105,8 +105,8 @@ class Environment {
         random = random ?? Random(),
         getAttribute = wrapGetAttribute(getAttribute, getItem) {
     if (newLine != '\r' && newLine != '\n' && newLine != '\r\n') {
-      // TODO(environment): update error
-      throw ArgumentError.value(newLine);
+      // TODO(environment): add error message
+      throw ArgumentError.value(newLine, 'newLine');
     }
 
     if (globals case var globals?) {
