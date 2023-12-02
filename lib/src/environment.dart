@@ -349,7 +349,7 @@ class Environment {
       body = body.accept(const Optimizer(), Context(this));
     }
 
-    body = body.accept(RuntimeCompiler(), <String>{});
+    body = body.accept(RuntimeCompiler(), null);
     return Template.fromNode(this, body: body);
   }
 

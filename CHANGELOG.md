@@ -1,4 +1,4 @@
-## 0.6.0-dev.2
+## 0.6.0-dev.3
 - internal changes.
 - added:
   - statements:
