@@ -554,7 +554,7 @@ Object? Function(Object? object) _prepareMap(
   }
 
   try {
-    // TODO(filters): catch cast error
+    // TODO(filters): catch cast error or not?
     var name = positional.first as String;
     positional = positional.sublist(1);
 

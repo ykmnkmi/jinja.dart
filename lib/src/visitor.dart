@@ -63,6 +63,8 @@ abstract class Visitor<C, R> {
 
   R visitIf(If node, C context);
 
+  R visitImport(Import node, C context);
+
   R visitInclude(Include node, C context);
 
   R visitInterpolation(Interpolation node, C context);
@@ -220,6 +222,11 @@ class ThrowingVisitor<C, R> implements Visitor<C, R> {
 
   @override
   R visitIf(If node, C context) {
+    throw UnimplementedError('$node');
+  }
+
+  @override
+  R visitImport(Import node, C context) {
     throw UnimplementedError('$node');
   }
 

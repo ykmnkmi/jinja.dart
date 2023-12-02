@@ -4,24 +4,34 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math' show max;
 
+import 'package:jinja/loaders.dart';
 import 'package:jinja/src/compiler.dart';
 import 'package:jinja/src/context.dart';
 import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/optimizer.dart';
 import 'package:stack_trace/stack_trace.dart';
 
-const String source = '''\
-  {% if kvs %}(
-   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}
-  ){% endif %}''';
-
-const Map<String, Object?> context = <String, Object?>{};
-
 const JsonEncoder jsonEncoder = JsonEncoder.withIndent('  ');
+
+const String source = '''
+{% import "module" as m %}{{ m.test() }}''';
+
+const Map<String, Object?> globals = <String, Object?>{'bar': 23};
+
+const Map<String, Object?> context = <String, Object?>{'foo': 42};
+
+const Map<String, String> sources = <String, String>{
+  'module': '{% macro test() %}[{{ foo }}|{{ bar }}]{% endmacro %}',
+};
 
 void main() {
   try {
-    var environment = Environment(leftStripBlocks: true, trimBlocks: true);
+    var environment = Environment(
+      leftStripBlocks: true,
+      trimBlocks: true,
+      loader: MapLoader(sources),
+      globals: globals,
+    );
 
     var tokens = environment.lex(source);
     // print('tokens:');
@@ -31,16 +41,16 @@ void main() {
     // }
 
     var body = environment.scan(tokens);
-    // var original = jsonEncoder.convert(body.toJson());
+    var original = jsonEncoder.convert(body.toJson());
 
     body = body.accept(const Optimizer(), Context(environment));
 
-    // var optimized = jsonEncoder.convert(body.toJson());
+    var optimized = jsonEncoder.convert(body.toJson());
 
-    body = body.accept(RuntimeCompiler(), <String>{});
+    body = body.accept(RuntimeCompiler(), null);
 
-    // var compiled = jsonEncoder.convert(body.toJson());
-    // compare(original, optimized, compiled);
+    var compiled = jsonEncoder.convert(body.toJson());
+    compare(original, optimized, compiled);
 
     var template = Template.fromNode(environment, body: body);
     print('render:');

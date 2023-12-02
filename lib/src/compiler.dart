@@ -4,30 +4,35 @@ import 'package:jinja/src/visitor.dart';
 import 'package:meta/meta.dart';
 
 @doNotStore
-class RuntimeCompiler implements Visitor<Set<String>, Node> {
-  int _macroDepth = 0;
+class RuntimeCompiler implements Visitor<void, Node> {
+  RuntimeCompiler()
+      : _imports = <String>{},
+        _macroses = <String>{},
+        _inMacro = false;
 
-  bool get _isMacro {
-    return _macroDepth > 0;
-  }
+  final Set<String> _imports;
 
-  T visitNode<T extends Node?>(Node? node, Set<String> context) {
+  final Set<String> _macroses;
+
+  bool _inMacro;
+
+  T visitNode<T extends Node?>(Node? node, void context) {
     return node?.accept(this, context) as T;
   }
 
-  List<T> visitNodes<T extends Node>(List<Node> nodes, Set<String> context) {
+  List<T> visitNodes<T extends Node>(List<Node> nodes, void context) {
     return <T>[for (var node in nodes) visitNode(node, context)];
   }
 
   // Expressions
 
   @override
-  Array visitArray(Array node, Set<String> context) {
+  Array visitArray(Array node, void context) {
     return node.copyWith(values: visitNodes(node.values, context));
   }
 
   @override
-  Node visitAttribute(Attribute node, Set<String> context) {
+  Node visitAttribute(Attribute node, void context) {
     // Modifies Template AST from `object.prop` to `object['prop']`.
     if (node.value case Name(name: 'self' || 'loop')) {
       return Item(
@@ -40,7 +45,7 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
   }
 
   @override
-  Call visitCall(Call node, Set<String> context) {
+  Call visitCall(Call node, void context) {
     // Modifies Template AST from `loop.cycle(first, second, *list)`
     // to `loop['cycle']([first, second], list)`, which matches
     // [LoopContext.cycle] definition.
@@ -89,7 +94,28 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
         );
       }
 
-      if (context.contains(name) || _isMacro && name == 'caller') {
+      if (_macroses.contains(name) || _inMacro && name == 'caller') {
+        var calling = visitNode<Calling>(node.calling, context);
+        var arguments = calling.arguments;
+        var keywords = calling.keywords;
+
+        return node.copyWith(
+          value: visitNode(node.value, context),
+          calling: Calling(
+            arguments: <Expression>[
+              Array(values: arguments.toList()),
+              Dict(pairs: <Pair>[
+                for (var (:key, :value) in keywords)
+                  (key: Constant(value: key), value: value),
+              ]),
+            ],
+          ),
+        );
+      }
+    }
+
+    if (node.value case Attribute attribute) {
+      if (attribute.value case Name name when _imports.contains(name.name)) {
         var calling = visitNode<Calling>(node.calling, context);
         var arguments = calling.arguments;
         var keywords = calling.keywords;
@@ -116,7 +142,7 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
   }
 
   @override
-  Calling visitCalling(Calling node, Set<String> context) {
+  Calling visitCalling(Calling node, void context) {
     return node.copyWith(
       arguments: visitNodes(node.arguments, context),
       keywords: <Keyword>[
@@ -127,7 +153,7 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
   }
 
   @override
-  Compare visitCompare(Compare node, Set<String> context) {
+  Compare visitCompare(Compare node, void context) {
     return node.copyWith(
       value: visitNode(node.value, context),
       operands: <Operand>[
@@ -138,12 +164,12 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
   }
 
   @override
-  Concat visitConcat(Concat node, Set<String> context) {
+  Concat visitConcat(Concat node, void context) {
     return node.copyWith(values: visitNodes(node.values, context));
   }
 
   @override
-  Condition visitCondition(Condition node, Set<String> context) {
+  Condition visitCondition(Condition node, void context) {
     return node.copyWith(
       test: visitNode(node.test, context),
       trueValue: visitNode(node.trueValue, context),
@@ -152,12 +178,12 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
   }
 
   @override
-  Constant visitConstant(Constant node, Set<String> context) {
+  Constant visitConstant(Constant node, void context) {
     return node;
   }
 
   @override
-  Dict visitDict(Dict node, Set<String> context) {
+  Dict visitDict(Dict node, void context) {
     return node.copyWith(
       pairs: <Pair>[
         for (var (:key, :value) in node.pairs)
@@ -167,7 +193,7 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
   }
 
   @override
-  Filter visitFilter(Filter node, Set<String> context) {
+  Filter visitFilter(Filter node, void context) {
     // Modifies Template AST from `map('filter', key=value)`
     // to `map(values, ['filter'], {'key': value})` to match [doMap] definition.
     if (node.name == 'map') {
@@ -193,12 +219,12 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
   }
 
   @override
-  Item visitItem(Item node, Set<String> context) {
+  Item visitItem(Item node, void context) {
     return node.copyWith(value: visitNode(node.value, context));
   }
 
   @override
-  Logical visitLogical(Logical node, Set<String> context) {
+  Logical visitLogical(Logical node, void context) {
     return node.copyWith(
       left: visitNode(node.left, context),
       right: visitNode(node.right, context),
@@ -206,17 +232,17 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
   }
 
   @override
-  Name visitName(Name node, Set<String> context) {
+  Name visitName(Name node, void context) {
     return node;
   }
 
   @override
-  NamespaceRef visitNamespaceRef(NamespaceRef node, Set<String> context) {
+  NamespaceRef visitNamespaceRef(NamespaceRef node, void context) {
     return node;
   }
 
   @override
-  Scalar visitScalar(Scalar node, Set<String> context) {
+  Scalar visitScalar(Scalar node, void context) {
     return node.copyWith(
       left: visitNode(node.left, context),
       right: visitNode(node.right, context),
@@ -224,24 +250,24 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
   }
 
   @override
-  Test visitTest(Test node, Set<String> context) {
+  Test visitTest(Test node, void context) {
     return node.copyWith(calling: visitNode(node.calling, context));
   }
 
   @override
-  Tuple visitTuple(Tuple node, Set<String> context) {
+  Tuple visitTuple(Tuple node, void context) {
     return node.copyWith(values: visitNodes(node.values, context));
   }
 
   @override
-  Unary visitUnary(Unary node, Set<String> context) {
+  Unary visitUnary(Unary node, void context) {
     return node.copyWith(value: visitNode(node.value, context));
   }
 
   // Statements
 
   @override
-  Assign visitAssign(Assign node, Set<String> context) {
+  Assign visitAssign(Assign node, void context) {
     return node.copyWith(
       target: visitNode(node.target, context),
       value: visitNode(node.value, context),
@@ -249,7 +275,7 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
   }
 
   @override
-  AssignBlock visitAssignBlock(AssignBlock node, Set<String> context) {
+  AssignBlock visitAssignBlock(AssignBlock node, void context) {
     return node.copyWith(
       target: visitNode(node.target, context),
       filters: visitNodes(node.filters, context),
@@ -258,12 +284,12 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
   }
 
   @override
-  Block visitBlock(Block node, Set<String> context) {
+  Block visitBlock(Block node, void context) {
     return node.copyWith(body: visitNode(node.body, context));
   }
 
   @override
-  CallBlock visitCallBlock(CallBlock node, Set<String> context) {
+  CallBlock visitCallBlock(CallBlock node, void context) {
     return node.copyWith(
       call: visitNode(node.call, context),
       positional: <Expression>[
@@ -282,22 +308,22 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
   }
 
   @override
-  Data visitData(Data node, Set<String> context) {
+  Data visitData(Data node, void context) {
     return node;
   }
 
   @override
-  Do visitDo(Do node, Set<String> context) {
+  Do visitDo(Do node, void context) {
     return node.copyWith(value: visitNode(node.value, context));
   }
 
   @override
-  Extends visitExtends(Extends node, Set<String> context) {
+  Extends visitExtends(Extends node, void context) {
     return node;
   }
 
   @override
-  FilterBlock visitFilterBlock(FilterBlock node, Set<String> context) {
+  FilterBlock visitFilterBlock(FilterBlock node, void context) {
     return node.copyWith(
       filters: visitNodes(node.filters, context),
       body: visitNode(node.body, context),
@@ -305,7 +331,7 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
   }
 
   @override
-  For visitFor(For node, Set<String> context) {
+  For visitFor(For node, void context) {
     return node.copyWith(
       target: visitNode(node.target, context),
       iterable: visitNode(node.iterable, context),
@@ -316,7 +342,7 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
   }
 
   @override
-  If visitIf(If node, Set<String> context) {
+  If visitIf(If node, void context) {
     return node.copyWith(
       test: visitNode(node.test, context),
       body: visitNode(node.body, context),
@@ -324,19 +350,25 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
   }
 
   @override
-  Include visitInclude(Include node, Set<String> context) {
+  Import visitImport(Import node, void context) {
+    _imports.add(node.target);
     return node;
   }
 
   @override
-  Interpolation visitInterpolation(Interpolation node, Set<String> context) {
+  Include visitInclude(Include node, void context) {
+    return node;
+  }
+
+  @override
+  Interpolation visitInterpolation(Interpolation node, void context) {
     return node.copyWith(value: visitNode(node.value, context));
   }
 
   @override
-  Macro visitMacro(Macro node, Set<String> context) {
-    _macroDepth += 1;
-    context.add(node.name);
+  Macro visitMacro(Macro node, void context) {
+    _inMacro = true;
+    _macroses.add(node.name);
 
     var positional = <Expression>[];
     var named = <(Expression, Expression)>[];
@@ -373,17 +405,17 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
       body: visitNode(node.body, context),
     );
 
-    _macroDepth -= 1;
+    _inMacro = false;
     return node;
   }
 
   @override
-  Output visitOutput(Output node, Set<String> context) {
+  Output visitOutput(Output node, void context) {
     return node.copyWith(nodes: visitNodes(node.nodes, context));
   }
 
   @override
-  TemplateNode visitTemplateNode(TemplateNode node, Set<String> context) {
+  TemplateNode visitTemplateNode(TemplateNode node, void context) {
     return node.copyWith(
       blocks: visitNodes(node.blocks, context),
       body: visitNode(node.body, context),
@@ -391,7 +423,7 @@ class RuntimeCompiler implements Visitor<Set<String>, Node> {
   }
 
   @override
-  With visitWith(With node, Set<String> context) {
+  With visitWith(With node, void context) {
     return node.copyWith(
       targets: visitNodes(node.targets, context),
       values: visitNodes(node.values, context),

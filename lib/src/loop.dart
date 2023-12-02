@@ -149,7 +149,7 @@ final class LoopIterator implements Iterator<Object?> {
 }
 
 final class Cycler extends Iterable<Object?> {
-  Cycler(List<Object?> values)
+  Cycler(Iterable<Object?> values)
       : values = List<Object?>.of(values),
         length = values.length,
         index = 0;

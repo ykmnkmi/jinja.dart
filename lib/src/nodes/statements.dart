@@ -585,6 +585,49 @@ final class Include extends Statement implements ImportContext {
   }
 }
 
+final class Import extends Statement implements ImportContext {
+  const Import({
+    required this.template,
+    required this.target,
+    this.withContext = true,
+  });
+
+  final Expression template;
+
+  final String target;
+
+  @override
+  final bool withContext;
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitImport(this, context);
+  }
+
+  @override
+  Import copyWith({
+    Expression? template,
+    String? target,
+    bool? withContext,
+  }) {
+    return Import(
+      template: template ?? this.template,
+      target: target ?? this.target,
+      withContext: withContext ?? this.withContext,
+    );
+  }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'class': 'Import',
+      'template': template,
+      'target': target,
+      if (withContext) 'withContext': withContext,
+    };
+  }
+}
+
 final class Do extends Statement {
   Do({required this.value});
 

@@ -560,7 +560,7 @@ final class Attribute extends Expression {
   @override
   Map<String, Object?> toJson() {
     return <String, Object?>{
-      'class': 'Item',
+      'class': 'Attribute',
       'attribute': attribute,
       'value': value.toJson(),
     };

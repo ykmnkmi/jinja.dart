@@ -137,9 +137,15 @@ final class Output extends Node {
 }
 
 final class TemplateNode extends Node {
-  const TemplateNode({this.blocks = const <Block>[], required this.body});
+  const TemplateNode({
+    this.blocks = const <Block>[],
+    this.macros = const <String, Macro>{},
+    required this.body,
+  });
 
   final List<Block> blocks;
+
+  final Map<String, Macro> macros;
 
   final Node body;
 
@@ -176,6 +182,9 @@ final class TemplateNode extends Node {
       'class': 'TemplateNode',
       'blocks': <Map<String, Object?>>[
         for (var block in blocks) block.toJson(),
+      ],
+      'macros': <Map<String, Object?>>[
+        for (var macro in macros.values) macro.toJson(),
       ],
       'body': body.toJson(),
     };

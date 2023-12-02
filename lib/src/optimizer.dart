@@ -374,8 +374,17 @@ class Optimizer implements Visitor<Context, Node> {
   }
 
   @override
+  Import visitImport(Import node, Context context) {
+    return node.copyWith(
+      template: node.template.accept(this, context) as Expression,
+    );
+  }
+
+  @override
   Include visitInclude(Include node, Context context) {
-    return node;
+    return node.copyWith(
+      template: node.template.accept(this, context) as Expression,
+    );
   }
 
   @override

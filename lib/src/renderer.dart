@@ -169,7 +169,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
     MacroCall node,
     StringSinkRenderContext context,
   ) {
-    return (List<Object?> positional, Map<Object?, Object?> named) {
+    String macro(List<Object?> positional, Map<Object?, Object?> named) {
       var buffer = StringBuffer();
       var derived = context.derived(sink: buffer);
       var index = 0;
@@ -209,7 +209,9 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
 
       node.body.accept(this, derived);
       return buffer.toString();
-    };
+    }
+
+    return macro;
   }
 
   // Expressions
@@ -582,6 +584,49 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
     } else if (node.orElse case var orElse?) {
       orElse.accept(this, context);
     }
+  }
+
+  @override
+  void visitImport(Import node, StringSinkRenderContext context) {
+    var templateOrParth = node.template.accept(this, context);
+
+    var template = switch (templateOrParth) {
+      String path => context.environment.getTemplate(path),
+      Template template => template,
+      Object? value => throw ArgumentError.value(value, 'template'),
+    };
+
+    var namespace = Namespace();
+
+    if (template.body case Macro macro) {
+      if (node.withContext) {
+        namespace[macro.name] = getMacroFunction(macro, context);
+      } else {
+        var newContext = context.derived();
+        namespace[macro.name] = getMacroFunction(macro, newContext);
+      }
+    } else if (template.body case TemplateNode body) {
+      void Function(String name, Macro macro) forEach;
+
+      if (node.withContext) {
+        forEach = (String name, Macro macro) {
+          namespace[name] = getMacroFunction(macro, context);
+        };
+      } else {
+        var newContext = context.derived();
+
+        forEach = (String name, Macro macro) {
+          namespace[name] = getMacroFunction(macro, newContext);
+        };
+      }
+
+      body.macros.forEach(forEach);
+    } else {
+      // TODO(renderer): Update error.
+      throw Exception();
+    }
+
+    context.set(node.target, namespace);
   }
 
   @override

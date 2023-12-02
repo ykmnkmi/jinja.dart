@@ -61,12 +61,9 @@ See also examples with [conduit][conduit_example] and
   - `generate`
   - `stream`
   - `await` support
-- Template Inheritance
-  - Template Objects
 - List of Control Structures
-  - Macros 🔥
-  - Call 🔥
-  - Import
+  - Import 🔥
+  - From 🔥
 - Loaders
   - PackageLoader (VM)
   - ...
@@ -105,10 +102,13 @@ See also examples with [conduit][conduit_example] and
   - Named Block End-Tags
   - Block Nesting and Scope
   - Required Blocks
+  - Template Objects
 - ~~HTML Escaping~~
 - List of Control Structures
   - For
   - If
+  - Macro
+  - Call
   - Filters
   - Assignments
   - Block Assignments
@@ -119,7 +119,21 @@ See also examples with [conduit][conduit_example] and
   - Include
 - Expressions with [filters][filters] and [tests][tests]
   - Literals
+    - `"Hello World"`
+    - `42` / `123_456`
+    - `42.23` / `42.1e2` / `123_456.789`
+    - `['list', 'of', 'objects']`
+    - `('tuple', 'of', 'values')`
+    - `{'dict': 'of', 'key': 'and', 'value': 'pairs'}`
+    - `true` / `false`
   - Math
+    - `+`
+    - `-`
+    - `/`
+    - `//`
+    - `%`
+    - `*`
+    - `**`
   - Comparisons
   - Logic
   - Other Operators
@@ -137,6 +151,10 @@ See also examples with [conduit][conduit_example] and
   - Expression Statement
   - With Statement
 - ~~Autoescape Overrides~~
+
+## Contributing
+Contributions are welcome! Please open an issue or pull request on GitHub.
+There are no strict rules, but please try to follow the existing code style.
 
 ## Support
 Post issues and feature requests on the GitHub [issue tracker][issues].

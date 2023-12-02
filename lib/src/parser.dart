@@ -129,6 +129,9 @@ class Parser {
         case 'include':
           return parseInclude(reader);
 
+        case 'import':
+          return parseImport(reader);
+
         case 'call':
           return parseCallBlock(reader);
 
@@ -359,7 +362,7 @@ class Parser {
   }
 
   Extends parseExtends(TokenReader reader) {
-    var token = reader.next();
+    var token = reader.expect('name', 'extends');
 
     if (extendsNode != null) {
       fail('Extended multiple times', token.line);
@@ -394,14 +397,29 @@ class Parser {
   }
 
   Include parseInclude(TokenReader reader) {
-    reader.next();
+    reader.expect('name', 'include');
 
     var template = parseExpression(reader);
     var withContext = parseImportContext(reader, true);
     return Include(template: template, withContext: withContext);
   }
 
-  // TODO(parser): add parseImport
+  Import parseImport(TokenReader reader) {
+    reader.expect('name', 'import');
+
+    var template = parseExpression(reader);
+
+    reader.expect('name', 'as');
+
+    var targetName = parseAssignName(reader);
+    var withContext = parseImportContext(reader, false);
+    return Import(
+      template: template,
+      target: targetName.name,
+      withContext: withContext,
+    );
+  }
+
   // TODO(parser): add parseFrom
 
   // TODO(parser): check for duplicate arguments.
@@ -446,7 +464,7 @@ class Parser {
   CallBlock parseCallBlock(TokenReader reader) {
     const endCall = <(String, String?)>[('name', 'endcall')];
 
-    var token = reader.next();
+    var token = reader.expect('name', 'call');
 
     List<Expression> positional;
     List<(Expression, Expression)> named;
@@ -498,7 +516,7 @@ class Parser {
   FilterBlock parseFilterBlock(TokenReader reader) {
     const endFilter = <(String, String?)>[('name', 'endfilter')];
 
-    reader.next();
+    reader.expect('name', 'filter');
 
     var filters = parseFilters(reader, true);
     var body = parseStatements(reader, endFilter, true);
@@ -508,7 +526,7 @@ class Parser {
   Macro parseMacro(TokenReader reader) {
     const endMacro = <(String, String?)>[('name', 'endmacro')];
 
-    reader.next();
+    reader.expect('name', 'macro');
 
     var name = parseAssignName(reader);
     var (positional, named) = parseSignature(reader);
@@ -630,8 +648,11 @@ class Parser {
 
       if (reader.skipIf('name', 'else')) {
         var orElse = parseCondition(reader);
-        value =
-            Condition(test: condition, trueValue: value, falseValue: orElse);
+        value = Condition(
+          test: condition,
+          trueValue: value,
+          falseValue: orElse,
+        );
       } else {
         value = Condition(test: condition, trueValue: value);
       }
