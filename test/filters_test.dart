@@ -27,7 +27,7 @@ class User {
 }
 
 bool noFilterNamedF(TemplateError error) {
-  return error.message == "No filter named 'f'";
+  return error.message == "No filter named 'f'.";
 }
 
 void main() {

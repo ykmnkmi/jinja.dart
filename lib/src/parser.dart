@@ -132,6 +132,9 @@ class Parser {
         case 'import':
           return parseImport(reader);
 
+        case 'from':
+          return parseFrom(reader);
+
         case 'call':
           return parseCallBlock(reader);
 
@@ -211,7 +214,7 @@ class Parser {
     var target = parseAssignTarget(reader, extraEndRules: endIn);
 
     if (target case Name(name: 'loop')) {
-      fail("Can't assign to special loop variable in for-loop target");
+      fail("Can't assign to special loop variable in for-loop target.");
     }
 
     reader.expect('name', 'in');
@@ -316,13 +319,13 @@ class Parser {
     var name = reader.expect('name');
 
     if (blocks.any((block) => block.name == name.value)) {
-      fail("Block '${name.value}' defined twice", reader.current.line);
+      fail("Block '${name.value}' defined twice.", reader.current.line);
     }
 
     var scoped = reader.skipIf('name', 'scoped');
 
     if (reader.current.test('sub')) {
-      fail('Use an underscore instead', reader.current.line);
+      fail('Use an underscore instead.', reader.current.line);
     }
 
     var required = reader.skipIf('name', 'required');
@@ -335,7 +338,7 @@ class Parser {
           break;
 
         default:
-          fail('Required blocks can only contain comments or whitespace',
+          fail('Required blocks can only contain comments or whitespace.',
               token.line);
       }
     }
@@ -344,7 +347,7 @@ class Parser {
 
     if (maybeName.test('name')) {
       if (maybeName.value != name.value) {
-        fail("'${name.value}' expected, got ${maybeName.value}");
+        fail("'${name.value}' expected, got ${maybeName.value}.");
       }
 
       reader.next();
@@ -365,7 +368,7 @@ class Parser {
     var token = reader.expect('name', 'extends');
 
     if (extendsNode != null) {
-      fail('Extended multiple times', token.line);
+      fail('Extended multiple times.', token.line);
     }
 
     var template = parseExpression(reader);
@@ -411,16 +414,75 @@ class Parser {
 
     reader.expect('name', 'as');
 
-    var targetName = parseAssignName(reader);
+    var target = parseAssignName(reader);
     var withContext = parseImportContext(reader, false);
     return Import(
       template: template,
-      target: targetName.name,
+      target: target.name,
       withContext: withContext,
     );
   }
 
-  // TODO(parser): add parseFrom
+  FromImport parseFrom(TokenReader reader) {
+    reader.expect('name', 'from');
+
+    var template = parseExpression(reader);
+
+    reader.expect('name', 'import');
+
+    var names = <(String, String?)>[]; // target & alias
+    var withContext = false;
+
+    bool parseContext() {
+      if (reader.current.value case 'with' || 'without'
+          when reader.look().test('name', 'context')) {
+        withContext = reader.current.value == 'with';
+        reader.skip(2);
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    while (true) {
+      if (names.isNotEmpty) {
+        reader.expect('comma');
+      }
+
+      if (reader.current.type == 'name') {
+        if (parseContext()) {
+          break;
+        }
+
+        var token = reader.current;
+        var target = parseAssignName(reader);
+
+        if (target.name.startsWith('_')) {
+          fail('Names starting with an underline can not be imported.',
+              token.line);
+        }
+
+        if (reader.skipIf('name', 'as')) {
+          var alias = parseAssignName(reader);
+          names.add((target.name, alias.name));
+        } else {
+          names.add((target.name, null));
+        }
+
+        if (parseContext() || reader.current.type != 'comma') {
+          break;
+        }
+      } else {
+        reader.expect('name');
+      }
+    }
+
+    return FromImport(
+      template: template,
+      names: names,
+      withContext: withContext,
+    );
+  }
 
   // TODO(parser): check for duplicate arguments.
   (List<Expression>, List<(Expression, Expression)>) parseSignature(
@@ -441,7 +503,7 @@ class Parser {
       if (reader.skipIf('assign')) {
         defaults.add(parseExpression(reader));
       } else if (defaults.isNotEmpty) {
-        fail('Non-default argument follows default argument');
+        fail('Non-default argument follows default argument.');
       }
 
       names.add(name);
@@ -479,13 +541,13 @@ class Parser {
     var call = parseExpression(reader);
 
     if (call is! Call) {
-      fail('Expected call', token.line);
+      fail('Expected call.', token.line);
     }
 
     var name = call.value;
 
     if (name is! Name) {
-      fail('Expected call macro name', token.line);
+      fail('Expected call macro name.', token.line);
     }
 
     var body = parseStatements(reader, endCall, true);
@@ -587,7 +649,7 @@ class Parser {
       return name.copyWith(context: AssignContext.store);
     }
 
-    fail("Can't assign to $name", line);
+    fail("Can't assign to $name.", line);
   }
 
   Expression parseAssignTarget(
@@ -623,7 +685,7 @@ class Parser {
       );
     }
 
-    fail("Can't assign to $target", line);
+    fail("Can't assign to $target.", line);
   }
 
   Do parseDo(TokenReader reader) {
@@ -936,7 +998,7 @@ class Parser {
         break;
 
       default:
-        fail('Unexpected ${describeToken(current)}', current.line);
+        fail('Unexpected ${describeToken(current)}.', current.line);
     }
 
     return expression;
@@ -987,7 +1049,7 @@ class Parser {
 
       if (!explicitParentheses) {
         var current = reader.current;
-        fail('Expected an expression, got ${describeToken(current)}',
+        fail('Expected an expression, got ${describeToken(current)}.',
             current.line);
       }
     }
@@ -1085,7 +1147,7 @@ class Parser {
       }
 
       if (!attributeToken.test('integer')) {
-        fail('Expected name or number', attributeToken.line);
+        fail('Expected name or number.', attributeToken.line);
       }
 
       var key = Constant(value: int.parse(attributeToken.value));
@@ -1098,7 +1160,7 @@ class Parser {
       return Item(key: key, value: value);
     }
 
-    fail('Expected subscript expression', token.line);
+    fail('Expected subscript expression.', token.line);
   }
 
   Calling parseCalling(TokenReader reader) {
@@ -1109,7 +1171,7 @@ class Parser {
 
     void ensure(bool ensure) {
       if (!ensure) {
-        fail('Invalid syntax for function call expression', token.line);
+        fail('Invalid syntax for function call expression.', token.line);
       }
     }
 
@@ -1229,7 +1291,7 @@ class Parser {
       calling = calling.copyWith(arguments: arguments);
     } else if (current.testAny(allow) && !current.testAny(deny)) {
       if (current.test('name', 'is')) {
-        fail('You cannot chain multiple tests with is');
+        fail('You cannot chain multiple tests with is.');
       }
 
       var argument = parsePostfix(reader, parsePrimary(reader));

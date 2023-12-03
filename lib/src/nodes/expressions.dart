@@ -213,7 +213,7 @@ final class Dict extends Literal {
   @override
   Map<String, Object?> toJson() {
     return <String, Object?>{
-      'class': 'Tuple',
+      'class': 'Dict',
       'values': <Map<String, Object?>>[
         for (var (:key, :value) in pairs)
           <String, Object?>{

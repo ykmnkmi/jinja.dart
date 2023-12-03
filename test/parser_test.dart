@@ -135,7 +135,7 @@ void main() {
           'Unexpected end of template. Jinja was looking for the '
               "following tags: 'endfor' or 'else'. The innermost block "
               "that needs to be closed is 'for'.");
-      assertError('{% block foo-bar-baz %}', 'Use an underscore instead');
+      assertError('{% block foo-bar-baz %}', 'Use an underscore instead.');
       assertError(
           '{% unknown_tag %}', "Encountered unknown tag 'unknown_tag'.");
     });

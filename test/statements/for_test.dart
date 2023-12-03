@@ -255,7 +255,7 @@ void main() {
         {%- endfor -%}
         ''');
       expect(tmpl.render(), equals('[1][2][3]'));
-    }, skip: true);
+    });
 
     test('scoping bug', () {
       var tmpl = env.fromString('''

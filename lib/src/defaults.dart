@@ -16,7 +16,7 @@ Object finalize(Context context, Object? value) {
   return value ?? '';
 }
 
-Object? getItem(Object item, dynamic object) {
+Object? getItem(Object? item, dynamic object) {
   try {
     // TODO: dynamic invocation
     // ignore: avoid_dynamic_calls

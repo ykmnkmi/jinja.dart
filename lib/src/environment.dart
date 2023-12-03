@@ -41,7 +41,7 @@ typedef AttributeGetter = Object? Function(String attribute, Object? object);
 /// A [Function] that can be used to get object item.
 ///
 /// Used by `object['item']` expression.
-typedef ItemGetter = Object? Function(Object key, Object? object);
+typedef ItemGetter = Object? Function(Object? key, Object? object);
 
 /// Pass the [Context] as the first argument to the applied function when
 /// called while rendering a template.
@@ -275,7 +275,7 @@ class Environment {
     if (pass == PassArgument.context) {
       if (context == null) {
         throw TemplateRuntimeError(
-            'Attempted to invoke context function without context');
+            'Attempted to invoke context function without context.');
       }
 
       positional = <Object?>[context, ...positional];
@@ -298,7 +298,7 @@ class Environment {
       return callCommon(function, positional, named, context);
     }
 
-    throw TemplateRuntimeError("No filter named '$name'");
+    throw TemplateRuntimeError("No filter named '$name'.");
   }
 
   /// If [name] not found throws [TemplateRuntimeError].
@@ -313,7 +313,7 @@ class Environment {
       return callCommon(function, positional, named, context) as bool;
     }
 
-    throw TemplateRuntimeError("No test named '$name'");
+    throw TemplateRuntimeError("No test named '$name'.");
   }
 
   /// Lex the given source and return a list of tokens.
@@ -365,7 +365,7 @@ class Environment {
       return templates[template] ??= loader.load(this, template);
     }
 
-    throw StateError('No loader for this environment specified');
+    throw StateError('No loader for this environment specified.');
   }
 
   /// Returns a list of templates for this environment.
@@ -377,7 +377,7 @@ class Environment {
       return loader.listTemplates();
     }
 
-    throw StateError('No loader for this environment specified');
+    throw StateError('No loader for this environment specified.');
   }
 
   @protected
@@ -398,7 +398,7 @@ class Environment {
       };
     }
 
-    // TODO: add error message
+    // TODO(environment): Add error message.
     throw ArgumentError.value(function, 'finalize');
   }
 

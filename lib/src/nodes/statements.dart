@@ -628,6 +628,49 @@ final class Import extends Statement implements ImportContext {
   }
 }
 
+final class FromImport extends Statement implements ImportContext {
+  const FromImport({
+    required this.template,
+    required this.names,
+    this.withContext = true,
+  });
+
+  final Expression template;
+
+  final List<(String, String?)> names;
+
+  @override
+  final bool withContext;
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitFromImport(this, context);
+  }
+
+  @override
+  FromImport copyWith({
+    Expression? template,
+    List<(String, String?)>? names,
+    bool? withContext,
+  }) {
+    return FromImport(
+      template: template ?? this.template,
+      names: names ?? this.names,
+      withContext: withContext ?? this.withContext,
+    );
+  }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'class': 'FromImport',
+      'template': template,
+      'names': <String, String?>{for (var (name, alias) in names) name: alias},
+      if (withContext) 'withContext': withContext,
+    };
+  }
+}
+
 final class Do extends Statement {
   Do({required this.value});
 

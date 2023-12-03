@@ -340,24 +340,20 @@ void main() {
     });
 
     test('name undefined', () {
-      var matcher = throwsA(
-        predicate<TemplateAssertionError>(
-            (error) => error.message == "No test named 'f'"),
-      );
-
-      expect(() => env.fromString('{{ x is f }}'), matcher);
+      expect(
+          () => env.fromString('{{ x is f }}'),
+          throwsA(predicate<TemplateAssertionError>(
+              (error) => error.message == "No test named 'f'.")));
     }, skip: true);
 
     test('name undefined in if', () {
       var tmpl = env.fromString('{% if x is defined %}{{ x is f }}{% endif %}');
       expect(tmpl.render(), equals(''));
 
-      var matcher = throwsA(
-        predicate<TemplateRuntimeError>(
-            (error) => error.message == "No test named 'f'"),
-      );
-
-      expect(() => tmpl.render({'x': 1}), matcher);
+      expect(
+          () => tmpl.render({'x': 1}),
+          throwsA(predicate<TemplateRuntimeError>(
+              (error) => error.message == "No test named 'f'.")));
     });
 
     test('is filter', () {

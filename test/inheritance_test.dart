@@ -279,7 +279,7 @@ void main() {
 
       var matcher = throwsA(predicate<TemplateSyntaxError>((error) =>
           error.message ==
-          'Required blocks can only contain comments or whitespace'));
+          'Required blocks can only contain comments or whitespace.'));
 
       expect(() => env.getTemplate('level1default1').render(), matcher);
       expect(() => env.getTemplate('level1default2').render(), matcher);

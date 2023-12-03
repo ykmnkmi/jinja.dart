@@ -94,7 +94,7 @@ class RuntimeCompiler implements Visitor<void, Node> {
         );
       }
 
-      if (_macroses.contains(name) || _inMacro && name == 'caller') {
+      if (_inMacro && name == 'caller' || _macroses.contains(name)) {
         var calling = visitNode<Calling>(node.calling, context);
         var arguments = calling.arguments;
         var keywords = calling.keywords;
@@ -338,6 +338,16 @@ class RuntimeCompiler implements Visitor<void, Node> {
       body: visitNode(node.body, context),
       test: visitNode(node.test, context),
       orElse: visitNode(node.orElse, context),
+    );
+  }
+
+  @override
+  FromImport visitFromImport(FromImport node, void context) {
+    for (var (name, alias) in node.names) {
+      _macroses.add(alias ?? name);
+    }
+    return node.copyWith(
+      template: visitNode(node.template, context),
     );
   }
 

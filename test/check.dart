@@ -9,12 +9,11 @@ import 'package:jinja/src/compiler.dart';
 import 'package:jinja/src/context.dart';
 import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/optimizer.dart';
-import 'package:stack_trace/stack_trace.dart';
 
 const JsonEncoder jsonEncoder = JsonEncoder.withIndent('  ');
 
 const String source = '''
-{% import "module" as m %}{{ m.test() }}''';
+{% from "foo" import %}''';
 
 const Map<String, Object?> globals = <String, Object?>{'bar': 23};
 
@@ -25,40 +24,35 @@ const Map<String, String> sources = <String, String>{
 };
 
 void main() {
-  try {
-    var environment = Environment(
-      leftStripBlocks: true,
-      trimBlocks: true,
-      loader: MapLoader(sources),
-      globals: globals,
-    );
+  var environment = Environment(
+    leftStripBlocks: true,
+    trimBlocks: true,
+    loader: MapLoader(sources),
+    globals: globals,
+  );
 
-    var tokens = environment.lex(source);
-    // print('tokens:');
+  var tokens = environment.lex(source);
+  // print('tokens:');
 
-    // for (var token in tokens) {
-    //   print('${token.type}: ${token.value}');
-    // }
+  // for (var token in tokens) {
+  //   print('${token.type}: ${token.value}');
+  // }
 
-    var body = environment.scan(tokens);
-    var original = jsonEncoder.convert(body.toJson());
+  var body = environment.scan(tokens);
+  var original = jsonEncoder.convert(body.toJson());
 
-    body = body.accept(const Optimizer(), Context(environment));
+  body = body.accept(const Optimizer(), Context(environment));
 
-    var optimized = jsonEncoder.convert(body.toJson());
+  var optimized = jsonEncoder.convert(body.toJson());
 
-    body = body.accept(RuntimeCompiler(), null);
+  body = body.accept(RuntimeCompiler(), null);
 
-    var compiled = jsonEncoder.convert(body.toJson());
-    compare(original, optimized, compiled);
+  var compiled = jsonEncoder.convert(body.toJson());
+  compare(original, optimized, compiled);
 
-    var template = Template.fromNode(environment, body: body);
-    print('render:');
-    print(template.render(context));
-  } catch (error, trace) {
-    print(error);
-    print(Trace.format(trace));
-  }
+  var template = Template.fromNode(environment, body: body);
+  print('render:');
+  print(template.render(context));
 }
 
 const LineSplitter splitter = LineSplitter();
@@ -68,6 +62,10 @@ void compare(
   String optimizedJson,
   String compiledJson,
 ) {
+  if (!stdout.hasTerminal) {
+    return;
+  }
+
   var original = <String?>['original:', ...splitter.convert(originalJson)];
   var optimized = <String?>['optimized:', ...splitter.convert(optimizedJson)];
   var compiled = <String?>['compiled:', ...splitter.convert(compiledJson)];

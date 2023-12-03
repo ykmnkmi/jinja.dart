@@ -66,7 +66,7 @@ base class Context {
     return environment.getAttribute(key, value);
   }
 
-  Object? item(Object key, Object? value) {
+  Object? item(Object? key, Object? value) {
     return environment.getItem(key, value);
   }
 

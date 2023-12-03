@@ -1,9 +1,9 @@
-## 0.6.0-dev.3
+## 0.6.0-dev.4
 - internal changes.
 - added:
   - statements:
     - `import`
-    - ...
+    - `from`
 - removed:
   - exceptions:
     - `FilterArgumentError`

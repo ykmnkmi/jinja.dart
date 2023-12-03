@@ -161,7 +161,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
       };
     }
 
-    // TODO(renderer): update error message
+    // TODO(renderer): Update error message.
     throw ArgumentError.value(targets, 'targets');
   }
 
@@ -208,7 +208,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
       }
 
       node.body.accept(this, derived);
-      return buffer.toString();
+      return '$buffer';
     }
 
     return macro;
@@ -321,7 +321,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
   Object? visitItem(Item node, StringSinkRenderContext context) {
     var key = node.key.accept(this, context);
     var value = node.value.accept(this, context);
-    return context.item(key!, value);
+    return context.item(key, value);
   }
 
   @override
@@ -578,6 +578,56 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
   }
 
   @override
+  void visitFromImport(FromImport node, StringSinkRenderContext context) {
+    var templateOrParth = node.template.accept(this, context);
+
+    var template = switch (templateOrParth) {
+      String path => context.environment.getTemplate(path),
+      Template template => template,
+      Object? value => throw ArgumentError.value(value, 'template'),
+    };
+
+    for (var (name, alias) in node.names) {
+      String macro(List<Object?> positional, Map<Object?, Object?> named) {
+        Macro targetMacro;
+
+        if (template.body case Macro macro) {
+          if (macro.name != name) {
+            throw TemplateRuntimeError('Macro not found.');
+          }
+
+          targetMacro = macro;
+        } else if (template.body case TemplateNode body) {
+          found:
+          {
+            for (var macro in body.macros) {
+              if (macro.name == name) {
+                targetMacro = macro;
+                break found;
+              }
+            }
+
+            throw TemplateRuntimeError('Macro not found.');
+          }
+        } else {
+          throw TemplateRuntimeError('Non-macro object.');
+        }
+
+        if (node.withContext) {
+          var function = getMacroFunction(targetMacro, context);
+          return function(positional, named.cast<Symbol, Object?>());
+        } else {
+          var newContext = context.derived();
+          var function = getMacroFunction(targetMacro, newContext);
+          return function(positional, named.cast<Symbol, Object?>());
+        }
+      }
+
+      context.set(alias ?? name, macro);
+    }
+  }
+
+  @override
   void visitIf(If node, StringSinkRenderContext context) {
     if (boolean(node.test.accept(this, context))) {
       node.body.accept(this, context);
@@ -596,34 +646,24 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
       Object? value => throw ArgumentError.value(value, 'template'),
     };
 
-    var namespace = Namespace();
+    List<Macro> macros;
 
     if (template.body case Macro macro) {
+      macros = <Macro>[macro];
+    } else if (template.body case TemplateNode body) {
+      macros = body.macros;
+    } else {
+      throw TemplateRuntimeError('Non-macro object.');
+    }
+
+    var namespace = Namespace();
+
+    for (var macro in macros) {
       if (node.withContext) {
         namespace[macro.name] = getMacroFunction(macro, context);
       } else {
-        var newContext = context.derived();
-        namespace[macro.name] = getMacroFunction(macro, newContext);
+        namespace[macro.name] = getMacroFunction(macro, context.derived());
       }
-    } else if (template.body case TemplateNode body) {
-      void Function(String name, Macro macro) forEach;
-
-      if (node.withContext) {
-        forEach = (String name, Macro macro) {
-          namespace[name] = getMacroFunction(macro, context);
-        };
-      } else {
-        var newContext = context.derived();
-
-        forEach = (String name, Macro macro) {
-          namespace[name] = getMacroFunction(macro, newContext);
-        };
-      }
-
-      body.macros.forEach(forEach);
-    } else {
-      // TODO(renderer): Update error.
-      throw Exception();
     }
 
     context.set(node.target, namespace);
@@ -655,7 +695,6 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
 
   @override
   void visitMacro(Macro node, StringSinkRenderContext context) {
-    // TODO(renderer): handle varargs, kwargs
     var function = getMacroFunction(node, context);
     context.set(node.name, function);
   }
