@@ -38,5 +38,30 @@ void main() {
       expect(() => env.fromString('{% from "foo" import %}'),
           throwsA(isA<TemplateSyntaxError>()));
     });
+
+    test('no trailing comma', () {
+      expect(() => env.fromString('{% from "foo" import bar, %}'),
+          throwsA(isA<TemplateSyntaxError>()));
+
+      expect(() => env.fromString('{% from "foo" import bar,, %}'),
+          throwsA(isA<TemplateSyntaxError>()));
+
+      expect(() => env.fromString('{% from "foo" import, %}'),
+          throwsA(isA<TemplateSyntaxError>()));
+    });
+
+    test('trailing comma with context', () {
+      env.fromString('{% from "foo" import bar, baz with context %}');
+      env.fromString('{% from "foo" import bar, baz, with context %}');
+      env.fromString('{% from "foo" import bar, with context %}');
+      env.fromString('{% from "foo" import bar, with, context %}');
+      env.fromString('{% from "foo" import bar, with with context %}');
+
+      expect(() => env.fromString('{% from "foo" import bar,, with context %}'),
+          throwsA(isA<TemplateSyntaxError>()));
+
+      expect(() => env.fromString('{% from "foo" import bar with context, %}'),
+          throwsA(isA<TemplateSyntaxError>()));
+    });
   });
 }

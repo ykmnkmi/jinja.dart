@@ -13,7 +13,7 @@ import 'package:jinja/src/optimizer.dart';
 const JsonEncoder jsonEncoder = JsonEncoder.withIndent('  ');
 
 const String source = '''
-{% from "foo" import %}''';
+{% from "module" import test %}''';
 
 const Map<String, Object?> globals = <String, Object?>{'bar': 23};
 
