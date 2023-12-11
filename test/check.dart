@@ -5,6 +5,7 @@ import 'dart:io';
 import 'dart:math' show max;
 
 import 'package:jinja/loaders.dart';
+import 'package:jinja/reflection.dart';
 import 'package:jinja/src/compiler.dart';
 import 'package:jinja/src/context.dart';
 import 'package:jinja/src/environment.dart';
@@ -13,7 +14,10 @@ import 'package:jinja/src/optimizer.dart';
 const JsonEncoder jsonEncoder = JsonEncoder.withIndent('  ');
 
 const String source = '''
-{% from "module" import test %}''';
+{%- set items = [] %}
+{%- for char in "foo" %}
+    {%- do items.add(loop.index0 ~ char) %}
+{%- endfor %}{{ items|join(', ') }}''';
 
 const Map<String, Object?> globals = <String, Object?>{'bar': 23};
 
@@ -29,6 +33,7 @@ void main() {
     trimBlocks: true,
     loader: MapLoader(sources),
     globals: globals,
+    getAttribute: getAttribute,
   );
 
   var tokens = environment.lex(source);

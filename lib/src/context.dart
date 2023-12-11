@@ -3,8 +3,12 @@ import 'package:jinja/src/environment.dart';
 typedef ContextCallback<C extends Context> = void Function(C context);
 
 base class Context {
-  Context(this.environment, {this.parent, Map<String, Object?>? data})
-      : context = <String, Object?>{...environment.globals, ...?data};
+  Context(
+    this.environment, {
+    Map<String, Object?>? parent,
+    Map<String, Object?>? data,
+  })  : parent = <String, Object?>{...environment.globals, ...?parent},
+        context = <String, Object?>{...?data};
 
   final Environment environment;
 

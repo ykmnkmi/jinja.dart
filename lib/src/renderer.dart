@@ -26,21 +26,6 @@ abstract base class RenderContext extends Context {
     Map<String, Object?>? data,
   });
 
-  Map<String, Object?> save(Map<String, Object?> map) {
-    var save = <String, Object?>{};
-
-    for (var key in map.keys) {
-      save[key] = context[key];
-      context[key] = map[key];
-    }
-
-    return save;
-  }
-
-  void restore(Map<String, Object?> map) {
-    context.addAll(map);
-  }
-
   void set(String key, Object? value) {
     context[key] = value;
   }
@@ -54,7 +39,7 @@ abstract base class RenderContext extends Context {
     return false;
   }
 
-  Object finalize(Object? object) {
+  Object? finalize(Object? object) {
     return environment.finalize(this, object);
   }
 
@@ -100,7 +85,7 @@ abstract base class RenderContext extends Context {
   }
 }
 
-final class StringSinkRenderContext extends RenderContext {
+base class StringSinkRenderContext extends RenderContext {
   StringSinkRenderContext(
     super.environment,
     this.sink, {
@@ -115,23 +100,25 @@ final class StringSinkRenderContext extends RenderContext {
   StringSinkRenderContext derived({
     StringSink? sink,
     Map<String, List<Block>>? blocks,
+    Map<String, Object?>? parent,
     Map<String, Object?>? data,
   }) {
     return StringSinkRenderContext(
       environment,
       sink ?? this.sink,
       blocks: blocks ?? this.blocks,
-      parent: context,
+      parent: parent ?? context,
       data: data,
     );
   }
 
-  void write(Object? object) {
-    sink.write(object);
+  void write(Object? value) {
+    sink.write(value);
   }
 }
 
-class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
+base class StringSinkRenderer
+    extends Visitor<StringSinkRenderContext, Object?> {
   const StringSinkRenderer();
 
   Map<String, Object?> getDataForTargets(Object? targets, Object? current) {
@@ -442,7 +429,8 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
     } else {
       if (node.required) {
         if (blocks.length == 1) {
-          throw TemplateRuntimeError("Required block '${node.name}' not found");
+          throw TemplateRuntimeError(
+              "Required block '${node.name}' not found.");
         }
       }
 
@@ -548,13 +536,11 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
 
         for (var value in values) {
           var data = getDataForTargets(targets, value);
-          data = context.save(data);
+          var newContext = context.derived(data: data);
 
-          if (boolean(test.accept(this, context))) {
+          if (boolean(test.accept(this, newContext))) {
             filtered.add(value);
           }
-
-          context.restore(data);
         }
 
         values = filtered;
@@ -593,7 +579,8 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
 
         if (template.body case Macro macro) {
           if (macro.name != name) {
-            throw TemplateRuntimeError('Macro not found.');
+            // TODO(renderer): Update error message.
+            throw TemplateRuntimeError('Requested name does not exported.');
           }
 
           targetMacro = macro;
@@ -607,7 +594,8 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
               }
             }
 
-            throw TemplateRuntimeError('Macro not found.');
+            // TODO(renderer): Update error message.
+            throw TemplateRuntimeError('Requested name does not exported.');
           }
         } else {
           throw TemplateRuntimeError('Non-macro object.');
@@ -653,6 +641,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
     } else if (template.body case TemplateNode body) {
       macros = body.macros;
     } else {
+      // TODO(renderer): Update error message.
       throw TemplateRuntimeError('Non-macro object.');
     }
 
@@ -662,7 +651,8 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
       if (node.withContext) {
         namespace[macro.name] = getMacroFunction(macro, context);
       } else {
-        namespace[macro.name] = getMacroFunction(macro, context.derived());
+        var newContext = context.derived(parent: const <String, Object?>{});
+        namespace[macro.name] = getMacroFunction(macro, newContext);
       }
     }
 
@@ -680,7 +670,7 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
     };
 
     if (!node.withContext) {
-      context = StringSinkRenderContext(context.environment, context.sink);
+      context = context.derived(parent: const <String, Object?>{});
     }
 
     template.body.accept(this, context);
@@ -688,8 +678,8 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
 
   @override
   void visitInterpolation(Interpolation node, StringSinkRenderContext context) {
-    var resolved = node.value.accept(this, context);
-    var finalized = context.finalize(resolved);
+    var value = node.value.accept(this, context);
+    var finalized = context.finalize(value);
     context.write(finalized);
   }
 
@@ -736,8 +726,8 @@ class StringSinkRenderer extends Visitor<StringSinkRenderContext, Object?> {
       for (var value in node.values) value.accept(this, context)
     ];
 
-    var data = context.save(getDataForTargets(targets, values));
-    node.body.accept(this, context);
-    context.restore(data);
+    var data = getDataForTargets(targets, values);
+    var newContext = context.derived(data: data);
+    node.body.accept(this, newContext);
   }
 }

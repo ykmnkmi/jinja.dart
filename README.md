@@ -27,10 +27,11 @@ _work in progress_.
   Use `attribute` and `item` filters for `object.attribute` and `object[item]` expressions.
 - If `Environment({getAttribute})` is not passed, the `getItem` method will be used.
   This allows you to use `{{ map.key }}` as an expression equivalent to `{{ map['key'] }}`.
-- Slices and negative indexes are not supported
+- Slices and negative indexes are not supported.
+- Template module is not supported.
 - Not yet supported:
-  - Conditional `extends` statement variant
-  - Choice and ignore missing `include` statement variants
+  - Conditional `extends` statement variant.
+  - Choice and ignore missing `include` statement variants.
 - _work in progress_
 
 ## Dynamically invoked members
@@ -57,13 +58,17 @@ See also examples with [conduit][conduit_example] and
 
 ## Status:
 ### TODO:
-- `Template`:
-  - `generate`
-  - `stream`
-  - `await` support
+- `Template` class:
+  - `generate` method
+  - `stream` method
+  - `module` getter
+- Async Support
 - List of Control Structures
   - Import 🔥
   - From 🔥
+- Expressions
+  - Dart Methods and Properties
+    - `!`/`?.`
 - Loaders
   - PackageLoader (VM)
   - ...
@@ -135,18 +140,38 @@ See also examples with [conduit][conduit_example] and
     - `*`
     - `**`
   - Comparisons
+    - `==`
+    - `!=`
+    - `>`
+    - `>=`
+    - `<`
+    - `<=`
   - Logic
+    - `and`
+    - `or`
+    - `not`
+    - `(expr)`
   - Other Operators
+    - `in`
+    - `is`
+    - `|`
+    - `~`
+    - `()`
+    - `.`/`[]`
   - If Expression
-  - Dart Methods
+    - `{{ list.last if list }}`
+    - `{{ user.name if user else 'Guest' }}`
+  - Dart Methods and Properties
+    - `{{ string.toUpperCase() }}`
+    - `{{ list.add(item) }}`
 - List of Global Functions
   - `print`
   - `range`
   - `list`
   - `namespace`
 - Loaders
-  - FileSystemLoader
-  - MapLoader (DictLoader)
+  - `FileSystemLoader`
+  - `MapLoader` (`DictLoader`)
 - Extensions
   - Expression Statement
   - With Statement

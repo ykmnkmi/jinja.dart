@@ -20,17 +20,17 @@ import 'package:meta/meta.dart';
 ///
 /// For example one can convert `null` implicitly into an empty string here.
 /// {@endtemplate}
-typedef Finalizer = Object Function(Object? value);
+typedef Finalizer = Object? Function(Object? value);
 
 /// {@macro finalizer}
 ///
 /// Takes [Context] as first argument.
-typedef ContextFinalizer = Object Function(Context context, Object? value);
+typedef ContextFinalizer = Object? Function(Context context, Object? value);
 
 /// {@macro finalizer}
 ///
 /// Takes [Environment] as first argument.
-typedef EnvironmentFinalizer = Object Function(
+typedef EnvironmentFinalizer = Object? Function(
     Environment environment, Object? value);
 
 /// A [Function] that can be used to get object atribute.
@@ -69,7 +69,7 @@ Function passEnvironment(Function function) {
 /// and others.
 ///
 /// Environment modifications can break templates that have been parsed or loaded.
-class Environment {
+base class Environment {
   /// {@macro environment}
   Environment({
     this.commentStart = '{#',
@@ -338,7 +338,11 @@ class Environment {
   }
 
   /// Load a template from a source string without using [loader].
-  Template fromString(String source, {String? path}) {
+  Template fromString(
+    String source, {
+    String? path,
+    Map<String, Object?>? globals,
+  }) {
     var body = parse(source, path: path);
 
     for (var modifier in modifiers) {
@@ -350,7 +354,7 @@ class Environment {
     }
 
     body = body.accept(RuntimeCompiler(), null);
-    return Template.fromNode(this, body: body);
+    return Template.fromNode(this, path: path, globals: globals, body: body);
   }
 
   /// Load a template by name with `loader` and return a [Template].
@@ -424,7 +428,8 @@ class Environment {
 /// {@template template}
 /// The base `Template` class.
 /// {@endtemplate}
-class Template {
+// TODO(environment): Add module.
+base class Template {
   /// {@macro template}
   factory Template(
     String source, {
@@ -481,13 +486,22 @@ class Template {
     return environment.fromString(source, path: path);
   }
 
-  Template.fromNode(this.environment, {this.path, required this.body});
+  @internal
+  Template.fromNode(
+    this.environment, {
+    this.path,
+    this.globals,
+    required this.body,
+  });
 
   /// The environment used to parse and render template.
   final Environment environment;
 
   /// The path to the template if it was loaded.
   final String? path;
+
+  ///
+  final Map<String, Object?>? globals;
 
   /// Template body node.
   final Node body;

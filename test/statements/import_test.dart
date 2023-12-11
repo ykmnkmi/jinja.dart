@@ -63,5 +63,14 @@ void main() {
       expect(() => env.fromString('{% from "foo" import bar with context, %}'),
           throwsA(isA<TemplateSyntaxError>()));
     });
+
+    test('exports', () {}, skip: 'Template module is not yet supported.');
+
+    test('not exported', () {
+      var tmpl =
+          env.fromString('{% from "module" import nothing %}{{ nothing() }}');
+
+      expect(() => tmpl.render(), throwsA(isA<TemplateRuntimeError>()));
+    });
   });
 }
