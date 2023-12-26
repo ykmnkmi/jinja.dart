@@ -57,7 +57,7 @@ enum RuleState {
   group,
 }
 
-abstract class Rule {
+sealed class Rule {
   Rule(this.regExp, [this.newState]);
 
   final RegExp regExp;
@@ -65,13 +65,13 @@ abstract class Rule {
   final RuleState? newState;
 }
 
-class SingleTokenRule extends Rule {
+final class SingleTokenRule extends Rule {
   SingleTokenRule(super.regExp, this.token, [super.newState]);
 
   final String token;
 }
 
-class MultiTokenRule extends Rule {
+final class MultiTokenRule extends Rule {
   MultiTokenRule(super.regExp, this.tokens, [super.newState])
       : optionalLStrip = false;
 
@@ -83,7 +83,7 @@ class MultiTokenRule extends Rule {
   final bool optionalLStrip;
 }
 
-class Lexer {
+final class Lexer {
   static final RegExp newLineRe = RegExp('(\r\n|\r|\n)');
   static final RegExp leftStripUnlessRe = RegExp('[^ \\t]');
   static final RegExp whitespaceRe = RegExp(r'\s+');

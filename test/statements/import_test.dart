@@ -64,13 +64,23 @@ void main() {
           throwsA(isA<TemplateSyntaxError>()));
     });
 
-    test('exports', () {}, skip: 'Template module is not yet supported.');
+    test('exports', () {}, skip: 'Not supported.');
 
     test('not exported', () {
       var tmpl =
           env.fromString('{% from "module" import nothing %}{{ nothing() }}');
 
-      expect(() => tmpl.render(), throwsA(isA<TemplateRuntimeError>()));
+      expect(
+          () => tmpl.render(),
+          throwsA(predicate<TemplateRuntimeError>((error) =>
+              error.message!.contains('does not export the requested name.'))));
+    });
+
+    test('import with globals', () {
+      var tmpl = env.fromString('{% import "module" as m %}{{ m.test() }}',
+          globals: {'foo': 42});
+
+      expect(tmpl.render(), equals('[42|23]'));
     });
   });
 }

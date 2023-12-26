@@ -1,18 +1,21 @@
-import 'package:jinja/src/environment.dart';
+import 'dart:collection';
 
-typedef ContextCallback<C extends Context> = void Function(C context);
+import 'package:jinja/src/environment.dart';
 
 base class Context {
   Context(
     this.environment, {
-    Map<String, Object?>? parent,
+    this.parent = const <String, Object?>{},
     Map<String, Object?>? data,
-  })  : parent = <String, Object?>{...environment.globals, ...?parent},
-        context = <String, Object?>{...?data};
+  }) : context = HashMap<String, Object?>() {
+    if (data != null) {
+      context.addAll(data);
+    }
+  }
 
   final Environment environment;
 
-  final Map<String, Object?>? parent;
+  final Map<String, Object?> parent;
 
   final Map<String, Object?> context;
 
@@ -35,7 +38,8 @@ base class Context {
   }
 
   Context derived({Map<String, Object?>? data}) {
-    return Context(environment, parent: context, data: data);
+    var parent = HashMap<String, Object?>.from(this.parent)..addAll(context);
+    return Context(environment, parent: parent, data: data);
   }
 
   bool has(String key) {
@@ -43,15 +47,7 @@ base class Context {
       return true;
     }
 
-    if (parent case var parent?) {
-      return parent.containsKey(key);
-    }
-
-    return false;
-  }
-
-  Object? get(String key) {
-    return context[key];
+    return parent.containsKey(key);
   }
 
   Object? resolve(String key) {
@@ -59,11 +55,7 @@ base class Context {
       return context[key];
     }
 
-    if (parent case var parent?) {
-      return parent[key];
-    }
-
-    return null;
+    return parent[key];
   }
 
   Object? attribute(String key, Object? value) {

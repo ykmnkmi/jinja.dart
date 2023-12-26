@@ -343,6 +343,12 @@ base class Environment {
     String? path,
     Map<String, Object?>? globals,
   }) {
+    if (globals == null) {
+      globals = HashMap<String, Object?>.of(this.globals);
+    } else {
+      globals = HashMap<String, Object?>.of(this.globals)..addAll(globals);
+    }
+
     var body = parse(source, path: path);
 
     for (var modifier in modifiers) {
@@ -490,7 +496,7 @@ base class Template {
   Template.fromNode(
     this.environment, {
     this.path,
-    this.globals,
+    this.globals = const <String, Object?>{},
     required this.body,
   });
 
@@ -501,7 +507,7 @@ base class Template {
   final String? path;
 
   ///
-  final Map<String, Object?>? globals;
+  final Map<String, Object?> globals;
 
   /// Template body node.
   final Node body;
@@ -515,7 +521,13 @@ base class Template {
 
   /// If no arguments are given the context will be empty.
   void renderTo(StringSink sink, [Map<String, Object?>? data]) {
-    var context = StringSinkRenderContext(environment, sink, data: data);
+    var context = StringSinkRenderContext(
+      environment,
+      sink,
+      parent: globals,
+      data: data,
+    );
+
     body.accept(const StringSinkRenderer(), context);
   }
 }

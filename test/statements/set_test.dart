@@ -18,7 +18,7 @@ void main() {
       expect(tmpl.render(), equals('42'));
     });
 
-    test('block escaping', () {}, skip: 'unsupported');
+    test('block escaping', () {}, skip: 'Not supported.');
 
     test('set invalid', () {
       expect(() => envTrim.fromString('{% set foo["bar"] = 1 %}'),
@@ -85,7 +85,7 @@ void main() {
       expect(tmpl.render(), equals('13|37'));
     });
 
-    test('block escapeing filtered', () {}, skip: 'unsupported');
+    test('block escapeing filtered', () {}, skip: 'Not supported.');
 
     test('block filtered', () {
       var tmpl = envTrim.fromString(

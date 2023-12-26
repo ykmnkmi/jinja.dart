@@ -85,7 +85,7 @@ See also examples with [conduit][conduit_example] and
 - ...
 
 ### Done:
-**Note**: ~~item~~ - _unsupported_
+**Note**: ~~item~~ - _not supported_
 - Variables
 - Filters
   - ~~`forceescape`~~

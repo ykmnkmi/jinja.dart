@@ -5,7 +5,7 @@ import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/reader.dart';
 import 'package:textwrap/textwrap.dart';
 
-class Parser {
+final class Parser {
   Parser(this.environment, {this.path})
       : endTokensStack = <List<(String, String?)>>[],
         tagStack = <String>[],
@@ -386,14 +386,12 @@ class Parser {
       ('name', 'without'),
     ];
 
-    bool withContext;
+    bool withContext = defaultValue;
 
     if (reader.current.testAny(keywords) &&
         reader.look().test('name', 'context')) {
       withContext = reader.current.value == 'with';
       reader.skip(2);
-    } else {
-      withContext = defaultValue;
     }
 
     return withContext;
@@ -1120,6 +1118,7 @@ class Parser {
     return expression;
   }
 
+  // TODO(parser): check if filters and tests exist, else throw TemplateAssertionError
   Expression parseFilterExpression(TokenReader reader, Expression expression) {
     while (true) {
       if (reader.current.test('pipe')) {

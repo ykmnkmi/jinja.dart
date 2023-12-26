@@ -14,14 +14,17 @@ import 'package:jinja/src/optimizer.dart';
 const JsonEncoder jsonEncoder = JsonEncoder.withIndent('  ');
 
 const String source = '''
-{%- set items = [] %}
-{%- for char in "foo" %}
-    {%- do items.add(loop.index0 ~ char) %}
-{%- endfor %}{{ items|join(', ') }}''';
+{% for item in seq %}
+  {{- loop.cycle(through) }}
+{% endfor %}''';
 
 const Map<String, Object?> globals = <String, Object?>{'bar': 23};
 
-const Map<String, Object?> context = <String, Object?>{'foo': 42};
+const Map<String, Object?> context = <String, Object?>{
+  'foo': 42,
+  'seq': <int>[1, 2],
+  'through': <String>['<1>', '<2>'],
+};
 
 const Map<String, String> sources = <String, String>{
   'module': '{% macro test() %}[{{ foo }}|{{ bar }}]{% endmacro %}',

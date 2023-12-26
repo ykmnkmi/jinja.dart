@@ -282,7 +282,7 @@ void main() {
       expect(tmpl.render({'foo': null}), equals('true'));
     });
 
-    test('escaped', () {}, skip: 'unsupported');
+    test('escaped', () {}, skip: 'Not supported.');
 
     test('greater than', () {
       var tmpl = env.fromString('{{ 1 is greaterthan 0 }}');

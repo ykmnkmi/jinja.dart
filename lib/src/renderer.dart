@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:math' as math;
 
 import 'package:jinja/src/context.dart';
@@ -16,7 +17,7 @@ abstract base class RenderContext extends Context {
     Map<String, List<Block>>? blocks,
     super.parent,
     super.data,
-  }) : blocks = blocks ?? <String, List<Block>>{};
+  }) : blocks = blocks ?? HashMap<String, List<Block>>();
 
   final Map<String, List<Block>> blocks;
 
@@ -100,14 +101,22 @@ base class StringSinkRenderContext extends RenderContext {
   StringSinkRenderContext derived({
     StringSink? sink,
     Map<String, List<Block>>? blocks,
-    Map<String, Object?>? parent,
     Map<String, Object?>? data,
+    bool withContext = true,
   }) {
+    Map<String, Object?> parent;
+
+    if (withContext) {
+      parent = HashMap<String, Object?>.of(this.parent)..addAll(context);
+    } else {
+      parent = this.parent;
+    }
+
     return StringSinkRenderContext(
       environment,
       sink ?? this.sink,
       blocks: blocks ?? this.blocks,
-      parent: parent ?? context,
+      parent: parent,
       data: data,
     );
   }
@@ -327,7 +336,7 @@ base class StringSinkRenderer
   Object? visitName(Name node, StringSinkRenderContext context) {
     return switch (node.context) {
       AssignContext.load => context.resolve(node.name),
-      AssignContext.store || AssignContext.parameter => node.name,
+      _ => node.name,
     };
   }
 
@@ -547,7 +556,7 @@ base class StringSinkRenderer
       }
 
       var loop = LoopContext(values, depth, render);
-      var parent = context.get('loop');
+      var parent = context.resolve('loop');
       context.set('loop', loop);
 
       for (var value in loop) {
@@ -579,8 +588,8 @@ base class StringSinkRenderer
 
         if (template.body case Macro macro) {
           if (macro.name != name) {
-            // TODO(renderer): Update error message.
-            throw TemplateRuntimeError('Requested name does not exported.');
+            throw TemplateRuntimeError(
+                "The '${template.path}' does not export the requested name.");
           }
 
           targetMacro = macro;
@@ -594,8 +603,8 @@ base class StringSinkRenderer
               }
             }
 
-            // TODO(renderer): Update error message.
-            throw TemplateRuntimeError('Requested name does not exported.');
+            throw TemplateRuntimeError(
+                "The '${template.path}' does not export the requested name.");
           }
         } else {
           throw TemplateRuntimeError('Non-macro object.');
@@ -605,7 +614,7 @@ base class StringSinkRenderer
           var function = getMacroFunction(targetMacro, context);
           return function(positional, named.cast<Symbol, Object?>());
         } else {
-          var newContext = context.derived();
+          var newContext = context.derived(withContext: false);
           var function = getMacroFunction(targetMacro, newContext);
           return function(positional, named.cast<Symbol, Object?>());
         }
@@ -651,7 +660,7 @@ base class StringSinkRenderer
       if (node.withContext) {
         namespace[macro.name] = getMacroFunction(macro, context);
       } else {
-        var newContext = context.derived(parent: const <String, Object?>{});
+        var newContext = context.derived(withContext: false);
         namespace[macro.name] = getMacroFunction(macro, newContext);
       }
     }
@@ -670,7 +679,7 @@ base class StringSinkRenderer
     };
 
     if (!node.withContext) {
-      context = context.derived(parent: const <String, Object?>{});
+      context = context.derived(withContext: false);
     }
 
     template.body.accept(this, context);

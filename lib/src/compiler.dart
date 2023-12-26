@@ -33,8 +33,8 @@ class RuntimeCompiler implements Visitor<void, Node> {
 
   @override
   Node visitAttribute(Attribute node, void context) {
-    // Modifies Template AST from `object.prop` to `object['prop']`.
-    if (node.value case Name(name: 'self' || 'loop')) {
+    // Modifies Template AST from `self.prop` to `self['prop']`.
+    if (node.value case Name(name: 'self')) {
       return Item(
         key: Constant(value: node.attribute),
         value: visitNode(node.value, context),

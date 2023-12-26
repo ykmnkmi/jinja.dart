@@ -13,7 +13,7 @@ Object? funcWithEnvironment(Environment env, String positional,
 }
 
 Object? funcWithContext(Context context, {String named = 'default'}) {
-  var bar = context.get('bar');
+  var bar = context.resolve('bar');
   return named + bar.toString();
 }
 

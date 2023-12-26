@@ -429,9 +429,9 @@ void main() {
       expect(tmpl.render({'string': '<foo>'}), equals('<f4242>'));
     });
 
-    test('forceescape', () {}, skip: 'unsupported');
+    test('forceescape', () {}, skip: 'Not supported.');
 
-    test('safe', () {}, skip: 'unsupported');
+    test('safe', () {}, skip: 'Not supported.');
 
     // TODO(filters): add urlencode test
     // test('urlencode', () {});
