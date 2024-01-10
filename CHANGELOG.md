@@ -1,9 +1,13 @@
-## 0.6.0-dev.7
+## 0.6.0-dev.8
 - internal changes.
 - added:
   - statements:
     - `import`
     - `from`
+- changed:
+  - `Environment`:
+    - `Environment.lex()` return from `List<Token>` to `Iterable<Token>`
+    - `Environment.scan(tokens)` argument type from `List<Token>` to `Iterable<Token>`
 - removed:
   - exceptions:
     - `FilterArgumentError`
@@ -24,16 +28,16 @@
 - changed:
   - `Environment`:
     - `Environment({modifiers})` from `List<NodeVisitor>` to `List<Node Function(Node)>`
-    - `Environment.modifiers` from `List<NodeVisitor>` to `List<Node Function(Node)>`
-    - `Environment.scan(...)` from `List<Node>` to `Node`
-    - `Environment.parse(...)` from `List<Node>` to `Node`
+    - `modifiers` type from `List<NodeVisitor>` to `List<Node Function(Node)>`
+    - `scan(...)` return type from `List<Node>` to `Node`
+    - `parse(...)` return type from `List<Node>` to `Node`
   - `Template`:
-    - `Template({modifiers})` from `List<NodeVisitor>` to `List<Node Function(Node)>`
+    - `Template({modifiers})` argument type from `List<NodeVisitor>` to `List<Node Function(Node)>`
   - filters:
     - `truncate` arguments are now positional
 - removed:
   - `Template`:
-    - `Template.fromNodes(Environment environment, List<Node> nodes, {String? path})` constructor
+    - `Template.fromNodes(...)` constructor
   - statements:
     - `autoescape`
   - filters:

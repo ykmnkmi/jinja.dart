@@ -18,6 +18,7 @@ jobs:
     strategy:
       matrix:
         sdk:
+          - 3.0.0
           - stable
           - dev
 

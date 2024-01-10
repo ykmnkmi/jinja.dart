@@ -333,7 +333,7 @@ final class Lexer {
             var token = rule.tokens[i];
 
             if (token.startsWith('@')) {
-              // TODO(lexer): add error message
+              // TODO(lexer): update error
               throw Exception();
             } else if (token == '#group') {
               var notFound = true;
@@ -354,7 +354,7 @@ final class Lexer {
               }
 
               if (notFound) {
-                // TODO: update error message
+                // TODO(lexer): update error
                 throw Exception('${rule.regExp} wanted to resolve the token '
                     'dynamically but no group matched');
               }
@@ -421,7 +421,7 @@ final class Lexer {
             }
           }
         } else {
-          // TODO: update error
+          // TODO(lexer): update error
           throw Exception();
         }
 
@@ -436,13 +436,13 @@ final class Lexer {
           ];
 
           if (names.isEmpty) {
-            // TODO: update error message
+            // TODO(lexer): add error message
             throw TemplateSyntaxError('');
           }
 
           stack.addAll(names);
         } else if (position == match.end) {
-          // TODO: update error message
+          // TODO(lexer): add error message
           throw TemplateSyntaxError('');
         }
 
@@ -464,7 +464,7 @@ final class Lexer {
     }
   }
 
-  List<Token> tokenize(String source, {String? path}) {
+  Iterable<Token> tokenize(String source, {String? path}) sync* {
     var lines = split(newLineRe, source);
 
     if (!keepTrailingNewLine && lines.last.isEmpty) {
@@ -474,32 +474,30 @@ final class Lexer {
     source = lines.join('\n');
 
     var scanner = StringScanner(source, sourceUrl: path);
-    var tokens = <Token>[];
 
     for (var token in scan(scanner)) {
       if (ignoredTokens.any(token.test)) {
         continue;
       } else if (token.test('linestatement_start')) {
-        tokens.add(token.change(type: 'block_start'));
+        yield token.change(type: 'block_start');
       } else if (token.test('linestatement_end')) {
-        tokens.add(token.change(type: 'block_end'));
+        yield token.change(type: 'block_end');
       } else if (token.test('data')) {
-        tokens.add(token.change(value: normalizeNewLines(token.value)));
+        yield token.change(value: normalizeNewLines(token.value));
       } else if (token.test('string')) {
         var value = token.value;
         value = normalizeNewLines(value.substring(1, value.length - 1));
-        tokens.add(token.change(value: value));
+        yield token.change(value: value);
       } else if (token.test('integer') || token.test('float')) {
-        tokens.add(token.change(value: token.value.replaceAll('_', '')));
+        yield token.change(value: token.value.replaceAll('_', ''));
       } else if (token.test('operator')) {
-        tokens.add(Token.simple(token.line, operators[token.value]!));
+        yield Token.simple(token.line, operators[token.value]!);
       } else {
-        tokens.add(token);
+        yield token;
       }
     }
 
-    tokens.add(Token.simple(source.length, 'eof'));
-    return tokens;
+    yield Token.simple(source.length, 'eof');
   }
 
   static List<String> split(Pattern pattern, String text) {

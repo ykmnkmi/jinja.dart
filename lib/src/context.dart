@@ -29,7 +29,7 @@ base class Context {
     if (object is Function) {
       function = object;
     } else {
-      // TODO: dynamic invocation
+      // TODO(dynamic): dynamic invocation
       // ignore: avoid_dynamic_calls
       function = object.call as Function;
     }

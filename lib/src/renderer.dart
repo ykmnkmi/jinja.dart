@@ -54,12 +54,10 @@ abstract base class RenderContext extends Context {
       var values = list(current);
 
       if (values.length < strings.length) {
-        // TODO(renderer): update error
-        throw StateError('Not enough values to unpack');
+        throw StateError('Not enough values to unpack.');
       }
 
       if (values.length > strings.length) {
-        // TODO(renderer): update error
         throw StateError('Too many values to unpack.');
       }
 
@@ -81,7 +79,6 @@ abstract base class RenderContext extends Context {
       throw TemplateRuntimeError('Non-namespace object');
     }
 
-    // TODO(renderer): update error
     throw TypeError();
   }
 }
@@ -140,16 +137,14 @@ base class StringSinkRenderer
       var values = list(current);
 
       if (values.length < names.length) {
-        // TODO(renderer): update error
         throw StateError(
             'Not enough values to unpack (expected ${names.length}, '
-            'got ${values.length})');
+            'got ${values.length}).');
       }
 
       if (values.length > names.length) {
-        // TODO(renderer): update error
         throw StateError(
-            'Too many values to unpack (expected ${names.length})');
+            'Too many values to unpack (expected ${names.length}).');
       }
 
       return <String, Object?>{
@@ -157,7 +152,7 @@ base class StringSinkRenderer
       };
     }
 
-    // TODO(renderer): Update error message.
+    // TODO(renderer): add error message
     throw ArgumentError.value(targets, 'targets');
   }
 
@@ -650,7 +645,7 @@ base class StringSinkRenderer
     } else if (template.body case TemplateNode body) {
       macros = body.macros;
     } else {
-      // TODO(renderer): Update error message.
+      // TODO(renderer): update error message
       throw TemplateRuntimeError('Non-macro object.');
     }
 

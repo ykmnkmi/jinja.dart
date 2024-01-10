@@ -5,6 +5,8 @@ import 'package:jinja/src/context.dart';
 import 'package:jinja/src/environment.dart';
 import 'package:textwrap/utils.dart';
 
+final RegExp _tagsRe = RegExp('(<!--.*?-->|<[^>]*>)');
+
 /// Jinja [Environment] function types.
 ///
 /// See [passContext] and [passEnvironment].
@@ -182,13 +184,14 @@ String stripTags(String value) {
     return '';
   }
 
-  return unescape(RegExp(r'\s+')
-      .split(value.replaceAll(RegExp('(<!--.*?-->|<[^>]*>)'), ''))
-      .join(' '));
+  return unescape(
+      RegExp(r'\s+').split(value.replaceAll(_tagsRe, '')).join(' '));
 }
 
+/// Sum two values.
+// TODO(utils): move to op context
 Object? sum(dynamic left, Object? right) {
-  // TODO: dynamic invocation
+  // TODO(dynamic): dynamic invocation
   // ignore: avoid_dynamic_calls
   return left + right;
 }

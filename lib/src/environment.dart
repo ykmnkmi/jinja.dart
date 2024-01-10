@@ -319,18 +319,18 @@ base class Environment {
   /// Lex the given source and return a list of tokens.
   ///
   /// This can be useful for extension development and debugging templates.
-  List<Token> lex(String source, {String? path}) {
+  Iterable<Token> lex(String source, {String? path}) {
     return lexer.tokenize(source, path: path);
   }
 
-  /// Parse the list of tokens and return the AST nodes.
+  /// Parse the list of tokens and return the AST node.
   ///
   /// This can be useful for debugging or to extract information from templates.
-  Node scan(List<Token> tokens, {String? path}) {
+  Node scan(Iterable<Token> tokens, {String? path}) {
     return Parser(this, path: path).scan(tokens);
   }
 
-  /// Parse the source code and return the AST nodes.
+  /// Parse the source code and return the AST node.
   ///
   /// This can be useful for debugging or to extract information from templates.
   Node parse(String source, {String? path}) {
@@ -408,7 +408,7 @@ base class Environment {
       };
     }
 
-    // TODO(environment): Add error message.
+    // TODO(environment): add error message
     throw ArgumentError.value(function, 'finalize');
   }
 
@@ -434,7 +434,7 @@ base class Environment {
 /// {@template template}
 /// The base `Template` class.
 /// {@endtemplate}
-// TODO(environment): Add module.
+// TODO(template): add module namespace
 base class Template {
   /// {@macro template}
   factory Template(
@@ -506,7 +506,7 @@ base class Template {
   /// The path to the template if it was loaded.
   final String? path;
 
-  ///
+  /// The global variables for this template.
   final Map<String, Object?> globals;
 
   /// Template body node.

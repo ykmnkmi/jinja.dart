@@ -107,7 +107,7 @@ final class LoopContext extends Iterable<Object?> {
     var list = values.toList();
 
     if (list.isEmpty) {
-      // TODO: update error
+      // TODO(loop): update error
       throw TypeError();
     }
 

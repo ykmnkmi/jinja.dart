@@ -180,10 +180,10 @@ void main() {
       expect(tmpl.render({'value': 'abc'}), equals('1.0'));
     });
 
-    // TODO(filters): add format test
-    // TODO(filters): add indent test
-    // TODO(filters): add indent markup input test
-    // TODO(filters): add indent width string test
+    // TODO: add format test
+    // TODO: add indent test
+    // TODO: add indent markup input test
+    // TODO: add indent width string test
 
     test('int', () {
       var tmpl = env.fromString('{{ value|int }}');
@@ -244,7 +244,7 @@ void main() {
       expect(tmpl.render(), equals('[]'));
     });
 
-    // TODO(filters): add pprint test
+    // TODO: add pprint test
 
     test('random', () {
       var expected = '1234567890';
@@ -324,10 +324,10 @@ void main() {
       expect(tmpl.render(), equals('FOO'));
     });
 
-    // TODO(filters): add urlize test
-    // TODO(filters): add urlize rel policy test
-    // TODO(filters): add urlize target parameter test
-    // TODO(filters): add urlize extra schemes parameter test
+    // TODO: add urlize test
+    // TODO: add urlize rel policy test
+    // TODO: add urlize target parameter test
+    // TODO: add urlize extra schemes parameter test
 
     test('wordcount', () {
       var tmpl = env.fromString('{{ "foo bar baz"|wordcount }}');
@@ -396,27 +396,27 @@ void main() {
       expect(tmpl.render(), equals('1|1'));
     });
 
-    // TODO(filters): add round positive test
-    // TODO(filters): add round negative test
-    // TODO(filters): add xmlattr test
-    // TODO(filters): add sort1 test
-    // TODO(filters): add sort2 test
-    // TODO(filters): add sort3 test
-    // TODO(filters): add sort4 test
-    // TODO(filters): add sort5 test
-    // TODO(filters): add sort6 test
-    // TODO(filters): add sort7 test
-    // TODO(filters): add sort8 test
-    // TODO(filters): add unique test
-    // TODO(filters): add unique case sensitive test
-    // TODO(filters): add unique attribute test
-    // TODO(filters): add min max test
-    // TODO(filters): add min max attribute test
-    // TODO(filters): add groupby test
-    // TODO(filters): add groupby tuple index test
-    // TODO(filters): add groupby multidot test
-    // TODO(filters): add groupby default test
-    // TODO(filters): add groupby case test
+    // TODO: add round positive test
+    // TODO: add round negative test
+    // TODO: add xmlattr test
+    // TODO: add sort1 test
+    // TODO: add sort2 test
+    // TODO: add sort3 test
+    // TODO: add sort4 test
+    // TODO: add sort5 test
+    // TODO: add sort6 test
+    // TODO: add sort7 test
+    // TODO: add sort8 test
+    // TODO: add unique test
+    // TODO: add unique case sensitive test
+    // TODO: add unique attribute test
+    // TODO: add min max test
+    // TODO: add min max attribute test
+    // TODO: add groupby test
+    // TODO: add groupby tuple index test
+    // TODO: add groupby multidot test
+    // TODO: add groupby default test
+    // TODO: add groupby case test
 
     test('filtertag', () {
       var tmpl = env.fromString(
@@ -433,7 +433,7 @@ void main() {
 
     test('safe', () {}, skip: 'Not supported.');
 
-    // TODO(filters): add urlencode test
+    // TODO: add urlencode test
     // test('urlencode', () {});
 
     test('simple map', () {
@@ -500,28 +500,28 @@ void main() {
       expect(tmpl.render(data), equals('lennon, , '));
     });
 
-    // TODO(filters): add simple select test
+    // TODO: add simple select test
     // test('simple select', () {});
 
-    // TODO(filters): add bool select test
+    // TODO: add bool select test
     // test('bool select', () {});
 
-    // TODO(filters): add simple reject test
+    // TODO: add simple reject test
     // test('simple reject', () {});
 
-    // TODO(filters): add bool reject test
+    // TODO: add bool reject test
     // test('bool reject', () {});
 
-    // TODO(filters): add simple select attr test
+    // TODO: add simple select attr test
     // test('simple select attr', () {});
 
-    // TODO(filters): add simple reject attr test
+    // TODO: add simple reject attr test
     // test('simple reject attr', () {});
 
-    // TODO(filters): add func select attr test
+    // TODO: add func select attr test
     // test('func select attr', () {});
 
-    // TODO(filters): add func reject attr test
+    // TODO: add func reject attr test
     // test('func reject attr', () {});
 
     test('json dump', () {
@@ -540,10 +540,9 @@ void main() {
       expect(result, equals('Hello!\nThis is Jinja saying\nsomething.'));
     });
 
-    // TODO(compiler): enable test
     test('filter undefined', () {
       expect(() => env.fromString('{{ var|f }}'), aNoFilterNamedF);
-    }, skip: true);
+    }, skip: 'Enable after implementing assert checks.');
 
     test('filter undefined in if', () {
       var t1 = env.fromString(

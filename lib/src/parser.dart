@@ -620,7 +620,7 @@ final class Parser {
     );
   }
 
-  // TODO: add parsePrint
+  // TODO(parser): add parsePrint
 
   Name parseAssignName(
     TokenReader reader, [
@@ -1308,7 +1308,7 @@ final class Parser {
     return expression;
   }
 
-  Node scan(List<Token> tokens) {
+  Node scan(Iterable<Token> tokens) {
     var reader = TokenReader(tokens);
     var nodes = subParse(reader);
 

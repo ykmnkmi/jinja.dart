@@ -18,21 +18,22 @@ For more information, see `CHANGELOG.md`.
 
 ## Documentation
 It is mostly similar to [Jinja][jinja_templates] templates documentation, differences provided below.
+
 _work in progress_.
 
 ## Differences with Python version
-- The `default` filter compares values with `null`; there is no `boolean` parameter.
+- The `default` filter compares values with `null`.
 - The `defined` and `undefined` tests compare values with `null`.
 - The `map` filter also compares values with `null`.
   Use `attribute` and `item` filters for `object.attribute` and `object[item]` expressions.
 - If `Environment({getAttribute})` is not passed, the `getItem` method will be used.
   This allows you to use `{{ map.key }}` as an expression equivalent to `{{ map['key'] }}`.
 - Slices and negative indexes are not supported.
-- Template module is not supported.
 - Not yet supported:
   - Conditional `extends` statement variant.
   - Choice and ignore missing `include` statement variants.
-- _work in progress_
+  - Template module.
+ - _work in progress_
 
 ## Dynamically invoked members
 - `[]`, `+`, `-`, `*`, `/`, `~/`, `%` operators
@@ -61,9 +62,13 @@ See also examples with [conduit][conduit_example] and
 - `Template` class:
   - `generate` method
   - `stream` method
-  - `module` getter
+  - `module` namespace getter 🔥
 - Async Support
 - List of Control Structures
+  - Extends
+    - Conditional variant 🔥
+  - Include
+    - Choice and ignore missing 🔥
   - Import 🔥
   - From 🔥
 - Expressions
@@ -161,7 +166,7 @@ See also examples with [conduit][conduit_example] and
   - If Expression
     - `{{ list.last if list }}`
     - `{{ user.name if user else 'Guest' }}`
-  - Dart Methods and Properties
+  - Dart Methods and Properties (with reflection)
     - `{{ string.toUpperCase() }}`
     - `{{ list.add(item) }}`
 - List of Global Functions
@@ -179,7 +184,11 @@ See also examples with [conduit][conduit_example] and
 
 ## Contributing
 Contributions are welcome! Please open an issue or pull request on GitHub.
+Look at the ToDo list and comments in the code for ideas on what to work on.
 There are no strict rules, but please try to follow the existing code style.
+
+As non-native English speaker and learner, I will be grateful for any
+corrections in the documentation and code comments.
 
 ## Support
 Post issues and feature requests on the GitHub [issue tracker][issues].

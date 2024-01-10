@@ -114,7 +114,6 @@ bool isIn(Object? value, Object? values) {
       return strings.contains(pattern);
     }
 
-    // TODO: update error
     throw TypeError();
   }
 
@@ -126,7 +125,6 @@ bool isIn(Object? value, Object? values) {
     return map.containsKey(value);
   }
 
-  // TODO: update error
   throw TypeError();
 }
 
@@ -173,7 +171,7 @@ bool isCallable(dynamic object) {
   }
 
   try {
-    // TODO: dynamic invocation
+    // TODO(dynamic): dynamic invocation
     // ignore: avoid_dynamic_calls
     return object.call is Function;
   } on NoSuchMethodError {

@@ -101,7 +101,7 @@ void main() {
           return token.test(expekt);
         }
 
-        expect(tokens[1], equals(predicate<Token>(predication)));
+        expect(tokens.elementAt(1), equals(predicate<Token>(predication)));
       });
     });
 

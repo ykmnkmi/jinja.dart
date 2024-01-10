@@ -11,12 +11,16 @@ import 'package:jinja/src/context.dart';
 import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/optimizer.dart';
 
+class User {
+  const User(this.name);
+
+  final String? name;
+}
+
 const JsonEncoder jsonEncoder = JsonEncoder.withIndent('  ');
 
 const String source = '''
-{% for item in seq %}
-  {{- loop.cycle(through) }}
-{% endfor %}''';
+{{ users|map(attribute="name")|join("|") }}''';
 
 const Map<String, Object?> globals = <String, Object?>{'bar': 23};
 
@@ -24,6 +28,7 @@ const Map<String, Object?> context = <String, Object?>{
   'foo': 42,
   'seq': <int>[1, 2],
   'through': <String>['<1>', '<2>'],
+  'users': <User>[User('john'), User('jane'), User('mike')]
 };
 
 const Map<String, String> sources = <String, String>{

@@ -11,18 +11,18 @@ final RegExp _wordBeginningSplitRe = RegExp('([-\\s({\\[<]+)');
 
 final RegExp _wordRe = RegExp('\\w+');
 
-List<Object> prepareAttributeParts(Object? attribute) {
+Iterable<Object> _prepareAttributeParts(Object? attribute) sync* {
   if (attribute == null) {
-    return <Object>[];
+    return;
   }
 
   if (attribute is String) {
-    return <Object>[
-      for (var part in attribute.split('.')) int.tryParse(part) ?? part
-    ];
+    for (var part in attribute.split('.')) {
+      yield int.tryParse(part) ?? part;
+    }
+  } else {
+    yield attribute;
   }
-
-  return <Object>[attribute];
 }
 
 /// Returns a callable that looks up the given attribute from a
@@ -36,7 +36,7 @@ Object? Function(Object? object) makeAttributeGetter(
   Object attribute, {
   Object? defaultValue,
 }) {
-  var parts = prepareAttributeParts(attribute);
+  var parts = _prepareAttributeParts(attribute);
 
   Object? getter(Object? object) {
     for (var part in parts) {
@@ -123,7 +123,7 @@ String doLower(String value) {
 /// Return an iterator over the `[key, value]` items of a mapping.
 Iterable<List<Object?>> doItems(Map<Object?, Object?>? value) {
   if (value == null) {
-    return <List<Object?>>[];
+    return Iterable<List<Object?>>.empty();
   }
 
   return value.entries.map<List<Object?>>(utils.pair);
@@ -287,15 +287,13 @@ String doFileSizeFormat(Object? value, [bool binary = false]) {
   }
 
   if (bytes < base) {
-    const suffix = ' Bytes';
-
     var size = bytes.toStringAsFixed(1);
 
     if (size.endsWith('.0')) {
-      return size.substring(0, size.length - 2) + suffix;
+      return '${size.substring(0, size.length - 2)} Bytes';
     }
 
-    return size + suffix;
+    return '$size Bytes';
   }
 
   var k = binary ? 0 : 1;
@@ -490,7 +488,7 @@ List<List<Object?>> doBatch(
 /// Return the number of items in a container.
 int? doLength(dynamic object) {
   try {
-    // TODO: dynamic invocation
+    // TODO(dynamic): dynamic invocation
     // ignore: avoid_dynamic_calls
     return object.length as int;
   } on NoSuchMethodError {

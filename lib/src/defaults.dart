@@ -18,7 +18,7 @@ Object finalize(Context context, Object? value) {
 
 Object? getItem(Object? item, dynamic object) {
   try {
-    // TODO: dynamic invocation
+    // TODO(dynamic): dynamic invocation
     // ignore: avoid_dynamic_calls
     return object[item];
   } on NoSuchMethodError {
