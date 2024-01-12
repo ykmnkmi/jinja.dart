@@ -153,7 +153,7 @@ String escape(String text) {
 ///
 /// The following characters are escaped: `<`, `>`, `&`, `'`.
 ///
-/// {@macro safestring}
+/// {@macro jinja.safestring}
 String htmlSafeJsonEncode(Object? value, [String? indent]) {
   var encoder = indent == null ? json.encoder : JsonEncoder.withIndent(indent);
 

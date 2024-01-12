@@ -23,6 +23,7 @@ void main() {
     test('set invalid', () {
       expect(() => envTrim.fromString('{% set foo["bar"] = 1 %}'),
           throwsA(isA<TemplateSyntaxError>()));
+
       var tmpl = envTrim.fromString('{% set foo.bar = 1 %}');
       expect(
           () => tmpl.render({'foo': emptyMap}),
@@ -55,11 +56,8 @@ void main() {
       var tmpl = envTrim.fromString('{% set ns = namespace(d, self=37) %}'
           '{% set ns.b = 42 %}'
           '{{ ns.a }}|{{ ns.self }}|{{ ns.b }}');
-      expect(
-          tmpl.render({
-            'd': {'a': 13}
-          }),
-          equals('13|37|42'));
+      var d = {'a': 13};
+      expect(tmpl.render({'d': d}), equals('13|37|42'));
     });
 
     test('namespace loop', () {

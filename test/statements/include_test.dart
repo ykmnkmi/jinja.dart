@@ -1,8 +1,6 @@
 import 'package:jinja/jinja.dart';
 import 'package:test/test.dart';
 
-import '../environment.dart';
-
 void main() {
   group('Include', () {
     var env = Environment(
@@ -15,20 +13,21 @@ void main() {
     );
 
     test('context include', () {
-      env.render('{% include "header" %}',
-          data: {'foo': 42}, equals: '[42|23]');
+      var tmpl = env.fromString('{% include "header" %}');
+      expect(tmpl.render({'foo': 42}), equals('[42|23]'));
 
-      env.render('{% include "header" with context %}',
-          data: {'foo': 42}, equals: '[42|23]');
+      tmpl = env.fromString('{% include "header" with context %}');
+      expect(tmpl.render({'foo': 42}), equals('[42|23]'));
 
-      env.render('{% include "header" without context %}',
-          data: {'foo': 42}, equals: '[|23]');
+      tmpl = env.fromString('{% include "header" without context %}');
+      expect(tmpl.render({'foo': 42}), equals('[|23]'));
     });
 
     // TODO: add test: choice_includes
 
     test('include ignore missing', () {
-      env.renderThrows<TemplateNotFound>('{% include "missing" %}');
+      var tmpl = env.fromString('{% include "missing" %}');
+      expect(() => tmpl.render(), throwsA(isA<TemplateNotFound>()));
     });
 
     test('context include with overrides', () {

@@ -1,11 +1,17 @@
 import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/exceptions.dart';
 
+/// {@template jinja.Loader}
 /// Base abstract class for all loaders.
 ///
 /// Subclass this and override [getSource], [listTemplates] and [load]
 /// to implement a custom loading mechanism.
+/// {@endtemplate}
 abstract class Loader {
+  /// {@macro jinja.Loader}
+  const Loader();
+
+  /// Returns `true` if this loader can provide access to the source.
   bool get hasSourceAccess {
     return true;
   }
@@ -27,9 +33,11 @@ abstract class Loader {
     throw UnsupportedError('This loader cannot iterate over all templates');
   }
 
+  /// Loads a template to the environment template cache.
   Template load(Environment environment, String path);
 }
 
+/// {@template jinja.MapLoader}
 /// Loads a template from a map.
 ///
 /// It's passed a map of strings bound to template names. This loader is
@@ -37,8 +45,12 @@ abstract class Loader {
 ///
 ///     var loader = MapLoader({'index.html': 'source here'})
 ///
+/// {@endtemplate}
 class MapLoader extends Loader {
-  MapLoader(this.sources);
+  /// {@macro jinja.MapLoader}
+  // TODO(loaders): comment that the map keys should be URI paths,
+  // like 'path/to/template.html'
+  const MapLoader(this.sources);
 
   final Map<String, String> sources;
 

@@ -14,7 +14,7 @@ import 'package:jinja/src/renderer.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:meta/meta.dart';
 
-/// {@template finalizer}
+/// {@template jinja.finalizer}
 /// A [Function] that can be used to process the result of a variable
 /// expression before it is output.
 ///
@@ -22,12 +22,12 @@ import 'package:meta/meta.dart';
 /// {@endtemplate}
 typedef Finalizer = Object? Function(Object? value);
 
-/// {@macro finalizer}
+/// {@macro jinja.finalizer}
 ///
 /// Takes [Context] as first argument.
 typedef ContextFinalizer = Object? Function(Context context, Object? value);
 
-/// {@macro finalizer}
+/// {@macro jinja.finalizer}
 ///
 /// Takes [Environment] as first argument.
 typedef EnvironmentFinalizer = Object? Function(
@@ -61,7 +61,7 @@ Function passEnvironment(Function function) {
   return function;
 }
 
-/// {@template environment}
+/// {@template jinja.Environment}
 /// The core component of Jinja 2 is the Environment.
 /// {@endtemplate}
 ///
@@ -70,7 +70,7 @@ Function passEnvironment(Function function) {
 ///
 /// Environment modifications can break templates that have been parsed or loaded.
 base class Environment {
-  /// {@macro environment}
+  /// {@macro jinja.Environment}
   Environment({
     this.commentStart = '{#',
     this.commentEnd = '#}',
@@ -109,23 +109,23 @@ base class Environment {
       throw ArgumentError.value(newLine, 'newLine');
     }
 
-    if (globals case var globals?) {
+    if (globals != null) {
       this.globals.addAll(globals);
     }
 
-    if (filters case var filters?) {
+    if (filters != null) {
       this.filters.addAll(filters);
     }
 
-    if (tests case var tests?) {
+    if (tests != null) {
       this.tests.addAll(tests);
     }
 
-    if (modifiers case var modifiers?) {
+    if (modifiers != null) {
       this.modifiers.addAll(modifiers);
     }
 
-    if (templates case var templates?) {
+    if (templates != null) {
       this.templates.addAll(templates);
     }
   }
@@ -431,12 +431,12 @@ base class Environment {
   }
 }
 
-/// {@template template}
+/// {@template jinja.Template}
 /// The base `Template` class.
 /// {@endtemplate}
 // TODO(template): add module namespace
 base class Template {
-  /// {@macro template}
+  /// {@macro jinja.Template}
   factory Template(
     String source, {
     Environment? environment,

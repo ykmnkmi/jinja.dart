@@ -128,38 +128,36 @@ void main() {
       expect(tmpl.render(), equals('BA'));
     });
 
-    // not supported
-    // test('dynamic inheritance', () {
-    //   var env = Environment(
-    //     loader: MapLoader({
-    //       'default1': 'DEFAULT1{% block x %}{% endblock %}',
-    //       'default2': 'DEFAULT2{% block x %}{% endblock %}',
-    //       'child': '{% extends default %}{% block x %}CHILD{% endblock %}',
-    //     }),
-    //   );
+    test('dynamic inheritance', () {
+      var env = Environment(
+        loader: MapLoader({
+          'default1': 'DEFAULT1{% block x %}{% endblock %}',
+          'default2': 'DEFAULT2{% block x %}{% endblock %}',
+          'child': '{% extends default %}{% block x %}CHILD{% endblock %}',
+        }),
+      );
 
-    //   var tmpl = env.getTemplate('child');
-    //   expect(tmpl.render({'default': 'default1'}), equals('DEFAULT1CHILD'));
-    //   expect(tmpl.render({'default': 'default2'}), equals('DEFAULT2CHILD'));
-    // });
+      var tmpl = env.getTemplate('child');
+      expect(tmpl.render({'default': 'default1'}), equals('DEFAULT1CHILD'));
+      expect(tmpl.render({'default': 'default2'}), equals('DEFAULT2CHILD'));
+    });
 
-    // not supported
-    // test('multi inheritance', () {
-    //   var env = Environment(
-    //     loader: MapLoader({
-    //       'default1': 'DEFAULT1{% block x %}{% endblock %}',
-    //       'default2': 'DEFAULT2{% block x %}{% endblock %}',
-    //       'child': '{% if default %}{% extends default %}{% else %}'
-    //           '{% extends "default1" %}{% endif %}'
-    //           '{% block x %}CHILD{% endblock %}',
-    //     }),
-    //   );
+    test('multi inheritance', () {
+      var env = Environment(
+        loader: MapLoader({
+          'default1': 'DEFAULT1{% block x %}{% endblock %}',
+          'default2': 'DEFAULT2{% block x %}{% endblock %}',
+          'child': '{% if default %}{% extends default %}{% else %}'
+              '{% extends "default1" %}{% endif %}'
+              '{% block x %}CHILD{% endblock %}',
+        }),
+      );
 
-    //   var tmpl = env.getTemplate('child');
-    //   expect(tmpl.render(), equals('DEFAULT1CHILD'));
-    //   expect(tmpl.render({'default': 'default1'}), equals('DEFAULT1CHILD'));
-    //   expect(tmpl.render({'default': 'default2'}), equals('DEFAULT2CHILD'));
-    // });
+      var tmpl = env.getTemplate('child');
+      expect(tmpl.render(), equals('DEFAULT1CHILD'));
+      expect(tmpl.render({'default': 'default1'}), equals('DEFAULT1CHILD'));
+      expect(tmpl.render({'default': 'default2'}), equals('DEFAULT2CHILD'));
+    }, skip: true);
 
     test('scoped block', () {
       var env = Environment(
@@ -284,6 +282,13 @@ void main() {
       expect(() => env.getTemplate('level1default1').render(), matcher);
       expect(() => env.getTemplate('level1default2').render(), matcher);
       expect(() => env.getTemplate('level1default3').render(), matcher);
+    });
+
+    test('double extends', () {
+      expect(
+          () => env.getTemplate('doublee').render(),
+          throwsA(predicate<TemplateSyntaxError>(
+              (error) => error.message!.contains('Extended multiple times.'))));
     });
   });
 }

@@ -609,7 +609,7 @@ Object? doItem(Environment environment, Object? value, Object item) {
 ///
 /// This filter is only for use in HTML documents.
 ///
-/// {@template safestring}
+/// {@template jinja.safestring}
 /// The returned string is safe to render in HTML documents and `<script>` tags.
 /// The exception is in HTML attributes that are double quoted; either use
 /// single quotes or the `|forceescape` filter.

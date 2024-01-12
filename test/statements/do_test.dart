@@ -1,11 +1,10 @@
-import 'package:jinja/jinja.dart';
-import 'package:jinja/reflection.dart';
 import 'package:test/test.dart';
+
+import '../environment.dart';
 
 void main() {
   group('Do', () {
     test('do', () {
-      var env = Environment(getAttribute: getAttribute);
       var tmpl = env.fromString('''
             {%- set items = [] %}
             {%- for char in "foo" %}

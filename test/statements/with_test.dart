@@ -11,8 +11,8 @@ void main() {
         {% with a=42, b=23 -%}
             {{ a }} = {{ b }}
         {% endwith -%}
-            {{ a }} = {{ b }}
-        ''');
+            {{ a }} = {{ b }}''');
+
       var lines = const LineSplitter()
           .convert(tmpl.render({'a': 1, 'b': 2}))
           .map((line) => line.trim())
@@ -24,8 +24,7 @@ void main() {
       var tmpl = env.fromString('''
         {%- with a=1, b=2, c=b, d=e, e=5 -%}
             {{ a }}|{{ b }}|{{ c }}|{{ d }}|{{ e }}
-        {%- endwith -%}
-        ''');
+        {%- endwith %}''');
       expect(tmpl.render({'b': 3, 'e': 4}), equals('1|2|3|4|5'));
     });
   });

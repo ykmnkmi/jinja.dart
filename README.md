@@ -8,11 +8,11 @@
 Variables, expressions, control structures and template inheritance.
 
 ## Version 0.6.0 introduces breaking changes
-- `FilterArgumentError` removed
-- `*args` and `**kwargs` arguments are removed
+- `FilterArgumentError` error class removed
+- `*args` and `**kwargs` arguments support removed
+- Auto-escaping and related statements, filters and tests have been removed due to the impossibility of extending `String`.
+  Use the `escape` filter manually or escape values before passing them to the template.
 - _work in progress_
-
-Auto-escaping and related filters and tests have been removed due to the impossibility of extending `String`. Use the `escape` filter manually or escape values before passing them to the template.
 
 For more information, see `CHANGELOG.md`.
 
@@ -29,11 +29,13 @@ _work in progress_.
 - If `Environment({getAttribute})` is not passed, the `getItem` method will be used.
   This allows you to use `{{ map.key }}` as an expression equivalent to `{{ map['key'] }}`.
 - Slices and negative indexes are not supported.
-- Not yet supported:
+- Macro arguments without default values are required.
+- Not yet implemented:
   - Conditional `extends` statement variant.
+- Not supported:
   - Choice and ignore missing `include` statement variants.
   - Template module.
- - _work in progress_
+- _work in progress_
 
 ## Dynamically invoked members
 - `[]`, `+`, `-`, `*`, `/`, `~/`, `%` operators

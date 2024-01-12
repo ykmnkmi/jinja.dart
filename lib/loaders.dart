@@ -11,29 +11,42 @@ import 'package:path/path.dart' show extension, join, normalize, relative;
 
 export 'package:jinja/src/loaders.dart';
 
+/// {@template jinja.FileSystemLoader}
 /// Loads templates from the file system.
 ///
 /// This loader can find templates in folders on the file system and is the
 /// preferred way to load them:
 ///
-///     var loader = FileSystemLoader(path: 'templates', ext: ['html', 'xml']))
-///     var loader = FileSystemLoader(paths: ['overrides/templates', 'default/templates'], ext: ['html', 'xml']))
+///     var loader = FileSystemLoader(
+///       path: 'templates',
+///       extensions: ['html', 'xml'],
+///     );
 ///
-/// Default values for path `templates` and file ext. `['html']`.
+/// or:
 ///
-/// To follow symbolic links, set the [followLinks] parameter to `true`
+///     var loader = FileSystemLoader(
+///       paths: ['overrides/templates', 'default/templates'],
+///       extensions: ['html', 'xml'],
+///     );
 ///
-///     var loader = FileSystemLoader(path: 'path', followLinks: true)
+/// To follow symbolic links, set the [followLinks] parameter to `true`:
 ///
+///     var loader = FileSystemLoader(path: 'path', followLinks: true);
+///
+/// {@endtemplate}
 class FileSystemLoader extends Loader {
+  /// {@macro jinja.FileSystemLoader}
   FileSystemLoader({
     List<String> paths = const <String>['templates'],
+    this.recursive = true,
     this.followLinks = true,
     this.extensions = const <String>{'html'},
     this.encoding = utf8,
   }) : paths = paths.map<String>(normalize).toList();
 
   final List<String> paths;
+
+  final bool recursive;
 
   final bool followLinks;
 
@@ -43,8 +56,6 @@ class FileSystemLoader extends Loader {
 
   @protected
   File? findFile(String path) {
-    path = normalize(path);
-
     for (var root in paths) {
       var file = File(join(root, path));
 
@@ -54,19 +65,6 @@ class FileSystemLoader extends Loader {
     }
 
     return null;
-  }
-
-  @protected
-  bool isTemplate(String path, [String? from]) {
-    var template = relative(path, from: from);
-    var templateExtension = extension(template);
-
-    if (templateExtension.startsWith('.')) {
-      templateExtension = templateExtension.substring(1);
-    }
-
-    return extensions.contains(templateExtension) &&
-        FileSystemEntity.isFileSync(path);
   }
 
   @override
@@ -80,46 +78,50 @@ class FileSystemLoader extends Loader {
     return file.readAsStringSync(encoding: encoding);
   }
 
+  @protected
+  bool isTemplate(String template) {
+    var templateExtention = extension(template);
+
+    if (templateExtention.startsWith('.')) {
+      templateExtention = templateExtention.substring(1);
+    }
+
+    return extensions.contains(templateExtention) &&
+        FileSystemEntity.isFileSync(template);
+  }
+
   @override
   List<String> listTemplates() {
     var found = <String>{};
 
-    for (var path in paths) {
-      var directory = Directory(path);
+    for (var root in paths) {
+      var directory = Directory.fromUri(Uri.directory(root));
 
       if (directory.existsSync()) {
-        var entities =
-            directory.listSync(recursive: true, followLinks: followLinks);
+        var entities = directory.listSync(
+          recursive: recursive,
+          followLinks: followLinks,
+        );
 
         for (var entity in entities) {
-          if (isTemplate(entity.path, path)) {
-            var template = relative(entity.path, from: path)
-                .replaceAll(Platform.pathSeparator, '/');
-            found.add(template);
+          if (isTemplate(entity.path)) {
+            var uri = Uri.file(relative(entity.path, from: root));
+            found.add(uri.path);
           }
         }
       }
     }
 
-    var list = found.toList();
-    list.sort();
-    return list;
+    return found.toList()..sort();
   }
 
   @override
   Template load(Environment environment, String path) {
-    var file = findFile(path);
-
-    if (file == null) {
-      throw TemplateNotFound(path: path);
-    }
-
-    var source = file.readAsStringSync(encoding: encoding);
-    return environment.fromString(source, path: path);
+    return environment.fromString(getSource(path), path: path);
   }
 
   @override
   String toString() {
-    return 'FileSystemLoader($paths)';
+    return 'FileSystemLoader(${paths.join(', ')})';
   }
 }

@@ -13,20 +13,20 @@ void main() {
     });
 
     test('finalize', () {
-      var env = Environment(finalize: (Object? obj) => obj ?? '');
+      var env = Environment(finalize: (Object? object) => object ?? '');
       var tmpl = env.fromString('{% for item in seq %}|{{ item }}{% endfor %}');
       var seq = [null, 1, 'foo'];
       expect(tmpl.render({'seq': seq}), equals('||1|foo'));
     });
 
     test('finalize constant expression', () {
-      var env = Environment(finalize: (Object? obj) => obj ?? '');
+      var env = Environment(finalize: (Object? object) => object ?? '');
       var tmpl = env.fromString('<{{ none }}>');
       expect(tmpl.render(), equals('<>'));
     });
 
     test('no finalize template data', () {
-      var env = Environment(finalize: (Object? obj) => obj.runtimeType);
+      var env = Environment(finalize: (Object? object) => object.runtimeType);
       var tmpl = env.fromString('<{{ value }}>');
       expect(tmpl.render({'value': 123}), equals('<int>'));
     });
@@ -70,6 +70,6 @@ void main() {
       expect(cycler.current, equals(1));
     });
 
-    // TODO: add test: autoescape autoselect
+    test('autoescape autoselect', () {}, skip: 'Not supported.');
   });
 }
