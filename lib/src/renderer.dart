@@ -521,7 +521,7 @@ base class StringSinkRenderer
       List<Object?> values;
 
       if (iterable is Map) {
-        values = iterable.entries.toList();
+        values = List<Object?>.of(iterable.entries);
       } else {
         values = list(iterable);
       }
@@ -551,16 +551,14 @@ base class StringSinkRenderer
       }
 
       var loop = LoopContext(values, depth, render);
-      var parent = context.resolve('loop');
-      context.set('loop', loop);
 
       for (var value in loop) {
         var data = getDataForTargets(targets, value);
         var forContext = context.derived(data: data);
+        forContext.set('loop', loop);
         node.body.accept(this, forContext);
       }
 
-      context.set('loop', parent);
       return '';
     }
 

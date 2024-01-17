@@ -1,10 +1,12 @@
+@TestOn('vm')
+library;
+
 import 'dart:math' show Random;
 
 import 'package:jinja/jinja.dart';
+import 'package:jinja/reflection.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:test/test.dart';
-
-import 'environment.dart';
 
 class FirstName {
   FirstName(this.first);
@@ -31,6 +33,8 @@ bool noFilterNamedF(TemplateError error) {
 }
 
 void main() {
+  var env = Environment(getAttribute: getAttribute);
+
   group('Filter', () {
     var aNoFilterNamedF = throwsA(
       predicate<TemplateAssertionError>(noFilterNamedF),

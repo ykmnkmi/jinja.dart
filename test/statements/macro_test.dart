@@ -1,14 +1,13 @@
+@TestOn('vm || chrome')
+library;
+
 import 'package:jinja/jinja.dart';
 import 'package:test/test.dart';
 
 void main() {
+  var env = Environment(trimBlocks: true);
+
   group('Macro', () {
-    late Environment env;
-
-    setUp(() {
-      env = Environment(trimBlocks: true);
-    });
-
     test('simple', () {
       var tmpl = env.fromString('''
 {% macro say_hello(name) %}Hello {{ name }}!{% endmacro %}

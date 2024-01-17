@@ -1,12 +1,15 @@
+@TestOn('vm || chrome')
+library;
+
 import 'package:jinja/jinja.dart';
 import 'package:jinja/src/lexer.dart';
 import 'package:jinja/src/reader.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:test/test.dart';
 
-import 'environment.dart';
-
 void main() {
+  var env = Environment();
+
   group('TokenReader', () {
     var testTokens = [Token(1, 'block_begin', ''), Token(2, 'block_end', '')];
 

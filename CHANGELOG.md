@@ -1,5 +1,6 @@
-## 0.6.0-dev.9
+## 0.6.0-dev.10
 - internal changes.
+- `chrome` platform tests.
 - added:
   - statements:
     - `import`

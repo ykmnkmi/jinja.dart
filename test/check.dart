@@ -20,9 +20,10 @@ class User {
 const JsonEncoder jsonEncoder = JsonEncoder.withIndent('  ');
 
 const String source = '''
-{% set x = 42 %}
-{% macro m(a, b=x, x=23) %}{{ a }}|{{ b }}|{{ x }}{% endmacro -%}
-{{ m(1, b=2) }}''';
+{% set items = [] %}
+{% for char in "foo" %}
+  {% do items.add(loop.index0 ~ char) %}
+{% endfor %}{{ items|join(', ') }}''';
 
 const Map<String, Object?> globals = <String, Object?>{'bar': 23};
 

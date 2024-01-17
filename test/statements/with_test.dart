@@ -1,10 +1,14 @@
+@TestOn('vm || chrome')
+library;
+
 import 'dart:convert';
 
+import 'package:jinja/jinja.dart';
 import 'package:test/test.dart';
 
-import '../environment.dart';
-
 void main() {
+  var env = Environment();
+
   group('With', () {
     test('with', () {
       var tmpl = env.fromString('''

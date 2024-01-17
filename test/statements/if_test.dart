@@ -1,8 +1,12 @@
+@TestOn('vm || chrome')
+library;
+
+import 'package:jinja/jinja.dart';
 import 'package:test/test.dart';
 
-import '../environment.dart';
-
 void main() {
+  var env = Environment();
+
   group('If', () {
     test('simple', () {
       var tmpl = env.fromString('{% if true %}...{% endif %}');

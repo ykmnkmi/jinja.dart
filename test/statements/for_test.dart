@@ -1,8 +1,9 @@
+@TestOn('vm || chrome')
+library;
+
 import 'package:jinja/jinja.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:test/test.dart';
-
-import '../environment.dart';
 
 const recursiveData = <String, List<Object>>{
   'seq': [
@@ -30,6 +31,8 @@ const recursiveData = <String, List<Object>>{
 };
 
 void main() {
+  var env = Environment();
+
   group('For', () {
     test('simple', () {
       var tmpl = env.fromString('{% for item in seq %}{{ item }}{% endfor %}');

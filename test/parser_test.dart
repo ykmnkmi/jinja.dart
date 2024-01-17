@@ -1,8 +1,9 @@
+@TestOn('vm || chrome')
+library;
+
 import 'package:jinja/jinja.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:test/test.dart';
-
-import 'environment.dart';
 
 void main() {
   group('Parser', () {
@@ -46,6 +47,7 @@ void main() {
     });
 
     test('balancing', () {
+      var env = Environment();
       var tmpl = env.fromString('''{{{'foo':'bar'}['foo']}}''');
       expect(tmpl.render(), equals('bar'));
     });
@@ -108,6 +110,8 @@ void main() {
     });
 
     test('error messages', () {
+      var env = Environment();
+
       void assertError(String source, String expekted) {
         expect(
             () => env.fromString(source),

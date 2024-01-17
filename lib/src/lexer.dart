@@ -286,7 +286,7 @@ final class Lexer {
 
         var match = scanner.lastMatch as RegExpMatch;
 
-        if (rule case MultiTokenRule rule) {
+        if (rule is MultiTokenRule) {
           var indexes = List<int>.generate(match.groupCount, (i) => i + 1);
           var groups = match.groups(indexes);
 
@@ -377,7 +377,7 @@ final class Lexer {
               }
             }
           }
-        } else if (rule case SingleTokenRule rule) {
+        } else if (rule is SingleTokenRule) {
           if (balancingStack.isNotEmpty && endTokens.contains(rule.token)) {
             scanner.position = match.start;
             continue;

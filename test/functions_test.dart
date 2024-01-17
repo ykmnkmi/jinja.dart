@@ -1,3 +1,6 @@
+@TestOn('vm')
+library;
+
 import 'package:jinja/jinja.dart';
 import 'package:jinja/reflection.dart';
 import 'package:jinja/src/context.dart';

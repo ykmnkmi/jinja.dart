@@ -1,10 +1,13 @@
+@TestOn('vm || chrome')
+library;
+
 import 'dart:collection';
 
 import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/exceptions.dart';
 import 'package:test/test.dart';
 
-import 'environment.dart';
+const bool kWeb = identical(1, 1.0);
 
 class MyMap extends MapBase<Object?, Object?> {
   @override
@@ -34,6 +37,8 @@ class MyMap extends MapBase<Object?, Object?> {
 }
 
 void main() {
+  var env = Environment();
+
   group('Test', () {
     test('defined', () {
       var tmpl = env.fromString('{{ missing is defined }}');
@@ -63,7 +68,7 @@ void main() {
       expect(tmpl.render(), equals('false'));
     });
 
-    test('types', () {
+    test('is none', () {
       var tmpl = env.fromString('{{ none is none }}');
       expect(tmpl.render(), equals('true'));
       tmpl = env.fromString('{{ false is none }}');
@@ -72,7 +77,10 @@ void main() {
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ 42 is none }}');
       expect(tmpl.render(), equals('false'));
-      tmpl = env.fromString('{{ none is true }}');
+    });
+
+    test('is true', () {
+      var tmpl = env.fromString('{{ none is true }}');
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ false is true }}');
       expect(tmpl.render(), equals('false'));
@@ -84,7 +92,10 @@ void main() {
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ 42 is true }}');
       expect(tmpl.render(), equals('false'));
-      tmpl = env.fromString('{{ none is false }}');
+    });
+
+    test('is false', () {
+      var tmpl = env.fromString('{{ none is false }}');
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ false is false }}');
       expect(tmpl.render(), equals('true'));
@@ -96,7 +107,10 @@ void main() {
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ 42 is false }}');
       expect(tmpl.render(), equals('false'));
-      tmpl = env.fromString('{{ none is boolean }}');
+    });
+
+    test('is bool', () {
+      var tmpl = env.fromString('{{ none is boolean }}');
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ false is boolean }}');
       expect(tmpl.render(), equals('true'));
@@ -114,7 +128,10 @@ void main() {
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ 3.14159 is boolean }}');
       expect(tmpl.render(), equals('false'));
-      tmpl = env.fromString('{{ none is integer }}');
+    });
+
+    test('is integer', () {
+      var tmpl = env.fromString('{{ none is integer }}');
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ false is integer }}');
       expect(tmpl.render(), equals('false'));
@@ -126,19 +143,25 @@ void main() {
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ (10 ** 100) is integer }}');
       expect(tmpl.render(), equals('true'));
-      tmpl = env.fromString('{{ none is float }}');
+    });
+
+    test('is float', () {
+      var tmpl = env.fromString('{{ none is float }}');
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ false is float }}');
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ true is float }}');
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ 42 is float }}');
-      expect(tmpl.render(), equals('false'));
+      expect(tmpl.render(), equals(kWeb ? 'true' : 'false'));
       tmpl = env.fromString('{{ 4.2 is float }}');
       expect(tmpl.render(), equals('true'));
       tmpl = env.fromString('{{ (10 ** 100) is float }}');
-      expect(tmpl.render(), equals('false'));
-      tmpl = env.fromString('{{ none is number }}');
+      expect(tmpl.render(), equals(kWeb ? 'true' : 'false'));
+    });
+
+    test('is number', () {
+      var tmpl = env.fromString('{{ none is number }}');
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ false is number }}');
       expect(tmpl.render(), equals('false'));
@@ -150,7 +173,10 @@ void main() {
       expect(tmpl.render(), equals('true'));
       tmpl = env.fromString('{{ (10 ** 100) is number }}');
       expect(tmpl.render(), equals('true'));
-      tmpl = env.fromString('{{ none is string }}');
+    });
+
+    test('is string', () {
+      var tmpl = env.fromString('{{ none is string }}');
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ false is string }}');
       expect(tmpl.render(), equals('false'));
@@ -160,7 +186,10 @@ void main() {
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ "foo" is string }}');
       expect(tmpl.render(), equals('true'));
-      tmpl = env.fromString('{{ none is list }}');
+    });
+
+    test('is list', () {
+      var tmpl = env.fromString('{{ none is list }}');
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ false is list }}');
       expect(tmpl.render(), equals('false'));
@@ -172,7 +201,10 @@ void main() {
       expect(tmpl.render(), equals('true'));
       tmpl = env.fromString('{{ [1, 2, 3] is list }}');
       expect(tmpl.render(), equals('true'));
-      tmpl = env.fromString('{{ none is map }}');
+    });
+
+    test('is map', () {
+      var tmpl = env.fromString('{{ none is map }}');
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ false is map }}');
       expect(tmpl.render(), equals('false'));
@@ -184,9 +216,12 @@ void main() {
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ {} is map }}');
       expect(tmpl.render(), equals('true'));
-      tmpl = env.fromString('{{ mydict is map }}');
-      expect(tmpl.render({'mydict': MyMap()}), equals('true'));
-      tmpl = env.fromString('{{ none is iterable }}');
+      tmpl = env.fromString('{{ mymap is map }}');
+      expect(tmpl.render({'mymap': MyMap()}), equals('true'));
+    });
+
+    test('is iterable', () {
+      var tmpl = env.fromString('{{ none is iterable }}');
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ false is iterable }}');
       expect(tmpl.render(), equals('false'));
@@ -200,7 +235,10 @@ void main() {
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ range(5) is iterable }}');
       expect(tmpl.render(), equals('true'));
-      tmpl = env.fromString('{{ none is callable }}');
+    });
+
+    test('is callable', () {
+      var tmpl = env.fromString('{{ none is callable }}');
       expect(tmpl.render(), equals('false'));
       tmpl = env.fromString('{{ false is callable }}');
       expect(tmpl.render(), equals('false'));

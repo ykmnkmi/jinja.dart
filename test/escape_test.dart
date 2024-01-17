@@ -1,3 +1,6 @@
+@TestOn('vm || chrome')
+library;
+
 import 'package:jinja/src/utils.dart' show escape;
 import 'package:test/test.dart' hide escape;
 

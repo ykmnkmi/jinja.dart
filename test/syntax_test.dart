@@ -1,12 +1,14 @@
+@TestOn('vm || chrome')
+library;
+
 import 'dart:collection';
 
 import 'package:jinja/jinja.dart';
-import 'package:jinja/reflection.dart';
 import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:test/test.dart';
 
-import 'environment.dart';
+const bool kWeb = identical(1, 1.0);
 
 class Foo extends MapMixin<Object?, Object?> {
   @override
@@ -34,6 +36,8 @@ class Foo extends MapMixin<Object?, Object?> {
 }
 
 void main() {
+  var env = Environment();
+
   group('Syntax', () {
     test('call', () {
       Object? foo(dynamic a, {dynamic b}) {
@@ -48,7 +52,6 @@ void main() {
 
     test('attribute', () {
       var foo = {'bar': 42};
-      var env = Environment(getAttribute: getAttribute);
       var tmpl = env.fromString('{{ foo.bar }}|{{ foo["bar"] }}');
       expect(tmpl.render({'foo': foo}), equals('42|42'));
     });
@@ -150,9 +153,9 @@ void main() {
       tmpl = env.fromString('{{ 3_4.5_6 }}');
       expect(tmpl.render(), equals('34.56'));
       tmpl = env.fromString('{{ 1e0 }}');
-      expect(tmpl.render(), equals('1.0'));
+      expect(tmpl.render(), equals(kWeb ? '1' : '1.0'));
       tmpl = env.fromString('{{ 10e1 }}');
-      expect(tmpl.render(), equals('100.0'));
+      expect(tmpl.render(), equals(kWeb ? '100' : '100.0'));
       tmpl = env.fromString('{{ 2.5e100 }}');
       expect(tmpl.render(), equals('2.5e+100'));
       tmpl = env.fromString('{{ 2.5e+100 }}');

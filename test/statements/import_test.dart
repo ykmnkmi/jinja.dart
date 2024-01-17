@@ -1,3 +1,6 @@
+@TestOn('vm || chrome')
+library;
+
 import 'package:jinja/jinja.dart';
 import 'package:test/test.dart';
 
