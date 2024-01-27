@@ -97,13 +97,12 @@ void main() {
       expect(tmpl.render(), equals('5|4|3|2|1'));
     });
 
-    // TODO(macro): fix this test
     test('macro defaults self ref', () {
       var tmpl = env.fromString('''
 {% set x = 42 %}
 {% macro m(a, b=x, x=23) %}{{ a }}|{{ b }}|{{ x }}{% endmacro -%}
 {{ m(1) }},{{ m(1, b=2) }},{{ m(1, b=2, x=3) }},{{ m(1, x=7) }}''');
-      expect(tmpl.render(), equals('"1||23,1|2|23,1|2|3,1|7|7"'));
-    }, skip: 'Not implemented.');
+      expect(tmpl.render(), equals('1||23,1|2|23,1|2|3,1|7|7'));
+    });
   });
 }

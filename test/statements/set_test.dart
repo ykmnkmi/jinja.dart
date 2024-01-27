@@ -99,9 +99,7 @@ void main() {
         return value;
       }
 
-      var env = Environment(
-          filters: {'myfilter': myfilter},
-          trimBlocks: true);
+      var env = Environment(filters: {'myfilter': myfilter}, trimBlocks: true);
       var tmpl = env.fromString('{% set a = " xxx " %}'
           '{% set foo | myfilter(a) | trim | length | string %}'
           ' {% set b = " yy " %} 42 {{ a }}{{ b }}   '

@@ -1,4 +1,4 @@
-## 0.6.0-dev.11
+## 0.6.0-dev.12
 - internal changes.
 - `chrome` platform tests.
 - added:

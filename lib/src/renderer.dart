@@ -188,7 +188,11 @@ base class StringSinkRenderer
         if (remaining.remove(key)) {
           derived.set(key, named[key]);
         } else {
-          derived.set(key, defaultValue.accept(this, context));
+          if (defaultValue is Name) {
+            derived.set(key, named[defaultValue.name]);
+          } else {
+            derived.set(key, defaultValue.accept(this, context));
+          }
         }
       }
 
