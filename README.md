@@ -31,9 +31,8 @@ _work in progress_.
 - Slices and negative indexes are not supported.
 - Macro arguments without default values are required.
 - Not yet implemented:
-  - Conditional `extends` statement variant.
-- Not supported:
   - Choice and ignore missing `include` statement variants.
+- Not supported:
   - Template module.
 - _work in progress_
 
@@ -64,20 +63,15 @@ See also examples with [conduit][conduit_example] and
 - `Template` class:
   - `generate` method
   - `stream` method
-  - `module` namespace getter 🔥
 - Async Support
 - List of Control Structures
-  - Extends
-    - Conditional variant 🔥
   - Include
     - Choice and ignore missing 🔥
-  - Import 🔥
-  - From 🔥
 - Expressions
   - Dart Methods and Properties
     - `!`/`?.`
 - Loaders
-  - PackageLoader (VM)
+  - PackageLoader (VM, sync?) 🤔
   - ...
 - List of Global Functions
   - `lipsum`
@@ -127,8 +121,8 @@ See also examples with [conduit][conduit_example] and
   - Extends
   - Blocks
   - Include
+  - Import
 - Import Context Behavior
-  - Include
 - Expressions with [filters][filters] and [tests][tests]
   - Literals
     - `"Hello World"`

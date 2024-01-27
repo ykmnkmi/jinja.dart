@@ -4,6 +4,7 @@
 build/
 coverage/
 doc/
+web/
 **.py
 **.pyc
 pubspec.lock

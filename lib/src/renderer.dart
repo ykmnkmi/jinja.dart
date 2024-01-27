@@ -10,6 +10,7 @@ import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/tests.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:jinja/src/visitor.dart';
+import 'package:meta/dart2js.dart';
 
 abstract base class RenderContext extends Context {
   RenderContext(
@@ -118,6 +119,7 @@ base class StringSinkRenderContext extends RenderContext {
     );
   }
 
+  @noInline
   void write(Object? value) {
     sink.write(value);
   }
