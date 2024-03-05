@@ -671,17 +671,28 @@ base class StringSinkRenderer
   void visitInclude(Include node, StringSinkRenderContext context) {
     var templateOrParth = node.template.accept(this, context);
 
-    var template = switch (templateOrParth) {
-      String path => context.environment.getTemplate(path),
-      Template template => template,
-      Object? value => throw ArgumentError.value(value, 'template'),
-    };
+    Template? template;
 
-    if (!node.withContext) {
-      context = context.derived(withContext: false);
+    try {
+      template = switch (templateOrParth) {
+        String path => context.environment.getTemplate(path),
+        Template template => template,
+        List<Object?> paths => context.environment.selectTemplate(paths),
+        Object? value => throw ArgumentError.value(value, 'template'),
+      };
+    } on TemplateNotFound {
+      if (!node.ignoreMissing) {
+        rethrow;
+      }
     }
 
-    template.body.accept(this, context);
+    if (template != null) {
+      if (!node.withContext) {
+        context = context.derived(withContext: false);
+      }
+
+      template.body.accept(this, context);
+    }
   }
 
   @override

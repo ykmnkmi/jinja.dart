@@ -75,7 +75,7 @@ final class TokenReader {
         throw TemplateSyntaxError('Unexpected end of template, expected $type');
       }
 
-      throw TemplateSyntaxError('Expected token $type, got $current');
+      throw TemplateSyntaxError('Expected token $type, got ${current.value}');
     }
 
     return next();

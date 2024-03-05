@@ -366,16 +366,45 @@ base class Environment {
   /// Load a template by name with `loader` and return a [Template].
   ///
   /// If the template does not exist a [TemplateNotFound] exception is thrown.
-  Template getTemplate(String template) {
+  /// If the loader is not specified a [StateError] is thrown.
+  Template getTemplate(String name) {
     if (loader case var loader?) {
+      var loaded = loader.load(this, name, globals: globals);
+
       if (autoReload) {
-        return templates[template] = loader.load(this, template);
+        return templates[name] = loaded;
       }
 
-      return templates[template] ??= loader.load(this, template);
+      return templates[name] ??= loaded;
     }
 
     throw StateError('No loader for this environment specified.');
+  }
+
+  /// Load a template from a list of names.
+  ///
+  /// If the template does not exist a [TemplatesNotFound] exception is thrown.
+  Template selectTemplate(List<Object?> names) {
+    if (names.isEmpty) {
+      throw TemplatesNotFound(
+          message: 'Tried to select from an empty list of templates.');
+    }
+
+    for (var template in names) {
+      if (template is Template) {
+        return template;
+      }
+
+      if (template is String) {
+        try {
+          return getTemplate(template);
+        } on TemplateNotFound {
+          // pass
+        }
+      }
+    }
+
+    throw TemplatesNotFound(names: names.cast<String>());
   }
 
   /// Returns a list of templates for this environment.
@@ -390,6 +419,7 @@ base class Environment {
     throw StateError('No loader for this environment specified.');
   }
 
+  /// @nodoc
   @protected
   static ContextFinalizer wrapFinalizer(Function function) {
     if (function case ContextFinalizer contextFinalizer) {
@@ -412,6 +442,7 @@ base class Environment {
     throw ArgumentError.value(function, 'finalize');
   }
 
+  /// @nodoc
   @protected
   static AttributeGetter wrapGetAttribute(
     AttributeGetter? attributeGetter,

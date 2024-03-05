@@ -1,4 +1,6 @@
-## 0.6.0-dev.13
+## 0.6.0-dev.14
+- bump SDK version to 3.3.0.
+- update dependencies.
 - internal changes.
 - `chrome` platform tests.
 - added:

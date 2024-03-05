@@ -26,7 +26,45 @@ void main() {
       expect(tmpl.render({'foo': 42}), equals('[|23]'));
     });
 
-    // TODO: add test: choice_includes
+    test('choice includes', () {
+      var tmpl = env.fromString('{% include ["missing", "header"] %}');
+      expect(tmpl.render({'foo': 42}), equals('[42|23]'));
+
+      tmpl = env
+          .fromString('{% include ["missing", "missing2"] ignore missing %}');
+      expect(tmpl.render({'foo': 42}), equals(''));
+
+      tmpl = env.fromString('{% include ["missing", "missing2"] %}');
+
+      try {
+        expect(tmpl.render({'foo': 42}), isA<Never>());
+      } on TemplatesNotFound catch (error) {
+        expect(error.name, contains('missing2'));
+        expect(error.names, contains('missing'));
+        expect(error.names, contains('missing2'));
+      }
+
+      void testIncludes(Template tmpl, [Map<String, Object?>? context]) {
+        context ??= <String, Object?>{};
+        context['foo'] = 42;
+        expect(tmpl.render(context), '[42|23]');
+      }
+
+      tmpl = env.fromString('{% include ["missing", "header"] %}');
+      testIncludes(tmpl);
+
+      tmpl = env.fromString('{% include x %}');
+      testIncludes(tmpl, {'x': 'missing,header'.split(',')});
+
+      tmpl = env.fromString('{% include [x, "header"] %}');
+      testIncludes(tmpl, {'x': 'missing'});
+
+      tmpl = env.fromString('{% include x %}');
+      testIncludes(tmpl, {'x': 'header'});
+
+      tmpl = env.fromString('{% include [x] %}');
+      testIncludes(tmpl, {'x': 'header'});
+    });
 
     test('include ignore missing', () {
       var tmpl = env.fromString('{% include "missing" %}');

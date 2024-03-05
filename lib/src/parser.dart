@@ -386,7 +386,7 @@ final class Parser {
       ('name', 'without'),
     ];
 
-    bool withContext = defaultValue;
+    var withContext = defaultValue;
 
     if (reader.current.testAny(keywords) &&
         reader.look().test('name', 'context')) {
@@ -401,8 +401,19 @@ final class Parser {
     reader.expect('name', 'include');
 
     var template = parseExpression(reader);
+    var ignoreMissing = reader.current.test('name', 'ignore') &&
+        reader.look().test('name', 'missing');
+
+    if (ignoreMissing) {
+      reader.skip(2);
+    }
+
     var withContext = parseImportContext(reader, true);
-    return Include(template: template, withContext: withContext);
+    return Include(
+      template: template,
+      ignoreMissing: ignoreMissing,
+      withContext: withContext,
+    );
   }
 
   Import parseImport(TokenReader reader) {

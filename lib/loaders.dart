@@ -72,7 +72,7 @@ class FileSystemLoader extends Loader {
     var file = findFile(path);
 
     if (file == null) {
-      throw TemplateNotFound(path: path);
+      throw TemplateNotFound(name: path);
     }
 
     return file.readAsStringSync(encoding: encoding);
@@ -116,8 +116,13 @@ class FileSystemLoader extends Loader {
   }
 
   @override
-  Template load(Environment environment, String path) {
-    return environment.fromString(getSource(path), path: path);
+  Template load(
+    Environment environment,
+    String path, {
+    Map<String, Object?>? globals,
+  }) {
+    return environment.fromString(getSource(path),
+        path: path, globals: globals);
   }
 
   @override

@@ -555,9 +555,15 @@ final class Block extends Statement {
 }
 
 final class Include extends Statement implements ImportContext {
-  const Include({required this.template, this.withContext = true});
+  const Include({
+    required this.template,
+    this.ignoreMissing = false,
+    this.withContext = true,
+  });
 
   final Expression template;
+
+  final bool ignoreMissing;
 
   @override
   final bool withContext;
@@ -568,9 +574,14 @@ final class Include extends Statement implements ImportContext {
   }
 
   @override
-  Include copyWith({Expression? template, bool? withContext}) {
+  Include copyWith({
+    Expression? template,
+    bool? ignoreMissing,
+    bool? withContext,
+  }) {
     return Include(
       template: template ?? this.template,
+      ignoreMissing: ignoreMissing ?? this.ignoreMissing,
       withContext: withContext ?? this.withContext,
     );
   }
@@ -580,6 +591,7 @@ final class Include extends Statement implements ImportContext {
     return <String, Object?>{
       'class': 'Include',
       'template': template,
+      if (ignoreMissing) 'ignoreMissing': ignoreMissing,
       if (withContext) 'withContext': withContext,
     };
   }

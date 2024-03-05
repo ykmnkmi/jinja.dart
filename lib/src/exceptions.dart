@@ -1,79 +1,117 @@
-/// Baseclass for all template errors.
+/// Base class for all template errors.
 abstract class TemplateError implements Exception {
-  const TemplateError([this.message]);
+  /// Creates a new [TemplateError].
+  TemplateError([this.message]);
 
+  /// The error message.
   final String? message;
 
   @override
   String toString() {
     if (message case var message?) {
-      return '$runtimeType: $message';
+      return 'TemplateError: $message';
     }
 
-    return '$runtimeType';
+    return 'TemplateError';
   }
 }
 
 /// Raised if a template does not exist.
 class TemplateNotFound extends TemplateError {
-  const TemplateNotFound({String? path, String? message})
-      : super(message ?? path);
+  /// Creates a new [TemplateNotFound].
+  TemplateNotFound({this.name, String? message}) : super(message);
+
+  /// The name of the template that was not found.
+  final String? name;
+
+  @override
+  String toString() {
+    if (message case var message?) {
+      return 'TemplateNotFound: $message';
+    }
+
+    if (name case var name?) {
+      return 'TemplateNotFound: $name';
+    }
+
+    return 'TemplateNotFound';
+  }
 }
 
-/// Like [TemplateNotFound] but raised if multiple templates are selected.
+/// Like [TemplateNotFound], but raised if multiple templates are selected.
 class TemplatesNotFound extends TemplateNotFound {
-  TemplatesNotFound({List<Object?>? names, super.message});
+  /// Creates a new [TemplatesNotFound].
+  TemplatesNotFound({this.names, super.message}) : super(name: names?.last);
+
+  /// The names of the templates that were not found.
+  final List<String>? names;
+
+  @override
+  String toString() {
+    if (message case var message?) {
+      return 'TemplatesNotFound: $message';
+    }
+
+    if (names case var names?) {
+      return 'TemplatesNotFound: '
+          'none of the templates given were found: '
+          '${names.join(', ')}';
+    }
+
+    return 'TemplatesNotFound';
+  }
 }
 
 /// Raised to tell the user that there is a problem with the template.
 class TemplateSyntaxError extends TemplateError {
-  const TemplateSyntaxError(super.message, {this.path, this.line});
+  /// Creates a new [TemplateSyntaxError].
+  TemplateSyntaxError(super.message, {this.path, this.line});
 
+  /// The path to the template that caused the error.
   final String? path;
 
+  /// The line in the template that caused the error.
   final int? line;
 
   @override
   String toString() {
-    var result = runtimeType.toString();
+    var buffer = StringBuffer('TemplateSyntaxError');
 
     if (path case var path?) {
-      if (result.contains(',')) {
-        result += ', file: $path';
-      }
-
-      result += ' file: $path';
+      buffer
+        ..write(", file '")
+        ..write(path)
+        ..write("'");
     }
 
     if (line case var line?) {
-      if (result.contains(',')) {
-        result += ', line: $line';
-      } else {
-        result += ' line: $line';
-      }
+      buffer
+        ..write(', line ')
+        ..write(line);
     }
 
     if (message case var message?) {
-      return '$result: $message';
+      buffer
+        ..write(': ')
+        ..write(message);
     }
 
-    return result;
+    return buffer.toString();
   }
 }
 
-/// Like a template syntax error, but covers cases where something in the
+/// Like a [TemplateSyntaxError], but covers cases where something in the
 /// template caused an error at parsing time that wasn't necessarily caused
 /// by a syntax error.
-///
-/// However it's a direct subclass of [TemplateSyntaxError] and has the same
-/// attributes.
 class TemplateAssertionError extends TemplateError {
-  const TemplateAssertionError([super.message]);
+  /// Creates a new [TemplateAssertionError].
+  TemplateAssertionError([super.message]);
 }
 
 /// A generic runtime error in the template engine.
 ///
 /// Under some situations Jinja may raise this exception.
 class TemplateRuntimeError extends TemplateError {
-  const TemplateRuntimeError([super.message]);
+  /// Creates a new [TemplateRuntimeError].
+  TemplateRuntimeError([super.message]);
 }

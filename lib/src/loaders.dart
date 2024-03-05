@@ -25,7 +25,7 @@ abstract class Loader {
       throw UnsupportedError('This loader cannot provide access to the source');
     }
 
-    throw TemplateNotFound(path: path);
+    throw TemplateNotFound(name: path);
   }
 
   /// Iterates over all templates.
@@ -34,7 +34,11 @@ abstract class Loader {
   }
 
   /// Loads a template to the environment template cache.
-  Template load(Environment environment, String path);
+  Template load(
+    Environment environment,
+    String path, {
+    Map<String, Object?>? globals,
+  });
 }
 
 /// {@template jinja.MapLoader}
@@ -65,7 +69,7 @@ class MapLoader extends Loader {
       return sources[path]!;
     }
 
-    throw TemplateNotFound(path: path);
+    throw TemplateNotFound(name: path);
   }
 
   @override
@@ -74,8 +78,12 @@ class MapLoader extends Loader {
   }
 
   @override
-  Template load(Environment environment, String path) {
+  Template load(
+    Environment environment,
+    String path, {
+    Map<String, Object?>? globals,
+  }) {
     var source = getSource(path);
-    return environment.fromString(source, path: path);
+    return environment.fromString(source, path: path, globals: globals);
   }
 }

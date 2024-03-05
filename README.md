@@ -64,9 +64,6 @@ See also examples with [conduit][conduit_example] and
   - `generate` method
   - `stream` method
 - Async Support
-- List of Control Structures
-  - Include
-    - Choice and ignore missing 🔥
 - Expressions
   - Dart Methods and Properties
     - `!`/`?.`

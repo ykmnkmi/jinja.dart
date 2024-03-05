@@ -5,47 +5,22 @@ import 'dart:io';
 import 'dart:math' show max;
 
 import 'package:jinja/loaders.dart';
-import 'package:jinja/reflection.dart';
 import 'package:jinja/src/compiler.dart';
 import 'package:jinja/src/context.dart';
 import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/optimizer.dart';
 
-class User {
-  const User(this.name);
-
-  final String? name;
-}
-
 const JsonEncoder jsonEncoder = JsonEncoder.withIndent('  ');
 
 const String source = '''
-{% set items = [] %}
-{% for char in "foo" %}
-  {% do items.add(loop.index0 ~ char) %}
-{% endfor %}{{ items|join(', ') }}''';
-
-const Map<String, Object?> globals = <String, Object?>{'bar': 23};
-
-const Map<String, Object?> context = <String, Object?>{
-  'foo': 42,
-  'seq': <int>[1, 2],
-  'through': <String>['<1>', '<2>'],
-  'users': <User>[User('john'), User('jane'), User('mike')]
-};
+{% include ["missing", "header"] %}''';
 
 const Map<String, String> sources = <String, String>{
-  'module': '{% macro test() %}[{{ foo }}|{{ bar }}]{% endmacro %}',
+  'header': '[{{ foo }}|{{ 23 }}]',
 };
 
 void main() {
-  var environment = Environment(
-    leftStripBlocks: true,
-    trimBlocks: true,
-    loader: MapLoader(sources),
-    globals: globals,
-    getAttribute: getAttribute,
-  );
+  var environment = Environment(loader: MapLoader(sources));
 
   var tokens = environment.lex(source);
   // print('tokens:');
@@ -68,7 +43,7 @@ void main() {
 
   var template = Template.fromNode(environment, body: body);
   print('render:');
-  print(template.render(context));
+  print(template.render({'foo': 42}));
 }
 
 const LineSplitter splitter = LineSplitter();
