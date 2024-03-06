@@ -42,6 +42,8 @@ void main() {
         expect(error.name, contains('missing2'));
         expect(error.names, contains('missing'));
         expect(error.names, contains('missing2'));
+      } catch (error) {
+        expect(error, isA<TemplatesNotFound>());
       }
 
       void testIncludes(Template tmpl, [Map<String, Object?>? context]) {
@@ -68,7 +70,17 @@ void main() {
 
     test('include ignore missing', () {
       var tmpl = env.fromString('{% include "missing" %}');
-      expect(() => tmpl.render(), throwsA(isA<TemplateNotFound>()));
+
+      try {
+        expect(tmpl.render(), isA<Never>());
+      } catch (error) {
+        expect(error, isA<TemplateNotFound>());
+      }
+
+      for (var extra in ['', 'with context', 'without context']) {
+        tmpl = env.fromString('{% include "missing" ignore missing $extra %}');
+        expect(tmpl.render(), equals(''));
+      }
     });
 
     test('context include with overrides', () {
@@ -83,7 +95,30 @@ void main() {
       expect(tmpl.render(), equals('123'));
     });
 
-    // TODO: add test: unoptimized_scopes
-    // TODO: add test: import_from_with_context
+    test('unoptimized scopes', () {
+      var tmpl = env.fromString('''
+        {% macro outer(o) %}
+        {% macro inner() %}
+        {% include "o_printer" %}
+        {% endmacro %}
+        {{ inner() }}
+        {% endmacro %}
+        {{ outer("FOO") }}
+      ''');
+
+      expect(tmpl.render().trim(), equals('(FOO)'));
+    });
+
+    test('import from with context', () {
+      var env = Environment(
+        loader: MapLoader({
+          'a': '{% macro x() %}{{ foobar }}{% endmacro %}',
+        }),
+      );
+
+      var tmpl = env.fromString(
+          "{% set foobar = 42 %}{% from 'a' import x with context %}{{ x() }}");
+      expect(tmpl.render(), equals('42'));
+    });
   });
 }
