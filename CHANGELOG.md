@@ -1,4 +1,4 @@
-## 0.6.0-dev.15
+## unreleased ([diff](https://github.com/ykmnkmi/jinja.dart/compare/c12244e6..be035c5f))
 - bump SDK version to 3.3.0.
 - update dependencies.
 - internal changes.
@@ -7,6 +7,11 @@
   - statements:
     - `import`
     - `from`
+  - `Template`:
+    - `globals` field
+- restored:
+  - conditional and variable `extends` statement variants
+  - choice, ignore missing and variable `include` statement variants
 - changed:
   - `Environment`:
     - `Environment.lex()` return from `List<Token>` to `Iterable<Token>`

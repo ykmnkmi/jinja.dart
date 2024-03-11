@@ -35,7 +35,6 @@ jobs:
         run: dart analyze --fatal-infos --fatal-warnings .
 
       - name: Run WEB Tests
-        if: matrix.sdk != '3.0.0'
         run: |
           dart test --platform chrome
 

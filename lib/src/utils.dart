@@ -106,8 +106,8 @@ List<Object?> list(Object? value) {
 /// Creates an [Iterable] of [int]s that iterates from `start` to `stop` by `step`.
 Iterable<int> range(int startOrStop, [int? stop, int step = 1]) sync* {
   if (step == 0) {
-    // TODO(error): add message
-    throw ArgumentError.value(step, 'step');
+    // TODO(utils): add message
+    throw ArgumentError.value(step, 'step', "Step can't be zero.");
   }
 
   int start;
@@ -119,12 +119,12 @@ Iterable<int> range(int startOrStop, [int? stop, int step = 1]) sync* {
     start = startOrStop;
   }
 
-  if (step < 0) {
-    for (var i = start; i >= stop; i += step) {
+  if (step > 0) {
+    for (var i = start; i < stop; i += step) {
       yield i;
     }
   } else {
-    for (var i = start; i < stop; i += step) {
+    for (var i = start; i >= stop; i += step) {
       yield i;
     }
   }

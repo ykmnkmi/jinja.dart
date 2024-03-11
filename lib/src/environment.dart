@@ -219,11 +219,11 @@ base class Environment {
 
   /// Get an attribute of an object.
   ///
-  /// If `getAttribute` is not passed to the [Environment], the item is
-  /// returned.
+  /// If `getAttribute` is not passed to the [Environment], [getItem] is used
+  /// instead.
   final AttributeGetter getAttribute;
 
-  /// Get an item of an object.
+  /// Get an item from an object.
   final ItemGetter getItem;
 
   @override
@@ -242,7 +242,7 @@ base class Environment {
     );
   }
 
-  /// The lexer for this environment.
+  /// The [Lexer] for this environment.
   Lexer get lexer {
     return Lexer.cached(this);
   }
@@ -359,8 +359,12 @@ base class Environment {
       body = body.accept(const Optimizer(), Context(this));
     }
 
-    body = body.accept(RuntimeCompiler(), null);
-    return Template.fromNode(this, path: path, globals: globals, body: body);
+    return Template.fromNode(
+      this,
+      path: path,
+      globals: globals,
+      body: body.accept(RuntimeCompiler(), null),
+    );
   }
 
   /// Load a template by name with `loader` and return a [Template].
@@ -399,7 +403,7 @@ base class Environment {
         try {
           return getTemplate(template);
         } on TemplateNotFound {
-          // pass
+          // ignore
         }
       }
     }
@@ -409,8 +413,7 @@ base class Environment {
 
   /// Returns a list of templates for this environment.
   ///
-  /// This requires that the loader supports the loader's
-  /// [Loader.listTemplates] method.
+  /// If the [loader] is not specified a [StateError] is thrown.
   List<String> listTemplates() {
     if (loader case var loader?) {
       return loader.listTemplates();
@@ -438,8 +441,8 @@ base class Environment {
       };
     }
 
-    // TODO(environment): add error message
-    throw ArgumentError.value(function, 'finalize');
+    // Dart doesn't support union types, so we have to throw an error here.
+    throw TypeError();
   }
 
   /// @nodoc
@@ -495,34 +498,38 @@ base class Template {
     AttributeGetter? getAttribute,
     ItemGetter getItem = defaults.getItem,
   }) {
-    environment ??= Environment(
-      commentStart: commentStart,
-      commentEnd: commentEnd,
-      variableStart: variableStatr,
-      variableEnd: variableEnd,
-      blockStart: blockStart,
-      blockEnd: blockEnd,
-      lineCommentPrefix: lineCommentPrefix,
-      lineStatementPrefix: lineStatementPrefix,
-      leftStripBlocks: leftStripBlocks,
-      trimBlocks: trimBlocks,
-      newLine: newLine,
-      keepTrailingNewLine: keepTrailingNewLine,
-      optimize: optimize,
-      finalize: finalize,
-      autoReload: false,
-      globals: globals,
-      filters: filters,
-      tests: tests,
-      modifiers: modifiers,
-      random: random,
-      getAttribute: getAttribute,
-      getItem: getItem,
-    );
+    if (environment == null) {
+      return Environment(
+        commentStart: commentStart,
+        commentEnd: commentEnd,
+        variableStart: variableStatr,
+        variableEnd: variableEnd,
+        blockStart: blockStart,
+        blockEnd: blockEnd,
+        lineCommentPrefix: lineCommentPrefix,
+        lineStatementPrefix: lineStatementPrefix,
+        leftStripBlocks: leftStripBlocks,
+        trimBlocks: trimBlocks,
+        newLine: newLine,
+        keepTrailingNewLine: keepTrailingNewLine,
+        optimize: optimize,
+        finalize: finalize,
+        autoReload: false,
+        globals: globals,
+        filters: filters,
+        tests: tests,
+        modifiers: modifiers,
+        random: random,
+        getAttribute: getAttribute,
+        getItem: getItem,
+      ).fromString(source, path: path);
+    }
 
-    return environment.fromString(source, path: path);
+    return environment.fromString(source, path: path, globals: globals);
   }
 
+  /// This is used internally by the [Environment.fromString] to create
+  /// templates from parsed sources.
   @internal
   Template.fromNode(
     this.environment, {

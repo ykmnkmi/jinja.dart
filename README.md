@@ -63,12 +63,13 @@ See also examples with [conduit][conduit_example] and
 - `Template` class:
   - `generate` method
   - `stream` method
+- Relative template Paths
 - Async Support
 - Expressions
   - Dart Methods and Properties
-    - `!`/`?.`
+    - `!.`/`?.`
 - Loaders
-  - PackageLoader (VM, sync?) 🤔
+  - PackageLoader (VM)
   - ...
 - List of Global Functions
   - `lipsum`
