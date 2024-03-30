@@ -35,7 +35,8 @@ void main() {
           paths: paths, extensions: <String>{'txt'}, encoding: latin1);
       var env = Environment(loader: loader);
       var tmpl = env.getTemplate('mojibake.txt');
-      expect(tmpl.render().trim(), equals('æ\x96\x87\xe5\xad\x97\xe5\x8c\x96\xe3\x81\x91'));
+      expect(tmpl.render().trim(),
+          equals('æ\x96\x87\xe5\xad\x97\xe5\x8c\x96\xe3\x81\x91'));
     });
   });
 }
