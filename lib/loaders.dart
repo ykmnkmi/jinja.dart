@@ -124,9 +124,4 @@ class FileSystemLoader extends Loader {
     return environment.fromString(getSource(path),
         path: path, globals: globals);
   }
-
-  @override
-  String toString() {
-    return 'FileSystemLoader(${paths.join(', ')})';
-  }
 }

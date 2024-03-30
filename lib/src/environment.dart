@@ -554,7 +554,7 @@ base class Template {
   String render([Map<String, Object?>? data]) {
     var buffer = StringBuffer();
     renderTo(buffer, data);
-    return buffer.toString();
+    return '$buffer';
   }
 
   /// If no arguments are given the context will be empty.

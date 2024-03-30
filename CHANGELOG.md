@@ -1,4 +1,4 @@
-## unreleased ([diff](https://github.com/ykmnkmi/jinja.dart/compare/c12244e6..be035c5f))
+## 0.6.0 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/c12244e6..main))
 - bump SDK version to 3.3.0.
 - update dependencies.
 - internal changes.
@@ -8,6 +8,7 @@
     - `import`
     - `from`
   - `Template`:
+    - `Template.fromNode({globals})` argument
     - `globals` field
 - restored:
   - conditional and variable `extends` statement variants
@@ -35,7 +36,7 @@
     - `title`
 - changed:
   - `Environment`:
-    - `Environment({modifiers})` from `List<NodeVisitor>` to `List<Node Function(Node)>`
+    - `Environment({modifiers})` argument type from `List<NodeVisitor>` to `List<Node Function(Node)>`
     - `modifiers` type from `List<NodeVisitor>` to `List<Node Function(Node)>`
     - `scan(...)` return type from `List<Node>` to `Node`
     - `parse(...)` return type from `List<Node>` to `Node`

@@ -12,7 +12,6 @@ Variables, expressions, control structures and template inheritance.
 - `*args` and `**kwargs` arguments support removed
 - Auto-escaping and related statements, filters and tests have been removed due to the impossibility of extending `String`.
   Use the `escape` filter manually or escape values before passing them to the template.
-- _work in progress_
 
 For more information, see `CHANGELOG.md`.
 
