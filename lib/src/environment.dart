@@ -15,7 +15,7 @@ import 'package:jinja/src/utils.dart';
 import 'package:meta/meta.dart';
 
 /// {@template jinja.finalizer}
-/// A [Function] that can be used to process the result of a variable
+/// A function that can be used to process the result of a variable
 /// expression before it is output.
 ///
 /// For example one can convert `null` implicitly into an empty string here.
@@ -33,15 +33,53 @@ typedef ContextFinalizer = Object? Function(Context context, Object? value);
 typedef EnvironmentFinalizer = Object? Function(
     Environment environment, Object? value);
 
-/// A [Function] that can be used to get object atribute.
+/// A function that can be used to get object atribute.
 ///
 /// Used by `object.attribute` expression.
 typedef AttributeGetter = Object? Function(String attribute, Object? object);
 
-/// A [Function] that can be used to get object item.
+/// A function that can be used to get object item.
 ///
 /// Used by `object['item']` expression.
 typedef ItemGetter = Object? Function(Object? key, Object? object);
+
+/// A function that returns an undefined object or throws an error if
+/// the variable is not found.
+///
+/// Used by `{{ user.field }}` expression when `user` not found.
+///
+/// Possible usage to throw an error when accessing properties of an undefined
+/// variable:
+/// ```dart
+/// Object? undefined(String key) {
+///   return Undefined(key);
+/// }
+///
+/// final class Undefined {
+///   const Undefined(this.name);
+///
+///   final String name;
+///
+///   Object? operator [](String key) {
+///     throw UndefinedError('$name has no property $key');
+///   }
+///
+///   @override
+///   dynamic noSuchMethod(Invocation invocation) {
+///     var symbol = '${invocation.memberName}'; // Symbol('name')
+///     var memberName = symbol.substring(8, symbol.length - 2);
+///     throw UndefinedError('$name has no property $memberName');
+///   }
+///
+///   @override
+///   String toString() {
+///     return 'Undefined($name)';
+///   }
+/// }
+///
+/// var environment = Environment(undefined: undefined);
+/// ```
+typedef UndefinedFactory = Object? Function(String key);
 
 /// Pass the [Context] as the first argument to the applied function when
 /// called while rendering a template.
@@ -96,6 +134,7 @@ base class Environment {
     Random? random,
     AttributeGetter? getAttribute,
     this.getItem = defaults.getItem,
+    this.undefined = defaults.undefined,
   })  : finalize = wrapFinalizer(finalize),
         globals = HashMap<String, Object?>.of(defaults.globals),
         filters = HashMap<String, Function>.of(defaults.filters),
@@ -225,6 +264,11 @@ base class Environment {
 
   /// Get an item from an object.
   final ItemGetter getItem;
+
+  /// Get an undefined object or throw an error if the variable is not found.
+  ///
+  /// Default implementation throws [UndefinedError].
+  final UndefinedFactory undefined;
 
   @override
   int get hashCode {
@@ -497,6 +541,7 @@ base class Template {
     Random? random,
     AttributeGetter? getAttribute,
     ItemGetter getItem = defaults.getItem,
+    UndefinedFactory undefined = defaults.undefined,
   }) {
     if (environment == null) {
       return Environment(
@@ -522,6 +567,7 @@ base class Template {
         random: random,
         getAttribute: getAttribute,
         getItem: getItem,
+        undefined: undefined,
       ).fromString(source, path: path);
     }
 

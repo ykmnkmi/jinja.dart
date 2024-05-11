@@ -4,23 +4,49 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math' show max;
 
-import 'package:jinja/loaders.dart';
 import 'package:jinja/src/compiler.dart';
 import 'package:jinja/src/context.dart';
 import 'package:jinja/src/environment.dart';
+import 'package:jinja/src/exceptions.dart';
 import 'package:jinja/src/optimizer.dart';
 
 const JsonEncoder jsonEncoder = JsonEncoder.withIndent('  ');
 
 const String source = '''
-{% include ["missing", "header"] %}''';
+{{ user.name }}''';
 
-const Map<String, String> sources = <String, String>{
-  'header': '[{{ foo }}|{{ 23 }}]',
-};
+Object? undefined(String key) {
+  return Undefined(key);
+}
+
+final class Undefined {
+  const Undefined(this.name);
+
+  final String name;
+
+  Object? operator [](Object? key) {
+    if (key is int) {
+      throw UndefinedError('$name has no element $key');
+    }
+
+    throw UndefinedError('$name has no property $key');
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) {
+    var symbol = '${invocation.memberName}'; // Symbol('name')
+    var memberName = symbol.substring(8, symbol.length - 2);
+    throw UndefinedError('$name has no property $memberName');
+  }
+
+  @override
+  String toString() {
+    return 'Undefined($name)';
+  }
+}
 
 void main() {
-  var environment = Environment(loader: MapLoader(sources));
+  var environment = Environment(undefined: undefined);
 
   var tokens = environment.lex(source);
   // print('tokens:');
@@ -42,8 +68,13 @@ void main() {
   compare(original, optimized, compiled);
 
   var template = Template.fromNode(environment, body: body);
-  print('render:');
-  print(template.render({'foo': 42}));
+
+  try {
+    print('render:');
+    print(template.render());
+  } on UndefinedError catch (error) {
+    print(error.message);
+  }
 }
 
 const LineSplitter splitter = LineSplitter();

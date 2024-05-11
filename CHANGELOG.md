@@ -1,4 +1,14 @@
-## 0.6.0 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/c12244e6..main))
+## 0.6.1-dev.0 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/88996f8..main))
+- added:
+  - `UndefinedError` exception
+  - `UndefinedFactory` typedef
+  - `Environment`:
+    - `Environment({undefined})` argument
+    - `undefined` field
+  - `Template`:
+    - `Template({undefined})` argument
+
+## 0.6.0 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/c12244e6..88996f8))
 - bump SDK version to 3.3.0.
 - update dependencies.
 - internal changes.

@@ -1,4 +1,5 @@
 import 'package:jinja/src/context.dart';
+import 'package:jinja/src/exceptions.dart';
 import 'package:jinja/src/namespace.dart';
 import 'package:jinja/src/utils.dart';
 
@@ -28,4 +29,8 @@ Object? getItem(Object? item, dynamic object) {
 
     return null;
   }
+}
+
+Object? undefined(String name) {
+  throw UndefinedError('$name is not defined.');
 }

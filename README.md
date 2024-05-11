@@ -29,13 +29,11 @@ _work in progress_.
   This allows you to use `{{ map.key }}` as an expression equivalent to `{{ map['key'] }}`.
 - Slices and negative indexes are not supported.
 - Macro arguments without default values are required.
-- Not yet implemented:
-  - Choice and ignore missing `include` statement variants.
 - Not supported:
   - Template module.
 - _work in progress_
 
-## Dynamically invoked members
+## Dynamically invoked members (can increase the size of the JS output)
 - `[]`, `+`, `-`, `*`, `/`, `~/`, `%` operators
 - `object.length` getter
 - `object.call` getter

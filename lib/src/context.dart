@@ -52,10 +52,15 @@ base class Context {
 
   Object? resolve(String key) {
     if (context.containsKey(key)) {
+      print('key: $key');
       return context[key];
     }
 
-    return parent[key];
+    if (parent.containsKey(key)) {
+      return parent[key];
+    }
+
+    return environment.undefined(key);
   }
 
   Object? attribute(String key, Object? value) {

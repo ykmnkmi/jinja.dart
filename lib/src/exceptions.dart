@@ -106,6 +106,15 @@ class TemplateSyntaxError extends TemplateError {
 class TemplateAssertionError extends TemplateError {
   /// Creates a new [TemplateAssertionError].
   TemplateAssertionError([super.message]);
+
+  @override
+  String toString() {
+    if (message case var message?) {
+      return 'TemplateAssertionError: $message';
+    }
+
+    return 'TemplateAssertionError';
+  }
 }
 
 /// A generic runtime error in the template engine.
@@ -114,4 +123,28 @@ class TemplateAssertionError extends TemplateError {
 class TemplateRuntimeError extends TemplateError {
   /// Creates a new [TemplateRuntimeError].
   TemplateRuntimeError([super.message]);
+
+  @override
+  String toString() {
+    if (message case var message?) {
+      return 'TemplateRuntimeError: $message';
+    }
+
+    return 'TemplateRuntimeError';
+  }
+}
+
+/// Raised if a variable is undefined.
+class UndefinedError extends TemplateRuntimeError {
+  /// Creates a new [UndefinedError].
+  UndefinedError([super.message]);
+
+  @override
+  String toString() {
+    if (message case var message?) {
+      return 'UndefinedError: $message';
+    }
+
+    return 'UndefinedError';
+  }
 }
