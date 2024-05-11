@@ -38,10 +38,6 @@ jobs:
       - name: Analyze
         run: dart analyze --fatal-infos --fatal-warnings .
 
-      - name: Run WEB Tests
-        run: |
-          dart test --platform chrome
-
       - name: Run VM Tests
         run: |
           dart pub global activate coverage
