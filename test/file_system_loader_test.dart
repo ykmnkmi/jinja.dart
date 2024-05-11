@@ -2,15 +2,13 @@
 library;
 
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:jinja/jinja.dart';
 import 'package:jinja/loaders.dart';
 import 'package:test/test.dart';
 
 void main() {
-  var pathUri = Directory.current.uri.resolve('test/res/templates');
-  var paths = <String>[pathUri.path];
+  var paths = <String>['test/res/templates'];
 
   group('FileSystemLoader', () {
     test('paths', () {

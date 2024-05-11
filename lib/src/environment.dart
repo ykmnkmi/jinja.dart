@@ -134,7 +134,7 @@ base class Environment {
     Random? random,
     AttributeGetter? getAttribute,
     this.getItem = defaults.getItem,
-    this.undefined = defaults.undefined,
+    this.undefined,
   })  : finalize = wrapFinalizer(finalize),
         globals = HashMap<String, Object?>.of(defaults.globals),
         filters = HashMap<String, Function>.of(defaults.filters),
@@ -268,7 +268,7 @@ base class Environment {
   /// Get an undefined object or throw an error if the variable is not found.
   ///
   /// Default implementation throws [UndefinedError].
-  final UndefinedFactory undefined;
+  final UndefinedFactory? undefined;
 
   @override
   int get hashCode {
@@ -541,7 +541,7 @@ base class Template {
     Random? random,
     AttributeGetter? getAttribute,
     ItemGetter getItem = defaults.getItem,
-    UndefinedFactory undefined = defaults.undefined,
+    UndefinedFactory? undefined,
   }) {
     if (environment == null) {
       return Environment(

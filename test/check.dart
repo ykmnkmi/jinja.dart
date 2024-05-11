@@ -15,38 +15,8 @@ const JsonEncoder jsonEncoder = JsonEncoder.withIndent('  ');
 const String source = '''
 {{ user.name }}''';
 
-Object? undefined(String key) {
-  return Undefined(key);
-}
-
-final class Undefined {
-  const Undefined(this.name);
-
-  final String name;
-
-  Object? operator [](Object? key) {
-    if (key is int) {
-      throw UndefinedError('$name has no element $key');
-    }
-
-    throw UndefinedError('$name has no property $key');
-  }
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) {
-    var symbol = '${invocation.memberName}'; // Symbol('name')
-    var memberName = symbol.substring(8, symbol.length - 2);
-    throw UndefinedError('$name has no property $memberName');
-  }
-
-  @override
-  String toString() {
-    return 'Undefined($name)';
-  }
-}
-
 void main() {
-  var environment = Environment(undefined: undefined);
+  var environment = Environment();
 
   var tokens = environment.lex(source);
   // print('tokens:');

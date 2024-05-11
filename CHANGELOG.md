@@ -1,4 +1,4 @@
-## 0.6.1-dev.0 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/88996f8..main))
+## 0.6.1-dev.1 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/88996f8..main))
 - added:
   - `UndefinedError` exception
   - `UndefinedFactory` typedef

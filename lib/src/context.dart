@@ -52,7 +52,6 @@ base class Context {
 
   Object? resolve(String key) {
     if (context.containsKey(key)) {
-      print('key: $key');
       return context[key];
     }
 
@@ -60,7 +59,7 @@ base class Context {
       return parent[key];
     }
 
-    return environment.undefined(key);
+    return environment.undefined?.call(key);
   }
 
   Object? attribute(String key, Object? value) {
