@@ -12,8 +12,6 @@ defaults:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-
     strategy:
       matrix:
         os:
@@ -22,6 +20,8 @@ jobs:
         sdk:
           - stable
           - dev
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v3
