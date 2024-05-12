@@ -186,8 +186,8 @@ Post issues and feature requests on the GitHub [issue tracker][issues].
 
 [pub_icon]: https://img.shields.io/pub/v/jinja.svg
 [pub]: https://pub.dev/packages/jinja
-[test_ci_icon]: https://github.com/ykmnkmi/jinja.dart/actions/workflows/test-vm.yaml/badge.svg
-[test_ci]: https://github.com/ykmnkmi/jinja.dart/actions/workflows/test-vm.yaml
+[test_ci_icon]: https://github.com/ykmnkmi/jinja.dart/actions/workflows/test_vm.yaml/badge.svg
+[test_ci]: https://github.com/ykmnkmi/jinja.dart/actions/workflows/test_vm.yaml
 [codecov_icon]: https://codecov.io/gh/ykmnkmi/jinja.dart/branch/main/graph/badge.svg?token=PRP3DHMO48
 [codecov]: https://codecov.io/gh/ykmnkmi/jinja.dart
 [jinja]: https://www.palletsprojects.com/p/jinja

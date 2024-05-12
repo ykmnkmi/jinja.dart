@@ -29,3 +29,7 @@ Object? getItem(Object? item, dynamic object) {
     return null;
   }
 }
+
+Object? undefined(String name) {
+  return null;
+}

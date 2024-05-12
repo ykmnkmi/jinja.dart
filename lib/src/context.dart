@@ -50,24 +50,24 @@ base class Context {
     return parent.containsKey(key);
   }
 
-  Object? resolve(String key) {
-    if (context.containsKey(key)) {
-      return context[key];
+  Object? resolve(String name) {
+    if (context.containsKey(name)) {
+      return context[name];
     }
 
-    if (parent.containsKey(key)) {
-      return parent[key];
+    if (parent.containsKey(name)) {
+      return parent[name];
     }
 
-    return environment.undefined?.call(key);
+    return environment.undefined(name);
   }
 
-  Object? attribute(String key, Object? value) {
-    return environment.getAttribute(key, value);
+  Object? attribute(String name, Object? value) {
+    return environment.getAttribute(name, value);
   }
 
-  Object? item(Object? key, Object? value) {
-    return environment.getItem(key, value);
+  Object? item(Object? name, Object? value) {
+    return environment.getItem(name, value);
   }
 
   Object? filter(
