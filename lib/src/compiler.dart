@@ -346,9 +346,8 @@ class RuntimeCompiler implements Visitor<void, Node> {
     for (var (name, alias) in node.names) {
       _macroses.add(alias ?? name);
     }
-    return node.copyWith(
-      template: visitNode(node.template, context),
-    );
+
+    return node.copyWith(template: visitNode(node.template, context));
   }
 
   @override
@@ -356,18 +355,19 @@ class RuntimeCompiler implements Visitor<void, Node> {
     return node.copyWith(
       test: visitNode(node.test, context),
       body: visitNode(node.body, context),
+      orElse: visitNode(node.orElse, context),
     );
   }
 
   @override
   Import visitImport(Import node, void context) {
     _imports.add(node.target);
-    return node;
+    return node.copyWith(template: visitNode(node.template, context));
   }
 
   @override
   Include visitInclude(Include node, void context) {
-    return node;
+    return node.copyWith(template: visitNode(node.template, context));
   }
 
   @override
@@ -428,6 +428,7 @@ class RuntimeCompiler implements Visitor<void, Node> {
   TemplateNode visitTemplateNode(TemplateNode node, void context) {
     return node.copyWith(
       blocks: visitNodes(node.blocks, context),
+      macros: visitNodes(node.macros, context),
       body: visitNode(node.body, context),
     );
   }

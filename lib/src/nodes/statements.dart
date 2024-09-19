@@ -547,6 +547,7 @@ final class Block extends Statement {
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'class': 'Block',
+      'name': name,
       if (scoped) 'scoped': scoped,
       if (required) 'required': required,
       'body': body.toJson(),

@@ -189,6 +189,7 @@ final Map<String, Function> tests = <String, Function>{
   'filter': passEnvironment(isFilter),
   'test': passEnvironment(isTest),
   'none': isNull,
+  'null': isNull,
   'boolean': isBoolean,
   'false': isFalse,
   'true': isTrue,

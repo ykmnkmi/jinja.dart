@@ -331,16 +331,9 @@ final class Parser {
     var required = reader.skipIf('name', 'required');
     var body = parseStatements(reader, endBlock, true);
 
-    if (required) {
-      switch (body) {
-        case Data data when data.isLeaf:
-        case Output(nodes: <Node>[]):
-          break;
-
-        default:
-          fail('Required blocks can only contain comments or whitespace.',
-              token.line);
-      }
+    if (required && (body is! Data || body.isLeaf)) {
+      fail('Required blocks can only contain comments or whitespace.',
+          token.line);
     }
 
     var maybeName = reader.current;

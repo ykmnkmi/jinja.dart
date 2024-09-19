@@ -155,8 +155,16 @@ final class TemplateNode extends Node {
   }
 
   @override
-  TemplateNode copyWith({List<Block>? blocks, Node? body}) {
-    return TemplateNode(blocks: blocks ?? this.blocks, body: body ?? this.body);
+  TemplateNode copyWith({
+    List<Block>? blocks,
+    List<Macro>? macros,
+    Node? body,
+  }) {
+    return TemplateNode(
+      blocks: blocks ?? this.blocks,
+      macros: macros ?? this.macros,
+      body: body ?? this.body,
+    );
   }
 
   @override

@@ -1,8 +1,8 @@
 import 'dart:convert' show LineSplitter;
 import 'dart:math' as math;
 
-import 'package:jinja/src/context.dart';
 import 'package:jinja/src/environment.dart';
+import 'package:jinja/src/runtime.dart';
 import 'package:jinja/src/utils.dart' as utils;
 import 'package:textwrap/textwrap.dart' show TextWrapper;
 import 'package:textwrap/utils.dart';

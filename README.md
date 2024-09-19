@@ -57,10 +57,13 @@ See also examples with [conduit][conduit_example] and
 
 ## Status:
 ### TODO:
+- Informative error messages
+  - Template name 🔥
+  - Source span 🔥
 - `Template` class:
   - `generate` method
   - `stream` method
-- Relative template Paths
+- Relative template paths
 - Async Support
 - Expressions
   - Dart Methods and Properties
@@ -127,6 +130,7 @@ See also examples with [conduit][conduit_example] and
     - `('tuple', 'of', 'values')`
     - `{'dict': 'of', 'key': 'and', 'value': 'pairs'}`
     - `true` / `false`
+    - `null`
   - Math
     - `+`
     - `-`
@@ -157,7 +161,7 @@ See also examples with [conduit][conduit_example] and
   - If Expression
     - `{{ list.last if list }}`
     - `{{ user.name if user else 'Guest' }}`
-  - Dart Methods and Properties (with reflection)
+  - Dart Methods and Properties (if reflection is on)
     - `{{ string.toUpperCase() }}`
     - `{{ list.add(item) }}`
 - List of Global Functions
