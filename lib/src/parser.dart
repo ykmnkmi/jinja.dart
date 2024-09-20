@@ -177,8 +177,12 @@ final class Parser {
       reader.next();
     }
 
-    if (nodes case <Node>[Node node]) {
-      return node;
+    if (nodes.isEmpty) {
+      return Data(data: '');
+    }
+
+    if (nodes.length == 1) {
+      return nodes[0];
     }
 
     return Output(nodes: nodes);
@@ -331,7 +335,7 @@ final class Parser {
     var required = reader.skipIf('name', 'required');
     var body = parseStatements(reader, endBlock, true);
 
-    if (required && (body is! Data || body.isLeaf)) {
+    if (required && (body is! Data || !body.isLeaf)) {
       fail('Required blocks can only contain comments or whitespace.',
           token.line);
     }

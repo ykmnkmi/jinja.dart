@@ -439,15 +439,19 @@ base class Environment {
     }
 
     if (function is EnvironmentFinalizer) {
-      return (context, value) {
+      Object? finalizer(Context context, Object? value) {
         return function(context.environment, value);
-      };
+      }
+
+      return finalizer;
     }
 
     if (function is Finalizer) {
-      return (context, value) {
+      Object? finalizer(Context context, Object? value) {
         return function(value);
-      };
+      }
+
+      return finalizer;
     }
 
     // Dart doesn't support union types, so we have to throw an error here.
@@ -464,13 +468,15 @@ base class Environment {
       return itemGetter;
     }
 
-    return (attribute, object) {
+    Object? getter(String attribute, Object? object) {
       try {
         return attributeGetter(attribute, object);
       } on NoSuchMethodError {
         return itemGetter(attribute, object);
       }
-    };
+    }
+
+    return getter;
   }
 }
 

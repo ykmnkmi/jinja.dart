@@ -180,7 +180,7 @@ base class StringSinkRenderer
       }
 
       node.body.accept(this, derived);
-      return '$buffer';
+      return buffer.toString();
     }
 
     return macro;
@@ -523,6 +523,7 @@ base class StringSinkRenderer
     var template = switch (templateOrParth) {
       String path => context.environment.getTemplate(path),
       Template template => template,
+      // TODO(renderer): add error message
       Object? value => throw ArgumentError.value(value, 'template'),
     };
 
@@ -602,6 +603,7 @@ base class StringSinkRenderer
         String path => context.environment.getTemplate(path),
         Template template => template,
         List<Object?> paths => context.environment.selectTemplate(paths),
+        // TODO(renderer): add error message
         Object? value => throw ArgumentError.value(value, 'template'),
       };
     } on TemplateNotFound {
@@ -656,6 +658,24 @@ base class StringSinkRenderer
       }
 
       self[block.name] = render;
+
+      var blocks = context.blocks[block.name] ??= <ContextCallback>[];
+
+      if (block.required) {
+        String callback(Context context) {
+          throw TemplateRuntimeError(
+              "Required block '${block.name}' not found.");
+        }
+
+        blocks.add(callback);
+      } else {
+        String callback(Context context) {
+          block.body.accept(this, context);
+          return '';
+        }
+
+        blocks.add(callback);
+      }
     }
 
     context.set('self', self);
