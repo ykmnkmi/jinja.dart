@@ -1,8 +1,6 @@
-import 'dart:collection' show HashMap;
 import 'dart:math' show Random;
 
 import 'package:jinja/src/compiler.dart';
-import 'package:jinja/src/context.dart';
 import 'package:jinja/src/defaults.dart' as defaults;
 import 'package:jinja/src/exceptions.dart';
 import 'package:jinja/src/lexer.dart';
@@ -11,6 +9,7 @@ import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/optimizer.dart';
 import 'package:jinja/src/parser.dart';
 import 'package:jinja/src/renderer.dart';
+import 'package:jinja/src/runtime.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:meta/meta.dart';
 
@@ -43,43 +42,11 @@ typedef AttributeGetter = Object? Function(String attribute, Object? object);
 /// Used by `object['item']` expression.
 typedef ItemGetter = Object? Function(Object? key, Object? object);
 
-/// A function that returns an undefined object or throws an error if
-/// the variable is not found.
+/// A function that returns a value or throws an error if the variable is not
+/// found.
 ///
 /// Used by `{{ user.field }}` expression when `user` not found.
-///
-/// Possible usage to throw an error when accessing properties of an undefined
-/// variable:
-/// ```dart
-/// Object? undefined(String key) {
-///   return Undefined(key);
-/// }
-///
-/// final class Undefined {
-///   const Undefined(this.name);
-///
-///   final String name;
-///
-///   Object? operator [](String key) {
-///     throw UndefinedError('$name has no property $key');
-///   }
-///
-///   @override
-///   dynamic noSuchMethod(Invocation invocation) {
-///     var symbol = '${invocation.memberName}'; // Symbol('name')
-///     var memberName = symbol.substring(8, symbol.length - 2);
-///     throw UndefinedError('$name has no property $memberName');
-///   }
-///
-///   @override
-///   String toString() {
-///     return 'Undefined($name)';
-///   }
-/// }
-///
-/// var environment = Environment(undefined: undefined);
-/// ```
-typedef UndefinedFactory = Object? Function(String key);
+typedef UndefinedCallback = Object? Function(String name, [String? template]);
 
 /// Pass the [Context] as the first argument to the applied function when
 /// called while rendering a template.
@@ -136,11 +103,11 @@ base class Environment {
     this.getItem = defaults.getItem,
     this.undefined = defaults.undefined,
   })  : finalize = wrapFinalizer(finalize),
-        globals = HashMap<String, Object?>.of(defaults.globals),
-        filters = HashMap<String, Function>.of(defaults.filters),
-        tests = HashMap<String, Function>.of(defaults.tests),
+        globals = <String, Object?>{...defaults.globals},
+        filters = <String, Function>{...defaults.filters},
+        tests = <String, Function>{...defaults.tests},
         modifiers = <Node Function(Node)>[],
-        templates = HashMap<String, Template>(),
+        templates = <String, Template>{},
         random = random ?? Random(),
         getAttribute = wrapGetAttribute(getAttribute, getItem) {
     if (newLine != '\r' && newLine != '\n' && newLine != '\r\n') {
@@ -268,7 +235,7 @@ base class Environment {
   /// Get an undefined object or throw an error if the variable is not found.
   ///
   /// Default implementation throws [UndefinedError].
-  final UndefinedFactory undefined;
+  final UndefinedCallback undefined;
 
   @override
   int get hashCode {
@@ -375,10 +342,8 @@ base class Environment {
   }
 
   /// Parse the source code and return the AST node.
-  ///
-  /// This can be useful for debugging or to extract information from templates.
   Node parse(String source, {String? path}) {
-    return scan(lex(source), path: path);
+    return Parser(this, path: path).parse(source);
   }
 
   /// Load a template from a source string without using [loader].
@@ -387,11 +352,7 @@ base class Environment {
     String? path,
     Map<String, Object?>? globals,
   }) {
-    if (globals == null) {
-      globals = HashMap<String, Object?>.of(this.globals);
-    } else {
-      globals = HashMap<String, Object?>.of(this.globals)..addAll(globals);
-    }
+    globals = <String, Object?>{...this.globals, ...?globals};
 
     var body = parse(source, path: path);
 
@@ -400,14 +361,16 @@ base class Environment {
     }
 
     if (optimize) {
-      body = body.accept(const Optimizer(), Context(this));
+      body = body.accept(const Optimizer(), Context(this, template: path));
     }
+
+    body = body.accept(RuntimeCompiler(), null);
 
     return Template.fromNode(
       this,
       path: path,
       globals: globals,
-      body: body.accept(RuntimeCompiler(), null),
+      body: body,
     );
   }
 
@@ -469,20 +432,24 @@ base class Environment {
   /// @nodoc
   @protected
   static ContextFinalizer wrapFinalizer(Function function) {
-    if (function case ContextFinalizer contextFinalizer) {
-      return contextFinalizer;
+    if (function is ContextFinalizer) {
+      return function;
     }
 
-    if (function case EnvironmentFinalizer environmentFinalizer) {
-      return (context, value) {
-        return environmentFinalizer(context.environment, value);
-      };
+    if (function is EnvironmentFinalizer) {
+      Object? finalizer(Context context, Object? value) {
+        return function(context.environment, value);
+      }
+
+      return finalizer;
     }
 
-    if (function case Finalizer finalizer) {
-      return (context, value) {
-        return finalizer(value);
-      };
+    if (function is Finalizer) {
+      Object? finalizer(Context context, Object? value) {
+        return function(value);
+      }
+
+      return finalizer;
     }
 
     // Dart doesn't support union types, so we have to throw an error here.
@@ -499,13 +466,15 @@ base class Environment {
       return itemGetter;
     }
 
-    return (attribute, object) {
+    Object? getter(String attribute, Object? object) {
       try {
         return attributeGetter(attribute, object);
       } on NoSuchMethodError {
         return itemGetter(attribute, object);
       }
-    };
+    }
+
+    return getter;
   }
 }
 
@@ -541,7 +510,7 @@ base class Template {
     Random? random,
     AttributeGetter? getAttribute,
     ItemGetter getItem = defaults.getItem,
-    UndefinedFactory undefined = defaults.undefined,
+    UndefinedCallback undefined = defaults.undefined,
   }) {
     if (environment == null) {
       return Environment(
@@ -581,8 +550,8 @@ base class Template {
     this.environment, {
     this.path,
     this.globals = const <String, Object?>{},
-    required this.body,
-  });
+    required Node body,
+  }) : body = body is TemplateNode ? body : TemplateNode(body: body);
 
   /// The environment used to parse and render template.
   final Environment environment;
@@ -593,14 +562,15 @@ base class Template {
   /// The global variables for this template.
   final Map<String, Object?> globals;
 
-  /// Template body node.
-  final Node body;
+  // @nodoc
+  @internal
+  final TemplateNode body;
 
   /// If no arguments are given the context will be empty.
   String render([Map<String, Object?>? data]) {
     var buffer = StringBuffer();
     renderTo(buffer, data);
-    return '$buffer';
+    return buffer.toString();
   }
 
   /// If no arguments are given the context will be empty.
@@ -608,6 +578,7 @@ base class Template {
     var context = StringSinkRenderContext(
       environment,
       sink,
+      template: path,
       parent: globals,
       data: data,
     );

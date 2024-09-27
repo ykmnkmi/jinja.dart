@@ -1,50 +1,52 @@
-## 0.6.1-dev.2 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/88996f8..main))
-- added:
+## 0.6.1-dev.5 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/88996f8..main))
+- Added:
   - `UndefinedError` exception
   - `UndefinedFactory` typedef
   - `Environment`:
-    - `Environment({undefined})` argument
-    - `undefined` field
+    - `Environment({UndefinedFactory undefined})` argument
+    - `UndefinedFactory undefined` field
   - `Template`:
-    - `Template({undefined})` argument
+    - `Template({UndefinedFactory undefined})` argument
+  - Filters:
+    - `null` (`none` alias)
 
 ## 0.6.0 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/c12244e6..88996f8))
-- bump SDK version to 3.3.0.
-- update dependencies.
-- internal changes.
+- Bump SDK version to 3.3.0.
+- Update dependencies.
+- Internal changes.
 - `chrome` platform tests.
-- added:
-  - statements:
+- Added:
+  - Statements:
     - `import`
     - `from`
   - `Template`:
     - `Template.fromNode({globals})` argument
     - `globals` field
-- restored:
-  - conditional and variable `extends` statement variants
-  - choice, ignore missing and variable `include` statement variants
-- changed:
+- Restored:
+  - Conditional and variable `extends` statement variants
+  - Choice, ignore missing and variable `include` statement variants
+- Changed:
   - `Environment`:
     - `Environment.lex()` return from `List<Token>` to `Iterable<Token>`
     - `Environment.scan(tokens)` argument type from `List<Token>` to `Iterable<Token>`
-- removed:
-  - exceptions:
+- Removed:
+  - Exceptions:
     - `FilterArgumentError`
   - `*args` and `**kwargs` support
 
 ## 0.5.0
-- minimal SDK version: 3.0.0.
-- internal changes.
-- added:
+- Minimal SDK version: 3.0.0.
+- Internal changes.
+- Added:
   - `Template`:
     - `Template.fromNode(Environment environment, {String? path, required Node body})` constructor
-  - statements:
+  - Statements:
     - `macro`
     - `call`
-  - filters:
+  - Filters:
     - `items`
     - `title`
-- changed:
+- Changed:
   - `Environment`:
     - `Environment({modifiers})` argument type from `List<NodeVisitor>` to `List<Node Function(Node)>`
     - `modifiers` type from `List<NodeVisitor>` to `List<Node Function(Node)>`
@@ -52,34 +54,33 @@
     - `parse(...)` return type from `List<Node>` to `Node`
   - `Template`:
     - `Template({modifiers})` argument type from `List<NodeVisitor>` to `List<Node Function(Node)>`
-  - filters:
+  - Filters:
     - `truncate` arguments are now positional
-- removed:
+- Removed:
   - `Template`:
     - `Template.fromNodes(...)` constructor
-  - statements:
+  - Statements:
     - `autoescape`
-  - filters:
+  - Filters:
     - `forceescape`
     - `safe`
     - `unsafe`
-  - tests:
+  - Tests:
     - `escaped`
 
 ## 0.4.2
-- internal changes.
+- Internal changes.
 
 ## 0.4.1
-- update links.
+- Update links.
 
 ## 0.4.0
-- minimal SDK version: 2.18.0.
-- added:
+- Minimal SDK version: 2.18.0.
+- Added:
   - `passContext` and `passEnvironment` functions
   - `print` to globals `{{ do print(name) }}`
   - `Environment`
-    - `Environment({lineCommentPrefix, lineStatementPrefix, newLine, autoReload, modifiers, templates})`
-      constructor arguments
+    - `Environment({lineCommentPrefix, lineStatementPrefix, newLine, autoReload, modifiers, templates})` constructor arguments
     - `autoReload` field
     - `lexer` field
     - `lineCommentPrefix` field
@@ -91,10 +92,9 @@
     - `scan` method
     - `parse` method
   - `Template`
-    - `Template({path, lineCommentPrefix, lineStatementPrefix, newLine, modifiers, templates})`
-      constructor arguments
+    - `Template({path, lineCommentPrefix, lineStatementPrefix, newLine, modifiers, templates})` constructor arguments
     - `renderTo` method
-  - exceptions are public now:
+  - Exceptions (was internal):
     - `TemplateError`
     - `TemplateSyntaxError`
     - `TemplateAssertionError`
@@ -102,10 +102,10 @@
     - `TemplatesNotFound`
     - `TemplateRuntimeError`
     - `FilterArgumentError`
-  - statements:
+  - Statements:
     - `do`
     - `with`
-  - filters:
+  - Filters:
     - `dictsort`
     - `replace`
     - `reverse`
@@ -118,11 +118,11 @@
     - `item`
     - `map`
     - `tojson`
-  - test:
+  - Test:
     - `filter`
     - `test`
-- changed:
-  - `FieldGetter` typedef renamed to `AttributeGetter`
+- Changed:
+  - `FieldGetter` type definition renamed to `AttributeGetter`
   - `default` filter compare values with `null`, no boolean argument
   - `defined` and `undefined` tests compare values with `null`
   - `Environment`
@@ -135,11 +135,11 @@
   - `Loader.listSources` method renamed to `listTemplates`
   - `MapLoader.mapping` field renamed to  `sources`
   - `FileSystemLoader`
-    - `FileSystemLoader({paths})` argument now non-nullable, defaults to `['templates']`
+    - `FileSystemLoader({paths})` argument is now non-nullable, defaults to `['templates']`
     - moved to `package:jinja/loaders.dart` library
   - `package:jinja/get_field.dart` library renamed to `package:jinja/reflection.dart`
   - `getField` function renamed to `getAttribute`
-- removed:
+- Removed:
   - `Undefined` type and `missing` object
   - `Environment.undefined` method
   - `Template.render` method
@@ -147,8 +147,7 @@
     - `FileSystemLoader({path, autoReload})` arguments
     - `autoReload` field
     - `directory` field
-  - slices and negative indexes
-  - conditional and variable `extends` statement variants
-  - choice, ignore missing and variable `include` statement variants
-- internal changes
-- _work in progress_
+  - Slices and negative indexes
+  - Conditional and variable `extends` statement variants
+  - Choice, ignore missing and variable `include` statement variants
+- Internal changes

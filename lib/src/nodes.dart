@@ -137,7 +137,7 @@ final class Output extends Node {
 }
 
 final class TemplateNode extends Node {
-  const TemplateNode({
+  TemplateNode({
     this.blocks = const <Block>[],
     this.macros = const <Macro>[],
     required this.body,
@@ -155,20 +155,20 @@ final class TemplateNode extends Node {
   }
 
   @override
-  TemplateNode copyWith({List<Block>? blocks, Node? body}) {
-    return TemplateNode(blocks: blocks ?? this.blocks, body: body ?? this.body);
+  TemplateNode copyWith({
+    List<Block>? blocks,
+    List<Macro>? macros,
+    Node? body,
+  }) {
+    return TemplateNode(
+      blocks: blocks ?? this.blocks,
+      macros: macros ?? this.macros,
+      body: body ?? this.body,
+    );
   }
 
   @override
   Iterable<T> findAll<T extends Node>() sync* {
-    for (var block in blocks) {
-      if (block case T block) {
-        yield block;
-      }
-
-      yield* block.findAll<T>();
-    }
-
     if (body case T body) {
       yield body;
     }

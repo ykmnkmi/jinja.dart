@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
-import 'package:jinja/src/context.dart';
 import 'package:jinja/src/nodes.dart';
+import 'package:jinja/src/runtime.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:jinja/src/visitor.dart';
 import 'package:meta/meta.dart';
@@ -413,10 +413,7 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   TemplateNode visitTemplateNode(TemplateNode node, Context context) {
-    return node.copyWith(
-      blocks: visitNodes<Block>(node.blocks, context),
-      body: visitNode<Node>(node.body, context),
-    );
+    return node.copyWith(body: visitNode<Node>(node.body, context));
   }
 
   @override

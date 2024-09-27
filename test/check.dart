@@ -5,10 +5,10 @@ import 'dart:io';
 import 'dart:math' show max;
 
 import 'package:jinja/src/compiler.dart';
-import 'package:jinja/src/context.dart';
 import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/exceptions.dart';
 import 'package:jinja/src/optimizer.dart';
+import 'package:jinja/src/runtime.dart';
 
 const JsonEncoder jsonEncoder = JsonEncoder.withIndent('  ');
 

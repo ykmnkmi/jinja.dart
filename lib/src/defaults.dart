@@ -1,5 +1,4 @@
-import 'package:jinja/src/context.dart';
-import 'package:jinja/src/namespace.dart';
+import 'package:jinja/src/runtime.dart';
 import 'package:jinja/src/utils.dart';
 
 export 'package:jinja/src/filters.dart' show filters;
@@ -30,6 +29,6 @@ Object? getItem(Object? item, dynamic object) {
   }
 }
 
-Object? undefined(String name) {
+Object? undefined(String name, [String? template]) {
   return null;
 }

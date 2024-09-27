@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:html_unescape/html_unescape.dart';
-import 'package:jinja/src/context.dart';
 import 'package:jinja/src/environment.dart';
+import 'package:jinja/src/runtime.dart';
 import 'package:textwrap/utils.dart';
 
 final RegExp _tagsRe = RegExp('(<!--.*?-->|<[^>]*>)');
