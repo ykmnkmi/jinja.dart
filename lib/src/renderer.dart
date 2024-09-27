@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/exceptions.dart';
-import 'package:jinja/src/loop.dart';
 import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/runtime.dart';
 import 'package:jinja/src/tests.dart';
@@ -18,13 +17,6 @@ abstract base class RenderContext extends Context {
     super.parent,
     super.data,
   });
-
-  @override
-  RenderContext derived({String? template, Map<String, Object?>? data});
-
-  Object? finalize(Object? object) {
-    return environment.finalize(this, object);
-  }
 
   void assignTargets(Object? target, Object? current) {
     if (target is String) {
@@ -46,14 +38,21 @@ abstract base class RenderContext extends Context {
     } else if (target is NamespaceValue) {
       var value = resolve(target.name);
 
-      if (value is Namespace) {
-        value[target.item] = current;
-      } else {
-        throw TemplateRuntimeError('Non-namespace object');
+      if (value is! Namespace) {
+        throw TemplateRuntimeError('Non-namespace object.');
       }
+
+      value[target.item] = current;
     } else {
       throw TypeError();
     }
+  }
+
+  @override
+  RenderContext derived({String? template, Map<String, Object?>? data});
+
+  Object? finalize(Object? object) {
+    return environment.finalize(this, object);
   }
 }
 
@@ -87,7 +86,7 @@ base class StringSinkRenderContext extends RenderContext {
     return StringSinkRenderContext(
       environment,
       sink ?? this.sink,
-      template: template,
+      template: template ?? this.template,
       blocks: blocks,
       parent: parent,
       data: data,
@@ -105,11 +104,11 @@ base class StringSinkRenderer
   const StringSinkRenderer();
 
   Map<String, Object?> getDataForTargets(Object? targets, Object? current) {
-    if (targets case String string) {
-      return <String, Object?>{string: current};
+    if (targets is String) {
+      return <String, Object?>{targets: current};
     }
 
-    if (targets case List<Object?> targets) {
+    if (targets is List<Object?>) {
       var names = targets.cast<String>();
       var values = list(current);
 
@@ -140,8 +139,8 @@ base class StringSinkRenderer
     String macro(List<Object?> positional, Map<Object?, Object?> named) {
       var buffer = StringBuffer();
       var derived = context.derived(sink: buffer);
-      var index = 0;
 
+      var index = 0;
       var length = node.positional.length;
 
       for (; index < length; index += 1) {
@@ -258,7 +257,7 @@ base class StringSinkRenderer
       buffer.write(value.accept(this, context));
     }
 
-    return '$buffer';
+    return buffer.toString();
   }
 
   @override
@@ -387,7 +386,7 @@ base class StringSinkRenderer
     var derived = context.derived(sink: buffer);
     node.body.accept(this, derived);
 
-    Object? value = '$buffer';
+    Object? value = buffer.toString();
 
     var filters = node.filters;
 
@@ -448,7 +447,7 @@ base class StringSinkRenderer
     var derived = context.derived(sink: buffer);
     node.body.accept(this, derived);
 
-    Object? value = '$buffer';
+    Object? value = buffer.toString();
 
     for (var Filter(name: name, calling: calling) in node.filters) {
       var (positional, named) = calling.accept(this, context) as Parameters;
@@ -482,6 +481,7 @@ base class StringSinkRenderer
           orElse.accept(this, context);
         }
 
+        // Empty string prevents calling `finalize` on `null`.
         return '';
       }
 
@@ -510,6 +510,7 @@ base class StringSinkRenderer
         node.body.accept(this, forContext);
       }
 
+      // Empty string prevents calling `finalize` on `null`.
       return '';
     }
 
@@ -643,35 +644,57 @@ base class StringSinkRenderer
 
   @override
   void visitTemplateNode(TemplateNode node, StringSinkRenderContext context) {
+    // TODO(renderer): add `TemplateReference`
     var self = Namespace();
 
     for (var block in node.blocks) {
-      String render() {
-        var blocks = context.blocks[block.name];
+      var blockName = block.name;
 
-        if (blocks == null || blocks.isEmpty) {
-          throw UndefinedError("Block '${block.name}' is not defined.");
+      // TODO(compiler): switch to `ContextCallback`
+      String render() {
+        var blocks = context.blocks[blockName];
+
+        if (blocks == null) {
+          throw UndefinedError("Block '$blockName' is not defined.");
         }
 
-        blocks.last(context);
+        // TODO(renderer): check if empty
+        blocks[0](context);
         return '';
       }
 
-      self[block.name] = render;
+      self[blockName] = render;
 
-      var blocks = context.blocks[block.name] ??= <ContextCallback>[];
+      var blocks = context.blocks[blockName] ??= <ContextCallback>[];
 
       if (block.required) {
-        String callback(Context context) {
+        Never callback(Context context) {
           throw TemplateRuntimeError(
               "Required block '${block.name}' not found.");
         }
 
         blocks.add(callback);
       } else {
-        String callback(Context context) {
+        var parentIndex = blocks.length + 1;
+
+        void callback(Context context) {
+          var current = context.get('super');
+
+          // TODO(renderer): add `BlockReference`
+          String parent() {
+            var blocks = context.blocks[blockName]!;
+
+            if (parentIndex >= blocks.length) {
+              throw TemplateRuntimeError("Super block '$blockName' not found.");
+            }
+
+            blocks[parentIndex](context);
+            return '';
+          }
+
+          context.set('super', parent);
           block.body.accept(this, context);
-          return '';
+          context.set('super', current);
         }
 
         blocks.add(callback);

@@ -9,7 +9,7 @@ final class Parser {
   Parser(this.environment, {this.path})
       : endTokensStack = <List<(String, String?)>>[],
         tagStack = <String>[],
-        blocks = <Block>[];
+        blocks = <String>{};
 
   final Environment environment;
 
@@ -19,7 +19,7 @@ final class Parser {
 
   final List<String> tagStack;
 
-  final List<Block> blocks;
+  final Set<String> blocks;
 
   Extends? extendsNode;
 
@@ -322,7 +322,7 @@ final class Parser {
     var token = reader.next();
     var name = reader.expect('name');
 
-    if (blocks.any((block) => block.name == name.value)) {
+    if (!blocks.add(name.value)) {
       fail("Block '${name.value}' defined twice.", reader.current.line);
     }
 
@@ -350,15 +350,12 @@ final class Parser {
       reader.next();
     }
 
-    var block = Block(
+    return Block(
       name: name.value,
       scoped: scoped,
       required: required,
       body: body,
     );
-
-    blocks.add(block);
-    return block;
   }
 
   Extends parseExtends(TokenReader reader) {
@@ -1319,20 +1316,7 @@ final class Parser {
   Node scan(Iterable<Token> tokens) {
     var reader = TokenReader(tokens);
     var nodes = subParse(reader);
-
-    if (extendsNode case var extendsNode?) {
-      nodes = <Node>[extendsNode];
-    }
-
-    if (blocks.isEmpty) {
-      if (nodes.length == 1) {
-        return nodes.first;
-      }
-
-      return Output(nodes: nodes);
-    }
-
-    return TemplateNode(blocks: blocks.toList(), body: Output(nodes: nodes));
+    return Output(nodes: nodes);
   }
 
   List<Node> subParse(
@@ -1397,6 +1381,6 @@ final class Parser {
 
   Node parse(String template) {
     var tokens = environment.lex(template, path: path);
-    return scan(tokens);
+    return TemplateNode(body: scan(tokens));
   }
 }

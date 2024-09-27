@@ -3,16 +3,18 @@ import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/visitor.dart';
 import 'package:meta/meta.dart';
 
+// TODO(renderer): Rename to `StringSinkRendererCompiler`
+// and move to `renderer.dart`. Add `ContextNode` for `ContextCallback`s.
 @doNotStore
 class RuntimeCompiler implements Visitor<void, Node> {
   RuntimeCompiler()
       : _imports = <String>{},
-        _macroses = <String>{},
+        _macros = <String>{},
         _inMacro = false;
 
   final Set<String> _imports;
 
-  final Set<String> _macroses;
+  final Set<String> _macros;
 
   bool _inMacro;
 
@@ -46,8 +48,8 @@ class RuntimeCompiler implements Visitor<void, Node> {
 
   @override
   Call visitCall(Call node, void context) {
-    // Modifies Template AST from `loop.cycle(first, second, *list)`
-    // to `loop['cycle']([first, second], list)`, which matches
+    // Modifies Template AST from `loop.cycle(first, second)`
+    // to `loop['cycle']([first, second])`, which matches
     // [LoopContext.cycle] definition.
     //
     // TODO(compiler): check name arguments
@@ -59,7 +61,7 @@ class RuntimeCompiler implements Visitor<void, Node> {
             : <Expression>[Array(values: calling.arguments)];
 
         return node.copyWith(
-          value: visitNode(node.value, context),
+          value: Item(key: Constant(value: 'cycle'), value: value),
           calling: Calling(arguments: visitNodes(arguments, context)),
         );
       }
@@ -94,7 +96,7 @@ class RuntimeCompiler implements Visitor<void, Node> {
         );
       }
 
-      if (_inMacro && name == 'caller' || _macroses.contains(name)) {
+      if (_inMacro && name == 'caller' || _macros.contains(name)) {
         var calling = visitNode<Calling>(node.calling, context);
         var arguments = calling.arguments;
         var keywords = calling.keywords;
@@ -344,7 +346,7 @@ class RuntimeCompiler implements Visitor<void, Node> {
   @override
   FromImport visitFromImport(FromImport node, void context) {
     for (var (name, alias) in node.names) {
-      _macroses.add(alias ?? name);
+      _macros.add(alias ?? name);
     }
 
     return node.copyWith(template: visitNode(node.template, context));
@@ -378,7 +380,7 @@ class RuntimeCompiler implements Visitor<void, Node> {
   @override
   Macro visitMacro(Macro node, void context) {
     _inMacro = true;
-    _macroses.add(node.name);
+    _macros.add(node.name);
 
     var positional = <Expression>[];
     var named = <(Expression, Expression)>[];
@@ -420,17 +422,29 @@ class RuntimeCompiler implements Visitor<void, Node> {
   }
 
   @override
-  Output visitOutput(Output node, void context) {
+  Node visitOutput(Output node, void context) {
+    if (node.nodes.isEmpty) {
+      return Data();
+    }
+
+    if (node.nodes.length == 1) {
+      return visitNode(node.nodes[0], context);
+    }
+
     return node.copyWith(nodes: visitNodes(node.nodes, context));
   }
 
   @override
   TemplateNode visitTemplateNode(TemplateNode node, void context) {
-    return node.copyWith(
-      blocks: visitNodes(node.blocks, context),
-      macros: visitNodes(node.macros, context),
-      body: visitNode(node.body, context),
-    );
+    var body = visitNode(node.body, context) as Node;
+    var blocks = <Block>[if (body is Block) body, ...body.findAll<Block>()];
+    var macros = <Macro>[if (body is Macro) body, ...body.findAll<Macro>()];
+
+    if (body is Output && body.nodes.first is Extends) {
+      body = body.nodes.first;
+    }
+
+    return node.copyWith(blocks: blocks, macros: macros, body: body);
   }
 
   @override

@@ -65,6 +65,22 @@ See also examples with [conduit][conduit_example] and
   - `stream` method
 - Relative template paths
 - Async Support
+- Template Inheritance
+  - Super Blocks
+    - `{{ super.super() }}`
+- List of Control Structures
+  - Extends
+    - Execute non-`block` statements and expressions
+      ```jinja
+      {% extends 'base.html' %}
+      {% set title = 'Index' %}
+      {% macro header() %}
+        <h1>{{ title }}</h1>
+      {% endmacro %}      ```
+      {% block body %}
+        {{ header() }}
+      {% endblock %}
+      ```
 - Expressions
   - Dart Methods and Properties
     - `!.`/`?.`
@@ -73,7 +89,6 @@ See also examples with [conduit][conduit_example] and
   - ...
 - List of Global Functions
   - `lipsum`
-  - `dict`
   - `cycler`
   - `joiner`
 - Extensions
@@ -165,6 +180,7 @@ See also examples with [conduit][conduit_example] and
     - `{{ string.toUpperCase() }}`
     - `{{ list.add(item) }}`
 - List of Global Functions
+  - ~~`dict`~~
   - `print`
   - `range`
   - `list`

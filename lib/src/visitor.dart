@@ -87,183 +87,183 @@ class ThrowingVisitor<C, R> implements Visitor<C, R> {
 
   @override
   R visitArray(Array node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitAttribute(Attribute node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitCall(Call node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitCalling(Calling node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitCompare(Compare node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitConcat(Concat node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitCondition(Condition node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitConstant(Constant node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitDict(Dict node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitFilter(Filter node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitItem(Item node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitLogical(Logical node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitName(Name node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitNamespaceRef(NamespaceRef node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitScalar(Scalar node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitTest(Test node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitTuple(Tuple node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitUnary(Unary node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   // Statements
 
   @override
   R visitAssign(Assign node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitAssignBlock(AssignBlock node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitBlock(Block node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitCallBlock(CallBlock node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitData(Data node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitDo(Do node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitExtends(Extends node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitFilterBlock(FilterBlock node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitFor(For node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitFromImport(FromImport node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitIf(If node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitImport(Import node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitInclude(Include node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitInterpolation(Interpolation node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitMacro(Macro node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitOutput(Output node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitTemplateNode(TemplateNode node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 
   @override
   R visitWith(With node, C context) {
-    throw UnimplementedError('$node');
+    throw UnimplementedError();
   }
 }

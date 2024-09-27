@@ -2,7 +2,6 @@
 library;
 
 import 'package:jinja/jinja.dart';
-import 'package:jinja/src/loop.dart';
 import 'package:jinja/src/runtime.dart';
 import 'package:test/test.dart';
 

@@ -3,10 +3,10 @@
   - `UndefinedError` exception
   - `UndefinedFactory` typedef
   - `Environment`:
-    - `Environment({undefined})` argument
-    - `undefined` field
+    - `Environment({UndefinedFactory undefined})` argument
+    - `UndefinedFactory undefined` field
   - `Template`:
-    - `Template({undefined})` argument
+    - `Template({UndefinedFactory undefined})` argument
   - Filters:
     - `null` (`none` alias)
 

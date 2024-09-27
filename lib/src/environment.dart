@@ -342,10 +342,8 @@ base class Environment {
   }
 
   /// Parse the source code and return the AST node.
-  ///
-  /// This can be useful for debugging or to extract information from templates.
   Node parse(String source, {String? path}) {
-    return scan(lex(source), path: path);
+    return Parser(this, path: path).parse(source);
   }
 
   /// Load a template from a source string without using [loader].
@@ -564,7 +562,7 @@ base class Template {
   /// The global variables for this template.
   final Map<String, Object?> globals;
 
-  /// Template body node.
+  // @nodoc
   @internal
   final TemplateNode body;
 

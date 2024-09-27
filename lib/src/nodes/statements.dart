@@ -1,6 +1,6 @@
 part of '../nodes.dart';
 
-abstract class ImportContext {
+abstract interface class ImportContext {
   bool get withContext;
 }
 
