@@ -5,6 +5,12 @@ on:
     branches:
       - main
       - dev
+    paths:
+      - .github/workflows/**
+      - lib/**
+      - test/**
+      - analysis_options.yaml
+      - pubspec.yaml
   pull_request:
 
 defaults:
