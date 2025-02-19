@@ -66,6 +66,49 @@ abstract base class Statement extends Node {
   const Statement();
 }
 
+final class Slice extends Expression {
+  const Slice({required this.value, required this.start, this.stop});
+
+  final Expression value;
+
+  final Expression? start;
+
+  final Expression? stop;
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitSlice(this, context);
+  }
+
+  @override
+  Slice copyWith({Expression? start, Expression? stop}) {
+    return Slice(
+      value: value,
+      start: start ?? this.start,
+      stop: stop ?? this.stop,
+    );
+  }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (value case T value) {
+      yield value;
+    }
+
+    yield* value.findAll<T>();
+  }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'class': 'Slice',
+      'start': start?.toJson(),
+      'stop': stop?.toJson(),
+      'value': value.toJson(),
+    };
+  }
+}
+
 final class Interpolation extends Node {
   const Interpolation({required this.value});
 

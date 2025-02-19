@@ -424,4 +424,12 @@ class Optimizer implements Visitor<Context, Node> {
       body: visitNode<Node>(node.body, context),
     );
   }
+
+  @override
+  Node visitSlice(Slice node, Context context) {
+    return node.copyWith(
+      start: visitNode<Expression?>(node.start, context),
+      stop: visitNode<Expression?>(node.stop, context),
+    );
+  }
 }
