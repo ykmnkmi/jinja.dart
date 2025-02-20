@@ -1159,9 +1159,24 @@ final class Parser {
     }
 
     if (token.test('lbracket')) {
+      if (reader.nextIf('colon') != null) {
+        var stop = parseExpression(reader);
+        reader.expect('rbracket');
+        return Slice(start: null, stop: stop, value: value);
+      }
       var key = parseExpression(reader);
-      reader.expect('rbracket');
-      return Item(key: key, value: value);
+      if (reader.nextIf('colon') != null) {
+        if (reader.skipIf('rbracket')) {
+          return Slice(start: key, stop: null, value: value);
+        } else {
+          var stop = parseExpression(reader);
+          reader.expect('rbracket');
+          return Slice(start: key, stop: stop, value: value);
+        }
+      } else {
+        reader.expect('rbracket');
+        return Item(key: key, value: value);
+      }
     }
 
     fail('Expected subscript expression.', token.line);
