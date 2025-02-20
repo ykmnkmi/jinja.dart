@@ -1,5 +1,6 @@
-## 0.6.1-dev.5 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/88996f8..main))
+## 0.6.1 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/88996f8..main))
 - Added:
+  - List slices `list[start:stop]`.
   - `UndefinedError` exception
   - `UndefinedFactory` typedef
   - `Environment`:

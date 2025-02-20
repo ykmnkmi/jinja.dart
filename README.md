@@ -27,7 +27,7 @@ _work in progress_.
   Use `attribute` and `item` filters for `object.attribute` and `object[item]` expressions.
 - If `Environment({getAttribute})` is not passed, the `getItem` method will be used.
   This allows you to use `{{ map.key }}` as an expression equivalent to `{{ map['key'] }}`.
-- Slices and negative indexes are not supported.
+- String slices and negative indexes are not supported.
 - Macro arguments without default values are required.
 - Not supported:
   - Template module.

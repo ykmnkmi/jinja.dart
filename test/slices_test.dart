@@ -2,7 +2,7 @@ import 'package:jinja/jinja.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('Slices test', () {
+  group('Slices', () {
     test('sitems from the beginning through stop-1', () {
       var environment = Environment();
       var tmpl = environment
