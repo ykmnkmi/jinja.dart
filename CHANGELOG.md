@@ -1,6 +1,20 @@
-## 0.6.1 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/88996f8..main))
+## 0.6.2 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/3464f33..main))
 - Added:
-  - List slices `list[start:stop]`.
+  - Statements:
+    - `try-catch` block:
+      ```jinja
+      {% try %}
+        {{ 1 / 0 }}
+      {% catch exception %}
+        {{ exception | runtimeType }}: {{ exception }}
+      {% endtry %}
+      ```
+  - Filters:
+    - `runtimeType`
+
+## 0.6.1 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/88996f8..3464f33))
+- Added:
+  - List slices `{{ list[start:stop] }}`.
   - `UndefinedError` exception
   - `UndefinedFactory` typedef
   - `Environment`:
