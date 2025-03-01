@@ -147,6 +147,9 @@ final class Parser {
         case 'do':
           return parseDo(reader);
 
+        case 'try':
+          return parseTryCatch(reader);
+
         default:
           tagStack.removeLast();
           popTag = false;
@@ -648,11 +651,11 @@ final class Parser {
 
     var name = parsePrimary(reader);
 
-    if (name case Name name) {
-      return name.copyWith(context: AssignContext.store);
+    if (name is! Name) {
+      fail("Can't assign to $name.", line);
     }
 
-    fail("Can't assign to $name.", line);
+    return name.copyWith(context: AssignContext.store);
   }
 
   Expression parseAssignTarget(
@@ -674,15 +677,14 @@ final class Parser {
       target = parsePrimary(reader);
     }
 
-    if (target case Name name) {
-      return name.copyWith(context: context);
+    if (target is Name) {
+      return target.copyWith(context: context);
     }
 
-    if (target case Tuple(values: var values)
-        when values.any((value) => value is Name)) {
+    if (target is Tuple && target.values.any((value) => value is Name)) {
       return target.copyWith(
         values: <Expression>[
-          for (var value in values.cast<Name>())
+          for (var value in target.values.cast<Name>())
             value.copyWith(context: context),
         ],
       );
@@ -695,6 +697,31 @@ final class Parser {
     reader.expect('name', 'do');
 
     return Do(value: parseTuple(reader));
+  }
+
+  Node parseTryCatch(TokenReader reader) {
+    const endTry = <(String, String?)>[('name', 'catch')];
+    const endTryCatch = <(String, String?)>[('name', 'endtry')];
+
+    reader.expect('name', 'try');
+
+    var body = parseStatements(reader, endTry);
+    reader.expect('name', 'catch');
+
+    var token = reader.current;
+    Expression? name;
+
+    if (token.test('name')) {
+      name = parseAssignTarget(reader, withTuple: false);
+
+      if (name is! Name) {
+        fail("Can't assign to $name.", token.line);
+      }
+    }
+
+    var catchBody = parseStatements(reader, endTryCatch);
+    reader.expect('name', 'endtry');
+    return TryCatch(body: body, exception: name, catchBody: catchBody);
   }
 
   Expression parseExpression(TokenReader reader, [bool withCondition = true]) {

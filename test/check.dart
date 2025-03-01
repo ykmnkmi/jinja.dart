@@ -13,7 +13,13 @@ import 'package:jinja/src/runtime.dart';
 const JsonEncoder jsonEncoder = JsonEncoder.withIndent('  ');
 
 const String source = '''
-{{ user.name }}''';
+{% try %}
+  {% if x %}
+    {{ x / y }}
+  {% endif %}
+{% catch exception %}
+  {{ exception | runtimetype }}: {{ exception }}
+{% endtry %}''';
 
 void main() {
   var environment = Environment();
@@ -41,7 +47,7 @@ void main() {
 
   try {
     print('render:');
-    print(template.render());
+    print(template.render({'x': 1}));
   } on UndefinedError catch (error) {
     print(error.message);
   }

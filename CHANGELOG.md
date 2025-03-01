@@ -4,13 +4,13 @@
     - `try-catch` block:
       ```jinja
       {% try %}
-        {{ 1 / 0 }}
+        {{ x / y }}
       {% catch exception %}
-        {{ exception | runtimeType }}: {{ exception }}
+        {{ exception | runtimetype }}: {{ exception }}
       {% endtry %}
       ```
   - Filters:
-    - `runtimeType`
+    - `runtimetype`
 
 ## 0.6.1 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/88996f8..3464f33))
 - Added:
