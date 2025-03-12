@@ -706,6 +706,20 @@ base class StringSinkRenderer
   }
 
   @override
+  void visitTryCatch(TryCatch node, StringSinkRenderContext context) {
+    try {
+      node.body.accept(this, context);
+    } catch (error) {
+      if (node.exception case var exception?) {
+        var taget = exception.accept(this, context);
+        context.assignTargets(taget, error);
+      }
+
+      node.catchBody.accept(this, context);
+    }
+  }
+
+  @override
   void visitWith(With node, StringSinkRenderContext context) {
     var targets = <Object?>[
       for (var target in node.targets) target.accept(this, context)

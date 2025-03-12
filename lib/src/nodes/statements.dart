@@ -719,6 +719,60 @@ final class Do extends Statement {
   }
 }
 
+final class TryCatch extends Statement {
+  TryCatch({required this.body, this.exception, required this.catchBody});
+
+  final Node body;
+
+  // TODO(nodes): find better name. String?
+  final Expression? exception;
+
+  final Node catchBody;
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitTryCatch(this, context);
+  }
+
+  @override
+  TryCatch copyWith({Node? body, Expression? exception, Node? catchBody}) {
+    return TryCatch(
+      body: body ?? this.body,
+      exception: exception ?? this.exception,
+      catchBody: catchBody ?? this.catchBody,
+    );
+  }
+
+  @override
+  Iterable<T> findAll<T extends Node>() sync* {
+    if (body case T body) {
+      yield body;
+    }
+
+    yield* body.findAll<T>();
+
+    if (exception case T exceptionName) {
+      yield exceptionName;
+    }
+
+    if (catchBody case T catchBody) {
+      yield catchBody;
+    }
+
+    yield* catchBody.findAll<T>();
+  }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'class': 'TryCatch',
+      'body': body.toJson(),
+      if (exception case var exception?) 'exception': exception.toJson(),
+      'catchBody': catchBody.toJson(),
+    };
+  }
+}
+
 final class Assign extends Statement {
   const Assign({required this.target, required this.value});
 

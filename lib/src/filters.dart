@@ -618,6 +618,13 @@ String doToJson(Object? value, [String? indent]) {
   return utils.htmlSafeJsonEncode(value, indent);
 }
 
+/// Return the runtime type of an object.
+///
+/// Useful for debugging. Not recommended for production use.
+String doRuntimeType(dynamic object) {
+  return object.runtimeType.toString();
+}
+
 /// Filters map.
 final Map<String, Function> filters = <String, Function>{
   'e': doEscape,
@@ -673,4 +680,6 @@ final Map<String, Function> filters = <String, Function>{
   // 'selectattr': passContext(doSelectAttr),
   // 'rejectattr': passContext(doRejectAttr),
   'tojson': doToJson,
+
+  'runtimetype': doRuntimeType,
 };

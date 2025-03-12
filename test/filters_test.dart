@@ -544,9 +544,16 @@ void main() {
       expect(result, equals('Hello!\nThis is Jinja saying\nsomething.'));
     });
 
+    test('runtimetype', () {
+      var tmpl = env.fromString('{{ 1|runtimetype }}');
+      expect(tmpl.render(), equals('int'));
+      tmpl = env.fromString('{{ null|runtimetype }}');
+      expect(tmpl.render(), equals('Null'));
+    });
+
     test('filter undefined', () {
       expect(() => env.fromString('{{ var|f }}'), aNoFilterNamedF);
-    }, skip: 'Enable after implementing assert checks.');
+    }, skip: 'Enable after implementing compiler assert checks.');
 
     test('filter undefined in if', () {
       var t1 = env.fromString(
