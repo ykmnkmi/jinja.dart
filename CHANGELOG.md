@@ -1,4 +1,8 @@
-## 0.6.2 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/3464f33..main))
+## 0.6.3 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/e686f50..main))
+- Fix `autoReload` logic.
+- Refactoring.
+
+## 0.6.2 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/3464f33..e686f50))
 - Added:
   - Statements:
     - `try-catch` block:

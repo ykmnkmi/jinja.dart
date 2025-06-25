@@ -364,13 +364,11 @@ base class Environment {
       body = body.accept(const Optimizer(), Context(this, template: path));
     }
 
-    body = body.accept(RuntimeCompiler(), null);
-
     return Template.fromNode(
       this,
       path: path,
       globals: globals,
-      body: body,
+      body: body.accept(RuntimeCompiler(), null),
     );
   }
 
@@ -380,13 +378,11 @@ base class Environment {
   /// If the loader is not specified a [StateError] is thrown.
   Template getTemplate(String name) {
     if (loader case var loader?) {
-      var loaded = loader.load(this, name, globals: globals);
-
       if (autoReload) {
-        return templates[name] = loaded;
+        return templates[name] = loader.load(this, name, globals: globals);
       }
 
-      return templates[name] ??= loaded;
+      return templates[name] ??= loader.load(this, name, globals: globals);
     }
 
     throw StateError('No loader for this environment specified.');

@@ -346,6 +346,19 @@ base class StringSinkRenderer
   }
 
   @override
+  Object? visitSlice(Slice node, StringSinkRenderContext context) {
+    var value = node.value.accept(this, context);
+    var start = node.start?.accept(this, context) ?? 0;
+    var stop = node.stop?.accept(this, context);
+
+    if (value is List && start is int && stop is int?) {
+      return value.sublist(start, stop);
+    }
+
+    throw TemplateRuntimeError('Invalid slice operation.');
+  }
+
+  @override
   Object? visitTest(Test node, StringSinkRenderContext context) {
     var (positional, named) = node.calling.accept(this, context) as Parameters;
     return context.test(node.name, positional, named);
@@ -732,18 +745,5 @@ base class StringSinkRenderer
     var data = getDataForTargets(targets, values);
     var newContext = context.derived(data: data);
     node.body.accept(this, newContext);
-  }
-
-  @override
-  Object? visitSlice(Slice node, StringSinkRenderContext context) {
-    var value = node.value.accept(this, context);
-    var start = node.start?.accept(this, context) ?? 0;
-    var stop = node.stop?.accept(this, context);
-
-    if (value is List && start is int && stop is int?) {
-      return value.sublist(start, stop);
-    }
-
-    throw TemplateRuntimeError('Invalid slice operation.');
   }
 }

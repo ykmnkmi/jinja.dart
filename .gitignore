@@ -5,6 +5,8 @@ build/
 coverage/
 doc/
 web/
+**.dill
+**.exe
 **.py
 **.pyc
 pubspec.lock
