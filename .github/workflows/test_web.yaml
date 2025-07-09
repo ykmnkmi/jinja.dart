@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
 
       - name: Install Dependencies
@@ -36,4 +36,4 @@ jobs:
 
       - name: Run WEB Tests
         run: |
-          dart test --platform chrome
+          dart test --platform chrome --compiler dart2js,dart2wasm
