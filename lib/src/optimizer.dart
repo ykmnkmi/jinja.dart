@@ -15,11 +15,7 @@ class Optimizer implements Visitor<Context, Node> {
   }
 
   List<T> visitNodes<T extends Node>(List<Node> nodes, Context context) {
-    T generate(int i) {
-      return visitNode<T>(nodes[i], context);
-    }
-
-    return List<T>.generate(nodes.length, generate);
+    return <T>[for (var node in nodes) visitNode<T>(node, context)];
   }
 
   // Expressions
@@ -41,15 +37,9 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   Expression visitAttribute(Attribute node, Context context) {
-    var value = visitNode<Expression>(node.value, context);
-
-    if (value case Constant constant) {
-      return Constant(
-        value: context.attribute(node.attribute, constant.value),
-      );
-    }
-
-    return node.copyWith(value: value);
+    return node.copyWith(
+      value: visitNode<Expression>(node.value, context),
+    );
   }
 
   @override
@@ -98,8 +88,8 @@ class Optimizer implements Visitor<Context, Node> {
     var pack = <Object?>[];
 
     for (var value in values) {
-      if (value case Constant constant) {
-        pack.add(constant.value);
+      if (value is Constant) {
+        pack.add(value.value);
       } else {
         newValues
           ..add(Constant(value: pack.join()))
@@ -122,12 +112,12 @@ class Optimizer implements Visitor<Context, Node> {
     var trueValue = visitNode<Expression>(node.trueValue, context);
     var falseValue = visitNode<Expression?>(node.falseValue, context);
 
-    if (test case Constant constant) {
-      if (boolean(constant.value)) {
+    if (test is Constant) {
+      if (boolean(test.value)) {
         return trueValue;
-      } else {
-        return falseValue ?? const Constant(value: null);
       }
+
+      return falseValue ?? const Constant(value: null);
     }
 
     return node.copyWith(
@@ -189,10 +179,10 @@ class Optimizer implements Visitor<Context, Node> {
     var left = visitNode<Expression>(node.left, context);
     var right = visitNode<Expression>(node.right, context);
 
-    if (left case Constant constant) {
+    if (left is Constant) {
       return switch (node.operator) {
-        LogicalOperator.and => boolean(constant.value) ? right : constant,
-        LogicalOperator.or => boolean(constant.value) ? constant : right,
+        LogicalOperator.and => boolean(left.value) ? right : left,
+        LogicalOperator.or => boolean(left.value) ? left : right,
       };
     }
 
@@ -240,6 +230,14 @@ class Optimizer implements Visitor<Context, Node> {
   }
 
   @override
+  Node visitSlice(Slice node, Context context) {
+    return node.copyWith(
+      start: visitNode<Expression?>(node.start, context),
+      stop: visitNode<Expression?>(node.stop, context),
+    );
+  }
+
+  @override
   Test visitTest(Test node, Context context) {
     return node.copyWith(
       calling: visitNode<Calling>(node.calling, context),
@@ -265,13 +263,13 @@ class Optimizer implements Visitor<Context, Node> {
   Expression visitUnary(Unary node, Context context) {
     var value = visitNode<Expression>(node.value, context);
 
-    if (value case Constant constant) {
+    if (value is Constant) {
       return Constant(
         value: switch (node.operator) {
-          UnaryOperator.plus => constant.value,
+          UnaryOperator.plus => value.value,
           // ignore: avoid_dynamic_calls
-          UnaryOperator.minus => -(constant.value as dynamic),
-          UnaryOperator.not => !boolean(constant.value),
+          UnaryOperator.minus => -(value.value as dynamic),
+          UnaryOperator.not => !boolean(value.value),
         },
       );
     }
@@ -408,7 +406,11 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   Node visitOutput(Output node, Context context) {
-    return node.copyWith(nodes: visitNodes<Node>(node.nodes, context));
+    return switch (node.nodes.length) {
+      0 => Data(),
+      1 => visitNode<Node>(node.nodes[0], context),
+      _ => node.copyWith(nodes: visitNodes<Node>(node.nodes, context)),
+    };
   }
 
   @override
@@ -432,14 +434,6 @@ class Optimizer implements Visitor<Context, Node> {
       targets: visitNodes<Expression>(node.targets, context),
       values: visitNodes<Expression>(node.values, context),
       body: visitNode<Node>(node.body, context),
-    );
-  }
-
-  @override
-  Node visitSlice(Slice node, Context context) {
-    return node.copyWith(
-      start: visitNode<Expression?>(node.start, context),
-      stop: visitNode<Expression?>(node.stop, context),
     );
   }
 }

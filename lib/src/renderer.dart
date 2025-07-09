@@ -100,7 +100,7 @@ base class StringSinkRenderContext extends RenderContext {
 }
 
 base class StringSinkRenderer
-    extends Visitor<StringSinkRenderContext, Object?> {
+    implements Visitor<StringSinkRenderContext, Object?> {
   const StringSinkRenderer();
 
   Map<String, Object?> getDataForTargets(Object? targets, Object? current) {

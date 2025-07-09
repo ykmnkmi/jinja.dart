@@ -1,6 +1,6 @@
 import 'package:jinja/src/nodes.dart';
 
-abstract class Visitor<C, R> {
+abstract interface class Visitor<C, R> {
   const Visitor();
 
   // Expressions
@@ -34,6 +34,8 @@ abstract class Visitor<C, R> {
   R visitNamespaceRef(NamespaceRef node, C context);
 
   R visitScalar(Scalar node, C context);
+
+  R visitSlice(Slice node, C context);
 
   R visitTest(Test node, C context);
 
@@ -80,13 +82,9 @@ abstract class Visitor<C, R> {
   R visitTryCatch(TryCatch node, C context);
 
   R visitWith(With node, C context);
-
-  R visitSlice(Slice node, C context) {
-    throw UnimplementedError();
-  }
 }
 
-class ThrowingVisitor<C, R> implements Visitor<C, R> {
+base class ThrowingVisitor<C, R> implements Visitor<C, R> {
   const ThrowingVisitor();
 
   // Expressions
@@ -163,6 +161,11 @@ class ThrowingVisitor<C, R> implements Visitor<C, R> {
 
   @override
   R visitScalar(Scalar node, C context) {
+    throw UnimplementedError();
+  }
+
+  @override
+  R visitSlice(Slice node, C context) {
     throw UnimplementedError();
   }
 
@@ -275,11 +278,6 @@ class ThrowingVisitor<C, R> implements Visitor<C, R> {
 
   @override
   R visitWith(With node, C context) {
-    throw UnimplementedError();
-  }
-
-  @override
-  R visitSlice(Slice node, C context) {
     throw UnimplementedError();
   }
 }

@@ -1,4 +1,7 @@
-## 0.6.3 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/e686f50..main))
+## 0.6.4 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/1c0015b..main))
+- Refactoring.
+
+## 0.6.3 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/e686f50..1c0015b))
 - Fix `autoReload` logic.
 - Refactoring.
 

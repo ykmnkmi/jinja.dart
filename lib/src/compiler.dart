@@ -252,6 +252,14 @@ class RuntimeCompiler implements Visitor<void, Node> {
   }
 
   @override
+  Node visitSlice(Slice node, void context) {
+    return node.copyWith(
+      start: visitNode<Expression?>(node.start, context),
+      stop: visitNode<Expression?>(node.stop, context),
+    );
+  }
+
+  @override
   Test visitTest(Test node, void context) {
     return node.copyWith(calling: visitNode(node.calling, context));
   }
@@ -463,14 +471,6 @@ class RuntimeCompiler implements Visitor<void, Node> {
       targets: visitNodes(node.targets, context),
       values: visitNodes(node.values, context),
       body: visitNode(node.body, context),
-    );
-  }
-
-  @override
-  Node visitSlice(Slice node, void context) {
-    return node.copyWith(
-      start: visitNode<Expression?>(node.start, context),
-      stop: visitNode<Expression?>(node.stop, context),
     );
   }
 }
