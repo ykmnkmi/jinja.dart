@@ -7,9 +7,9 @@ import 'package:textwrap/textwrap.dart';
 
 final class Parser {
   Parser(this.environment, {this.path})
-      : endTokensStack = <List<(String, String?)>>[],
-        tagStack = <String>[],
-        blocks = <String>{};
+    : endTokensStack = <List<(String, String?)>>[],
+      tagStack = <String>[],
+      blocks = <String>{};
 
   final Environment environment;
 
@@ -58,16 +58,20 @@ final class Parser {
         messages
           ..add('You probably made a nesting mistake.')
           ..add(
-              'Jinja is expecting this tag, but currently looking for $currentlyLooking.');
+            'Jinja is expecting this tag, but currently looking for '
+            '$currentlyLooking.',
+          );
       } else {
         messages.add(
-            'Jinja was looking for the following tags: $currentlyLooking.');
+          'Jinja was looking for the following tags: $currentlyLooking.',
+        );
       }
     }
 
     if (tagStack.isNotEmpty) {
       messages.add(
-          "The innermost block that needs to be closed is '${tagStack.last}'.");
+        "The innermost block that needs to be closed is '${tagStack.last}'.",
+      );
     }
 
     fail(messages.join(' '), line);
@@ -89,9 +93,10 @@ final class Parser {
   ]) {
     return switch (reader.current.type) {
       'variable_end' || 'block_end' || 'rparen' => true,
-      _ => extraEndRules != null && extraEndRules.isNotEmpty
-          ? reader.current.testAny(extraEndRules)
-          : false,
+      _ =>
+        extraEndRules != null && extraEndRules.isNotEmpty
+            ? reader.current.testAny(extraEndRules)
+            : false,
     };
   }
 
@@ -162,7 +167,7 @@ final class Parser {
     }
   }
 
-  Node parseStatements(
+  List<Node> parseStatements(
     TokenReader reader,
     List<(String, String?)> endTokens, [
     bool dropNeedle = false,
@@ -181,14 +186,10 @@ final class Parser {
     }
 
     if (nodes.isEmpty) {
-      return Data(data: '');
+      return const <Node>[];
     }
 
-    if (nodes.length == 1) {
-      return nodes[0];
-    }
-
-    return Output(nodes: nodes);
+    return nodes;
   }
 
   Statement parseSet(TokenReader reader) {
@@ -235,7 +236,7 @@ final class Parser {
 
     var recursive = reader.skipIf('name', 'recursive');
     var body = parseStatements(reader, endForElse);
-    Node? orElse;
+    List<Node>? orElse;
 
     if (reader.next().test('name', 'else')) {
       orElse = parseStatements(reader, endFor, true);
@@ -281,7 +282,7 @@ final class Parser {
       break;
     }
 
-    Node? orElse;
+    List<Node>? orElse;
 
     if (tag.test('name', 'else')) {
       orElse = parseStatements(reader, endIf, true);
@@ -290,7 +291,7 @@ final class Parser {
     var node = ifNodes.last.copyWith(orElse: orElse);
 
     for (var ifNode in ifNodes.reversed.skip(1)) {
-      node = ifNode.copyWith(orElse: node);
+      node = ifNode.copyWith(orElse: <Node>[node]);
     }
 
     return node;
@@ -338,9 +339,11 @@ final class Parser {
     var required = reader.skipIf('name', 'required');
     var body = parseStatements(reader, endBlock, true);
 
-    if (required && (body is! Data || !body.isLeaf)) {
-      fail('Required blocks can only contain comments or whitespace.',
-          token.line);
+    if (required && body.every((node) => node is! Data || !node.isLeaf)) {
+      fail(
+        'Required blocks can only contain comments or whitespace.',
+        token.line,
+      );
     }
 
     var maybeName = reader.current;
@@ -374,14 +377,8 @@ final class Parser {
     return node;
   }
 
-  bool parseImportContext(
-    TokenReader reader, [
-    bool defaultValue = true,
-  ]) {
-    const keywords = <(String, String?)>[
-      ('name', 'with'),
-      ('name', 'without'),
-    ];
+  bool parseImportContext(TokenReader reader, [bool defaultValue = true]) {
+    const keywords = <(String, String?)>[('name', 'with'), ('name', 'without')];
 
     var withContext = defaultValue;
 
@@ -398,7 +395,8 @@ final class Parser {
     reader.expect('name', 'include');
 
     var template = parseExpression(reader);
-    var ignoreMissing = reader.current.test('name', 'ignore') &&
+    var ignoreMissing =
+        reader.current.test('name', 'ignore') &&
         reader.look().test('name', 'missing');
 
     if (ignoreMissing) {
@@ -464,8 +462,10 @@ final class Parser {
         var target = parseAssignName(reader);
 
         if (target.name.startsWith('_')) {
-          fail('Names starting with an underline can not be imported.',
-              token.line);
+          fail(
+            'Names starting with an underline can not be imported.',
+            token.line,
+          );
         }
 
         if (reader.skipIf('name', 'as')) {
@@ -559,15 +559,17 @@ final class Parser {
     var body = parseStatements(reader, endCall, true);
     var varargs = false, kwargs = false;
 
-    for (var name in body.findAll<Name>()) {
-      switch (name.name) {
-        case 'varargs':
-          varargs = true;
-          break;
-        case 'kwargs':
-          kwargs = true;
-          break;
-        default:
+    for (var node in body) {
+      for (var name in node.findAll<Name>()) {
+        switch (name.name) {
+          case 'varargs':
+            varargs = true;
+            break;
+          case 'kwargs':
+            kwargs = true;
+            break;
+          default:
+        }
       }
     }
 
@@ -602,18 +604,20 @@ final class Parser {
 
     var varargs = false, kwargs = false, caller = false;
 
-    for (var name in body.findAll<Name>()) {
-      switch (name.name) {
-        case 'varargs':
-          varargs = true;
-          break;
-        case 'kwargs':
-          kwargs = true;
-          break;
-        case 'caller':
-          caller = true;
-          break;
-        default:
+    for (var node in body) {
+      for (var name in node.findAll<Name>()) {
+        switch (name.name) {
+          case 'varargs':
+            varargs = true;
+            break;
+          case 'kwargs':
+            kwargs = true;
+            break;
+          case 'caller':
+            caller = true;
+            break;
+          default:
+        }
       }
     }
 
@@ -793,7 +797,7 @@ final class Parser {
       ('lt', null),
       ('lteq', null),
       ('gt', null),
-      ('gteq', null)
+      ('gteq', null),
     ];
 
     var value = parseMath1(reader);
@@ -1079,8 +1083,10 @@ final class Parser {
 
       if (!explicitParentheses) {
         var current = reader.current;
-        fail('Expected an expression, got ${describeToken(current)}.',
-            current.line);
+        fail(
+          'Expected an expression, got ${describeToken(current)}.',
+          current.line,
+        );
       }
     }
 
@@ -1252,10 +1258,7 @@ final class Parser {
 
     reader.expect('rparen');
 
-    return Calling(
-      arguments: arguments,
-      keywords: keywords,
-    );
+    return Calling(arguments: arguments, keywords: keywords);
   }
 
   Call parseCall(TokenReader reader, Expression expression) {
@@ -1312,7 +1315,7 @@ final class Parser {
     const deny = <(String, String?)>[
       ('name', 'else'),
       ('name', 'or'),
-      ('name', 'and')
+      ('name', 'and'),
     ];
 
     reader.expect('name', 'is');
@@ -1355,10 +1358,9 @@ final class Parser {
     return expression;
   }
 
-  Node scan(Iterable<Token> tokens) {
+  List<Node> scan(Iterable<Token> tokens) {
     var reader = TokenReader(tokens);
-    var nodes = subParse(reader);
-    return Output(nodes: nodes);
+    return subParse(reader);
   }
 
   List<Node> subParse(
@@ -1421,8 +1423,8 @@ final class Parser {
     return nodes;
   }
 
-  Node parse(String template) {
+  TemplateNode parse(String template) {
     var tokens = environment.lex(template, path: path);
-    return TemplateNode(body: scan(tokens));
+    return TemplateNode(nodes: scan(tokens));
   }
 }

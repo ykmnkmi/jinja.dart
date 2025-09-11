@@ -5,20 +5,23 @@ void main() {
   group('Slices', () {
     test('sitems from the beginning through stop-1', () {
       var environment = Environment();
-      var tmpl = environment
-          .fromString('{% set foo = [0, 1, 2, 3, 4] %}{{ foo[:2] }}');
+      var tmpl = environment.fromString(
+        '{% set foo = [0, 1, 2, 3, 4] %}{{ foo[:2] }}',
+      );
       expect(tmpl.render(), equals('[0, 1]'));
     });
     test('items start through the rest of the array', () {
       var environment = Environment();
-      var tmpl = environment
-          .fromString('{% set foo = [0, 1, 2, 3, 4] %}{{ foo[2:] }}');
+      var tmpl = environment.fromString(
+        '{% set foo = [0, 1, 2, 3, 4] %}{{ foo[2:] }}',
+      );
       expect(tmpl.render(), equals('[2, 3, 4]'));
     });
     test('items start through stop-1', () {
       var environment = Environment();
-      var tmpl = environment
-          .fromString('{% set foo = [0, 1, 2, 3, 4] %}{{ foo[2:3] }}');
+      var tmpl = environment.fromString(
+        '{% set foo = [0, 1, 2, 3, 4] %}{{ foo[2:3] }}',
+      );
       expect(tmpl.render(), equals('[2]'));
     });
   });

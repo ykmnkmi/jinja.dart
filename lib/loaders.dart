@@ -16,23 +16,23 @@ export 'package:jinja/src/loaders.dart';
 ///
 /// This loader can find templates in folders on the file system and is the
 /// preferred way to load them:
-///
-///     var loader = FileSystemLoader(
-///       path: 'templates',
-///       extensions: ['html', 'xml'],
-///     );
-///
+/// ```dart
+/// var loader = FileSystemLoader(
+///   path: 'templates',
+///   extensions: ['html', 'xml'],
+/// );
+/// ```
 /// or:
-///
-///     var loader = FileSystemLoader(
-///       paths: ['overrides/templates', 'default/templates'],
-///       extensions: ['html', 'xml'],
-///     );
-///
+/// ```dart
+/// var loader = FileSystemLoader(
+///   paths: ['overrides/templates', 'default/templates'],
+///   extensions: ['html', 'xml'],
+/// );
+/// ```
 /// To follow symbolic links, set the [followLinks] parameter to `true`:
-///
-///     var loader = FileSystemLoader(path: 'path', followLinks: true);
-///
+/// ```dart
+/// var loader = FileSystemLoader(path: 'path', followLinks: true);
+/// ```
 /// {@endtemplate}
 class FileSystemLoader extends Loader {
   /// {@macro jinja.FileSystemLoader}
@@ -121,7 +121,10 @@ class FileSystemLoader extends Loader {
     String path, {
     Map<String, Object?>? globals,
   }) {
-    return environment.fromString(getSource(path),
-        path: path, globals: globals);
+    return environment.fromString(
+      getSource(path),
+      path: path,
+      globals: globals,
+    );
   }
 }

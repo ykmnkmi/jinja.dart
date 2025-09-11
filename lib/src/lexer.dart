@@ -52,10 +52,7 @@ const List<String> ignoreIfEmpty = <String>[
   'linecomment',
 ];
 
-enum RuleState {
-  pop,
-  group,
-}
+enum RuleState { pop, group }
 
 sealed class Rule {
   Rule(this.regExp, [this.newState]);
@@ -73,10 +70,10 @@ final class SingleTokenRule extends Rule {
 
 final class MultiTokenRule extends Rule {
   MultiTokenRule(super.regExp, this.tokens, [super.newState])
-      : optionalLStrip = false;
+    : optionalLStrip = false;
 
   MultiTokenRule.optionalLStrip(super.regExp, this.tokens, [super.newState])
-      : optionalLStrip = true;
+    : optionalLStrip = true;
 
   final List<String> tokens;
 
@@ -89,12 +86,15 @@ final class Lexer {
   static final RegExp whitespaceRe = RegExp(r'\s+');
   static final RegExp nameRe = RegExp('[a-zA-Z\$_][a-zA-Z0-9\$_]*');
   static final RegExp stringRe = RegExp(
-      '(\'([^\'\\\\]*(?:\\\\.[^\'\\\\]*)*)\'|"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)")');
+    '(\'([^\'\\\\]*(?:\\\\.[^\'\\\\]*)*)\'|"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)")',
+  );
   static final RegExp integerRe = RegExp('(0[xX](_?[\\da-fA-F])+|\\d(_?\\d)*)');
   static final RegExp floatRe = RegExp(
-      '(?<!\\.)(\\d+_)*\\d+((\\.(\\d+_)*\\d+)?[eE][+\\-]?(\\d+_)*\\d+|\\.(\\d+_)*\\d+)');
+    '(?<!\\.)(\\d+_)*\\d+((\\.(\\d+_)*\\d+)?[eE][+\\-]?(\\d+_)*\\d+|\\.(\\d+_)*\\d+)',
+  );
   static final RegExp operatorRe = RegExp(
-      '\\+|-|\\/\\/|\\/|\\*\\*|\\*|%|~|\\[|\\]|\\(|\\)|{|}|==|!=|<=|>=|=|<|>|\\.|:|\\||,|;');
+    '\\+|-|\\/\\/|\\/|\\*\\*|\\*|%|~|\\[|\\]|\\(|\\)|{|}|==|!=|<=|>=|=|<|>|\\.|:|\\||,|;',
+  );
 
   /// Cached [Lexer]'s
   static final Expando<Lexer> lexers = Expando<Lexer>();
@@ -109,8 +109,9 @@ final class Lexer {
     var commentStartRe = RegExp.escape(environment.commentStart);
     var commentEndRe = RegExp.escape(environment.commentEnd);
     var commentEnd = RegExp(
-        '(.*?)((?:\\+$commentEndRe|-$commentEndRe\\s*|$commentEndRe$blockSuffixRe))',
-        dotAll: true);
+      '(.*?)((?:\\+$commentEndRe|-$commentEndRe\\s*|$commentEndRe$blockSuffixRe))',
+      dotAll: true,
+    );
 
     var variableStartRe = RegExp.escape(environment.variableStart);
     var variableEndRe = RegExp.escape(environment.variableEnd);
@@ -118,8 +119,9 @@ final class Lexer {
 
     var blockStartRe = RegExp.escape(environment.blockStart);
     var blockEndRe = RegExp.escape(environment.blockEnd);
-    var blockEnd =
-        RegExp('(?:\\+$blockEndRe|-$blockEndRe\\s*|$blockEndRe$blockSuffixRe)');
+    var blockEnd = RegExp(
+      '(?:\\+$blockEndRe|-$blockEndRe\\s*|$blockEndRe$blockSuffixRe)',
+    );
 
     var tagRules = <Rule>[
       SingleTokenRule(whitespaceRe, 'whitespace'),
@@ -143,11 +145,13 @@ final class Lexer {
     rootTagRules.sort((a, b) => b.$2.length.compareTo(a.$2.length));
 
     var rawStart = RegExp(
-        '(?<raw_start>$blockStartRe(-|\\+|)\\s*raw\\s*(?:-$blockEndRe\\s*|$blockEndRe))');
+      '(?<raw_start>$blockStartRe(-|\\+|)\\s*raw\\s*(?:-$blockEndRe\\s*|$blockEndRe))',
+    );
     var rawEnd = RegExp(
-        '(.*?)((?:$blockStartRe(-|\\+|))\\s*endraw\\s*'
-        '(?:\\+$blockEndRe|-$blockEndRe\\s*|$blockEndRe$blockSuffixRe))',
-        dotAll: true);
+      '(.*?)((?:$blockStartRe(-|\\+|))\\s*endraw\\s*'
+      '(?:\\+$blockEndRe|-$blockEndRe\\s*|$blockEndRe$blockSuffixRe))',
+      dotAll: true,
+    );
 
     var rootParts = <String>[
       rawStart.pattern,
@@ -159,61 +163,44 @@ final class Lexer {
 
     var rules = <String, List<Rule>>{
       'root': <Rule>[
-        MultiTokenRule.optionalLStrip(
-          data,
-          <String>['data', '#group'],
-          RuleState.group,
-        ),
-        SingleTokenRule(
-          RegExp('.+', dotAll: true),
+        MultiTokenRule.optionalLStrip(data, <String>[
           'data',
-        ),
+          '#group',
+        ], RuleState.group),
+        SingleTokenRule(RegExp('.+', dotAll: true), 'data'),
       ],
       'comment_start': <Rule>[
-        MultiTokenRule(
-          commentEnd,
-          <String>['comment', 'comment_end'],
-          RuleState.pop,
-        ),
-        MultiTokenRule(
-          RegExp('(.)', dotAll: true),
-          <String>['@missing end of comment tag'],
-        ),
+        MultiTokenRule(commentEnd, <String>[
+          'comment',
+          'comment_end',
+        ], RuleState.pop),
+        MultiTokenRule(RegExp('(.)', dotAll: true), <String>[
+          '@missing end of comment tag',
+        ]),
       ],
       'variable_start': <Rule>[
-        SingleTokenRule(
-          variableEnd,
-          'variable_end',
-          RuleState.pop,
-        ),
+        SingleTokenRule(variableEnd, 'variable_end', RuleState.pop),
         ...tagRules,
       ],
       'block_start': <Rule>[
-        SingleTokenRule(
-          blockEnd,
-          'block_end',
-          RuleState.pop,
-        ),
+        SingleTokenRule(blockEnd, 'block_end', RuleState.pop),
         ...tagRules,
       ],
       'raw_start': <Rule>[
-        MultiTokenRule.optionalLStrip(
-          rawEnd,
-          <String>['data', 'raw_end'],
-          RuleState.pop,
-        ),
-        MultiTokenRule(
-          RegExp('(.)', dotAll: true),
-          <String>['@missing end of raw directive'],
-        ),
+        MultiTokenRule.optionalLStrip(rawEnd, <String>[
+          'data',
+          'raw_end',
+        ], RuleState.pop),
+        MultiTokenRule(RegExp('(.)', dotAll: true), <String>[
+          '@missing end of raw directive',
+        ]),
       ],
       if (environment.lineCommentPrefix != null)
         'linecomment_start': <Rule>[
-          MultiTokenRule(
-            RegExp('(.*?)()(?=\n|\$)', dotAll: true),
-            <String>['linecomment', 'linecomment_end'],
-            RuleState.pop,
-          ),
+          MultiTokenRule(RegExp('(.*?)()(?=\n|\$)', dotAll: true), <String>[
+            'linecomment',
+            'linecomment_end',
+          ], RuleState.pop),
         ],
       if (environment.lineStatementPrefix != null)
         'linestatement_start': <Rule>[
@@ -257,7 +244,7 @@ final class Lexer {
     const endTokens = <String>[
       'variable_end',
       'block_end',
-      'linestatement_end'
+      'linestatement_end',
     ];
 
     var stack = <String>['root'];
@@ -319,8 +306,9 @@ final class Lexer {
               var lastPosition = text.lastIndexOf('\n') + 1;
 
               if (lastPosition > 0 || lineStarting) {
-                var index =
-                    text.substring(lastPosition).indexOf(leftStripUnlessRe);
+                var index = text
+                    .substring(lastPosition)
+                    .indexOf(leftStripUnlessRe);
 
                 if (index == -1) {
                   groups[0] = groups[0]!.substring(0, lastPosition);
@@ -355,8 +343,10 @@ final class Lexer {
 
               if (notFound) {
                 // TODO(lexer): update error
-                throw Exception('${rule.regExp} wanted to resolve the token '
-                    'dynamically but no group matched');
+                throw Exception(
+                  '${rule.regExp} wanted to resolve the token '
+                  'dynamically but no group matched',
+                );
               }
             } else {
               if (groups[i] case var data?) {
@@ -402,7 +392,8 @@ final class Lexer {
 
               if (data != expected) {
                 throw TemplateSyntaxError(
-                    "Unexpected '$data', expected '$expected'");
+                  "Unexpected '$data', expected '$expected'",
+                );
               }
             }
           }
@@ -432,7 +423,7 @@ final class Lexer {
         } else if (rule.newState == RuleState.group) {
           var names = <String>[
             for (var name in match.groupNames)
-              if (match.namedGroup(name) != null) name
+              if (match.namedGroup(name) != null) name,
           ];
 
           if (names.isEmpty) {

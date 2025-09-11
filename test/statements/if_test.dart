@@ -47,17 +47,22 @@ void main() {
 
     test('complete', () {
       var tmpl = env.fromString(
-          '{% if a %}A{% elif b %}B{% elif c == d %}C{% else %}D{% endif %}');
+        '{% if a %}A{% elif b %}B{% elif c == d %}C{% else %}D{% endif %}',
+      );
       expect(
-          tmpl.render({'a': 0, 'b': false, 'c': 42, 'd': 42.0}), equals('C'));
+        tmpl.render({'a': 0, 'b': false, 'c': 42, 'd': 42.0}),
+        equals('C'),
+      );
     });
 
     test('no scope', () {
-      var tmpl =
-          env.fromString('{% if a %}{% set foo = 1 %}{% endif %}{{ foo }}');
+      var tmpl = env.fromString(
+        '{% if a %}{% set foo = 1 %}{% endif %}{{ foo }}',
+      );
       expect(tmpl.render({'a': true}), equals('1'));
-      tmpl =
-          env.fromString('{% if true %}{% set foo = 1 %}{% endif %}{{ foo }}');
+      tmpl = env.fromString(
+        '{% if true %}{% set foo = 1 %}{% endif %}{{ foo }}',
+      );
       expect(tmpl.render(), equals('1'));
     });
   });

@@ -15,14 +15,8 @@ void main() {
         escape('''abcd&><'"efgh'''),
         equals('abcd&amp;&gt;&lt;&#39;&quot;efgh'),
       );
-      expect(
-        escape('''&><'"efgh'''),
-        equals('&amp;&gt;&lt;&#39;&quot;efgh'),
-      );
-      expect(
-        escape('''abcd&><'"'''),
-        equals('abcd&amp;&gt;&lt;&#39;&quot;'),
-      );
+      expect(escape('''&><'"efgh'''), equals('&amp;&gt;&lt;&#39;&quot;efgh'));
+      expect(escape('''abcd&><'"'''), equals('abcd&amp;&gt;&lt;&#39;&quot;'));
     });
 
     test('2 byte', () {
@@ -30,14 +24,8 @@ void main() {
         escape('''こんにちは&><'"こんばんは'''),
         equals('こんにちは&amp;&gt;&lt;&#39;&quot;こんばんは'),
       );
-      expect(
-        escape('''&><'"こんばんは'''),
-        equals('&amp;&gt;&lt;&#39;&quot;こんばんは'),
-      );
-      expect(
-        escape('''こんにちは&><'"'''),
-        equals('こんにちは&amp;&gt;&lt;&#39;&quot;'),
-      );
+      expect(escape('''&><'"こんばんは'''), equals('&amp;&gt;&lt;&#39;&quot;こんばんは'));
+      expect(escape('''こんにちは&><'"'''), equals('こんにちは&amp;&gt;&lt;&#39;&quot;'));
     });
 
     test('4 byte', () {

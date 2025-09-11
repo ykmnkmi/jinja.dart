@@ -8,9 +8,9 @@ import 'package:meta/meta.dart';
 @doNotStore
 class RuntimeCompiler implements Visitor<void, Node> {
   RuntimeCompiler()
-      : _imports = <String>{},
-        _macros = <String>{},
-        _inMacro = false;
+    : _imports = <String>{},
+      _macros = <String>{},
+      _inMacro = false;
 
   final Set<String> _imports;
 
@@ -22,15 +22,19 @@ class RuntimeCompiler implements Visitor<void, Node> {
     return node?.accept(this, context) as T;
   }
 
-  List<T> visitNodes<T extends Node>(List<Node> nodes, void context) {
-    return <T>[for (var node in nodes) visitNode(node, context)];
+  List<T>? visitNodes<T extends Node>(List<Node>? nodes, void context) {
+    if (nodes == null) {
+      return null;
+    }
+
+    return <T>[for (var node in nodes) visitNode<T>(node, context)];
   }
 
   // Expressions
 
   @override
   Array visitArray(Array node, void context) {
-    return node.copyWith(values: visitNodes(node.values, context));
+    return node.copyWith(values: visitNodes<Expression>(node.values, context));
   }
 
   @override
@@ -39,11 +43,11 @@ class RuntimeCompiler implements Visitor<void, Node> {
     if (node.value case Name(name: 'self')) {
       return Item(
         key: Constant(value: node.attribute),
-        value: visitNode(node.value, context),
+        value: visitNode<Expression>(node.value, context),
       );
     }
 
-    return node.copyWith(value: visitNode(node.value, context));
+    return node.copyWith(value: visitNode<Expression>(node.value, context));
   }
 
   @override
@@ -61,8 +65,13 @@ class RuntimeCompiler implements Visitor<void, Node> {
             : <Expression>[Array(values: calling.arguments)];
 
         return node.copyWith(
-          value: Item(key: Constant(value: 'cycle'), value: value),
-          calling: Calling(arguments: visitNodes(arguments, context)),
+          value: Item(
+            key: Constant(value: 'cycle'),
+            value: value,
+          ),
+          calling: Calling(
+            arguments: visitNodes<Expression>(arguments, context)!,
+          ),
         );
       }
     }
@@ -80,17 +89,17 @@ class RuntimeCompiler implements Visitor<void, Node> {
         if (calling.keywords.isNotEmpty) {
           var pairs = <Pair>[
             for (var (:key, :value) in calling.keywords)
-              (key: Constant(value: key), value: value)
+              (key: Constant(value: key), value: value),
           ];
 
           values.add(Dict(pairs: pairs));
         }
 
         return node.copyWith(
-          value: visitNode(node.value, context),
+          value: visitNode<Expression>(node.value, context),
           calling: Calling(
             arguments: <Expression>[
-              if (values.isNotEmpty) Array(values: values)
+              if (values.isNotEmpty) Array(values: values),
             ],
           ),
         );
@@ -102,14 +111,16 @@ class RuntimeCompiler implements Visitor<void, Node> {
         var keywords = calling.keywords;
 
         return node.copyWith(
-          value: visitNode(node.value, context),
+          value: visitNode<Expression>(node.value, context),
           calling: Calling(
             arguments: <Expression>[
               Array(values: arguments.toList()),
-              Dict(pairs: <Pair>[
-                for (var (:key, :value) in keywords)
-                  (key: Constant(value: key), value: value),
-              ]),
+              Dict(
+                pairs: <Pair>[
+                  for (var (:key, :value) in keywords)
+                    (key: Constant(value: key), value: value),
+                ],
+              ),
             ],
           ),
         );
@@ -123,14 +134,16 @@ class RuntimeCompiler implements Visitor<void, Node> {
         var keywords = calling.keywords;
 
         return node.copyWith(
-          value: visitNode(node.value, context),
+          value: visitNode<Expression>(node.value, context),
           calling: Calling(
             arguments: <Expression>[
               Array(values: arguments.toList()),
-              Dict(pairs: <Pair>[
-                for (var (:key, :value) in keywords)
-                  (key: Constant(value: key), value: value),
-              ]),
+              Dict(
+                pairs: <Pair>[
+                  for (var (:key, :value) in keywords)
+                    (key: Constant(value: key), value: value),
+                ],
+              ),
             ],
           ),
         );
@@ -138,18 +151,18 @@ class RuntimeCompiler implements Visitor<void, Node> {
     }
 
     return node.copyWith(
-      value: visitNode(node.value, context),
-      calling: visitNode(node.calling, context),
+      value: visitNode<Expression>(node.value, context),
+      calling: visitNode<Calling>(node.calling, context),
     );
   }
 
   @override
   Calling visitCalling(Calling node, void context) {
     return node.copyWith(
-      arguments: visitNodes(node.arguments, context),
+      arguments: visitNodes<Expression>(node.arguments, context),
       keywords: <Keyword>[
         for (var (:key, :value) in node.keywords)
-          (key: key, value: visitNode(value, context))
+          (key: key, value: visitNode<Expression>(value, context)),
       ],
     );
   }
@@ -157,25 +170,25 @@ class RuntimeCompiler implements Visitor<void, Node> {
   @override
   Compare visitCompare(Compare node, void context) {
     return node.copyWith(
-      value: visitNode(node.value, context),
+      value: visitNode<Expression>(node.value, context),
       operands: <Operand>[
         for (var (operator, value) in node.operands)
-          (operator, value.accept(this, context) as Expression)
+          (operator, value.accept(this, context) as Expression),
       ],
     );
   }
 
   @override
   Concat visitConcat(Concat node, void context) {
-    return node.copyWith(values: visitNodes(node.values, context));
+    return node.copyWith(values: visitNodes<Expression>(node.values, context));
   }
 
   @override
   Condition visitCondition(Condition node, void context) {
     return node.copyWith(
-      test: visitNode(node.test, context),
-      trueValue: visitNode(node.trueValue, context),
-      falseValue: visitNode(node.falseValue, context),
+      test: visitNode<Expression>(node.test, context),
+      trueValue: visitNode<Expression>(node.trueValue, context),
+      falseValue: visitNode<Expression?>(node.falseValue, context),
     );
   }
 
@@ -189,7 +202,10 @@ class RuntimeCompiler implements Visitor<void, Node> {
     return node.copyWith(
       pairs: <Pair>[
         for (var (:key, :value) in node.pairs)
-          (key: visitNode(key, context), value: visitNode(value, context))
+          (
+            key: visitNode<Expression>(key, context),
+            value: visitNode<Expression>(value, context),
+          ),
       ],
     );
   }
@@ -205,31 +221,31 @@ class RuntimeCompiler implements Visitor<void, Node> {
         arguments: <Expression>[
           calling.arguments.first,
           Array(values: calling.arguments.sublist(1)),
-          Dict(pairs: <Pair>[
-            for (var (:key, :value) in calling.keywords)
-              (key: Constant(value: key), value: value)
-          ]),
+          Dict(
+            pairs: <Pair>[
+              for (var (:key, :value) in calling.keywords)
+                (key: Constant(value: key), value: value),
+            ],
+          ),
         ],
       );
 
-      return node.copyWith(
-        calling: visitNode(calling, context),
-      );
+      return node.copyWith(calling: visitNode<Calling>(calling, context));
     }
 
-    return node.copyWith(calling: visitNode(node.calling, context));
+    return node.copyWith(calling: visitNode<Calling>(node.calling, context));
   }
 
   @override
   Item visitItem(Item node, void context) {
-    return node.copyWith(value: visitNode(node.value, context));
+    return node.copyWith(value: visitNode<Expression>(node.value, context));
   }
 
   @override
   Logical visitLogical(Logical node, void context) {
     return node.copyWith(
-      left: visitNode(node.left, context),
-      right: visitNode(node.right, context),
+      left: visitNode<Expression>(node.left, context),
+      right: visitNode<Expression>(node.right, context),
     );
   }
 
@@ -246,8 +262,8 @@ class RuntimeCompiler implements Visitor<void, Node> {
   @override
   Scalar visitScalar(Scalar node, void context) {
     return node.copyWith(
-      left: visitNode(node.left, context),
-      right: visitNode(node.right, context),
+      left: visitNode<Expression>(node.left, context),
+      right: visitNode<Expression>(node.right, context),
     );
   }
 
@@ -261,17 +277,17 @@ class RuntimeCompiler implements Visitor<void, Node> {
 
   @override
   Test visitTest(Test node, void context) {
-    return node.copyWith(calling: visitNode(node.calling, context));
+    return node.copyWith(calling: visitNode<Calling>(node.calling, context));
   }
 
   @override
   Tuple visitTuple(Tuple node, void context) {
-    return node.copyWith(values: visitNodes(node.values, context));
+    return node.copyWith(values: visitNodes<Expression>(node.values, context));
   }
 
   @override
   Unary visitUnary(Unary node, void context) {
-    return node.copyWith(value: visitNode(node.value, context));
+    return node.copyWith(value: visitNode<Expression>(node.value, context));
   }
 
   // Statements
@@ -279,29 +295,29 @@ class RuntimeCompiler implements Visitor<void, Node> {
   @override
   Assign visitAssign(Assign node, void context) {
     return node.copyWith(
-      target: visitNode(node.target, context),
-      value: visitNode(node.value, context),
+      target: visitNode<Expression>(node.target, context),
+      value: visitNode<Expression>(node.value, context),
     );
   }
 
   @override
   AssignBlock visitAssignBlock(AssignBlock node, void context) {
     return node.copyWith(
-      target: visitNode(node.target, context),
-      filters: visitNodes(node.filters, context),
-      body: visitNode(node.body, context),
+      target: visitNode<Expression>(node.target, context),
+      filters: visitNodes<Filter>(node.filters, context),
+      body: visitNodes<Node>(node.body, context),
     );
   }
 
   @override
   Block visitBlock(Block node, void context) {
-    return node.copyWith(body: visitNode(node.body, context));
+    return node.copyWith(body: visitNodes<Node>(node.body, context));
   }
 
   @override
   CallBlock visitCallBlock(CallBlock node, void context) {
     return node.copyWith(
-      call: visitNode(node.call, context),
+      call: visitNode<Call>(node.call, context),
       positional: <Expression>[
         for (var argument in node.positional)
           argument.accept(this, context) as Expression,
@@ -311,9 +327,9 @@ class RuntimeCompiler implements Visitor<void, Node> {
           (
             argument.accept(this, context) as Expression,
             defaultValue.accept(this, context) as Expression,
-          )
+          ),
       ],
-      body: visitNode(node.body, context),
+      body: visitNodes<Node>(node.body, context),
     );
   }
 
@@ -324,7 +340,7 @@ class RuntimeCompiler implements Visitor<void, Node> {
 
   @override
   Do visitDo(Do node, void context) {
-    return node.copyWith(value: visitNode(node.value, context));
+    return node.copyWith(value: visitNode<Expression>(node.value, context));
   }
 
   @override
@@ -335,19 +351,19 @@ class RuntimeCompiler implements Visitor<void, Node> {
   @override
   FilterBlock visitFilterBlock(FilterBlock node, void context) {
     return node.copyWith(
-      filters: visitNodes(node.filters, context),
-      body: visitNode(node.body, context),
+      filters: visitNodes<Filter>(node.filters, context),
+      body: visitNodes<Node>(node.body, context),
     );
   }
 
   @override
   For visitFor(For node, void context) {
     return node.copyWith(
-      target: visitNode(node.target, context),
-      iterable: visitNode(node.iterable, context),
-      body: visitNode(node.body, context),
-      test: visitNode(node.test, context),
-      orElse: visitNode(node.orElse, context),
+      target: visitNode<Expression>(node.target, context),
+      iterable: visitNode<Expression>(node.iterable, context),
+      body: visitNodes<Node>(node.body, context),
+      test: visitNode<Expression?>(node.test, context),
+      orElse: visitNodes<Node>(node.orElse, context),
     );
   }
 
@@ -357,32 +373,38 @@ class RuntimeCompiler implements Visitor<void, Node> {
       _macros.add(alias ?? name);
     }
 
-    return node.copyWith(template: visitNode(node.template, context));
+    return node.copyWith(
+      template: visitNode<Expression>(node.template, context),
+    );
   }
 
   @override
   If visitIf(If node, void context) {
     return node.copyWith(
-      test: visitNode(node.test, context),
-      body: visitNode(node.body, context),
-      orElse: visitNode(node.orElse, context),
+      test: visitNode<Expression>(node.test, context),
+      body: visitNodes<Node>(node.body, context),
+      orElse: visitNodes<Node>(node.orElse, context),
     );
   }
 
   @override
   Import visitImport(Import node, void context) {
     _imports.add(node.target);
-    return node.copyWith(template: visitNode(node.template, context));
+    return node.copyWith(
+      template: visitNode<Expression>(node.template, context),
+    );
   }
 
   @override
   Include visitInclude(Include node, void context) {
-    return node.copyWith(template: visitNode(node.template, context));
+    return node.copyWith(
+      template: visitNode<Expression>(node.template, context),
+    );
   }
 
   @override
   Interpolation visitInterpolation(Interpolation node, void context) {
-    return node.copyWith(value: visitNode(node.value, context));
+    return node.copyWith(value: visitNode<Expression>(node.value, context));
   }
 
   @override
@@ -396,9 +418,11 @@ class RuntimeCompiler implements Visitor<void, Node> {
 
     for (var argument in node.positional) {
       if (argument case Name(name: 'caller')) {
-        throw TemplateAssertionError('When defining macros or call blocks '
-            'the special "caller" argument must be omitted or be given a '
-            'default.');
+        throw TemplateAssertionError(
+          'When defining macros or call blocks '
+          'the special "caller" argument must be omitted or be given a '
+          'default.',
+        );
       }
 
       positional.add(argument.accept(this, context) as Expression);
@@ -422,7 +446,7 @@ class RuntimeCompiler implements Visitor<void, Node> {
     node = node.copyWith(
       positional: positional,
       named: named,
-      body: visitNode(node.body, context),
+      body: visitNodes<Node>(node.body, context),
     );
 
     _inMacro = false;
@@ -436,41 +460,33 @@ class RuntimeCompiler implements Visitor<void, Node> {
     }
 
     if (node.nodes.length == 1) {
-      return visitNode(node.nodes[0], context);
+      return visitNode<Node>(node.nodes[0], context);
     }
 
-    return node.copyWith(nodes: visitNodes(node.nodes, context));
+    return node.copyWith(nodes: visitNodes<Node>(node.nodes, context));
   }
 
   @override
   TemplateNode visitTemplateNode(TemplateNode node, void context) {
-    var body = visitNode(node.body, context) as Node;
-    var blocks = <Block>[if (body is Block) body, ...body.findAll<Block>()];
-    var macros = <Macro>[if (body is Macro) body, ...body.findAll<Macro>()];
-
-    if (body is Output && body.nodes.first is Extends) {
-      body = body.nodes.first;
-    }
-
-    return node.copyWith(blocks: blocks, macros: macros, body: body);
+    return node.copyWith(nodes: visitNodes<Node>(node.nodes, context));
   }
 
   @override
   Node visitTryCatch(TryCatch node, void context) {
     return node.copyWith(
       // TODO(compiler): skip bad nodes.
-      body: visitNode(node.body, context),
-      exception: visitNode(node.exception, context),
-      catchBody: visitNode(node.catchBody, context),
+      body: visitNodes<Node>(node.body, context),
+      exception: visitNode<Expression?>(node.exception, context),
+      catchBody: visitNodes<Node>(node.catchBody, context),
     );
   }
 
   @override
   With visitWith(With node, void context) {
     return node.copyWith(
-      targets: visitNodes(node.targets, context),
-      values: visitNodes(node.values, context),
-      body: visitNode(node.body, context),
+      targets: visitNodes<Expression>(node.targets, context),
+      values: visitNodes<Expression>(node.values, context),
+      body: visitNodes<Node>(node.body, context),
     );
   }
 }

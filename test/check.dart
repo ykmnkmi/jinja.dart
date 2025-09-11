@@ -7,6 +7,7 @@ import 'dart:math' show max;
 import 'package:jinja/src/compiler.dart';
 import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/exceptions.dart';
+import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/optimizer.dart';
 import 'package:jinja/src/runtime.dart';
 
@@ -25,19 +26,26 @@ void main() {
   //   print('${token.type}: ${token.value}');
   // }
 
-  var body = environment.scan(tokens);
-  var original = jsonEncoder.convert(body.toJson());
+  var nodes = environment.scan(tokens);
+  var original = jsonEncoder.convert(nodes);
 
-  body = body.accept(const Optimizer(), Context(environment));
+  for (var i = 0; i < nodes.length; i += 1) {
+    nodes[i] = nodes[i].accept(const Optimizer(), Context(environment));
+  }
 
-  var optimized = jsonEncoder.convert(body.toJson());
+  var optimized = jsonEncoder.convert(nodes);
 
-  body = body.accept(RuntimeCompiler(), null);
+  for (var i = 0; i < nodes.length; i += 1) {
+    nodes[i] = nodes[i].accept(RuntimeCompiler(), null);
+  }
 
-  var compiled = jsonEncoder.convert(body.toJson());
+  var compiled = jsonEncoder.convert(nodes);
   compare(original, optimized, compiled);
 
-  var template = Template.fromNode(environment, body: body);
+  var template = Template.fromNode(
+    environment,
+    body: TemplateNode(nodes: nodes),
+  );
 
   try {
     print('render:');
@@ -49,18 +57,14 @@ void main() {
 
 const LineSplitter splitter = LineSplitter();
 
-void compare(
-  String originalJson,
-  String optimizedJson,
-  String compiledJson,
-) {
+void compare(String originalJson, String optimizedJson, String compiledJson) {
   if (!stdout.hasTerminal) {
     return;
   }
 
-  var original = <String?>['original:', ...splitter.convert(originalJson)];
-  var optimized = <String?>['optimized:', ...splitter.convert(optimizedJson)];
-  var compiled = <String?>['compiled:', ...splitter.convert(compiledJson)];
+  var original = <String>['original:', ...splitter.convert(originalJson)];
+  var optimized = <String>['optimized:', ...splitter.convert(optimizedJson)];
+  var compiled = <String>['compiled:', ...splitter.convert(compiledJson)];
 
   var length = max(original.length, max(optimized.length, compiled.length));
 

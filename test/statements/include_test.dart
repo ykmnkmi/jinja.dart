@@ -30,8 +30,9 @@ void main() {
       var tmpl = env.fromString('{% include ["missing", "header"] %}');
       expect(tmpl.render({'foo': 42}), equals('[42|23]'));
 
-      tmpl = env
-          .fromString('{% include ["missing", "missing2"] ignore missing %}');
+      tmpl = env.fromString(
+        '{% include ["missing", "missing2"] ignore missing %}',
+      );
       expect(tmpl.render({'foo': 42}), equals(''));
 
       tmpl = env.fromString('{% include ["missing", "missing2"] %}');
@@ -111,13 +112,12 @@ void main() {
 
     test('import from with context', () {
       var env = Environment(
-        loader: MapLoader({
-          'a': '{% macro x() %}{{ foobar }}{% endmacro %}',
-        }),
+        loader: MapLoader({'a': '{% macro x() %}{{ foobar }}{% endmacro %}'}),
       );
 
       var tmpl = env.fromString(
-          "{% set foobar = 42 %}{% from 'a' import x with context %}{{ x() }}");
+        "{% set foobar = 42 %}{% from 'a' import x with context %}{{ x() }}",
+      );
       expect(tmpl.render(), equals('42'));
     });
   });

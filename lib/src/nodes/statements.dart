@@ -21,10 +21,7 @@ final class Extends extends Statement {
 
   @override
   Map<String, Object?> toJson() {
-    return <String, Object?>{
-      'class': 'Extends',
-      'template': template.toJson(),
-    };
+    return <String, Object?>{'class': 'Extends', 'template': template.toJson()};
   }
 }
 
@@ -46,9 +43,9 @@ final class For extends Statement {
 
   final bool recursive;
 
-  final Node body;
+  final List<Node> body;
 
-  final Node? orElse;
+  final List<Node>? orElse;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -61,8 +58,8 @@ final class For extends Statement {
     Expression? iterable,
     Expression? test,
     bool? recursive,
-    Node? body,
-    Node? orElse,
+    List<Node>? body,
+    List<Node>? orElse,
   }) {
     return For(
       target: target ?? this.target,
@@ -88,26 +85,30 @@ final class For extends Statement {
 
     yield* iterable.findAll<T>();
 
-    if (test case Expression test?) {
-      if (test case T test) {
-        yield test;
-      }
+    if (test case T test) {
+      yield test;
+    }
 
+    if (test case var test?) {
       yield* test.findAll<T>();
     }
 
-    if (body case T body) {
-      yield body;
-    }
-
-    yield* body.findAll<T>();
-
-    if (orElse case Node orElse?) {
-      if (orElse case T orElse) {
-        yield orElse;
+    for (var node in body) {
+      if (node is T) {
+        yield node;
       }
 
-      yield* orElse.findAll<T>();
+      yield* node.findAll<T>();
+    }
+
+    if (orElse case var orElse?) {
+      for (var node in orElse) {
+        if (node is T) {
+          yield node;
+        }
+
+        yield* node.findAll<T>();
+      }
     }
   }
 
@@ -119,24 +120,23 @@ final class For extends Statement {
       'iterable': iterable.toJson(),
       if (test case var test?) 'test': test.toJson(),
       if (recursive) 'recursive': recursive,
-      'body': body.toJson(),
-      if (orElse case var orElse?) 'orElse': orElse.toJson(),
+      'body': <Map<String, Object?>>[for (var node in body) node.toJson()],
+      if (orElse case var orElse?)
+        'orElse': <Map<String, Object?>>[
+          for (var node in orElse) node.toJson(),
+        ],
     };
   }
 }
 
 final class If extends Statement {
-  const If({
-    required this.test,
-    required this.body,
-    this.orElse,
-  });
+  const If({required this.test, required this.body, this.orElse});
 
   final Expression test;
 
-  final Node body;
+  final List<Node> body;
 
-  final Node? orElse;
+  final List<Node>? orElse;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -144,11 +144,7 @@ final class If extends Statement {
   }
 
   @override
-  If copyWith({
-    Expression? test,
-    Node? body,
-    Node? orElse,
-  }) {
+  If copyWith({Expression? test, List<Node>? body, List<Node>? orElse}) {
     return If(
       test: test ?? this.test,
       body: body ?? this.body,
@@ -164,18 +160,22 @@ final class If extends Statement {
 
     yield* test.findAll<T>();
 
-    if (body case T body) {
-      yield body;
-    }
-
-    yield* body.findAll<T>();
-
-    if (orElse case Node orElse?) {
-      if (orElse case T orElse) {
-        yield orElse;
+    for (var node in body) {
+      if (node is T) {
+        yield node;
       }
 
-      yield* orElse.findAll<T>();
+      yield* node.findAll<T>();
+    }
+
+    if (orElse case var orElse?) {
+      for (var node in orElse) {
+        if (node is T) {
+          yield node;
+        }
+
+        yield* node.findAll<T>();
+      }
     }
   }
 
@@ -184,16 +184,17 @@ final class If extends Statement {
     return <String, Object?>{
       'class': 'If',
       'test': test.toJson(),
-      'body': body.toJson(),
-      if (orElse case var orElse?) 'orElse': orElse.toJson(),
+      'body': <Map<String, Object?>>[for (var node in body) node.toJson()],
+      if (orElse case var orElse?)
+        'orElse': <Map<String, Object?>>[
+          for (var node in orElse) node.toJson(),
+        ],
     };
   }
 }
 
-typedef MacroFunction = String Function(
-  List<Object?> positional,
-  Map<Symbol, Object?> named,
-);
+typedef MacroFunction =
+    String Function(List<Object?> positional, Map<Symbol, Object?> named);
 
 typedef MacroSignature = ({
   List<Expression> arguments,
@@ -219,13 +220,13 @@ abstract final class MacroCall extends Statement {
   // TODO(nodes): split arguments and defaults
   final List<(Expression, Expression)> named;
 
-  final Node body;
+  final List<Node> body;
 
   @override
   MacroCall copyWith({
     List<Expression>? positional,
     List<(Expression, Expression)>? named,
-    Node? body,
+    List<Node>? body,
   });
 
   @override
@@ -244,11 +245,13 @@ abstract final class MacroCall extends Statement {
       yield* defaultValue.findAll<T>();
     }
 
-    if (body case T body) {
-      yield body;
-    }
+    for (var node in body) {
+      if (node is T) {
+        yield node;
+      }
 
-    yield* body.findAll<T>();
+      yield* node.findAll<T>();
+    }
   }
 }
 
@@ -280,7 +283,7 @@ final class Macro extends MacroCall {
     bool? varargs,
     bool? kwargs,
     bool? caller,
-    Node? body,
+    List<Node>? body,
   }) {
     return Macro(
       name: name ?? this.name,
@@ -310,7 +313,7 @@ final class Macro extends MacroCall {
             'defaultValue': defaultValue.toJson(),
           },
       ],
-      'body': body.toJson(),
+      'body': <Map<String, Object?>>[for (var node in body) node.toJson()],
     };
   }
 }
@@ -337,7 +340,7 @@ final class CallBlock extends MacroCall {
     Call? call,
     List<Expression>? positional,
     List<(Expression, Expression)>? named,
-    Node? body,
+    List<Node>? body,
   }) {
     return CallBlock(
       call: call ?? this.call,
@@ -373,7 +376,7 @@ final class CallBlock extends MacroCall {
             'defaultValue': defaultValue.toJson(),
           },
       ],
-      'body': body.toJson(),
+      'body': <Map<String, Object?>>[for (var node in body) node.toJson()],
     };
   }
 }
@@ -383,7 +386,7 @@ final class FilterBlock extends Statement {
 
   final List<Filter> filters;
 
-  final Node body;
+  final List<Node> body;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -391,7 +394,7 @@ final class FilterBlock extends Statement {
   }
 
   @override
-  FilterBlock copyWith({List<Filter>? filters, Node? body}) {
+  FilterBlock copyWith({List<Filter>? filters, List<Node>? body}) {
     return FilterBlock(
       filters: filters ?? this.filters,
       body: body ?? this.body,
@@ -408,11 +411,13 @@ final class FilterBlock extends Statement {
       yield* filter.findAll<T>();
     }
 
-    if (body case T body) {
-      yield body;
-    }
+    for (var node in body) {
+      if (node is T) {
+        yield node;
+      }
 
-    yield* body.findAll<T>();
+      yield* node.findAll<T>();
+    }
   }
 
   @override
@@ -422,23 +427,19 @@ final class FilterBlock extends Statement {
       'filters': <Map<String, Object?>>[
         for (var filter in filters) filter.toJson(),
       ],
-      'body': body.toJson(),
+      'body': <Map<String, Object?>>[for (var node in body) node.toJson()],
     };
   }
 }
 
 final class With extends Statement {
-  const With({
-    required this.targets,
-    required this.values,
-    required this.body,
-  });
+  const With({required this.targets, required this.values, required this.body});
 
   final List<Expression> targets;
 
   final List<Expression> values;
 
-  final Node body;
+  final List<Node> body;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -449,7 +450,7 @@ final class With extends Statement {
   With copyWith({
     List<Expression>? targets,
     List<Expression>? values,
-    Node? body,
+    List<Node>? body,
   }) {
     return With(
       targets: targets ?? this.targets,
@@ -476,11 +477,13 @@ final class With extends Statement {
       yield* value.findAll<T>();
     }
 
-    if (body case T body) {
-      yield body;
-    }
+    for (var node in body) {
+      if (node is T) {
+        yield node;
+      }
 
-    yield* body.findAll<T>();
+      yield* node.findAll<T>();
+    }
   }
 
   @override
@@ -493,7 +496,7 @@ final class With extends Statement {
       'values': <Map<String, Object?>>[
         for (var value in values) value.toJson(),
       ],
-      'body': body.toJson(),
+      'body': <Map<String, Object?>>[for (var node in body) node.toJson()],
     };
   }
 }
@@ -512,7 +515,7 @@ final class Block extends Statement {
 
   final bool required;
 
-  final Node body;
+  final List<Node> body;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -524,7 +527,7 @@ final class Block extends Statement {
     String? name,
     bool? scoped,
     bool? required,
-    Node? body,
+    List<Node>? body,
   }) {
     return Block(
       name: name ?? this.name,
@@ -536,11 +539,13 @@ final class Block extends Statement {
 
   @override
   Iterable<T> findAll<T extends Node>() sync* {
-    if (body case T body) {
-      yield body;
-    }
+    for (var node in body) {
+      if (node is T) {
+        yield node;
+      }
 
-    yield* body.findAll<T>();
+      yield* node.findAll<T>();
+    }
   }
 
   @override
@@ -550,7 +555,7 @@ final class Block extends Statement {
       'name': name,
       if (scoped) 'scoped': scoped,
       if (required) 'required': required,
-      'body': body.toJson(),
+      'body': <Map<String, Object?>>[for (var node in body) node.toJson()],
     };
   }
 }
@@ -618,11 +623,7 @@ final class Import extends Statement implements ImportContext {
   }
 
   @override
-  Import copyWith({
-    Expression? template,
-    String? target,
-    bool? withContext,
-  }) {
+  Import copyWith({Expression? template, String? target, bool? withContext}) {
     return Import(
       template: template ?? this.template,
       target: target ?? this.target,
@@ -696,9 +697,7 @@ final class Do extends Statement {
 
   @override
   Do copyWith({Expression? value}) {
-    return Do(
-      value: value ?? this.value,
-    );
+    return Do(value: value ?? this.value);
   }
 
   @override
@@ -712,22 +711,19 @@ final class Do extends Statement {
 
   @override
   Map<String, Object?> toJson() {
-    return <String, Object?>{
-      'class': 'Do',
-      'value': value,
-    };
+    return <String, Object?>{'class': 'Do', 'value': value};
   }
 }
 
 final class TryCatch extends Statement {
   TryCatch({required this.body, this.exception, required this.catchBody});
 
-  final Node body;
+  final List<Node> body;
 
   // TODO(nodes): find better name. String?
   final Expression? exception;
 
-  final Node catchBody;
+  final List<Node> catchBody;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -735,7 +731,11 @@ final class TryCatch extends Statement {
   }
 
   @override
-  TryCatch copyWith({Node? body, Expression? exception, Node? catchBody}) {
+  TryCatch copyWith({
+    List<Node>? body,
+    Expression? exception,
+    List<Node>? catchBody,
+  }) {
     return TryCatch(
       body: body ?? this.body,
       exception: exception ?? this.exception,
@@ -749,26 +749,32 @@ final class TryCatch extends Statement {
       yield body;
     }
 
-    yield* body.findAll<T>();
+    for (var node in body) {
+      if (node is T) {
+        yield node;
+      }
 
-    if (exception case T exceptionName) {
-      yield exceptionName;
+      yield* node.findAll<T>();
     }
 
-    if (catchBody case T catchBody) {
-      yield catchBody;
-    }
+    for (var node in catchBody) {
+      if (node is T) {
+        yield node;
+      }
 
-    yield* catchBody.findAll<T>();
+      yield* node.findAll<T>();
+    }
   }
 
   @override
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'class': 'TryCatch',
-      'body': body.toJson(),
+      'body': <Map<String, Object?>>[for (var node in body) node.toJson()],
       if (exception case var exception?) 'exception': exception.toJson(),
-      'catchBody': catchBody.toJson(),
+      'catchBody': <Map<String, Object?>>[
+        for (var node in catchBody) node.toJson(),
+      ],
     };
   }
 }
@@ -787,10 +793,7 @@ final class Assign extends Statement {
 
   @override
   Assign copyWith({Expression? target, Expression? value}) {
-    return Assign(
-      target: target ?? this.target,
-      value: value ?? this.value,
-    );
+    return Assign(target: target ?? this.target, value: value ?? this.value);
   }
 
   @override
@@ -829,7 +832,7 @@ final class AssignBlock extends Statement {
 
   final List<Filter> filters;
 
-  final Node body;
+  final List<Node> body;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -840,7 +843,7 @@ final class AssignBlock extends Statement {
   AssignBlock copyWith({
     Expression? target,
     List<Filter>? filters,
-    Node? body,
+    List<Node>? body,
   }) {
     return AssignBlock(
       target: target ?? this.target,
@@ -865,11 +868,13 @@ final class AssignBlock extends Statement {
       yield* filter.findAll<T>();
     }
 
-    if (body case T body) {
-      yield body;
-    }
+    for (var node in body) {
+      if (node is T) {
+        yield node;
+      }
 
-    yield* body.findAll<T>();
+      yield* node.findAll<T>();
+    }
   }
 
   @override
@@ -880,7 +885,7 @@ final class AssignBlock extends Statement {
       'filters': <Map<String, Object?>>[
         for (var filter in filters) filter.toJson(),
       ],
-      'body': body.toJson(),
+      'body': <Map<String, Object?>>[for (var node in body) node.toJson()],
     };
   }
 }

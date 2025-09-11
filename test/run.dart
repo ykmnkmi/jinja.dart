@@ -11,24 +11,26 @@ const Map<String, String> sources = <String, String>{
 <body>
   {% block content %}{% endblock %}
 </body>
-</html>''',
-  'component.jinja': '''
-{% macro component(data) %}
-  {{ data }}
-{% endmacro %}''',
+</html>
+''',
   'page.jinja': '''
 {% extends "base.jinja" %}
 
-{% import 'component.jinja' as components %}
+{% from "components.jinja" import component %}
 
 {% block content %}
-  {{ components.component("hey") }}
-{% endblock %}''',
+  {{ component("Hey!") }}
+{% endblock %}
+''',
+  'components.jinja': '''
+{% macro component(data) %}
+  {{ data }}
+{% endmacro %}
+''',
 };
-void main() {
-  Loader loader = MapLoader(sources);
 
-  Environment environment = Environment(loader: loader);
+void main() {
+  Environment environment = Environment(loader: MapLoader(sources));
 
   try {
     Template page = environment.getTemplate('page.jinja');

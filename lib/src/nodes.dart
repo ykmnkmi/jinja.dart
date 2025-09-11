@@ -1,4 +1,5 @@
 import 'package:jinja/src/visitor.dart';
+import 'package:meta/meta.dart';
 
 part 'nodes/expressions.dart';
 part 'nodes/statements.dart';
@@ -44,10 +45,7 @@ final class Data extends Node {
 
   @override
   Map<String, Object?> toJson() {
-    return <String, Object?>{
-      'class': 'Data',
-      'data': data,
-    };
+    return <String, Object?>{'class': 'Data', 'data': data};
   }
 }
 
@@ -56,9 +54,7 @@ abstract base class Expression extends Node {
 
   @override
   Map<String, Object?> toJson() {
-    return <String, Object?>{
-      'class': 'Expression',
-    };
+    return <String, Object?>{'class': 'Expression'};
   }
 }
 
@@ -92,10 +88,7 @@ final class Interpolation extends Node {
 
   @override
   Map<String, Object?> toJson() {
-    return <String, Object?>{
-      'class': 'Interpolation',
-      'value': value.toJson(),
-    };
+    return <String, Object?>{'class': 'Interpolation', 'value': value.toJson()};
   }
 }
 
@@ -129,25 +122,28 @@ final class Output extends Node {
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'class': 'Output',
-      'nodes': <Map<String, Object?>>[
-        for (var node in nodes) node.toJson(),
-      ],
+      'nodes': <Map<String, Object?>>[for (var node in nodes) node.toJson()],
     };
   }
 }
 
 final class TemplateNode extends Node {
-  TemplateNode({
-    this.blocks = const <Block>[],
-    this.macros = const <Macro>[],
-    required this.body,
-  });
+  TemplateNode({this.nodes = const <Node>[]})
+    : blocks = <Block>[],
+      macros = <Macro>[] {
+    blocks.addAll(findAll<Block>());
+    macros.addAll(findAll<Macro>());
+  }
 
+  // @nodoc
+  @internal
   final List<Block> blocks;
 
+  // @nodoc
+  @internal
   final List<Macro> macros;
 
-  final Node body;
+  final List<Node> nodes;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -155,38 +151,26 @@ final class TemplateNode extends Node {
   }
 
   @override
-  TemplateNode copyWith({
-    List<Block>? blocks,
-    List<Macro>? macros,
-    Node? body,
-  }) {
-    return TemplateNode(
-      blocks: blocks ?? this.blocks,
-      macros: macros ?? this.macros,
-      body: body ?? this.body,
-    );
+  TemplateNode copyWith({List<Node>? nodes}) {
+    return TemplateNode(nodes: nodes ?? this.nodes);
   }
 
   @override
   Iterable<T> findAll<T extends Node>() sync* {
-    if (body case T body) {
-      yield body;
-    }
+    for (var node in nodes) {
+      if (node is T) {
+        yield node;
+      }
 
-    yield* body.findAll<T>();
+      yield* node.findAll<T>();
+    }
   }
 
   @override
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'class': 'TemplateNode',
-      'blocks': <Map<String, Object?>>[
-        for (var block in blocks) block.toJson(),
-      ],
-      'macros': <Map<String, Object?>>[
-        for (var macro in macros) macro.toJson(),
-      ],
-      'body': body.toJson(),
+      'nodes': <Map<String, Object?>>[for (var node in nodes) node.toJson()],
     };
   }
 }

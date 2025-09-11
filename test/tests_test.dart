@@ -346,9 +346,10 @@ void main() {
 
       var env = Environment(tests: {'matching': matching});
 
-      var tmpl = env
-          .fromString('{{ "us-west-1" is matching "(us-east-1|ap-northeast-1)"'
-              ' or "stage" is matching "(dev|stage)" }}');
+      var tmpl = env.fromString(
+        '{{ "us-west-1" is matching "(us-east-1|ap-northeast-1)"'
+        ' or "stage" is matching "(dev|stage)" }}',
+      );
 
       var result = tmpl.render();
       expect(result, equals('false'));
@@ -379,9 +380,13 @@ void main() {
 
     test('name undefined', () {
       expect(
-          () => env.fromString('{{ x is f }}'),
-          throwsA(predicate<TemplateAssertionError>(
-              (error) => error.message == "No test named 'f'.")));
+        () => env.fromString('{{ x is f }}'),
+        throwsA(
+          predicate<TemplateAssertionError>(
+            (error) => error.message == "No test named 'f'.",
+          ),
+        ),
+      );
     }, skip: true);
 
     test('name undefined in if', () {
@@ -389,9 +394,13 @@ void main() {
       expect(tmpl.render(), equals(''));
 
       expect(
-          () => tmpl.render({'x': 1}),
-          throwsA(predicate<TemplateRuntimeError>(
-              (error) => error.message == "No test named 'f'.")));
+        () => tmpl.render({'x': 1}),
+        throwsA(
+          predicate<TemplateRuntimeError>(
+            (error) => error.message == "No test named 'f'.",
+          ),
+        ),
+      );
     });
 
     test('is filter', () {

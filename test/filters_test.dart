@@ -46,10 +46,11 @@ void main() {
 
     test('filter calling', () {
       expect(
-          env.callFilter('sum', [
-            [1, 2, 3]
-          ]),
-          equals(6));
+        env.callFilter('sum', [
+          [1, 2, 3],
+        ]),
+        equals(6),
+      );
     });
 
     test('capitalize', () {
@@ -75,7 +76,7 @@ void main() {
 
     test('dictsort', () {
       var data = {
-        'foo': {'aa': 0, 'AB': 3, 'b': 1, 'c': 2}
+        'foo': {'aa': 0, 'AB': 3, 'b': 1, 'c': 2},
       };
       var tmpl = env.fromString('{{ foo|dictsort }}');
       expect(tmpl.render(data), equals('[[aa, 0], [AB, 3], [b, 1], [c, 2]]'));
@@ -117,12 +118,15 @@ void main() {
     });
 
     test('striptags', () {
-      var foo = '  <p>just a small   \n <a href="#">'
+      var foo =
+          '  <p>just a small   \n <a href="#">'
           'example</a> link</p>\n<p>to a webpage</p> '
           '<!-- <p>and some commented stuff</p> -->';
       var tmpl = env.fromString('{{ foo|striptags }}');
-      expect(tmpl.render({'foo': foo}),
-          equals('just a small example link to a webpage'));
+      expect(
+        tmpl.render({'foo': foo}),
+        equals('just a small example link to a webpage'),
+      );
     });
 
     test('filesizeformat', () {
@@ -216,10 +220,11 @@ void main() {
     test('join attribute', () {
       var tmpl = env.fromString('{{ users|map(attribute="name")|join(", ") }}');
       expect(
-          tmpl.render({
-            'users': [User('foo'), User('bar')]
-          }),
-          equals('foo, bar'));
+        tmpl.render({
+          'users': [User('foo'), User('bar')],
+        }),
+        equals('foo, bar'),
+      );
     });
 
     test('last', () {
@@ -356,43 +361,47 @@ void main() {
     test('sum attributes', () {
       var tmpl = env.fromString('{{ values|map(item="value")|sum }}');
       expect(
-          tmpl.render({
-            'values': [
-              {'value': 23},
-              {'value': 1},
-              {'value': 18},
-            ]
-          }),
-          equals('42'));
+        tmpl.render({
+          'values': [
+            {'value': 23},
+            {'value': 1},
+            {'value': 18},
+          ],
+        }),
+        equals('42'),
+      );
     });
 
     test('sum attributes nested', () {
       var tmpl = env.fromString('{{ values|map(attribute="real.value")|sum }}');
       expect(
-          tmpl.render({
-            'values': [
-              {
-                'real': {'value': 23}
-              },
-              {
-                'real': {'value': 1}
-              },
-              {
-                'real': {'value': 18}
-              },
-            ]
-          }),
-          equals('42'));
+        tmpl.render({
+          'values': [
+            {
+              'real': {'value': 23},
+            },
+            {
+              'real': {'value': 1},
+            },
+            {
+              'real': {'value': 18},
+            },
+          ],
+        }),
+        equals('42'),
+      );
     });
 
     test('sum attributes tuple', () {
-      var tmpl =
-          env.fromString('{{ values.entries|map("list")|map(item=1)|sum }}');
+      var tmpl = env.fromString(
+        '{{ values.entries|map("list")|map(item=1)|sum }}',
+      );
       expect(
-          tmpl.render({
-            'values': {'foo': 23, 'bar': 1, 'baz': 18}
-          }),
-          equals('42'));
+        tmpl.render({
+          'values': {'foo': 23, 'bar': 1, 'baz': 18},
+        }),
+        equals('42'),
+      );
     });
 
     test('abs', () {
@@ -424,7 +433,8 @@ void main() {
 
     test('filtertag', () {
       var tmpl = env.fromString(
-          '{% filter upper|replace("FOO", "foo") %}foobar{% endfilter %}');
+        '{% filter upper|replace("FOO", "foo") %}foobar{% endfilter %}',
+      );
       expect(tmpl.render(), equals('fooBAR'));
     });
 
@@ -532,7 +542,14 @@ void main() {
       var tmpl = env.fromString('{{ x|tojson }}');
       var x = {'foo': 'bar'};
       expect(tmpl.render({'x': x}), equals('{"foo":"bar"}'));
-      expect(tmpl.render({'x': '"' "ba&r'"}), equals('"\\"ba\\u0026r\\u0027"'));
+      expect(
+        tmpl.render({
+          'x':
+              '"'
+              "ba&r'",
+        }),
+        equals('"\\"ba\\u0026r\\u0027"'),
+      );
       expect(tmpl.render({'x': '<bar>'}), equals('"\\u003cbar\\u003e"'));
     });
 
@@ -551,9 +568,13 @@ void main() {
       expect(tmpl.render(), equals('Null'));
     });
 
-    test('filter undefined', () {
-      expect(() => env.fromString('{{ var|f }}'), aNoFilterNamedF);
-    }, skip: 'Enable after implementing compiler assert checks.');
+    test(
+      'filter undefined',
+      () {
+        expect(() => env.fromString('{{ var|f }}'), aNoFilterNamedF);
+      },
+      skip: 'Enable after implementing compiler assert checks.',
+    );
 
     test('filter undefined in if', () {
       var t1 = env.fromString(

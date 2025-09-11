@@ -21,12 +21,14 @@ void main() {
     trimBlocks: true,
   );
 
-  print(env.getTemplate('users.html').render({
-    'users': [
-      {'fullname': 'John Doe', 'email': 'johndoe@dev.py'},
-      {'fullname': 'Jane Doe', 'email': 'janedoe@dev.py'},
-    ]
-  }));
+  print(
+    env.getTemplate('users.html').render({
+      'users': [
+        {'fullname': 'John Doe', 'email': 'johndoe@dev.py'},
+        {'fullname': 'Jane Doe', 'email': 'janedoe@dev.py'},
+      ],
+    }),
+  );
 }
 
 // ignore_for_file: avoid_print

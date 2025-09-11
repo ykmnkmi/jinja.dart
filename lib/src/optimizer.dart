@@ -14,7 +14,11 @@ class Optimizer implements Visitor<Context, Node> {
     return node?.accept(this, context) as T;
   }
 
-  List<T> visitNodes<T extends Node>(List<Node> nodes, Context context) {
+  List<T>? visitNodes<T extends Node>(List<Node>? nodes, Context context) {
+    if (nodes == null) {
+      return null;
+    }
+
     return <T>[for (var node in nodes) visitNode<T>(node, context)];
   }
 
@@ -24,7 +28,7 @@ class Optimizer implements Visitor<Context, Node> {
   Expression visitArray(Array node, Context context) {
     var values = visitNodes<Expression>(node.values, context);
 
-    if (values.every((value) => value is Constant)) {
+    if (values != null && values.every((value) => value is Constant)) {
       return Constant(
         value: <Object?>[
           for (var value in values.cast<Constant>()) value.value,
@@ -37,16 +41,12 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   Expression visitAttribute(Attribute node, Context context) {
-    return node.copyWith(
-      value: visitNode<Expression>(node.value, context),
-    );
+    return node.copyWith(value: visitNode<Expression>(node.value, context));
   }
 
   @override
   Call visitCall(Call node, Context context) {
-    return node.copyWith(
-      calling: visitNode<Calling>(node.calling, context),
-    );
+    return node.copyWith(calling: visitNode<Calling>(node.calling, context));
   }
 
   @override
@@ -55,7 +55,7 @@ class Optimizer implements Visitor<Context, Node> {
       arguments: visitNodes<Expression>(node.arguments, context),
       keywords: <Keyword>[
         for (var (:key, :value) in node.keywords)
-          (key: key, value: visitNode<Expression>(value, context))
+          (key: key, value: visitNode<Expression>(value, context)),
       ],
     );
   }
@@ -75,7 +75,7 @@ class Optimizer implements Visitor<Context, Node> {
   Expression visitConcat(Concat node, Context context) {
     var values = visitNodes<Expression>(node.values, context);
 
-    if (values.every((value) => value is Constant)) {
+    if (values != null && values.every((value) => value is Constant)) {
       return Constant(
         value: values
             .cast<Constant>()
@@ -87,15 +87,17 @@ class Optimizer implements Visitor<Context, Node> {
     var newValues = <Expression>[];
     var pack = <Object?>[];
 
-    for (var value in values) {
-      if (value is Constant) {
-        pack.add(value.value);
-      } else {
-        newValues
-          ..add(Constant(value: pack.join()))
-          ..add(value);
+    if (values != null) {
+      for (var value in values) {
+        if (value is Constant) {
+          pack.add(value.value);
+        } else {
+          newValues
+            ..add(Constant(value: pack.join()))
+            ..add(value);
 
-        pack.clear();
+          pack.clear();
+        }
       }
     }
 
@@ -139,7 +141,7 @@ class Optimizer implements Visitor<Context, Node> {
         (
           key: visitNode<Expression>(key, context),
           value: visitNode<Expression>(value, context),
-        )
+        ),
     ];
 
     if (pairs.any((pair) => pair.key is Constant && pair.value is Constant)) {
@@ -157,9 +159,7 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   Filter visitFilter(Filter node, Context context) {
-    return node.copyWith(
-      calling: visitNode<Calling>(node.calling, context),
-    );
+    return node.copyWith(calling: visitNode<Calling>(node.calling, context));
   }
 
   @override
@@ -207,8 +207,10 @@ class Optimizer implements Visitor<Context, Node> {
     if (left is Constant && right is Constant) {
       return Constant(
         value: switch (node.operator) {
-          ScalarOperator.power =>
-            math.pow(left.value as num, right.value as num),
+          ScalarOperator.power => math.pow(
+            left.value as num,
+            right.value as num,
+          ),
           // ignore: avoid_dynamic_calls
           ScalarOperator.module => (left.value as dynamic) % right.value,
           ScalarOperator.floorDivision =>
@@ -239,16 +241,14 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   Test visitTest(Test node, Context context) {
-    return node.copyWith(
-      calling: visitNode<Calling>(node.calling, context),
-    );
+    return node.copyWith(calling: visitNode<Calling>(node.calling, context));
   }
 
   @override
   Expression visitTuple(Tuple node, Context context) {
     var values = visitNodes<Expression>(node.values, context);
 
-    if (values.every((value) => value is Constant)) {
+    if (values != null && values.every((value) => value is Constant)) {
       return Constant(
         value: <Object?>[
           for (var value in values.cast<Constant>()) value.value,
@@ -292,13 +292,13 @@ class Optimizer implements Visitor<Context, Node> {
     return node.copyWith(
       target: visitNode<Expression>(node.target, context),
       filters: visitNodes<Filter>(node.filters, context),
-      body: visitNode<Node>(node.body, context),
+      body: visitNodes<Node>(node.body, context),
     );
   }
 
   @override
   Block visitBlock(Block node, Context context) {
-    return node.copyWith(body: visitNode<Node>(node.body, context));
+    return node.copyWith(body: visitNodes<Node>(node.body, context));
   }
 
   @override
@@ -311,9 +311,9 @@ class Optimizer implements Visitor<Context, Node> {
           (
             visitNode<Expression>(argument, context),
             visitNode<Expression>(defaultValue, context),
-          )
+          ),
       ],
-      body: visitNode<Node>(node.body, context),
+      body: visitNodes<Node>(node.body, context),
     );
   }
 
@@ -336,7 +336,7 @@ class Optimizer implements Visitor<Context, Node> {
   FilterBlock visitFilterBlock(FilterBlock node, Context context) {
     return node.copyWith(
       filters: visitNodes<Filter>(node.filters, context),
-      body: visitNode<Node>(node.body, context),
+      body: visitNodes<Node>(node.body, context),
     );
   }
 
@@ -346,9 +346,9 @@ class Optimizer implements Visitor<Context, Node> {
     return node.copyWith(
       target: visitNode<Expression>(node.target, context),
       iterable: visitNode<Expression>(node.iterable, context),
-      body: visitNode<Node>(node.body, context),
+      body: visitNodes<Node>(node.body, context),
       test: visitNode<Expression?>(node.test, context),
-      orElse: visitNode<Node?>(node.orElse, context),
+      orElse: visitNodes<Node>(node.orElse, context),
     );
   }
 
@@ -363,8 +363,8 @@ class Optimizer implements Visitor<Context, Node> {
   If visitIf(If node, Context context) {
     return node.copyWith(
       test: visitNode<Expression>(node.test, context),
-      body: visitNode<Node>(node.body, context),
-      orElse: visitNode<Node?>(node.orElse, context),
+      body: visitNodes<Node>(node.body, context),
+      orElse: visitNodes<Node>(node.orElse, context),
     );
   }
 
@@ -384,9 +384,7 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   Node visitInterpolation(Interpolation node, Context context) {
-    return node.copyWith(
-      value: visitNode<Expression>(node.value, context),
-    );
+    return node.copyWith(value: visitNode<Expression>(node.value, context));
   }
 
   @override
@@ -398,9 +396,9 @@ class Optimizer implements Visitor<Context, Node> {
           (
             visitNode<Expression>(argument, context),
             visitNode<Expression>(defaultValue, context),
-          )
+          ),
       ],
-      body: visitNode<Node>(node.body, context),
+      body: visitNodes<Node>(node.body, context),
     );
   }
 
@@ -415,16 +413,16 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   TemplateNode visitTemplateNode(TemplateNode node, Context context) {
-    return node.copyWith(body: visitNode<Node>(node.body, context));
+    return node.copyWith(nodes: visitNodes<Node>(node.nodes, context));
   }
 
   @override
   Node visitTryCatch(TryCatch node, Context context) {
     return node.copyWith(
       // TODO(optimizer): skip bad nodes.
-      body: visitNode<Node>(node.body, context),
+      body: visitNodes<Node>(node.body, context),
       exception: visitNode<Expression?>(node.exception, context),
-      catchBody: visitNode<Node>(node.catchBody, context),
+      catchBody: visitNodes<Node>(node.catchBody, context),
     );
   }
 
@@ -433,7 +431,7 @@ class Optimizer implements Visitor<Context, Node> {
     return node.copyWith(
       targets: visitNodes<Expression>(node.targets, context),
       values: visitNodes<Expression>(node.values, context),
-      body: visitNode<Node>(node.body, context),
+      body: visitNodes<Node>(node.body, context),
     );
   }
 }

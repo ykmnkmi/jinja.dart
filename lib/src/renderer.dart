@@ -114,17 +114,19 @@ base class StringSinkRenderer
 
       if (values.length < names.length) {
         throw StateError(
-            'Not enough values to unpack (expected ${names.length}, '
-            'got ${values.length}).');
+          'Not enough values to unpack (expected ${names.length}, '
+          'got ${values.length}).',
+        );
       }
 
       if (values.length > names.length) {
         throw StateError(
-            'Too many values to unpack (expected ${names.length}).');
+          'Too many values to unpack (expected ${names.length}).',
+        );
       }
 
       return <String, Object?>{
-        for (var i = 0; i < names.length; i++) names[i]: values[i]
+        for (var i = 0; i < names.length; i++) names[i]: values[i],
       };
     }
 
@@ -178,7 +180,10 @@ base class StringSinkRenderer
         throw TypeError();
       }
 
-      node.body.accept(this, derived);
+      for (var child in node.body) {
+        child.accept(this, derived);
+      }
+
       return buffer.toString();
     }
 
@@ -190,7 +195,7 @@ base class StringSinkRenderer
   @override
   List<Object?> visitArray(Array node, StringSinkRenderContext context) {
     return <Object?>[
-      for (var value in node.values) value.accept(this, context)
+      for (var value in node.values) value.accept(this, context),
     ];
   }
 
@@ -210,12 +215,12 @@ base class StringSinkRenderer
   @override
   Parameters visitCalling(Calling node, StringSinkRenderContext context) {
     var positional = <Object?>[
-      for (var argument in node.arguments) argument.accept(this, context)
+      for (var argument in node.arguments) argument.accept(this, context),
     ];
 
     var named = <Symbol, Object?>{
       for (var (:key, :value) in node.keywords)
-        Symbol(key): value.accept(this, context)
+        Symbol(key): value.accept(this, context),
     };
 
     return (positional, named);
@@ -278,7 +283,7 @@ base class StringSinkRenderer
   Map<Object?, Object?> visitDict(Dict node, StringSinkRenderContext context) {
     return <Object?, Object?>{
       for (var (:key, :value) in node.pairs)
-        key.accept(this, context): value.accept(this, context)
+        key.accept(this, context): value.accept(this, context),
     };
   }
 
@@ -367,7 +372,7 @@ base class StringSinkRenderer
   @override
   List<Object?> visitTuple(Tuple node, StringSinkRenderContext context) {
     return <Object?>[
-      for (var value in node.values) value.accept(this, context)
+      for (var value in node.values) value.accept(this, context),
     ];
   }
 
@@ -397,7 +402,10 @@ base class StringSinkRenderer
     var target = node.target.accept(this, context);
     var buffer = StringBuffer();
     var derived = context.derived(sink: buffer);
-    node.body.accept(this, derived);
+
+    for (var child in node.body) {
+      child.accept(this, derived);
+    }
 
     Object? value = buffer.toString();
 
@@ -458,7 +466,10 @@ base class StringSinkRenderer
   void visitFilterBlock(FilterBlock node, StringSinkRenderContext context) {
     var buffer = StringBuffer();
     var derived = context.derived(sink: buffer);
-    node.body.accept(this, derived);
+
+    for (var child in node.body) {
+      child.accept(this, derived);
+    }
 
     Object? value = buffer.toString();
 
@@ -491,7 +502,9 @@ base class StringSinkRenderer
 
       if (values.isEmpty) {
         if (node.orElse case var orElse?) {
-          orElse.accept(this, context);
+          for (var child in orElse) {
+            child.accept(this, context);
+          }
         }
 
         // Empty string prevents calling `finalize` on `null`.
@@ -520,7 +533,10 @@ base class StringSinkRenderer
         var data = getDataForTargets(targets, value);
         var forContext = context.derived(data: data);
         forContext.set('loop', loop);
-        node.body.accept(this, forContext);
+
+        for (var child in node.body) {
+          child.accept(this, forContext);
+        }
       }
 
       // Empty string prevents calling `finalize` on `null`.
@@ -554,7 +570,8 @@ base class StringSinkRenderer
 
         if (targetMacro == null) {
           throw TemplateRuntimeError(
-              "The '${template.path}' does not export the requested name.");
+            "The '${template.path}' does not export the requested name.",
+          );
         }
 
         MacroFunction function;
@@ -576,9 +593,13 @@ base class StringSinkRenderer
   @override
   void visitIf(If node, StringSinkRenderContext context) {
     if (boolean(node.test.accept(this, context))) {
-      node.body.accept(this, context);
+      for (var child in node.body) {
+        child.accept(this, context);
+      }
     } else if (node.orElse case var orElse?) {
-      orElse.accept(this, context);
+      for (var child in orElse) {
+        child.accept(this, context);
+      }
     }
   }
 
@@ -657,7 +678,7 @@ base class StringSinkRenderer
 
   @override
   void visitTemplateNode(TemplateNode node, StringSinkRenderContext context) {
-    // TODO(renderer): add `TemplateReference`
+    // TODO(renderer): replace with `TemplateReference`.
     var self = Namespace();
 
     for (var block in node.blocks) {
@@ -678,12 +699,14 @@ base class StringSinkRenderer
 
       self[blockName] = render;
 
+      // TODO(renderer): replace with `BlockReference`.
       var blocks = context.blocks[blockName] ??= <ContextCallback>[];
 
       if (block.required) {
         Never callback(Context context) {
           throw TemplateRuntimeError(
-              "Required block '${block.name}' not found.");
+            "Required block '${block.name}' not found.",
+          );
         }
 
         blocks.add(callback);
@@ -693,7 +716,6 @@ base class StringSinkRenderer
         void callback(Context context) {
           var current = context.get('super');
 
-          // TODO(renderer): add `BlockReference`
           String parent() {
             var blocks = context.blocks[blockName]!;
 
@@ -706,7 +728,11 @@ base class StringSinkRenderer
           }
 
           context.set('super', parent);
-          block.body.accept(this, context);
+
+          for (var child in block.body) {
+            child.accept(this, context);
+          }
+
           context.set('super', current);
         }
 
@@ -715,35 +741,49 @@ base class StringSinkRenderer
     }
 
     context.set('self', self);
-    node.body.accept(this, context);
+
+    for (var child in node.nodes) {
+      if (child is Extends) {
+        throw UnimplementedError();
+      }
+
+      child.accept(this, context);
+    }
   }
 
   @override
   void visitTryCatch(TryCatch node, StringSinkRenderContext context) {
     try {
-      node.body.accept(this, context);
+      for (var child in node.body) {
+        child.accept(this, context);
+      }
     } catch (error) {
       if (node.exception case var exception?) {
         var taget = exception.accept(this, context);
         context.assignTargets(taget, error);
       }
 
-      node.catchBody.accept(this, context);
+      for (var child in node.catchBody) {
+        child.accept(this, context);
+      }
     }
   }
 
   @override
   void visitWith(With node, StringSinkRenderContext context) {
     var targets = <Object?>[
-      for (var target in node.targets) target.accept(this, context)
+      for (var target in node.targets) target.accept(this, context),
     ];
 
     var values = <Object?>[
-      for (var value in node.values) value.accept(this, context)
+      for (var value in node.values) value.accept(this, context),
     ];
 
     var data = getDataForTargets(targets, values);
     var newContext = context.derived(data: data);
-    node.body.accept(this, newContext);
+
+    for (var child in node.body) {
+      child.accept(this, newContext);
+    }
   }
 }

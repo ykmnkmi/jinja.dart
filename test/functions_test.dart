@@ -10,8 +10,11 @@ Object? func({String named = 'default'}) {
   return named;
 }
 
-Object? funcWithEnvironment(Environment env, String positional,
-    {String named = 'default'}) {
+Object? funcWithEnvironment(
+  Environment env,
+  String positional, {
+  String named = 'default',
+}) {
   return '[$positional] {$named} env.commentStart = ${env.commentStart}';
 }
 

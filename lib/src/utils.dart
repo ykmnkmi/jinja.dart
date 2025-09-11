@@ -132,11 +132,7 @@ Iterable<int> range(int startOrStop, [int? stop, int step = 1]) sync* {
 
 /// HTML escape [Converter].
 final HtmlEscape htmlEscape = HtmlEscape(
-  HtmlEscapeMode(
-    escapeLtGt: true,
-    escapeQuot: true,
-    escapeApos: true,
-  ),
+  HtmlEscapeMode(escapeLtGt: true, escapeQuot: true, escapeApos: true),
 );
 
 /// HTML unescape [Converter].
@@ -185,7 +181,8 @@ String stripTags(String value) {
   }
 
   return unescape(
-      RegExp(r'\s+').split(value.replaceAll(_tagsRe, '')).join(' '));
+    RegExp(r'\s+').split(value.replaceAll(_tagsRe, '')).join(' '),
+  );
 }
 
 /// Sum two values.

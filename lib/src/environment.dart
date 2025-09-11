@@ -29,8 +29,8 @@ typedef ContextFinalizer = Object? Function(Context context, Object? value);
 /// {@macro jinja.finalizer}
 ///
 /// Takes [Environment] as first argument.
-typedef EnvironmentFinalizer = Object? Function(
-    Environment environment, Object? value);
+typedef EnvironmentFinalizer =
+    Object? Function(Environment environment, Object? value);
 
 /// A function that can be used to get object atribute.
 ///
@@ -102,14 +102,14 @@ base class Environment {
     AttributeGetter? getAttribute,
     this.getItem = defaults.getItem,
     this.undefined = defaults.undefined,
-  })  : finalize = wrapFinalizer(finalize),
-        globals = <String, Object?>{...defaults.globals},
-        filters = <String, Function>{...defaults.filters},
-        tests = <String, Function>{...defaults.tests},
-        modifiers = <Node Function(Node)>[],
-        templates = <String, Template>{},
-        random = random ?? Random(),
-        getAttribute = wrapGetAttribute(getAttribute, getItem) {
+  }) : finalize = wrapFinalizer(finalize),
+       globals = <String, Object?>{...defaults.globals},
+       filters = <String, Function>{...defaults.filters},
+       tests = <String, Function>{...defaults.tests},
+       modifiers = <Node Function(Node)>[],
+       templates = <String, Template>{},
+       random = random ?? Random(),
+       getAttribute = wrapGetAttribute(getAttribute, getItem) {
     if (newLine != '\r' && newLine != '\n' && newLine != '\r\n') {
       // TODO(environment): add error message
       throw ArgumentError.value(newLine, 'newLine');
@@ -286,7 +286,8 @@ base class Environment {
     if (pass == PassArgument.context) {
       if (context == null) {
         throw TemplateRuntimeError(
-            'Attempted to invoke context function without context.');
+          'Attempted to invoke context function without context.',
+        );
       }
 
       positional = <Object?>[context, ...positional];
@@ -337,12 +338,12 @@ base class Environment {
   /// Parse the list of tokens and return the AST node.
   ///
   /// This can be useful for debugging or to extract information from templates.
-  Node scan(Iterable<Token> tokens, {String? path}) {
+  List<Node> scan(Iterable<Token> tokens, {String? path}) {
     return Parser(this, path: path).scan(tokens);
   }
 
   /// Parse the source code and return the AST node.
-  Node parse(String source, {String? path}) {
+  TemplateNode parse(String source, {String? path}) {
     return Parser(this, path: path).parse(source);
   }
 
@@ -354,22 +355,29 @@ base class Environment {
   }) {
     globals = <String, Object?>{...this.globals, ...?globals};
 
-    var body = parse(source, path: path);
+    Node node = parse(source, path: path);
 
     for (var modifier in modifiers) {
-      body = modifier(body);
+      node = modifier(node);
     }
 
     if (optimize) {
-      body = body.accept(const Optimizer(), Context(this, template: path));
+      node = node.accept(const Optimizer(), Context(this, template: path));
     }
 
-    return Template.fromNode(
-      this,
-      path: path,
-      globals: globals,
-      body: body.accept(RuntimeCompiler(), null),
-    );
+    node = node.accept(RuntimeCompiler(), null);
+
+    TemplateNode body;
+
+    if (node is TemplateNode) {
+      body = node;
+    } else if (node is Output) {
+      body = TemplateNode(nodes: node.nodes);
+    } else {
+      body = TemplateNode(nodes: <Node>[node]);
+    }
+
+    return Template.fromNode(this, path: path, globals: globals, body: body);
   }
 
   /// Load a template by name with `loader` and return a [Template].
@@ -394,7 +402,8 @@ base class Environment {
   Template selectTemplate(List<Object?> names) {
     if (names.isEmpty) {
       throw TemplatesNotFound(
-          message: 'Tried to select from an empty list of templates.');
+        message: 'Tried to select from an empty list of templates.',
+      );
     }
 
     for (var template in names) {
@@ -546,8 +555,8 @@ base class Template {
     this.environment, {
     this.path,
     this.globals = const <String, Object?>{},
-    required Node body,
-  }) : body = body is TemplateNode ? body : TemplateNode(body: body);
+    required this.body,
+  });
 
   /// The environment used to parse and render template.
   final Environment environment;

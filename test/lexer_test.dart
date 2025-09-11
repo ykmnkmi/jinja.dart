@@ -22,19 +22,22 @@ void main() {
 
     test('iter', () {
       var reader = TokenReader(testTokens);
-      expect([for (var token in reader.values) token.type],
-          orderedEquals(<String>['block_begin', 'block_end']));
+      expect([
+        for (var token in reader.values) token.type,
+      ], orderedEquals(<String>['block_begin', 'block_end']));
     });
   });
 
   group('Lexer', () {
     const seq = {
-      'seq': [0, 1, 2]
+      'seq': [0, 1, 2],
     };
 
     test('raw', () {
-      var tmpl = env.fromString('{% raw %}foo{% endraw %}|'
-          '{%raw%}{{ bar }}|{% baz %}{%       endraw    %}');
+      var tmpl = env.fromString(
+        '{% raw %}foo{% endraw %}|'
+        '{%raw%}{{ bar }}|{% baz %}{%       endraw    %}',
+      );
       expect(tmpl.render(), equals('foo|{{ bar }}|{% baz %}'));
     });
 
@@ -45,25 +48,30 @@ void main() {
 
     test('raw3', () {
       var env = Environment(leftStripBlocks: true, trimBlocks: true);
-      var tmpl = env
-          .fromString('bar\n{% raw %}\n  {{baz}}2 spaces\n{% endraw %}\nfoo');
-      expect(tmpl.render({'baz': 'test'}),
-          equals('bar\n\n  {{baz}}2 spaces\nfoo'));
+      var tmpl = env.fromString(
+        'bar\n{% raw %}\n  {{baz}}2 spaces\n{% endraw %}\nfoo',
+      );
+      expect(
+        tmpl.render({'baz': 'test'}),
+        equals('bar\n\n  {{baz}}2 spaces\nfoo'),
+      );
     });
 
     test('raw4', () {
       var env = Environment(leftStripBlocks: true, trimBlocks: false);
       var tmpl = env.fromString(
-          'bar\n{%- raw -%}\n\n  \n  2 spaces\n space{%- endraw -%}\nfoo');
+        'bar\n{%- raw -%}\n\n  \n  2 spaces\n space{%- endraw -%}\nfoo',
+      );
       expect(tmpl.render(), equals('bar2 spaces\n spacefoo'));
     });
 
     test('balancing', () {
       var env = Environment(
-          blockStart: '{%',
-          blockEnd: '%}',
-          variableStart: r'${',
-          variableEnd: '}');
+        blockStart: '{%',
+        blockEnd: '%}',
+        variableStart: r'${',
+        variableEnd: '}',
+      );
       var tmpl = env.fromString(r'''{% for item in seq
             %}${{'foo': item}|string|upper}{% endfor %}''');
       expect(tmpl.render(seq), equals('{FOO: 0}{FOO: 1}{FOO: 2}'));
@@ -71,18 +79,21 @@ void main() {
 
     test('comments', () {
       var env = Environment(
-          blockStart: '<!--',
-          blockEnd: '-->',
-          variableStart: '{',
-          variableEnd: '}');
+        blockStart: '<!--',
+        blockEnd: '-->',
+        variableStart: '{',
+        variableEnd: '}',
+      );
       var tmpl = env.fromString('''
 <ul>
 <!--- for item in seq -->
   <li>{item}</li>
 <!--- endfor -->
 </ul>''');
-      expect(tmpl.render(seq),
-          equals('<ul>\n  <li>0</li>\n  <li>1</li>\n  <li>2</li>\n</ul>'));
+      expect(
+        tmpl.render(seq),
+        equals('<ul>\n  <li>0</li>\n  <li>1</li>\n  <li>2</li>\n</ul>'),
+      );
     });
 
     // not supported
@@ -171,7 +182,7 @@ void main() {
   group('LStripBlocks', () {
     const kvs = [
       ['a', 1],
-      ['b', 2]
+      ['b', 2],
     ];
 
     test('lstrip', () {
@@ -215,7 +226,8 @@ void main() {
     test('lstrip nested', () {
       var env = Environment(leftStripBlocks: true, trimBlocks: false);
       var tmpl = env.fromString(
-          '    {% if true %}a {% if true %}b {% endif %}c {% endif %}');
+        '    {% if true %}a {% if true %}b {% endif %}c {% endif %}',
+      );
       expect(tmpl.render(), equals('a b c '));
     });
 
@@ -248,48 +260,51 @@ hello
 
     test('lstrip angle bracket simple', () {
       var env = Environment(
-          blockStart: '<%',
-          blockEnd: '%>',
-          variableStart: r'${',
-          variableEnd: '}',
-          commentStart: '<%#',
-          commentEnd: '%>',
-          lineCommentPrefix: '##',
-          lineStatementPrefix: '%',
-          leftStripBlocks: true,
-          trimBlocks: true);
+        blockStart: '<%',
+        blockEnd: '%>',
+        variableStart: r'${',
+        variableEnd: '}',
+        commentStart: '<%#',
+        commentEnd: '%>',
+        lineCommentPrefix: '##',
+        lineStatementPrefix: '%',
+        leftStripBlocks: true,
+        trimBlocks: true,
+      );
       var tmpl = env.fromString('    <% if true %>hello    <% endif %>');
       expect(tmpl.render(), equals('hello    '));
     });
 
     test('lstrip angle bracket comment', () {
       var env = Environment(
-          blockStart: '<%',
-          blockEnd: '%>',
-          variableStart: r'${',
-          variableEnd: '}',
-          commentStart: '<%#',
-          commentEnd: '%>',
-          lineCommentPrefix: '##',
-          lineStatementPrefix: '%',
-          leftStripBlocks: true,
-          trimBlocks: true);
+        blockStart: '<%',
+        blockEnd: '%>',
+        variableStart: r'${',
+        variableEnd: '}',
+        commentStart: '<%#',
+        commentEnd: '%>',
+        lineCommentPrefix: '##',
+        lineStatementPrefix: '%',
+        leftStripBlocks: true,
+        trimBlocks: true,
+      );
       var tmpl = env.fromString('    <%# if true %>hello    <%# endif %>');
       expect(tmpl.render(), equals('hello    '));
     });
 
     test('lstrip angle bracket', () {
       var env = Environment(
-          blockStart: '<%',
-          blockEnd: '%>',
-          variableStart: r'${',
-          variableEnd: '}',
-          commentStart: '<%#',
-          commentEnd: '%>',
-          lineCommentPrefix: '##',
-          lineStatementPrefix: '%',
-          leftStripBlocks: true,
-          trimBlocks: true);
+        blockStart: '<%',
+        blockEnd: '%>',
+        variableStart: r'${',
+        variableEnd: '}',
+        commentStart: '<%#',
+        commentEnd: '%>',
+        lineCommentPrefix: '##',
+        lineStatementPrefix: '%',
+        leftStripBlocks: true,
+        trimBlocks: true,
+      );
       var tmpl = env.fromString(r'''
     <%# regular comment %>
     <% for item in seq %>
@@ -300,16 +315,17 @@ ${item} ## the rest of the stuff
 
     test('lstrip angle bracket compact', () {
       var env = Environment(
-          blockStart: '<%',
-          blockEnd: '%>',
-          variableStart: r'${',
-          variableEnd: '}',
-          commentStart: '<%#',
-          commentEnd: '%>',
-          lineCommentPrefix: '##',
-          lineStatementPrefix: '%',
-          leftStripBlocks: true,
-          trimBlocks: true);
+        blockStart: '<%',
+        blockEnd: '%>',
+        variableStart: r'${',
+        variableEnd: '}',
+        commentStart: '<%#',
+        commentEnd: '%>',
+        lineCommentPrefix: '##',
+        lineStatementPrefix: '%',
+        leftStripBlocks: true,
+        trimBlocks: true,
+      );
       var tmpl = env.fromString(r'''
     <%#regular comment%>
     <%for item in seq%>
@@ -320,72 +336,89 @@ ${item} ## the rest of the stuff
 
     test('lstrip blocks outside with new line', () {
       var env = Environment(leftStripBlocks: true, trimBlocks: false);
-      var tmpl = env.fromString('  {% if kvs %}(\n'
-          '   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}\n'
-          '  ){% endif %}');
+      var tmpl = env.fromString(
+        '  {% if kvs %}(\n'
+        '   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}\n'
+        '  ){% endif %}',
+      );
       expect(tmpl.render({'kvs': kvs}), equals('(\na=1 b=2 \n  )'));
     });
 
     test('lstrip trim blocks outside with new line', () {
       var env = Environment(leftStripBlocks: true, trimBlocks: true);
-      var tmpl = env.fromString('  {% if kvs %}(\n'
-          '   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}\n'
-          '  ){% endif %}');
+      var tmpl = env.fromString(
+        '  {% if kvs %}(\n'
+        '   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}\n'
+        '  ){% endif %}',
+      );
       expect(tmpl.render({'kvs': kvs}), equals('(\na=1 b=2   )'));
     });
 
     test('lstrip blocks inside with new line', () {
       var env = Environment(leftStripBlocks: true);
-      var tmpl = env.fromString('  ({% if kvs %}\n'
-          '   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}\n'
-          '  {% endif %})');
+      var tmpl = env.fromString(
+        '  ({% if kvs %}\n'
+        '   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}\n'
+        '  {% endif %})',
+      );
       expect(tmpl.render({'kvs': kvs}), equals('  (\na=1 b=2 \n)'));
     });
 
     test('lstrip trim blocks inside with new line', () {
       var env = Environment(leftStripBlocks: true, trimBlocks: true);
-      var tmpl = env.fromString('  ({% if kvs %}\n'
-          '   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}\n'
-          '  {% endif %})');
+      var tmpl = env.fromString(
+        '  ({% if kvs %}\n'
+        '   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}\n'
+        '  {% endif %})',
+      );
       expect(tmpl.render({'kvs': kvs}), equals('  (a=1 b=2 )'));
     });
 
     test('lstrip blocks without new line', () {
       var env = Environment(leftStripBlocks: true, trimBlocks: false);
-      var tmpl = env.fromString('  {% if kvs %}'
-          '   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}'
-          '  {% endif %}');
+      var tmpl = env.fromString(
+        '  {% if kvs %}'
+        '   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}'
+        '  {% endif %}',
+      );
       expect(tmpl.render({'kvs': kvs}), equals('   a=1 b=2   '));
     });
 
     test('lstrip trim blocks without new line', () {
       var env = Environment(leftStripBlocks: true, trimBlocks: true);
-      var tmpl = env.fromString('  {% if kvs %}'
-          '   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}'
-          '  {% endif %}');
+      var tmpl = env.fromString(
+        '  {% if kvs %}'
+        '   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor %}'
+        '  {% endif %}',
+      );
       expect(tmpl.render({'kvs': kvs}), equals('   a=1 b=2   '));
     });
 
     test('lstrip blocks consume after without new line', () {
       var env = Environment(leftStripBlocks: true, trimBlocks: false);
-      var tmpl = env.fromString('  {% if kvs -%}'
-          '   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor -%}'
-          '  {% endif -%}');
+      var tmpl = env.fromString(
+        '  {% if kvs -%}'
+        '   {% for k, v in kvs %}{{ k }}={{ v }} {% endfor -%}'
+        '  {% endif -%}',
+      );
       expect(tmpl.render({'kvs': kvs}), equals('a=1 b=2 '));
     });
 
     test('lstrip trim blocks consume before without new line', () {
       var env = Environment(leftStripBlocks: false, trimBlocks: false);
-      var tmpl = env.fromString('  {%- if kvs %}'
-          '   {%- for k, v in kvs %}{{ k }}={{ v }} {% endfor -%}'
-          '  {%- endif %}');
+      var tmpl = env.fromString(
+        '  {%- if kvs %}'
+        '   {%- for k, v in kvs %}{{ k }}={{ v }} {% endfor -%}'
+        '  {%- endif %}',
+      );
       expect(tmpl.render({'kvs': kvs}), equals('a=1 b=2 '));
     });
 
     test('lstrip trim blocks comment', () {
       var env = Environment(leftStripBlocks: true, trimBlocks: true);
-      var tmpl =
-          env.fromString(' {# 1 space #}\n  {# 2 spaces #}    {# 4 spaces #}');
+      var tmpl = env.fromString(
+        ' {# 1 space #}\n  {# 2 spaces #}    {# 4 spaces #}',
+      );
       expect(tmpl.render(), equals('    '));
     });
 
@@ -397,14 +430,15 @@ ${item} ## the rest of the stuff
 
     test('php syntax with manual', () {
       var env = Environment(
-          blockStart: '<?',
-          blockEnd: '?>',
-          variableStart: '<?=',
-          variableEnd: '?>',
-          commentStart: '<!--',
-          commentEnd: '-->',
-          leftStripBlocks: true,
-          trimBlocks: true);
+        blockStart: '<?',
+        blockEnd: '?>',
+        variableStart: '<?=',
+        variableEnd: '?>',
+        commentStart: '<!--',
+        commentEnd: '-->',
+        leftStripBlocks: true,
+        trimBlocks: true,
+      );
       var tmpl = env.fromString('''
     <!-- I'm a comment, I'm not interesting -->
     <? for item in seq -?>
@@ -415,72 +449,82 @@ ${item} ## the rest of the stuff
 
     test('php syntax', () {
       var env = Environment(
-          blockStart: '<?',
-          blockEnd: '?>',
-          variableStart: '<?=',
-          variableEnd: '?>',
-          commentStart: '<!--',
-          commentEnd: '-->',
-          leftStripBlocks: true,
-          trimBlocks: true);
+        blockStart: '<?',
+        blockEnd: '?>',
+        variableStart: '<?=',
+        variableEnd: '?>',
+        commentStart: '<!--',
+        commentEnd: '-->',
+        leftStripBlocks: true,
+        trimBlocks: true,
+      );
       var tmpl = env.fromString('''
     <!-- I'm a comment, I'm not interesting -->
     <? for item in seq ?>
         <?= item ?>
     <? endfor ?>''');
-      expect(tmpl.render({'seq': range(5)}),
-          equals([for (var i in range(5)) '        $i\n'].join()));
+      expect(
+        tmpl.render({'seq': range(5)}),
+        equals([for (var i in range(5)) '        $i\n'].join()),
+      );
     });
 
     test('php syntax compact', () {
       var env = Environment(
-          blockStart: '<?',
-          blockEnd: '?>',
-          variableStart: '<?=',
-          variableEnd: '?>',
-          commentStart: '<!--',
-          commentEnd: '-->',
-          leftStripBlocks: true,
-          trimBlocks: true);
+        blockStart: '<?',
+        blockEnd: '?>',
+        variableStart: '<?=',
+        variableEnd: '?>',
+        commentStart: '<!--',
+        commentEnd: '-->',
+        leftStripBlocks: true,
+        trimBlocks: true,
+      );
       var tmpl = env.fromString('''
     <!-- I'm a comment, I'm not interesting -->
     <? for item in seq ?>
         <?= item ?>
     <? endfor ?>''');
-      expect(tmpl.render({'seq': range(5)}),
-          equals([for (var i in range(5)) '        $i\n'].join()));
+      expect(
+        tmpl.render({'seq': range(5)}),
+        equals([for (var i in range(5)) '        $i\n'].join()),
+      );
     });
 
     test('erb syntax', () {
       var env = Environment(
-          blockStart: '<%',
-          blockEnd: '%>',
-          variableStart: '<%=',
-          variableEnd: '%>',
-          commentStart: '<%#',
-          commentEnd: '%>',
-          leftStripBlocks: true,
-          trimBlocks: true);
+        blockStart: '<%',
+        blockEnd: '%>',
+        variableStart: '<%=',
+        variableEnd: '%>',
+        commentStart: '<%#',
+        commentEnd: '%>',
+        leftStripBlocks: true,
+        trimBlocks: true,
+      );
       var tmpl = env.fromString('''
 <%# I'm a comment, I'm not interesting %>
   <% for item in seq %>
   <%= item %>
   <% endfor %>
 ''');
-      expect(tmpl.render({'seq': range(5)}),
-          equals([for (var i in range(5)) '  $i\n'].join()));
+      expect(
+        tmpl.render({'seq': range(5)}),
+        equals([for (var i in range(5)) '  $i\n'].join()),
+      );
     });
 
     test('erb syntax with manual', () {
       var env = Environment(
-          blockStart: '<%',
-          blockEnd: '%>',
-          variableStart: '<%=',
-          variableEnd: '%>',
-          commentStart: '<%#',
-          commentEnd: '%>',
-          leftStripBlocks: true,
-          trimBlocks: true);
+        blockStart: '<%',
+        blockEnd: '%>',
+        variableStart: '<%=',
+        variableEnd: '%>',
+        commentStart: '<%#',
+        commentEnd: '%>',
+        leftStripBlocks: true,
+        trimBlocks: true,
+      );
       var tmpl = env.fromString('''
 <%# I'm a comment, I'm not interesting %>
     <% for item in seq -%>
@@ -491,14 +535,15 @@ ${item} ## the rest of the stuff
 
     test('erb syntax no lstrip', () {
       var env = Environment(
-          blockStart: '<%',
-          blockEnd: '%>',
-          variableStart: '<%=',
-          variableEnd: '%>',
-          commentStart: '<%#',
-          commentEnd: '%>',
-          leftStripBlocks: true,
-          trimBlocks: true);
+        blockStart: '<%',
+        blockEnd: '%>',
+        variableStart: '<%=',
+        variableEnd: '%>',
+        commentStart: '<%#',
+        commentEnd: '%>',
+        leftStripBlocks: true,
+        trimBlocks: true,
+      );
       var tmpl = env.fromString('''
 <%# I'm a comment, I'm not interesting %>
     <%+ for item in seq -%>
@@ -509,14 +554,15 @@ ${item} ## the rest of the stuff
 
     test('comment syntax', () {
       var env = Environment(
-          blockStart: '<!--',
-          blockEnd: '-->',
-          variableStart: r'${',
-          variableEnd: '}',
-          commentStart: '<!--#',
-          commentEnd: '-->',
-          leftStripBlocks: true,
-          trimBlocks: true);
+        blockStart: '<!--',
+        blockEnd: '-->',
+        variableStart: r'${',
+        variableEnd: '}',
+        commentStart: '<!--#',
+        commentEnd: '-->',
+        leftStripBlocks: true,
+        trimBlocks: true,
+      );
       var tmpl = env.fromString(r'''
 <!--# I'm a comment, I'm not interesting --><!-- for item in seq --->
     ${item}
@@ -569,14 +615,16 @@ ${item} ## the rest of the stuff
     test('trim nested', () {
       var env = Environment(leftStripBlocks: true, trimBlocks: true);
       var tmpl = env.fromString(
-          '    {% if true %}\na {% if true %}\nb {% endif %}\nc {% endif %}');
+        '    {% if true %}\na {% if true %}\nb {% endif %}\nc {% endif %}',
+      );
       expect(tmpl.render(), equals('a b c '));
     });
 
     test('no trim nested', () {
       var env = Environment(leftStripBlocks: true, trimBlocks: true);
       var tmpl = env.fromString(
-          '    {% if true +%}\na {% if true +%}\nb {% endif +%}\nc {% endif %}');
+        '    {% if true +%}\na {% if true +%}\nb {% endif +%}\nc {% endif %}',
+      );
       expect(tmpl.render(), equals('\na \nb \nc '));
     });
 
@@ -595,14 +643,16 @@ ${item} ## the rest of the stuff
     test('multiple comment trim lstrip', () {
       var env = Environment(leftStripBlocks: true, trimBlocks: true);
       var tmpl = env.fromString(
-          '   {# comment #}\n\n{# comment2 #}\n   \n{# comment3 #}\n\n ');
+        '   {# comment #}\n\n{# comment2 #}\n   \n{# comment3 #}\n\n ',
+      );
       expect(tmpl.render(), equals('\n   \n\n '));
     });
 
     test('multiple comment no trim lstrip', () {
       var env = Environment(leftStripBlocks: true, trimBlocks: true);
       var tmpl = env.fromString(
-          '   {# comment +#}\n\n{# comment2 +#}\n   \n{# comment3 +#}\n\n ');
+        '   {# comment +#}\n\n{# comment2 +#}\n   \n{# comment3 +#}\n\n ',
+      );
       expect(tmpl.render(), equals('\n\n\n   \n\n\n '));
     });
 
@@ -614,21 +664,23 @@ ${item} ## the rest of the stuff
 
     test('raw no trim lstrip', () {
       var env = Environment(leftStripBlocks: true);
-      var tmpl =
-          env.fromString('{{x}}{% raw %}\n\n    {% endraw %}\n\n{{ y }}');
+      var tmpl = env.fromString(
+        '{{x}}{% raw %}\n\n    {% endraw %}\n\n{{ y }}',
+      );
       expect(tmpl.render({'x': 1, 'y': 2}), equals('1\n\n\n\n2'));
     });
 
     test('no trim angle bracket', () {
       var env = Environment(
-          blockStart: '<%',
-          blockEnd: '%>',
-          variableStart: r'${',
-          variableEnd: '}',
-          commentStart: '<%#',
-          commentEnd: '%>',
-          leftStripBlocks: true,
-          trimBlocks: true);
+        blockStart: '<%',
+        blockEnd: '%>',
+        variableStart: r'${',
+        variableEnd: '}',
+        commentStart: '<%#',
+        commentEnd: '%>',
+        leftStripBlocks: true,
+        trimBlocks: true,
+      );
       var tmpl = env.fromString('    <% if true +%>\n\n    <% endif %>');
       expect(tmpl.render(), equals('\n\n'));
       tmpl = env.fromString('    <%# comment +%>\n\n   ');
@@ -637,13 +689,14 @@ ${item} ## the rest of the stuff
 
     test('no trim php syntax', () {
       var env = Environment(
-          blockStart: '<?',
-          blockEnd: '?>',
-          variableStart: '<?=',
-          variableEnd: '?>',
-          commentStart: '<!--',
-          commentEnd: '-->',
-          trimBlocks: true);
+        blockStart: '<?',
+        blockEnd: '?>',
+        variableStart: '<?=',
+        variableEnd: '?>',
+        commentStart: '<!--',
+        commentEnd: '-->',
+        trimBlocks: true,
+      );
       var tmpl = env.fromString('    <? if true +?>\n\n    <? endif ?>');
       expect(tmpl.render(), equals('    \n\n    '));
       tmpl = env.fromString('    <!-- comment +-->\n\n    ');
