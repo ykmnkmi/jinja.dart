@@ -104,5 +104,38 @@ void main() {
 {{ m(1) }},{{ m(1, b=2) }},{{ m(1, b=2, x=3) }},{{ m(1, x=7) }}''');
       expect(tmpl.render(), equals('1||23,1|2|23,1|2|3,1|7|7'));
     });
+
+    test('recursive macro defined after caller works after hoisting', () {
+      // 'render_list' calls 'render_item' which is defined later.
+      var tmpl = env.fromString('''
+{%- macro render_list(items) -%}
+    {%- for item in items -%}
+        {{ render_item(item) }}
+    {%- endfor -%}
+{%- endmacro -%}
+
+{%- macro render_item(item) -%}
+    {{ item.name }}
+    {%- if item.children -%}
+        {%- for child in item.children -%}
+            {{ render_item(child) }}
+        {%- endfor -%}
+    {%- endif -%}
+{%- endmacro -%}
+
+{{ render_list(data) }}''');
+
+      var data = [
+        {
+          'name': 'A',
+          'children': [
+            {'name': 'A1'}
+          ]
+        },
+        {'name': 'B'}
+      ];
+
+      expect(tmpl.render({'data': data}).trim(), equals('AA1B'));
+    });
   });
 }
