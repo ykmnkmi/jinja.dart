@@ -614,7 +614,7 @@ Object? doItem(Environment environment, Object? value, Object item) {
 /// The exception is in HTML attributes that are double quoted; either use
 /// single quotes or the `|forceescape` filter.
 /// {@endtemplate}
-String doToJson(Object? value, [String? indent]) {
+String doToJson(Object? value, {Object? indent}) {
   return utils.htmlSafeJsonEncode(value, indent);
 }
 
