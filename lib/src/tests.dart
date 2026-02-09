@@ -221,4 +221,5 @@ final Map<String, Function> tests = <String, Function>{
   'lessthan': isLessThan,
   'lt': isLessThan,
   'ne': isNotEqual,
+  'sequence': isIterable,
 };

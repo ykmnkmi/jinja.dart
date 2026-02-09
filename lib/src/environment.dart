@@ -294,6 +294,10 @@ base class Environment {
       positional = <Object?>[this, ...positional];
     }
 
+    if (function is MacroFunction) {
+      return function(positional, named.cast<Symbol, Object?>());
+    }
+
     return Function.apply(function, positional, named);
   }
 

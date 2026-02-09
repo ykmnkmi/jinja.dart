@@ -136,7 +136,21 @@ base class StringSinkRenderer
     MacroCall node,
     StringSinkRenderContext context,
   ) {
-    String macro(List<Object?> positional, Map<Object?, Object?> named) {
+    String macro(List<Object?> positional, Map<Symbol, Object?> named) {
+      if (positional.length == 2 &&
+          positional[0] is List<Object?> &&
+          positional[1] is Map<Object?, Object?>) {
+        // Handle RuntimeCompiler wrapped arguments: [Array, Dict]
+        var p = positional[0] as List<Object?>;
+        var n =
+            (positional[1] as Map<Object?, Object?>).cast<String, Object?>();
+        positional = p;
+        named = <Symbol, Object?>{
+          ...named,
+          for (var MapEntry(:key, :value) in n.entries) Symbol(key): value,
+        };
+      }
+
       var buffer = StringBuffer();
       var derived = context.derived(sink: buffer);
 
@@ -154,16 +168,22 @@ base class StringSinkRenderer
         throw TypeError();
       }
 
-      var remaining = named.keys.toSet();
+      var namedStrings = <String, Object?>{
+        for (var entry in named.entries)
+          entry.key.toString().substring(8, entry.key.toString().length - 2):
+              entry.value,
+      };
+
+      var remaining = namedStrings.keys.toSet();
 
       for (var (argument, defaultValue) in node.named) {
         var key = argument.accept(this, context) as String;
 
         if (remaining.remove(key)) {
-          derived.set(key, named[key]);
+          derived.set(key, namedStrings[key]);
         } else {
           if (defaultValue is Name) {
-            derived.set(key, named[defaultValue.name]);
+            derived.set(key, namedStrings[defaultValue.name]);
           } else {
             derived.set(key, defaultValue.accept(this, context));
           }
@@ -172,7 +192,7 @@ base class StringSinkRenderer
 
       if (node.kwargs) {
         derived.set('kwargs', <Object?, Object?>{
-          for (var key in remaining) key: named[key],
+          for (var key in remaining) key: namedStrings[key],
         });
       } else if (remaining.isNotEmpty) {
         throw TypeError();
@@ -715,6 +735,12 @@ base class StringSinkRenderer
     }
 
     context.set('self', self);
+
+    // Hoist macros enabling forward references and recursion
+    for (var macro in node.macros) {
+      context.set(macro.name, getMacroFunction(macro, context));
+    }
+
     node.body.accept(this, context);
   }
 
