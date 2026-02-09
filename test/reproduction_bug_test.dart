@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 void main() {
   group('Macro Recursion and Order', () {
     test('recursive macro defined after caller works after hoisting', () {
-      final env = Environment();
+      var env = Environment();
       // 'render_list' calls 'render_item' which is defined later.
       const templateSrc = '''
 {%- macro render_list(items) -%}
@@ -24,8 +24,8 @@ void main() {
 
 {{ render_list(data) }}''';
 
-      final template = env.fromString(templateSrc);
-      final data = [
+      var template = env.fromString(templateSrc);
+      var data = [
         {
           'name': 'A',
           'children': [
@@ -35,14 +35,14 @@ void main() {
         {'name': 'B'}
       ];
 
-      final result = template.render({'data': data});
+      var result = template.render({'data': data});
       expect(result.trim(), equals('AA1B'));
     });
   });
 
   group('Sequence Test', () {
     test('sequence test is available', () {
-      final env = Environment();
+      var env = Environment();
       // 'sequence' test should be available now.
       expect(
           env.fromString('{{ [1, 2] is sequence }}').render(), equals('true'));
