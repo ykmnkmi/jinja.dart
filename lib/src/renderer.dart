@@ -357,15 +357,23 @@ base class StringSinkRenderer
       if (start is int) {
         startInt = start < 0 ? length + start : start;
       }
-      if (startInt < 0) startInt = 0;
-      if (startInt > length) startInt = length;
+      if (startInt < 0) {
+        startInt = 0;
+      }
+      if (startInt > length) {
+        startInt = length;
+      }
 
       var stopInt = length;
       if (stop is int) {
         stopInt = stop < 0 ? length + stop : stop;
       }
-      if (stopInt < 0) stopInt = 0;
-      if (stopInt > length) stopInt = length;
+      if (stopInt < 0) {
+        stopInt = 0;
+      }
+      if (stopInt > length) {
+        stopInt = length;
+      }
 
       if (stopInt <= startInt) {
         return value is List ? <Object?>[] : '';
