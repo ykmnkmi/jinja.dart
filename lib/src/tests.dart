@@ -109,23 +109,25 @@ bool isIterable(Object? object) {
 
 /// Check if value is in sequence.
 bool isIn(Object? value, Object? values) {
-  if (values case String strings) {
-    if (value case Pattern pattern) {
-      return strings.contains(pattern);
-    }
-
+  if (values == null) {
     throw TypeError();
   }
+  if (values is String) {
+    if (value is Pattern) {
+      return values.contains(value);
+    }
+    return false;
+  }
 
-  if (values case Iterable<Object?> values) {
+  if (values is Iterable) {
     return values.contains(value);
   }
 
-  if (values case Map<Object?, Object?> map) {
-    return map.containsKey(value);
+  if (values is Map) {
+    return values.containsKey(value);
   }
 
-  throw TypeError();
+  return false;
 }
 
 /// Same as `a != b`.
