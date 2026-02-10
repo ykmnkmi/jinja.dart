@@ -340,7 +340,6 @@ base class StringSinkRenderer
       ScalarOperator.multiple => (left as dynamic) * right,
       // ignore: avoid_dynamic_calls
       ScalarOperator.minus => (left as dynamic) - right,
-      // ignore: avoid_dynamic_calls
       ScalarOperator.plus => (left as dynamic) + right,
     };
   }
