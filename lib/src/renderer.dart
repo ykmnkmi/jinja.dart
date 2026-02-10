@@ -346,12 +346,37 @@ base class StringSinkRenderer
 
   @override
   Object? visitSlice(Slice node, StringSinkRenderContext context) {
-    var value = node.value.accept(this, context);
-    var start = node.start?.accept(this, context) ?? 0;
+    final value = node.value.accept(this, context);
+    var start = node.start?.accept(this, context);
     var stop = node.stop?.accept(this, context);
 
-    if (value is List && start is int && stop is int?) {
-      return value.sublist(start, stop);
+    if (value is List || value is String) {
+      final int length =
+          value is List ? value.length : (value as String).length;
+
+      var startInt = 0;
+      if (start is int) {
+        startInt = start < 0 ? length + start : start;
+      }
+      if (startInt < 0) startInt = 0;
+      if (startInt > length) startInt = length;
+
+      var stopInt = length;
+      if (stop is int) {
+        stopInt = stop < 0 ? length + stop : stop;
+      }
+      if (stopInt < 0) stopInt = 0;
+      if (stopInt > length) stopInt = length;
+
+      if (stopInt <= startInt) {
+        return value is List ? <Object?>[] : '';
+      }
+
+      if (value is List) {
+        return value.sublist(startInt, stopInt);
+      } else {
+        return (value as String).substring(startInt, stopInt);
+      }
     }
 
     throw TemplateRuntimeError('Invalid slice operation.');
