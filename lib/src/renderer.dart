@@ -346,13 +346,12 @@ base class StringSinkRenderer
 
   @override
   Object? visitSlice(Slice node, StringSinkRenderContext context) {
-    final value = node.value.accept(this, context);
+    var value = node.value.accept(this, context);
     var start = node.start?.accept(this, context);
     var stop = node.stop?.accept(this, context);
 
     if (value is List || value is String) {
-      final int length =
-          value is List ? value.length : (value as String).length;
+      int length = value is List ? value.length : (value as String).length;
 
       var startInt = 0;
       if (start is int) {
