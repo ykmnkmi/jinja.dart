@@ -433,6 +433,19 @@ void main() {
       expect(tmpl.render({'string': '<foo>'}), equals('<f4242>'));
     });
 
+    test('regex_replace', () {
+      var tmpl = env.fromString(
+          r'{{ string|regex_replace("([A-Z]+)-([0-9]+)", "$2:$1") }}');
+      expect(tmpl.render({'string': 'REF-42'}), equals('42:REF'));
+
+      tmpl = env.fromString(r'{{ string|regex_replace(" +", "_", count=2) }}');
+      expect(tmpl.render({'string': 'a b c d'}), equals('a_b_c d'));
+
+      tmpl = env.fromString(
+          r'{{ string|regex_replace("^foo", "bar", ignoreCase=true, multiLine=true) }}');
+      expect(tmpl.render({'string': 'Foo\nbaz'}), equals('bar\nbaz'));
+    });
+
     test('forceescape', () {}, skip: 'Not supported.');
 
     test('safe', () {}, skip: 'Not supported.');

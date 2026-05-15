@@ -110,6 +110,57 @@ String doReplace(
   return value;
 }
 
+String _replaceRegexGroups(Match match, String replacement) {
+  return replacement.replaceAllMapped(RegExp(r'(\\|\$)(\d+)'), (ref) {
+    var index = int.parse(ref.group(2)!);
+    if (index > match.groupCount) {
+      return ref.group(0)!;
+    }
+
+    return match.group(index) ?? '';
+  });
+}
+
+/// Return a copy of the value with regular expression matches replaced.
+///
+/// If [count] is greater than zero, only the first `count` matches are
+/// replaced. Replacement references like `$1` and `\1` expand captured groups.
+String doRegexReplace(
+  String value,
+  String pattern,
+  String replacement, {
+  int count = 0,
+  bool ignoreCase = false,
+  bool multiLine = false,
+  bool dotAll = false,
+  bool unicode = false,
+}) {
+  var regex = RegExp(
+    pattern,
+    caseSensitive: !ignoreCase,
+    multiLine: multiLine,
+    dotAll: dotAll,
+    unicode: unicode,
+  );
+
+  if (count <= 0) {
+    return value.replaceAllMapped(
+      regex,
+      (match) => _replaceRegexGroups(match, replacement),
+    );
+  }
+
+  var replaced = 0;
+  return value.replaceAllMapped(regex, (match) {
+    if (replaced >= count) {
+      return match.group(0)!;
+    }
+
+    replaced += 1;
+    return _replaceRegexGroups(match, replacement);
+  });
+}
+
 /// Convert a value to uppercase.
 String doUpper(String value) {
   return value.toUpperCase();
@@ -632,6 +683,7 @@ final Map<String, Function> filters = <String, Function>{
   'string': doString,
   // 'urlencode': doURLEncode,
   'replace': doReplace,
+  'regex_replace': doRegexReplace,
   'upper': doUpper,
   'lower': doLower,
   'items': doItems,
