@@ -137,17 +137,14 @@ base class StringSinkRenderer
     StringSinkRenderContext context,
   ) {
     String macro(List<Object?> positional, Map<Symbol, Object?> named) {
-      if (positional.length == 2 &&
-          positional[0] is List<Object?> &&
-          positional[1] is Map<Object?, Object?>) {
+      if (positional case [List<Object?> p, Map<Object?, Object?> n]) {
         // Handle RuntimeCompiler wrapped arguments: [Array, Dict]
-        var p = positional[0] as List<Object?>;
-        var n =
-            (positional[1] as Map<Object?, Object?>).cast<String, Object?>();
+        var nCasted = n.cast<String, Object?>();
         positional = p;
         named = <Symbol, Object?>{
           ...named,
-          for (var MapEntry(:key, :value) in n.entries) Symbol(key): value,
+          for (var MapEntry(:key, :value) in nCasted.entries)
+            Symbol(key): value,
         };
       }
 

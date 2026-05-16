@@ -1,3 +1,7 @@
+## 0.6.6 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/0.6.5..0.6.6))
+- Fixed:
+  - Fix macro hoisting and runtime argument wrapping #40
+
 ## 0.6.5 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/0.6.4..main))
 - Added:
   - Expressions:
