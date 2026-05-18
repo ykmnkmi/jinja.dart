@@ -29,8 +29,8 @@ typedef ContextFinalizer = Object? Function(Context context, Object? value);
 /// {@macro jinja.finalizer}
 ///
 /// Takes [Environment] as first argument.
-typedef EnvironmentFinalizer = Object? Function(
-    Environment environment, Object? value);
+typedef EnvironmentFinalizer =
+    Object? Function(Environment environment, Object? value);
 
 /// A function that can be used to get object atribute.
 ///
@@ -102,14 +102,14 @@ base class Environment {
     AttributeGetter? getAttribute,
     this.getItem = defaults.getItem,
     this.undefined = defaults.undefined,
-  })  : finalize = wrapFinalizer(finalize),
-        globals = <String, Object?>{...defaults.globals},
-        filters = <String, Function>{...defaults.filters},
-        tests = <String, Function>{...defaults.tests},
-        modifiers = <Node Function(Node)>[],
-        templates = <String, Template>{},
-        random = random ?? Random(),
-        getAttribute = wrapGetAttribute(getAttribute, getItem) {
+  }) : finalize = wrapFinalizer(finalize),
+       globals = <String, Object?>{...defaults.globals},
+       filters = <String, Function>{...defaults.filters},
+       tests = <String, Function>{...defaults.tests},
+       modifiers = <Node Function(Node)>[],
+       templates = <String, Template>{},
+       random = random ?? Random(),
+       getAttribute = wrapGetAttribute(getAttribute, getItem) {
     if (newLine != '\r' && newLine != '\n' && newLine != '\r\n') {
       // TODO(environment): add error message
       throw ArgumentError.value(newLine, 'newLine');
@@ -286,7 +286,8 @@ base class Environment {
     if (pass == PassArgument.context) {
       if (context == null) {
         throw TemplateRuntimeError(
-            'Attempted to invoke context function without context.');
+          'Attempted to invoke context function without context.',
+        );
       }
 
       positional = <Object?>[context, ...positional];
@@ -398,7 +399,8 @@ base class Environment {
   Template selectTemplate(List<Object?> names) {
     if (names.isEmpty) {
       throw TemplatesNotFound(
-          message: 'Tried to select from an empty list of templates.');
+        message: 'Tried to select from an empty list of templates.',
+      );
     }
 
     for (var template in names) {

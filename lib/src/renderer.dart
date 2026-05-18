@@ -114,17 +114,19 @@ base class StringSinkRenderer
 
       if (values.length < names.length) {
         throw StateError(
-            'Not enough values to unpack (expected ${names.length}, '
-            'got ${values.length}).');
+          'Not enough values to unpack (expected ${names.length}, '
+          'got ${values.length}).',
+        );
       }
 
       if (values.length > names.length) {
         throw StateError(
-            'Too many values to unpack (expected ${names.length}).');
+          'Too many values to unpack (expected ${names.length}).',
+        );
       }
 
       return <String, Object?>{
-        for (var i = 0; i < names.length; i++) names[i]: values[i]
+        for (var i = 0; i < names.length; i++) names[i]: values[i],
       };
     }
 
@@ -207,7 +209,7 @@ base class StringSinkRenderer
   @override
   List<Object?> visitArray(Array node, StringSinkRenderContext context) {
     return <Object?>[
-      for (var value in node.values) value.accept(this, context)
+      for (var value in node.values) value.accept(this, context),
     ];
   }
 
@@ -227,12 +229,12 @@ base class StringSinkRenderer
   @override
   Parameters visitCalling(Calling node, StringSinkRenderContext context) {
     var positional = <Object?>[
-      for (var argument in node.arguments) argument.accept(this, context)
+      for (var argument in node.arguments) argument.accept(this, context),
     ];
 
     var named = <Symbol, Object?>{
       for (var (:key, :value) in node.keywords)
-        Symbol(key): value.accept(this, context)
+        Symbol(key): value.accept(this, context),
     };
 
     return (positional, named);
@@ -295,7 +297,7 @@ base class StringSinkRenderer
   Map<Object?, Object?> visitDict(Dict node, StringSinkRenderContext context) {
     return <Object?, Object?>{
       for (var (:key, :value) in node.pairs)
-        key.accept(this, context): value.accept(this, context)
+        key.accept(this, context): value.accept(this, context),
     };
   }
 
@@ -384,7 +386,7 @@ base class StringSinkRenderer
   @override
   List<Object?> visitTuple(Tuple node, StringSinkRenderContext context) {
     return <Object?>[
-      for (var value in node.values) value.accept(this, context)
+      for (var value in node.values) value.accept(this, context),
     ];
   }
 
@@ -571,7 +573,8 @@ base class StringSinkRenderer
 
         if (targetMacro == null) {
           throw TemplateRuntimeError(
-              "The '${template.path}' does not export the requested name.");
+            "The '${template.path}' does not export the requested name.",
+          );
         }
 
         MacroFunction function;
@@ -700,7 +703,8 @@ base class StringSinkRenderer
       if (block.required) {
         Never callback(Context context) {
           throw TemplateRuntimeError(
-              "Required block '${block.name}' not found.");
+            "Required block '${block.name}' not found.",
+          );
         }
 
         blocks.add(callback);
@@ -758,11 +762,11 @@ base class StringSinkRenderer
   @override
   void visitWith(With node, StringSinkRenderContext context) {
     var targets = <Object?>[
-      for (var target in node.targets) target.accept(this, context)
+      for (var target in node.targets) target.accept(this, context),
     ];
 
     var values = <Object?>[
-      for (var value in node.values) value.accept(this, context)
+      for (var value in node.values) value.accept(this, context),
     ];
 
     var data = getDataForTargets(targets, values);

@@ -44,10 +44,7 @@ final class Data extends Node {
 
   @override
   Map<String, Object?> toJson() {
-    return <String, Object?>{
-      'class': 'Data',
-      'data': data,
-    };
+    return <String, Object?>{'class': 'Data', 'data': data};
   }
 }
 
@@ -56,9 +53,7 @@ abstract base class Expression extends Node {
 
   @override
   Map<String, Object?> toJson() {
-    return <String, Object?>{
-      'class': 'Expression',
-    };
+    return <String, Object?>{'class': 'Expression'};
   }
 }
 
@@ -92,10 +87,7 @@ final class Interpolation extends Node {
 
   @override
   Map<String, Object?> toJson() {
-    return <String, Object?>{
-      'class': 'Interpolation',
-      'value': value.toJson(),
-    };
+    return <String, Object?>{'class': 'Interpolation', 'value': value.toJson()};
   }
 }
 
@@ -129,9 +121,7 @@ final class Output extends Node {
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'class': 'Output',
-      'nodes': <Map<String, Object?>>[
-        for (var node in nodes) node.toJson(),
-      ],
+      'nodes': <Map<String, Object?>>[for (var node in nodes) node.toJson()],
     };
   }
 }

@@ -37,16 +37,12 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   Expression visitAttribute(Attribute node, Context context) {
-    return node.copyWith(
-      value: visitNode<Expression>(node.value, context),
-    );
+    return node.copyWith(value: visitNode<Expression>(node.value, context));
   }
 
   @override
   Call visitCall(Call node, Context context) {
-    return node.copyWith(
-      calling: visitNode<Calling>(node.calling, context),
-    );
+    return node.copyWith(calling: visitNode<Calling>(node.calling, context));
   }
 
   @override
@@ -55,7 +51,7 @@ class Optimizer implements Visitor<Context, Node> {
       arguments: visitNodes<Expression>(node.arguments, context),
       keywords: <Keyword>[
         for (var (:key, :value) in node.keywords)
-          (key: key, value: visitNode<Expression>(value, context))
+          (key: key, value: visitNode<Expression>(value, context)),
       ],
     );
   }
@@ -139,7 +135,7 @@ class Optimizer implements Visitor<Context, Node> {
         (
           key: visitNode<Expression>(key, context),
           value: visitNode<Expression>(value, context),
-        )
+        ),
     ];
 
     if (pairs.every((pair) => pair.key is Constant && pair.value is Constant)) {
@@ -157,9 +153,7 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   Filter visitFilter(Filter node, Context context) {
-    return node.copyWith(
-      calling: visitNode<Calling>(node.calling, context),
-    );
+    return node.copyWith(calling: visitNode<Calling>(node.calling, context));
   }
 
   @override
@@ -207,8 +201,10 @@ class Optimizer implements Visitor<Context, Node> {
     if (left is Constant && right is Constant) {
       return Constant(
         value: switch (node.operator) {
-          ScalarOperator.power =>
-            math.pow(left.value as num, right.value as num),
+          ScalarOperator.power => math.pow(
+            left.value as num,
+            right.value as num,
+          ),
           // ignore: avoid_dynamic_calls
           ScalarOperator.module => (left.value as dynamic) % right.value,
           ScalarOperator.floorDivision =>
@@ -239,9 +235,7 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   Test visitTest(Test node, Context context) {
-    return node.copyWith(
-      calling: visitNode<Calling>(node.calling, context),
-    );
+    return node.copyWith(calling: visitNode<Calling>(node.calling, context));
   }
 
   @override
@@ -311,7 +305,7 @@ class Optimizer implements Visitor<Context, Node> {
           (
             visitNode<Expression>(argument, context),
             visitNode<Expression>(defaultValue, context),
-          )
+          ),
       ],
       body: visitNode<Node>(node.body, context),
     );
@@ -384,9 +378,7 @@ class Optimizer implements Visitor<Context, Node> {
 
   @override
   Node visitInterpolation(Interpolation node, Context context) {
-    return node.copyWith(
-      value: visitNode<Expression>(node.value, context),
-    );
+    return node.copyWith(value: visitNode<Expression>(node.value, context));
   }
 
   @override
@@ -398,7 +390,7 @@ class Optimizer implements Visitor<Context, Node> {
           (
             visitNode<Expression>(argument, context),
             visitNode<Expression>(defaultValue, context),
-          )
+          ),
       ],
       body: visitNode<Node>(node.body, context),
     );

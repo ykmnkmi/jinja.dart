@@ -21,10 +21,7 @@ final class Extends extends Statement {
 
   @override
   Map<String, Object?> toJson() {
-    return <String, Object?>{
-      'class': 'Extends',
-      'template': template.toJson(),
-    };
+    return <String, Object?>{'class': 'Extends', 'template': template.toJson()};
   }
 }
 
@@ -126,11 +123,7 @@ final class For extends Statement {
 }
 
 final class If extends Statement {
-  const If({
-    required this.test,
-    required this.body,
-    this.orElse,
-  });
+  const If({required this.test, required this.body, this.orElse});
 
   final Expression test;
 
@@ -144,11 +137,7 @@ final class If extends Statement {
   }
 
   @override
-  If copyWith({
-    Expression? test,
-    Node? body,
-    Node? orElse,
-  }) {
+  If copyWith({Expression? test, Node? body, Node? orElse}) {
     return If(
       test: test ?? this.test,
       body: body ?? this.body,
@@ -190,10 +179,8 @@ final class If extends Statement {
   }
 }
 
-typedef MacroFunction = String Function(
-  List<Object?> positional,
-  Map<Symbol, Object?> named,
-);
+typedef MacroFunction =
+    String Function(List<Object?> positional, Map<Symbol, Object?> named);
 
 typedef MacroSignature = ({
   List<Expression> arguments,
@@ -428,11 +415,7 @@ final class FilterBlock extends Statement {
 }
 
 final class With extends Statement {
-  const With({
-    required this.targets,
-    required this.values,
-    required this.body,
-  });
+  const With({required this.targets, required this.values, required this.body});
 
   final List<Expression> targets;
 
@@ -520,12 +503,7 @@ final class Block extends Statement {
   }
 
   @override
-  Block copyWith({
-    String? name,
-    bool? scoped,
-    bool? required,
-    Node? body,
-  }) {
+  Block copyWith({String? name, bool? scoped, bool? required, Node? body}) {
     return Block(
       name: name ?? this.name,
       scoped: scoped ?? this.scoped,
@@ -618,11 +596,7 @@ final class Import extends Statement implements ImportContext {
   }
 
   @override
-  Import copyWith({
-    Expression? template,
-    String? target,
-    bool? withContext,
-  }) {
+  Import copyWith({Expression? template, String? target, bool? withContext}) {
     return Import(
       template: template ?? this.template,
       target: target ?? this.target,
@@ -696,9 +670,7 @@ final class Do extends Statement {
 
   @override
   Do copyWith({Expression? value}) {
-    return Do(
-      value: value ?? this.value,
-    );
+    return Do(value: value ?? this.value);
   }
 
   @override
@@ -712,10 +684,7 @@ final class Do extends Statement {
 
   @override
   Map<String, Object?> toJson() {
-    return <String, Object?>{
-      'class': 'Do',
-      'value': value,
-    };
+    return <String, Object?>{'class': 'Do', 'value': value};
   }
 }
 
@@ -787,10 +756,7 @@ final class Assign extends Statement {
 
   @override
   Assign copyWith({Expression? target, Expression? value}) {
-    return Assign(
-      target: target ?? this.target,
-      value: value ?? this.value,
-    );
+    return Assign(target: target ?? this.target, value: value ?? this.value);
   }
 
   @override

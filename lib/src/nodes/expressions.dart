@@ -1,19 +1,15 @@
 part of '../nodes.dart';
 
-enum AssignContext {
-  load,
-  store,
-  parameter,
-}
+enum AssignContext { load, store, parameter }
 
 final class Name extends Expression {
   const Name({required this.name, this.context = AssignContext.load});
 
   const Name.store({required String name})
-      : this(name: name, context: AssignContext.store);
+    : this(name: name, context: AssignContext.store);
 
   const Name.parameter({required String name})
-      : this(name: name, context: AssignContext.parameter);
+    : this(name: name, context: AssignContext.parameter);
 
   final String name;
 
@@ -90,10 +86,7 @@ final class Constant extends Literal {
 
   @override
   Map<String, Object?> toJson() {
-    return <String, Object?>{
-      'class': 'Constant',
-      'value': value,
-    };
+    return <String, Object?>{'class': 'Constant', 'value': value};
   }
 }
 
@@ -109,9 +102,7 @@ final class Tuple extends Literal {
 
   @override
   Tuple copyWith({List<Expression>? values}) {
-    return Tuple(
-      values: values ?? this.values,
-    );
+    return Tuple(values: values ?? this.values);
   }
 
   @override
@@ -173,10 +164,7 @@ final class Array extends Literal {
   }
 }
 
-typedef Pair = ({
-  Expression key,
-  Expression value,
-});
+typedef Pair = ({Expression key, Expression value});
 
 final class Dict extends Literal {
   const Dict({required this.pairs});
@@ -216,10 +204,7 @@ final class Dict extends Literal {
       'class': 'Dict',
       'values': <Map<String, Object?>>[
         for (var (:key, :value) in pairs)
-          <String, Object?>{
-            'key': key.toJson(),
-            'value': value.toJson(),
-          },
+          <String, Object?>{'key': key.toJson(), 'value': value.toJson()},
       ],
     };
   }
@@ -351,20 +336,14 @@ final class Calling extends Expression {
       ],
       'keywords': <Map<String, Object?>>[
         for (var (:key, :value) in keywords)
-          <String, Object?>{
-            'key': key,
-            'value': value.toJson(),
-          },
+          <String, Object?>{'key': key, 'value': value.toJson()},
       ],
     };
   }
 }
 
 final class Call extends Expression {
-  const Call({
-    required this.value,
-    this.calling = const Calling(),
-  });
+  const Call({required this.value, this.calling = const Calling()});
 
   final Expression value;
 
@@ -377,10 +356,7 @@ final class Call extends Expression {
 
   @override
   Call copyWith({Expression? value, Calling? calling}) {
-    return Call(
-      value: value ?? this.value,
-      calling: calling ?? this.calling,
-    );
+    return Call(value: value ?? this.value, calling: calling ?? this.calling);
   }
 
   @override
@@ -409,10 +385,7 @@ final class Call extends Expression {
 }
 
 final class Filter extends Expression {
-  const Filter({
-    required this.name,
-    this.calling = const Calling(),
-  });
+  const Filter({required this.name, this.calling = const Calling()});
 
   final String name;
 
@@ -448,10 +421,7 @@ final class Filter extends Expression {
 }
 
 final class Test extends Expression {
-  const Test({
-    required this.name,
-    this.calling = const Calling(),
-  });
+  const Test({required this.name, this.calling = const Calling()});
 
   final String name;
 
@@ -680,10 +650,7 @@ enum CompareOperator {
 typedef Operand = (CompareOperator operator, Expression value);
 
 final class Compare extends Expression {
-  const Compare({
-    required this.value,
-    this.operands = const <Operand>[],
-  });
+  const Compare({required this.value, this.operands = const <Operand>[]});
 
   final Expression value;
 
@@ -695,10 +662,7 @@ final class Compare extends Expression {
   }
 
   @override
-  Compare copyWith({
-    Expression? value,
-    List<Operand>? operands,
-  }) {
+  Compare copyWith({Expression? value, List<Operand>? operands}) {
     return Compare(
       value: value ?? this.value,
       operands: operands ?? this.operands,
@@ -729,10 +693,7 @@ final class Compare extends Expression {
       'value': value.toJson(),
       'operands': <Map<String, Object?>>[
         for (var (operand, value) in operands)
-          <String, Object?>{
-            'operand': operand.symbol,
-            'value': value.toJson(),
-          },
+          <String, Object?>{'operand': operand.symbol, 'value': value.toJson()},
       ],
     };
   }
@@ -869,10 +830,7 @@ final class Scalar extends Binary<ScalarOperator> {
   }
 }
 
-enum LogicalOperator {
-  or,
-  and,
-}
+enum LogicalOperator { or, and }
 
 final class Logical extends Binary<LogicalOperator> {
   const Logical({

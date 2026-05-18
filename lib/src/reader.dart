@@ -3,8 +3,8 @@ import 'package:jinja/src/lexer.dart';
 
 final class TokenReader {
   TokenReader(Iterable<Token> tokens)
-      : iterator = tokens.iterator,
-        pushed = <Token>[] {
+    : iterator = tokens.iterator,
+      pushed = <Token>[] {
     current = const Token.simple(0, 'initial');
     next();
   }

@@ -8,9 +8,9 @@ import 'package:meta/meta.dart';
 @doNotStore
 class RuntimeCompiler implements Visitor<void, Node> {
   RuntimeCompiler()
-      : _imports = <String>{},
-        _macros = <String>{},
-        _inMacro = false;
+    : _imports = <String>{},
+      _macros = <String>{},
+      _inMacro = false;
 
   final Set<String> _imports;
 
@@ -61,7 +61,10 @@ class RuntimeCompiler implements Visitor<void, Node> {
             : <Expression>[Array(values: calling.arguments)];
 
         return node.copyWith(
-          value: Item(key: Constant(value: 'cycle'), value: value),
+          value: Item(
+            key: Constant(value: 'cycle'),
+            value: value,
+          ),
           calling: Calling(arguments: visitNodes(arguments, context)),
         );
       }
@@ -80,7 +83,7 @@ class RuntimeCompiler implements Visitor<void, Node> {
         if (calling.keywords.isNotEmpty) {
           var pairs = <Pair>[
             for (var (:key, :value) in calling.keywords)
-              (key: Constant(value: key), value: value)
+              (key: Constant(value: key), value: value),
           ];
 
           values.add(Dict(pairs: pairs));
@@ -90,7 +93,7 @@ class RuntimeCompiler implements Visitor<void, Node> {
           value: visitNode(node.value, context),
           calling: Calling(
             arguments: <Expression>[
-              if (values.isNotEmpty) Array(values: values)
+              if (values.isNotEmpty) Array(values: values),
             ],
           ),
         );
@@ -106,10 +109,12 @@ class RuntimeCompiler implements Visitor<void, Node> {
           calling: Calling(
             arguments: <Expression>[
               Array(values: arguments.toList()),
-              Dict(pairs: <Pair>[
-                for (var (:key, :value) in keywords)
-                  (key: Constant(value: key), value: value),
-              ]),
+              Dict(
+                pairs: <Pair>[
+                  for (var (:key, :value) in keywords)
+                    (key: Constant(value: key), value: value),
+                ],
+              ),
             ],
           ),
         );
@@ -127,10 +132,12 @@ class RuntimeCompiler implements Visitor<void, Node> {
           calling: Calling(
             arguments: <Expression>[
               Array(values: arguments.toList()),
-              Dict(pairs: <Pair>[
-                for (var (:key, :value) in keywords)
-                  (key: Constant(value: key), value: value),
-              ]),
+              Dict(
+                pairs: <Pair>[
+                  for (var (:key, :value) in keywords)
+                    (key: Constant(value: key), value: value),
+                ],
+              ),
             ],
           ),
         );
@@ -149,7 +156,7 @@ class RuntimeCompiler implements Visitor<void, Node> {
       arguments: visitNodes(node.arguments, context),
       keywords: <Keyword>[
         for (var (:key, :value) in node.keywords)
-          (key: key, value: visitNode(value, context))
+          (key: key, value: visitNode(value, context)),
       ],
     );
   }
@@ -160,7 +167,7 @@ class RuntimeCompiler implements Visitor<void, Node> {
       value: visitNode(node.value, context),
       operands: <Operand>[
         for (var (operator, value) in node.operands)
-          (operator, value.accept(this, context) as Expression)
+          (operator, value.accept(this, context) as Expression),
       ],
     );
   }
@@ -189,7 +196,7 @@ class RuntimeCompiler implements Visitor<void, Node> {
     return node.copyWith(
       pairs: <Pair>[
         for (var (:key, :value) in node.pairs)
-          (key: visitNode(key, context), value: visitNode(value, context))
+          (key: visitNode(key, context), value: visitNode(value, context)),
       ],
     );
   }
@@ -205,16 +212,16 @@ class RuntimeCompiler implements Visitor<void, Node> {
         arguments: <Expression>[
           calling.arguments.first,
           Array(values: calling.arguments.sublist(1)),
-          Dict(pairs: <Pair>[
-            for (var (:key, :value) in calling.keywords)
-              (key: Constant(value: key), value: value)
-          ]),
+          Dict(
+            pairs: <Pair>[
+              for (var (:key, :value) in calling.keywords)
+                (key: Constant(value: key), value: value),
+            ],
+          ),
         ],
       );
 
-      return node.copyWith(
-        calling: visitNode(calling, context),
-      );
+      return node.copyWith(calling: visitNode(calling, context));
     }
 
     return node.copyWith(calling: visitNode(node.calling, context));
@@ -311,7 +318,7 @@ class RuntimeCompiler implements Visitor<void, Node> {
           (
             argument.accept(this, context) as Expression,
             defaultValue.accept(this, context) as Expression,
-          )
+          ),
       ],
       body: visitNode(node.body, context),
     );
@@ -396,9 +403,11 @@ class RuntimeCompiler implements Visitor<void, Node> {
 
     for (var argument in node.positional) {
       if (argument case Name(name: 'caller')) {
-        throw TemplateAssertionError('When defining macros or call blocks '
-            'the special "caller" argument must be omitted or be given a '
-            'default.');
+        throw TemplateAssertionError(
+          'When defining macros or call blocks '
+          'the special "caller" argument must be omitted or be given a '
+          'default.',
+        );
       }
 
       positional.add(argument.accept(this, context) as Expression);

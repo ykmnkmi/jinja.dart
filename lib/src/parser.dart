@@ -7,9 +7,9 @@ import 'package:textwrap/textwrap.dart';
 
 final class Parser {
   Parser(this.environment, {this.path})
-      : endTokensStack = <List<(String, String?)>>[],
-        tagStack = <String>[],
-        blocks = <String>{};
+    : endTokensStack = <List<(String, String?)>>[],
+      tagStack = <String>[],
+      blocks = <String>{};
 
   final Environment environment;
 
@@ -58,16 +58,19 @@ final class Parser {
         messages
           ..add('You probably made a nesting mistake.')
           ..add(
-              'Jinja is expecting this tag, but currently looking for $currentlyLooking.');
+            'Jinja is expecting this tag, but currently looking for $currentlyLooking.',
+          );
       } else {
         messages.add(
-            'Jinja was looking for the following tags: $currentlyLooking.');
+          'Jinja was looking for the following tags: $currentlyLooking.',
+        );
       }
     }
 
     if (tagStack.isNotEmpty) {
       messages.add(
-          "The innermost block that needs to be closed is '${tagStack.last}'.");
+        "The innermost block that needs to be closed is '${tagStack.last}'.",
+      );
     }
 
     fail(messages.join(' '), line);
@@ -89,9 +92,10 @@ final class Parser {
   ]) {
     return switch (reader.current.type) {
       'variable_end' || 'block_end' || 'rparen' => true,
-      _ => extraEndRules != null && extraEndRules.isNotEmpty
-          ? reader.current.testAny(extraEndRules)
-          : false,
+      _ =>
+        extraEndRules != null && extraEndRules.isNotEmpty
+            ? reader.current.testAny(extraEndRules)
+            : false,
     };
   }
 
@@ -339,8 +343,10 @@ final class Parser {
     var body = parseStatements(reader, endBlock, true);
 
     if (required && (body is! Data || !body.isLeaf)) {
-      fail('Required blocks can only contain comments or whitespace.',
-          token.line);
+      fail(
+        'Required blocks can only contain comments or whitespace.',
+        token.line,
+      );
     }
 
     var maybeName = reader.current;
@@ -374,14 +380,8 @@ final class Parser {
     return node;
   }
 
-  bool parseImportContext(
-    TokenReader reader, [
-    bool defaultValue = true,
-  ]) {
-    const keywords = <(String, String?)>[
-      ('name', 'with'),
-      ('name', 'without'),
-    ];
+  bool parseImportContext(TokenReader reader, [bool defaultValue = true]) {
+    const keywords = <(String, String?)>[('name', 'with'), ('name', 'without')];
 
     var withContext = defaultValue;
 
@@ -398,7 +398,8 @@ final class Parser {
     reader.expect('name', 'include');
 
     var template = parseExpression(reader);
-    var ignoreMissing = reader.current.test('name', 'ignore') &&
+    var ignoreMissing =
+        reader.current.test('name', 'ignore') &&
         reader.look().test('name', 'missing');
 
     if (ignoreMissing) {
@@ -464,8 +465,10 @@ final class Parser {
         var target = parseAssignName(reader);
 
         if (target.name.startsWith('_')) {
-          fail('Names starting with an underline can not be imported.',
-              token.line);
+          fail(
+            'Names starting with an underline can not be imported.',
+            token.line,
+          );
         }
 
         if (reader.skipIf('name', 'as')) {
@@ -812,7 +815,7 @@ final class Parser {
       ('lt', null),
       ('lteq', null),
       ('gt', null),
-      ('gteq', null)
+      ('gteq', null),
     ];
 
     var value = parseMath1(reader);
@@ -1098,8 +1101,10 @@ final class Parser {
 
       if (!explicitParentheses) {
         var current = reader.current;
-        fail('Expected an expression, got ${describeToken(current)}.',
-            current.line);
+        fail(
+          'Expected an expression, got ${describeToken(current)}.',
+          current.line,
+        );
       }
     }
 
@@ -1271,10 +1276,7 @@ final class Parser {
 
     reader.expect('rparen');
 
-    return Calling(
-      arguments: arguments,
-      keywords: keywords,
-    );
+    return Calling(arguments: arguments, keywords: keywords);
   }
 
   Call parseCall(TokenReader reader, Expression expression) {
@@ -1331,7 +1333,7 @@ final class Parser {
     const deny = <(String, String?)>[
       ('name', 'else'),
       ('name', 'or'),
-      ('name', 'and')
+      ('name', 'and'),
     ];
 
     reader.expect('name', 'is');

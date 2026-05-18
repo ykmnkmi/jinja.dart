@@ -9,40 +9,49 @@ void main() {
   group('Parser', () {
     test('php syntax', () {
       var env = Environment(
-          blockStart: '<?',
-          blockEnd: '?>',
-          variableStart: '<?=',
-          variableEnd: '?>',
-          commentStart: '<!--',
-          commentEnd: '-->');
-      var tmpl = env.fromString("<!-- I'm a comment -->"
-          '<? for item in seq -?>\n    <?= item ?>\n<?- endfor ?>');
+        blockStart: '<?',
+        blockEnd: '?>',
+        variableStart: '<?=',
+        variableEnd: '?>',
+        commentStart: '<!--',
+        commentEnd: '-->',
+      );
+      var tmpl = env.fromString(
+        "<!-- I'm a comment -->"
+        '<? for item in seq -?>\n    <?= item ?>\n<?- endfor ?>',
+      );
       expect(tmpl.render({'seq': range(5)}), equals('01234'));
     });
 
     test('erb syntax', () {
       var env = Environment(
-          blockStart: '<%',
-          blockEnd: '%>',
-          variableStart: '<%=',
-          variableEnd: '%>',
-          commentStart: '<%#',
-          commentEnd: '%>');
-      var tmpl = env.fromString("<%# I'm a comment %>"
-          '<% for item in seq -%>\n    <%= item %><%- endfor %>');
+        blockStart: '<%',
+        blockEnd: '%>',
+        variableStart: '<%=',
+        variableEnd: '%>',
+        commentStart: '<%#',
+        commentEnd: '%>',
+      );
+      var tmpl = env.fromString(
+        "<%# I'm a comment %>"
+        '<% for item in seq -%>\n    <%= item %><%- endfor %>',
+      );
       expect(tmpl.render({'seq': range(5)}), equals('01234'));
     });
 
     test('comment syntax', () {
       var env = Environment(
-          blockStart: '<!--',
-          blockEnd: '-->',
-          variableStart: '\${',
-          variableEnd: '}',
-          commentStart: '<!--#',
-          commentEnd: '-->');
-      var tmpl = env.fromString("<!--# I'm a comment -->"
-          '<!-- for item in seq --->    \${item}<!--- endfor -->');
+        blockStart: '<!--',
+        blockEnd: '-->',
+        variableStart: '\${',
+        variableEnd: '}',
+        commentStart: '<!--#',
+        commentEnd: '-->',
+      );
+      var tmpl = env.fromString(
+        "<!--# I'm a comment -->"
+        '<!-- for item in seq --->    \${item}<!--- endfor -->',
+      );
       expect(tmpl.render({'seq': range(5)}), equals('01234'));
     });
 
@@ -61,17 +70,20 @@ void main() {
 
     test('line syntax', () {
       var env = Environment(
-          blockStart: '<%',
-          blockEnd: '%>',
-          variableStart: '\${',
-          variableEnd: '}',
-          commentStart: '<%#',
-          commentEnd: '%>',
-          lineCommentPrefix: '##',
-          lineStatementPrefix: '%');
+        blockStart: '<%',
+        blockEnd: '%>',
+        variableStart: '\${',
+        variableEnd: '}',
+        commentStart: '<%#',
+        commentEnd: '%>',
+        lineCommentPrefix: '##',
+        lineStatementPrefix: '%',
+      );
       var sequence = range(5).toList();
-      var tmpl = env.fromString('<%# regular comment %>\n% for item in seq:\n'
-          '    \${item} ## the rest of the stuff\n% endfor');
+      var tmpl = env.fromString(
+        '<%# regular comment %>\n% for item in seq:\n'
+        '    \${item} ## the rest of the stuff\n% endfor',
+      );
       var result = tmpl
           .render({'seq': sequence})
           .split(RegExp(r'\s+'))
@@ -85,27 +97,33 @@ void main() {
     test('line syntax priority', () {
       var seq = [1, 2];
       var env = Environment(
-          variableStart: '\${',
-          variableEnd: '}',
-          commentStart: '/*',
-          commentEnd: '*/',
-          lineCommentPrefix: '#',
-          lineStatementPrefix: '##');
-      var tmpl = env.fromString("/* ignore me.\n   I'm a multiline comment */\n"
-          '## for item in seq:\n* \${item}          '
-          '# this is just extra stuff\n## endfor\n');
+        variableStart: '\${',
+        variableEnd: '}',
+        commentStart: '/*',
+        commentEnd: '*/',
+        lineCommentPrefix: '#',
+        lineStatementPrefix: '##',
+      );
+      var tmpl = env.fromString(
+        "/* ignore me.\n   I'm a multiline comment */\n"
+        '## for item in seq:\n* \${item}          '
+        '# this is just extra stuff\n## endfor\n',
+      );
       expect(tmpl.render({'seq': seq}).trim(), equals('* 1\n* 2'));
       env = Environment(
-          variableStart: '\${',
-          variableEnd: '}',
-          commentStart: '/*',
-          commentEnd: '*/',
-          lineCommentPrefix: '##',
-          lineStatementPrefix: '#');
-      tmpl = env.fromString("/* ignore me.\n   I'm a multiline comment */\n"
-          '# for item in seq:\n* \${item}          '
-          '## this is just extra stuff\n    '
-          '## extra stuff i just want to ignore\n# endfor');
+        variableStart: '\${',
+        variableEnd: '}',
+        commentStart: '/*',
+        commentEnd: '*/',
+        lineCommentPrefix: '##',
+        lineStatementPrefix: '#',
+      );
+      tmpl = env.fromString(
+        "/* ignore me.\n   I'm a multiline comment */\n"
+        '# for item in seq:\n* \${item}          '
+        '## this is just extra stuff\n    '
+        '## extra stuff i just want to ignore\n# endfor',
+      );
       expect(tmpl.render({'seq': seq}).trim(), equals('* 1\n\n* 2'));
     });
 
@@ -114,34 +132,44 @@ void main() {
 
       void assertError(String source, String expekted) {
         expect(
-            () => env.fromString(source),
-            throwsA(predicate<TemplateSyntaxError>(
-                (error) => error.message == expekted)));
+          () => env.fromString(source),
+          throwsA(
+            predicate<TemplateSyntaxError>(
+              (error) => error.message == expekted,
+            ),
+          ),
+        );
       }
 
       assertError(
-          '{% for item in seq %}...{% endif %}',
-          "Encountered unknown tag 'endif'. Jinja was looking "
-              "for the following tags: 'endfor' or 'else'. The "
-              "innermost block that needs to be closed is 'for'.");
+        '{% for item in seq %}...{% endif %}',
+        "Encountered unknown tag 'endif'. Jinja was looking "
+            "for the following tags: 'endfor' or 'else'. The "
+            "innermost block that needs to be closed is 'for'.",
+      );
       assertError(
-          '{% if foo %}{% for item in seq %}...{% endfor %}{% endfor %}',
-          "Encountered unknown tag 'endfor'. Jinja was looking for "
-              "the following tags: 'elif' or 'else' or 'endif'. The "
-              "innermost block that needs to be closed is 'if'.");
+        '{% if foo %}{% for item in seq %}...{% endfor %}{% endfor %}',
+        "Encountered unknown tag 'endfor'. Jinja was looking for "
+            "the following tags: 'elif' or 'else' or 'endif'. The "
+            "innermost block that needs to be closed is 'if'.",
+      );
       assertError(
-          '{% if foo %}',
-          'Unexpected end of template. Jinja was looking for the '
-              "following tags: 'elif' or 'else' or 'endif'. The "
-              "innermost block that needs to be closed is 'if'.");
+        '{% if foo %}',
+        'Unexpected end of template. Jinja was looking for the '
+            "following tags: 'elif' or 'else' or 'endif'. The "
+            "innermost block that needs to be closed is 'if'.",
+      );
       assertError(
-          '{% for item in seq %}',
-          'Unexpected end of template. Jinja was looking for the '
-              "following tags: 'endfor' or 'else'. The innermost block "
-              "that needs to be closed is 'for'.");
+        '{% for item in seq %}',
+        'Unexpected end of template. Jinja was looking for the '
+            "following tags: 'endfor' or 'else'. The innermost block "
+            "that needs to be closed is 'for'.",
+      );
       assertError('{% block foo-bar-baz %}', 'Use an underscore instead.');
       assertError(
-          '{% unknown_tag %}', "Encountered unknown tag 'unknown_tag'.");
+        '{% unknown_tag %}',
+        "Encountered unknown tag 'unknown_tag'.",
+      );
     });
   });
 }

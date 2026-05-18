@@ -87,12 +87,7 @@ String doString(Object? value) {
 /// the second is the replacement string.
 /// If the optional third argument [count] is given, only the first
 /// `count` occurrences are replaced.
-String doReplace(
-  String value,
-  String from,
-  String to, [
-  int? count,
-]) {
+String doReplace(String value, String from, String to, [int? count]) {
   if (count == null) {
     value = value.replaceAll(from, to);
   } else {
@@ -159,9 +154,10 @@ List<Object?> doDictSort(
     'key' => 0,
     'value' => 1,
     Object? value => throw ArgumentError.value(
-        value,
-        'by'
-        "You can only sort by either 'key' or 'value'."),
+      value,
+      'by'
+      "You can only sort by either 'key' or 'value'.",
+    ),
   };
 
   var order = reverse ? -1 : 1;
@@ -211,10 +207,7 @@ Object? doDefault(
 ///
 /// The separator between elements is an empty string per
 /// default, you can define it with the optional parameter
-Object doJoin(
-  Iterable<Object?> values, [
-  String delimiter = '',
-]) {
+Object doJoin(Iterable<Object?> values, [String delimiter = '']) {
   return values.join(delimiter);
 }
 
@@ -328,10 +321,16 @@ String doTruncate(
 ]) {
   if (length < end.length) {
     throw ArgumentError.value(
-        value, 'leeway', 'Expected length >= ${end.length}, got $length.');
+      value,
+      'leeway',
+      'Expected length >= ${end.length}, got $length.',
+    );
   } else if (leeway < 0) {
     throw ArgumentError.value(
-        value, 'leeway', 'Expected leeway >= 0, got $leeway.');
+      value,
+      'leeway',
+      'Expected leeway >= 0, got $leeway.',
+    );
   }
 
   if (value.length <= length + leeway) {
@@ -530,11 +529,17 @@ Object? Function(Object? object) _prepareMap(
       if (named.isNotEmpty) {
         var first = named.keys.first;
         throw ArgumentError.value(
-            named[first], first, 'Unexpected keyword argument.');
+          named[first],
+          first,
+          'Unexpected keyword argument.',
+        );
       }
 
-      return makeAttributeGetter(context.environment, attribute,
-          defaultValue: defaultValue);
+      return makeAttributeGetter(
+        context.environment,
+        attribute,
+        defaultValue: defaultValue,
+      );
     }
 
     if (named.remove('item') case Object item?) {
@@ -543,11 +548,17 @@ Object? Function(Object? object) _prepareMap(
       if (named.isNotEmpty) {
         var first = named.keys.first;
         throw ArgumentError.value(
-            named[first], first, 'Unexpected keyword argument.');
+          named[first],
+          first,
+          'Unexpected keyword argument.',
+        );
       }
 
-      return makeItemGetter(context.environment, item,
-          defaultValue: defaultValue);
+      return makeItemGetter(
+        context.environment,
+        item,
+        defaultValue: defaultValue,
+      );
     }
   }
 
@@ -557,7 +568,7 @@ Object? Function(Object? object) _prepareMap(
     positional = positional.sublist(1);
 
     var symbols = <Symbol, Object?>{
-      for (var MapEntry(:key, :value) in named.entries) Symbol(key): value
+      for (var MapEntry(:key, :value) in named.entries) Symbol(key): value,
     };
 
     Object? getter(Object? object) {

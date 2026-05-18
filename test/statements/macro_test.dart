@@ -91,9 +91,11 @@ void main() {
     test('macro api', () {}, skip: 'Not supported.');
 
     test('callself', () {
-      var tmpl = env.fromString('{% macro foo(x) %}{{ x }}{% if x > 1 %}|'
-          '{{ foo(x - 1) }}{% endif %}{% endmacro %}'
-          '{{ foo(5) }}');
+      var tmpl = env.fromString(
+        '{% macro foo(x) %}{{ x }}{% if x > 1 %}|'
+        '{{ foo(x - 1) }}{% endif %}{% endmacro %}'
+        '{{ foo(5) }}',
+      );
       expect(tmpl.render(), equals('5|4|3|2|1'));
     });
 
@@ -129,10 +131,10 @@ void main() {
         {
           'name': 'A',
           'children': [
-            {'name': 'A1'}
-          ]
+            {'name': 'A1'},
+          ],
         },
-        {'name': 'B'}
+        {'name': 'B'},
       ];
 
       expect(tmpl.render({'data': data}).trim(), equals('AA1B'));

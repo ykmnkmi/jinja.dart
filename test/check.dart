@@ -49,11 +49,7 @@ void main() {
 
 const LineSplitter splitter = LineSplitter();
 
-void compare(
-  String originalJson,
-  String optimizedJson,
-  String compiledJson,
-) {
+void compare(String originalJson, String optimizedJson, String compiledJson) {
   if (!stdout.hasTerminal) {
     return;
   }

@@ -1,3 +1,8 @@
+## 0.6.7 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/0.6.6..0.6.7))
+- Bump SDK version to 3.11.0.
+- Update dependencies.
+- Format.
+
 ## 0.6.6 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/0.6.5..0.6.6))
 - Fixed:
   - Fix macro hoisting and runtime argument wrapping #40
