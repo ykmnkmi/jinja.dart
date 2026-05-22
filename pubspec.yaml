@@ -6,7 +6,7 @@ description: >-
 repository: https://github.com/ykmnkmi/jinja.dart
 
 environment:
-  sdk: ">=3.11.0 <4.0.0"
+  sdk: ">=3.12.0 <4.0.0"
 
 dependencies:
   html_unescape: ^2.0.0
