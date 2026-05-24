@@ -8,7 +8,7 @@ abstract class TemplateError implements Exception {
 
   @override
   String toString() {
-    if (message case var message?) {
+    if (message != null) {
       return 'TemplateError: $message';
     }
 
@@ -16,21 +16,21 @@ abstract class TemplateError implements Exception {
   }
 }
 
-/// Raised if a template does not exist.
+/// Thrown if a template does not exist.
 class TemplateNotFound extends TemplateError {
   /// Creates a new [TemplateNotFound].
-  TemplateNotFound({this.name, String? message}) : super(message);
+  TemplateNotFound({String? message, this.name}) : super(message);
 
   /// The name of the template that was not found.
   final String? name;
 
   @override
   String toString() {
-    if (message case var message?) {
+    if (message != null) {
       return 'TemplateNotFound: $message';
     }
 
-    if (name case var name?) {
+    if (name != null) {
       return 'TemplateNotFound: $name';
     }
 
@@ -38,34 +38,36 @@ class TemplateNotFound extends TemplateError {
   }
 }
 
-/// Like [TemplateNotFound], but raised if multiple templates are selected.
+/// Like [TemplateNotFound], but thrown if multiple templates are selected.
 class TemplatesNotFound extends TemplateNotFound {
   /// Creates a new [TemplatesNotFound].
-  TemplatesNotFound({this.names, super.message}) : super(name: names?.last);
+  TemplatesNotFound({super.message, this.names}) : super(name: names?.last);
 
   /// The names of the templates that were not found.
   final List<String>? names;
 
   @override
   String toString() {
-    if (message case var message?) {
+    if (message != null) {
       return 'TemplatesNotFound: $message';
     }
 
-    if (names case var names?) {
-      return 'TemplatesNotFound: '
-          'none of the templates given were found: '
-          '${names.join(', ')}';
+    if (names != null) {
+      return 'TemplatesNotFound: none of the templates given were found: '
+          '${names!.join(', ')}';
     }
 
-    return 'TemplatesNotFound';
+    return 'TemplatesNotFound: $message';
   }
 }
 
-/// Raised to tell the user that there is a problem with the template.
+/// Thrown to tell the user that there is a problem with the template.
 class TemplateSyntaxError extends TemplateError {
   /// Creates a new [TemplateSyntaxError].
-  TemplateSyntaxError(super.message, {this.path, this.line});
+  TemplateSyntaxError(super.message, {this.name, this.path, this.line});
+
+  /// The name of the template that caused the error.
+  final String? name;
 
   /// The path to the template that caused the error.
   final String? path;
@@ -73,60 +75,56 @@ class TemplateSyntaxError extends TemplateError {
   /// The line in the template that caused the error.
   final int? line;
 
-  @override
-  String toString() {
-    var buffer = StringBuffer('TemplateSyntaxError');
+  String _toString(String type) {
+    var buffer = StringBuffer(type);
 
-    if (path case var path?) {
-      buffer
-        ..write(", file '")
-        ..write(path)
-        ..write("'");
+    if (path != null) {
+      buffer.write(" path '$path'");
+    }
+    if (name != null) {
+      buffer.write(" name '$name'");
     }
 
-    if (line case var line?) {
-      buffer
-        ..write(', line ')
-        ..write(line);
+    if (line != null) {
+      buffer.write(" line '$line'");
     }
 
-    if (message case var message?) {
-      buffer
-        ..write(': ')
-        ..write(message);
+    if (message != null) {
+      buffer.write(': $message');
     }
 
     return buffer.toString();
+  }
+
+  @override
+  String toString() {
+    return _toString('TemplateSyntaxError');
   }
 }
 
 /// Like a [TemplateSyntaxError], but covers cases where something in the
 /// template caused an error at parsing time that wasn't necessarily caused
 /// by a syntax error.
-class TemplateAssertionError extends TemplateError {
+class TemplateAssertionError extends TemplateSyntaxError {
   /// Creates a new [TemplateAssertionError].
-  TemplateAssertionError([super.message]);
+  TemplateAssertionError(super.message, {super.name, super.path, super.line});
 
   @override
   String toString() {
-    if (message case var message?) {
-      return 'TemplateAssertionError: $message';
-    }
-
-    return 'TemplateAssertionError';
+    return _toString('TemplateAssertionError');
   }
 }
 
 /// A generic runtime error in the template engine.
 ///
-/// Under some situations Jinja may raise this exception.
+/// Under some situations Jinja may throw this exception.
 class TemplateRuntimeError extends TemplateError {
   /// Creates a new [TemplateRuntimeError].
   TemplateRuntimeError([super.message]);
 
   @override
   String toString() {
-    if (message case var message?) {
+    if (message != null) {
       return 'TemplateRuntimeError: $message';
     }
 
@@ -134,14 +132,14 @@ class TemplateRuntimeError extends TemplateError {
   }
 }
 
-/// Raised if a variable is undefined.
+/// Thrown if a variable is undefined.
 class UndefinedError extends TemplateRuntimeError {
   /// Creates a new [UndefinedError].
   UndefinedError([super.message]);
 
   @override
   String toString() {
-    if (message case var message?) {
+    if (message != null) {
       return 'UndefinedError: $message';
     }
 
