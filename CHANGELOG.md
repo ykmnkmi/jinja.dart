@@ -1,5 +1,6 @@
 ## dev
 - Bump SDK version to 3.12.0.
+- Lexer rewrite.
 - Refactoring.
 
 ## 0.6.7 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/0.6.6..0.6.7))

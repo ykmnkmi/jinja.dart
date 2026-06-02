@@ -2,7 +2,6 @@ import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/exceptions.dart';
 import 'package:jinja/src/lexer.dart';
 import 'package:jinja/src/nodes.dart';
-import 'package:jinja/src/reader.dart';
 import 'package:textwrap/textwrap.dart';
 
 final class Parser {
@@ -36,12 +35,12 @@ final class Parser {
     String? currentlyLooking;
 
     for (var tokens in endTokensStack) {
-      expected.addAll(tokens.map<String>(describeExpression));
+      expected.addAll(tokens.map<String>(describeTokenRecord));
     }
 
     if (endTokensStack.isNotEmpty) {
       currentlyLooking = endTokensStack.last
-          .map<String>((token) => "'${describeExpression(token)}'")
+          .map<String>((token) => "'${describeTokenRecord(token)}'")
           .join(' or ');
     }
 
@@ -91,10 +90,10 @@ final class Parser {
     List<(String, String?)>? extraEndRules,
   ]) {
     return switch (reader.current.type) {
-      'variable_end' || 'block_end' || 'rparen' => true,
+      TokenType.variableEnd || TokenType.blockEnd || TokenType.rParen => true,
       _ =>
         extraEndRules != null && extraEndRules.isNotEmpty
-            ? reader.current.testAny(extraEndRules)
+            ? reader.current.matchAny(extraEndRules)
             : false,
     };
   }
@@ -102,7 +101,7 @@ final class Parser {
   Node parseStatement(TokenReader reader) {
     var token = reader.current;
 
-    if (!token.test('name')) {
+    if (token.type != TokenType.name) {
       fail('Tag name expected', token.line);
     }
 
@@ -171,12 +170,12 @@ final class Parser {
     List<(String, String?)> endTokens, [
     bool dropNeedle = false,
   ]) {
-    reader.skipIf('colon');
-    reader.expect('block_end');
+    reader.skipIf(TokenType.colon);
+    reader.expect(TokenType.blockEnd);
 
     var nodes = subParse(reader, endTokens: endTokens);
 
-    if (reader.current.test('eof')) {
+    if (reader.current.type == TokenType.eof) {
       failEof(endTokens);
     }
 
@@ -196,13 +195,13 @@ final class Parser {
   }
 
   Statement parseSet(TokenReader reader) {
-    const endSet = <(String, String?)>[('name', 'endset')];
+    const endSet = <(String, String?)>[(TokenType.name, 'endset')];
 
-    reader.expect('name', 'set');
+    reader.expect(TokenType.name, 'set');
 
     var target = parseAssignNameSpace(reader);
 
-    if (reader.skipIf('assign')) {
+    if (reader.skipIf(TokenType.assign)) {
       var expression = parseTuple(reader);
       return Assign(target: target, value: expression);
     }
@@ -213,14 +212,14 @@ final class Parser {
   }
 
   For parseFor(TokenReader reader) {
-    const endIn = <(String, String?)>[('name', 'in')];
-    const endFor = <(String, String?)>[('name', 'endfor')];
+    const endIn = <(String, String?)>[(TokenType.name, 'in')];
+    const endFor = <(String, String?)>[(TokenType.name, 'endfor')];
     const endForElse = <(String, String?)>[
-      ('name', 'endfor'),
-      ('name', 'else'),
+      (TokenType.name, 'endfor'),
+      (TokenType.name, 'else'),
     ];
 
-    reader.expect('name', 'for');
+    reader.expect(TokenType.name, 'for');
 
     var target = parseAssignTarget(reader, extraEndRules: endIn);
 
@@ -228,20 +227,20 @@ final class Parser {
       fail("Can't assign to special loop variable in for-loop target.");
     }
 
-    reader.expect('name', 'in');
+    reader.expect(TokenType.name, 'in');
 
     var iterable = parseTuple(reader, withCondition: false);
     Expression? test;
 
-    if (reader.skipIf('name', 'if')) {
+    if (reader.skipIf(TokenType.name, 'if')) {
       test = parseExpression(reader);
     }
 
-    var recursive = reader.skipIf('name', 'recursive');
+    var recursive = reader.skipIf(TokenType.name, 'recursive');
     var body = parseStatements(reader, endForElse);
     Node? orElse;
 
-    if (reader.next().test('name', 'else')) {
+    if (reader.next().match(TokenType.name, 'else')) {
       orElse = parseStatements(reader, endFor, true);
     }
 
@@ -256,14 +255,14 @@ final class Parser {
   }
 
   If parseIf(TokenReader reader) {
-    const endIf = <(String, String?)>[('name', 'endif')];
+    const endIf = <(String, String?)>[(TokenType.name, 'endif')];
     const endIfElseEndIf = <(String, String?)>[
-      ('name', 'elif'),
-      ('name', 'else'),
-      ('name', 'endif'),
+      (TokenType.name, 'elif'),
+      (TokenType.name, 'else'),
+      (TokenType.name, 'endif'),
     ];
 
-    reader.expect('name', 'if');
+    reader.expect(TokenType.name, 'if');
 
     var test = parseExpression(reader, false);
     var body = parseStatements(reader, endIfElseEndIf);
@@ -274,7 +273,7 @@ final class Parser {
     while (true) {
       tag = reader.next();
 
-      if (tag.test('name', 'elif')) {
+      if (tag.match(TokenType.name, 'elif')) {
         var test = parseTuple(reader, withCondition: false);
         var body = parseStatements(reader, endIfElseEndIf);
         var elif = If(test: test, body: body);
@@ -287,7 +286,7 @@ final class Parser {
 
     Node? orElse;
 
-    if (tag.test('name', 'else')) {
+    if (tag.match(TokenType.name, 'else')) {
       orElse = parseStatements(reader, endIf, true);
     }
 
@@ -301,21 +300,21 @@ final class Parser {
   }
 
   With parseWith(TokenReader reader) {
-    const endWith = <(String, String?)>[('name', 'endwith')];
+    const endWith = <(String, String?)>[(TokenType.name, 'endwith')];
 
-    reader.expect('name', 'with');
+    reader.expect(TokenType.name, 'with');
 
     var targets = <Expression>[];
     var values = <Expression>[];
 
-    while (!reader.current.test('block_end')) {
+    while (reader.current.type != TokenType.blockEnd) {
       if (targets.isNotEmpty) {
-        reader.expect('comma');
+        reader.expect(TokenType.comma);
       }
 
       var target = parseAssignTarget(reader, context: AssignContext.parameter);
       targets.add(target);
-      reader.expect('assign');
+      reader.expect(TokenType.assign);
       values.add(parseExpression(reader));
     }
 
@@ -324,22 +323,22 @@ final class Parser {
   }
 
   Block parseBlock(TokenReader reader) {
-    const endBlock = <(String, String?)>[('name', 'endblock')];
+    const endBlock = <(String, String?)>[(TokenType.name, 'endblock')];
 
     var token = reader.next();
-    var name = reader.expect('name');
+    var name = reader.expect(TokenType.name);
 
     if (!blocks.add(name.value)) {
       fail("Block '${name.value}' defined twice.", reader.current.line);
     }
 
-    var scoped = reader.skipIf('name', 'scoped');
+    var scoped = reader.skipIf(TokenType.name, 'scoped');
 
-    if (reader.current.test('sub')) {
+    if (reader.current.type == TokenType.sub) {
       fail('Use an underscore instead.', reader.current.line);
     }
 
-    var required = reader.skipIf('name', 'required');
+    var required = reader.skipIf(TokenType.name, 'required');
     var body = parseStatements(reader, endBlock, true);
 
     if (required && (body is! Data || !body.isLeaf)) {
@@ -351,7 +350,7 @@ final class Parser {
 
     var maybeName = reader.current;
 
-    if (maybeName.test('name')) {
+    if (maybeName.type == TokenType.name) {
       if (maybeName.value != name.value) {
         fail("'${name.value}' expected, got ${maybeName.value}.");
       }
@@ -368,7 +367,7 @@ final class Parser {
   }
 
   Extends parseExtends(TokenReader reader) {
-    var token = reader.expect('name', 'extends');
+    var token = reader.expect(TokenType.name, 'extends');
 
     if (extendsNode != null) {
       fail('Extended multiple times.', token.line);
@@ -381,12 +380,15 @@ final class Parser {
   }
 
   bool parseImportContext(TokenReader reader, [bool defaultValue = true]) {
-    const keywords = <(String, String?)>[('name', 'with'), ('name', 'without')];
+    const keywords = <(String, String?)>[
+      (TokenType.name, 'with'),
+      (TokenType.name, 'without'),
+    ];
 
     var withContext = defaultValue;
 
-    if (reader.current.testAny(keywords) &&
-        reader.look().test('name', 'context')) {
+    if (reader.current.matchAny(keywords) &&
+        reader.look().match(TokenType.name, 'context')) {
       withContext = reader.current.value == 'with';
       reader.skip(2);
     }
@@ -395,12 +397,12 @@ final class Parser {
   }
 
   Include parseInclude(TokenReader reader) {
-    reader.expect('name', 'include');
+    reader.expect(TokenType.name, 'include');
 
     var template = parseExpression(reader);
     var ignoreMissing =
-        reader.current.test('name', 'ignore') &&
-        reader.look().test('name', 'missing');
+        reader.current.match(TokenType.name, 'ignore') &&
+        reader.look().match(TokenType.name, 'missing');
 
     if (ignoreMissing) {
       reader.skip(2);
@@ -415,11 +417,11 @@ final class Parser {
   }
 
   Import parseImport(TokenReader reader) {
-    reader.expect('name', 'import');
+    reader.expect(TokenType.name, 'import');
 
     var template = parseExpression(reader);
 
-    reader.expect('name', 'as');
+    reader.expect(TokenType.name, 'as');
 
     var target = parseAssignName(reader);
     var withContext = parseImportContext(reader, false);
@@ -431,18 +433,18 @@ final class Parser {
   }
 
   FromImport parseFrom(TokenReader reader) {
-    reader.expect('name', 'from');
+    reader.expect(TokenType.name, 'from');
 
     var template = parseExpression(reader);
 
-    reader.expect('name', 'import');
+    reader.expect(TokenType.name, 'import');
 
     var names = <(String, String?)>[]; // target & alias
     var withContext = false;
 
     bool parseContext() {
       if (reader.current.value case 'with' || 'without'
-          when reader.look().test('name', 'context')) {
+          when reader.look().match(TokenType.name, 'context')) {
         withContext = reader.current.value == 'with';
         reader.skip(2);
         return true;
@@ -453,10 +455,10 @@ final class Parser {
 
     while (true) {
       if (names.isNotEmpty) {
-        reader.expect('comma');
+        reader.expect(TokenType.comma);
       }
 
-      if (reader.current.type == 'name') {
+      if (reader.current.type == TokenType.name) {
         if (parseContext()) {
           break;
         }
@@ -471,18 +473,18 @@ final class Parser {
           );
         }
 
-        if (reader.skipIf('name', 'as')) {
+        if (reader.skipIf(TokenType.name, 'as')) {
           var alias = parseAssignName(reader);
           names.add((target.name, alias.name));
         } else {
           names.add((target.name, null));
         }
 
-        if (parseContext() || reader.current.type != 'comma') {
+        if (parseContext() || reader.current.type != TokenType.comma) {
           break;
         }
       } else {
-        reader.expect('name');
+        reader.expect(TokenType.name);
       }
     }
 
@@ -500,16 +502,16 @@ final class Parser {
     var names = <Expression>[];
     var defaults = <Expression>[];
 
-    reader.expect('lparen');
+    reader.expect(TokenType.lParen);
 
-    while (!reader.current.test('rparen')) {
+    while (reader.current.type != TokenType.rParen) {
       if (names.isNotEmpty) {
-        reader.expect('comma');
+        reader.expect(TokenType.comma);
       }
 
       var name = parseAssignName(reader, AssignContext.parameter);
 
-      if (reader.skipIf('assign')) {
+      if (reader.skipIf(TokenType.assign)) {
         defaults.add(parseExpression(reader));
       } else if (defaults.isNotEmpty) {
         fail('Non-default argument follows default argument.');
@@ -518,7 +520,7 @@ final class Parser {
       names.add(name);
     }
 
-    reader.expect('rparen');
+    reader.expect(TokenType.rParen);
 
     var length = names.length - defaults.length;
 
@@ -533,14 +535,14 @@ final class Parser {
   }
 
   CallBlock parseCallBlock(TokenReader reader) {
-    const endCall = <(String, String?)>[('name', 'endcall')];
+    const endCall = <(String, String?)>[(TokenType.name, 'endcall')];
 
-    var token = reader.expect('name', 'call');
+    var token = reader.expect(TokenType.name, 'call');
 
     List<Expression> positional;
     List<(Expression, Expression)> named;
 
-    if (reader.current.test('lparen')) {
+    if (reader.current.type == TokenType.lParen) {
       (positional, named) = parseSignature(reader);
     } else {
       positional = const <Expression>[];
@@ -585,9 +587,9 @@ final class Parser {
   }
 
   FilterBlock parseFilterBlock(TokenReader reader) {
-    const endFilter = <(String, String?)>[('name', 'endfilter')];
+    const endFilter = <(String, String?)>[(TokenType.name, 'endfilter')];
 
-    reader.expect('name', 'filter');
+    reader.expect(TokenType.name, 'filter');
 
     var filters = parseFilters(reader, true);
     var body = parseStatements(reader, endFilter, true);
@@ -595,9 +597,9 @@ final class Parser {
   }
 
   Macro parseMacro(TokenReader reader) {
-    const endMacro = <(String, String?)>[('name', 'endmacro')];
+    const endMacro = <(String, String?)>[(TokenType.name, 'endmacro')];
 
-    reader.expect('name', 'macro');
+    reader.expect(TokenType.name, 'macro');
 
     var name = parseAssignName(reader);
     var (positional, named) = parseSignature(reader);
@@ -637,18 +639,18 @@ final class Parser {
     TokenReader reader, [
     AssignContext context = AssignContext.store,
   ]) {
-    var name = reader.expect('name');
+    var name = reader.expect(TokenType.name);
     return Name(name: name.value, context: context);
   }
 
   Expression parseAssignNameSpace(TokenReader reader) {
     var line = reader.current.line;
 
-    if (reader.look().test('dot')) {
-      var namespace = reader.expect('name');
-      reader.expect('dot'); // skip dot
+    if (reader.look().type == TokenType.dot) {
+      var namespace = reader.expect(TokenType.name);
+      reader.expect(TokenType.dot); // skip dot
 
-      var attribute = reader.expect('name');
+      var attribute = reader.expect(TokenType.name);
       return NamespaceRef(name: namespace.value, attribute: attribute.value);
     }
 
@@ -697,24 +699,24 @@ final class Parser {
   }
 
   Do parseDo(TokenReader reader) {
-    reader.expect('name', 'do');
+    reader.expect(TokenType.name, 'do');
 
     return Do(value: parseTuple(reader));
   }
 
   Node parseTryCatch(TokenReader reader) {
-    const endTry = <(String, String?)>[('name', 'catch')];
-    const endTryCatch = <(String, String?)>[('name', 'endtry')];
+    const endTry = <(String, String?)>[(TokenType.name, 'catch')];
+    const endTryCatch = <(String, String?)>[(TokenType.name, 'endtry')];
 
-    reader.expect('name', 'try');
+    reader.expect(TokenType.name, 'try');
 
     var body = parseStatements(reader, endTry);
-    reader.expect('name', 'catch');
+    reader.expect(TokenType.name, 'catch');
 
     var token = reader.current;
     Expression? name;
 
-    if (token.test('name')) {
+    if (token.type == TokenType.name) {
       name = parseAssignTarget(reader, withTuple: false);
 
       if (name is! Name) {
@@ -723,7 +725,7 @@ final class Parser {
     }
 
     var catchBody = parseStatements(reader, endTryCatch);
-    reader.expect('name', 'endtry');
+    reader.expect(TokenType.name, 'endtry');
     return TryCatch(body: body, exception: name, catchBody: catchBody);
   }
 
@@ -739,10 +741,10 @@ final class Parser {
     var value = parseTernary(reader);
 
     // Handle if-else syntax: trueValue if condition else falseValue
-    while (reader.skipIf('name', 'if')) {
+    while (reader.skipIf(TokenType.name, 'if')) {
       var condition = parseTernary(reader);
 
-      if (reader.skipIf('name', 'else')) {
+      if (reader.skipIf(TokenType.name, 'else')) {
         var orElse = parseCondition(reader);
         value = Condition(
           test: condition,
@@ -761,9 +763,10 @@ final class Parser {
     var condition = parseOr(reader);
 
     // Handle ternary operator: condition ? trueValue : falseValue
-    if (reader.skipIf('question', null)) {
+    if (reader.skipIf(TokenType.question)) {
       var trueValue = parseTernary(reader);
-      reader.expect('colon', null);
+      reader.expect(TokenType.colon);
+
       var falseValue = parseTernary(reader);
       return Condition(
         test: condition,
@@ -778,7 +781,8 @@ final class Parser {
   Expression parseOr(TokenReader reader) {
     var left = parseAnd(reader);
 
-    while (reader.skipIf('name', 'or') || reader.skipIf('nullcoalesce', null)) {
+    while (reader.skipIf(TokenType.name, 'or') ||
+        reader.skipIf(TokenType.nullCoalesce)) {
       var right = parseAnd(reader);
       left = Logical(operator: LogicalOperator.or, left: left, right: right);
     }
@@ -789,7 +793,7 @@ final class Parser {
   Expression parseAnd(TokenReader reader) {
     var left = parseNot(reader);
 
-    while (reader.skipIf('name', 'and')) {
+    while (reader.skipIf(TokenType.name, 'and')) {
       var right = parseNot(reader);
       left = Logical(operator: LogicalOperator.and, left: left, right: right);
     }
@@ -798,7 +802,7 @@ final class Parser {
   }
 
   Expression parseNot(TokenReader reader) {
-    if (reader.current.test('name', 'not')) {
+    if (reader.current.match(TokenType.name, 'not')) {
       reader.next();
 
       var value = parseNot(reader);
@@ -810,12 +814,12 @@ final class Parser {
 
   Expression parseCompare(TokenReader reader) {
     const operators = <(String, String?)>[
-      ('eq', null),
-      ('ne', null),
-      ('lt', null),
-      ('lteq', null),
-      ('gt', null),
-      ('gteq', null),
+      (TokenType.eq, null),
+      (TokenType.ne, null),
+      (TokenType.lt, null),
+      (TokenType.ltEq, null),
+      (TokenType.gt, null),
+      (TokenType.gtEq, null),
     ];
 
     var value = parseMath1(reader);
@@ -825,16 +829,16 @@ final class Parser {
     while (true) {
       CompareOperator operator;
 
-      if (reader.current.testAny(operators)) {
+      if (reader.current.matchAny(operators)) {
         var token = reader.current;
 
         reader.next();
 
         operator = CompareOperator.parse(token.type);
-      } else if (reader.skipIf('name', 'in')) {
+      } else if (reader.skipIf(TokenType.name, 'in')) {
         operator = CompareOperator.contains;
-      } else if (reader.current.test('name', 'not') &&
-          reader.look().test('name', 'in')) {
+      } else if (reader.current.match(TokenType.name, 'not') &&
+          reader.look().match(TokenType.name, 'in')) {
         reader.skip(2);
 
         operator = CompareOperator.notContains;
@@ -860,12 +864,12 @@ final class Parser {
       ScalarOperator operator;
 
       switch (reader.current.type) {
-        case 'add':
+        case TokenType.add:
           reader.next();
           operator = ScalarOperator.plus;
           break;
 
-        case 'sub':
+        case TokenType.sub:
           reader.next();
           operator = ScalarOperator.minus;
           break;
@@ -884,7 +888,7 @@ final class Parser {
   Expression parseConcat(TokenReader reader) {
     var values = <Expression>[parseMath2(reader)];
 
-    while (reader.current.test('tilde')) {
+    while (reader.current.type == TokenType.tilde) {
       reader.next();
 
       values.add(parseMath2(reader));
@@ -905,25 +909,25 @@ final class Parser {
       ScalarOperator operator;
 
       switch (reader.current.type) {
-        case 'mul':
+        case TokenType.mul:
           reader.next();
 
           operator = ScalarOperator.multiple;
           break;
 
-        case 'div':
+        case TokenType.div:
           reader.next();
 
           operator = ScalarOperator.division;
           break;
 
-        case 'floordiv':
+        case TokenType.floorDiv:
           reader.next();
 
           operator = ScalarOperator.floorDivision;
           break;
 
-        case 'mod':
+        case TokenType.mod:
           reader.next();
 
           operator = ScalarOperator.module;
@@ -943,7 +947,7 @@ final class Parser {
   Expression parsePow(TokenReader reader) {
     var left = parseUnary(reader);
 
-    while (reader.current.test('pow')) {
+    while (reader.current.type == TokenType.pow) {
       reader.next();
 
       var right = parseUnary(reader);
@@ -957,14 +961,14 @@ final class Parser {
     Expression value;
 
     switch (reader.current.type) {
-      case 'add':
+      case TokenType.add:
         reader.next();
 
         value = parseUnary(reader, withFilter: false);
         value = Unary(operator: UnaryOperator.plus, value: value);
         break;
 
-      case 'sub':
+      case TokenType.sub:
         reader.next();
 
         value = parseUnary(reader, withFilter: false);
@@ -989,7 +993,7 @@ final class Parser {
     Expression expression;
 
     switch (current.type) {
-      case 'name':
+      case TokenType.name:
         switch (current.value) {
           case 'false':
             expression = const Constant(value: false);
@@ -1010,12 +1014,12 @@ final class Parser {
         reader.next();
         break;
 
-      case 'string':
+      case TokenType.string:
         var buffer = StringBuffer(current.value);
 
         reader.next();
 
-        while (reader.current.test('string')) {
+        while (reader.current.type == TokenType.string) {
           buffer.write(reader.current.value);
           reader.next();
         }
@@ -1026,26 +1030,26 @@ final class Parser {
         expression = Constant(value: value);
         break;
 
-      case 'integer':
-      case 'float':
+      case TokenType.integer:
+      case TokenType.float:
         expression = Constant(value: num.parse(current.value));
 
         reader.next();
         break;
 
-      case 'lparen':
+      case TokenType.lParen:
         reader.next();
 
         expression = parseTuple(reader, explicitParentheses: true);
 
-        reader.expect('rparen');
+        reader.expect(TokenType.rParen);
         break;
 
-      case 'lbracket':
+      case TokenType.lBracket:
         expression = parseList(reader);
         break;
 
-      case 'lbrace':
+      case TokenType.lBrace:
         expression = parseDict(reader);
         break;
 
@@ -1078,7 +1082,7 @@ final class Parser {
 
     while (true) {
       if (values.isNotEmpty) {
-        reader.expect('comma');
+        reader.expect(TokenType.comma);
       }
 
       if (isTupleEnd(reader, extraEndRules)) {
@@ -1087,7 +1091,7 @@ final class Parser {
 
       values.add(parse(reader));
 
-      if (reader.current.test('comma')) {
+      if (reader.current.type == TokenType.comma) {
         isTuple = true;
       } else {
         break;
@@ -1112,59 +1116,59 @@ final class Parser {
   }
 
   Expression parseList(TokenReader reader) {
-    reader.expect('lbracket');
+    reader.expect(TokenType.lBracket);
 
     var values = <Expression>[];
 
-    while (!reader.current.test('rbracket')) {
+    while (reader.current.type != TokenType.rBracket) {
       if (values.isNotEmpty) {
-        reader.expect('comma');
+        reader.expect(TokenType.comma);
       }
 
-      if (reader.current.test('rbracket')) {
+      if (reader.current.type == TokenType.rBracket) {
         break;
       }
 
       values.add(parseExpression(reader));
     }
 
-    reader.expect('rbracket');
+    reader.expect(TokenType.rBracket);
 
     return Array(values: values);
   }
 
   Expression parseDict(TokenReader reader) {
-    reader.expect('lbrace');
+    reader.expect(TokenType.lBrace);
 
     var pairs = <Pair>[];
 
-    while (!reader.current.test('rbrace')) {
+    while (reader.current.type != TokenType.rBrace) {
       if (pairs.isNotEmpty) {
-        reader.expect('comma');
+        reader.expect(TokenType.comma);
       }
 
-      if (reader.current.test('rbrace')) {
+      if (reader.current.type == TokenType.rBrace) {
         break;
       }
 
       var key = parseExpression(reader);
 
-      reader.expect('colon');
+      reader.expect(TokenType.colon);
 
       var value = parseExpression(reader);
       pairs.add((key: key, value: value));
     }
 
-    reader.expect('rbrace');
+    reader.expect(TokenType.rBrace);
 
     return Dict(pairs: pairs);
   }
 
   Expression parsePostfix(TokenReader reader, Expression expression) {
     while (true) {
-      if (reader.current.test('dot') || reader.current.test('lbracket')) {
+      if (reader.current.type case TokenType.dot || TokenType.lBracket) {
         expression = parseSubscript(reader, expression);
-      } else if (reader.current.test('lparen')) {
+      } else if (reader.current.type == TokenType.lParen) {
         expression = parseCall(reader, expression);
       } else {
         break;
@@ -1177,11 +1181,11 @@ final class Parser {
   // TODO(parser): check if filters and tests exist, else throw TemplateAssertionError
   Expression parseFilterExpression(TokenReader reader, Expression expression) {
     while (true) {
-      if (reader.current.test('pipe')) {
+      if (reader.current.type == TokenType.pipe) {
         expression = parseFilter(reader, expression);
-      } else if (reader.current.test('name', 'is')) {
+      } else if (reader.current.match(TokenType.name, 'is')) {
         expression = parseTest(reader, expression);
-      } else if (reader.current.test('lparen')) {
+      } else if (reader.current.type == TokenType.lParen) {
         expression = parseCall(reader, expression);
       } else {
         break;
@@ -1194,14 +1198,14 @@ final class Parser {
   Expression parseSubscript(TokenReader reader, Expression value) {
     var token = reader.next();
 
-    if (token.test('dot')) {
+    if (token.type == TokenType.dot) {
       var attributeToken = reader.next();
 
-      if (attributeToken.test('name')) {
+      if (attributeToken.type == TokenType.name) {
         return Attribute(attribute: attributeToken.value, value: value);
       }
 
-      if (!attributeToken.test('integer')) {
+      if (attributeToken.type != TokenType.integer) {
         fail('Expected name or number.', attributeToken.line);
       }
 
@@ -1209,23 +1213,23 @@ final class Parser {
       return Item(key: key, value: value);
     }
 
-    if (token.test('lbracket')) {
-      if (reader.nextIf('colon') != null) {
+    if (token.type == TokenType.lBracket) {
+      if (reader.nextIf(TokenType.colon) != null) {
         var stop = parseExpression(reader);
-        reader.expect('rbracket');
+        reader.expect(TokenType.rBracket);
         return Slice(start: null, stop: stop, value: value);
       }
       var key = parseExpression(reader);
-      if (reader.nextIf('colon') != null) {
-        if (reader.skipIf('rbracket')) {
+      if (reader.nextIf(TokenType.colon) != null) {
+        if (reader.skipIf(TokenType.rBracket)) {
           return Slice(start: key, stop: null, value: value);
         } else {
           var stop = parseExpression(reader);
-          reader.expect('rbracket');
+          reader.expect(TokenType.rBracket);
           return Slice(start: key, stop: stop, value: value);
         }
       } else {
-        reader.expect('rbracket');
+        reader.expect(TokenType.rBracket);
         return Item(key: key, value: value);
       }
     }
@@ -1234,7 +1238,7 @@ final class Parser {
   }
 
   Calling parseCalling(TokenReader reader) {
-    var token = reader.expect('lparen');
+    var token = reader.expect(TokenType.lParen);
     var arguments = <Expression>[];
     var keywords = <Keyword>[];
     var requireComma = false;
@@ -1245,16 +1249,17 @@ final class Parser {
       }
     }
 
-    while (!reader.current.test('rparen')) {
+    while (reader.current.type != TokenType.rParen) {
       if (requireComma) {
-        reader.expect('comma');
+        reader.expect(TokenType.comma);
 
-        if (reader.current.test('rparen')) {
+        if (reader.current.type == TokenType.rParen) {
           break;
         }
       }
 
-      if (reader.current.test('name') && reader.look().test('assign')) {
+      if (reader.current.type == TokenType.name &&
+          reader.look().type == TokenType.assign) {
         var key = reader.current.value;
 
         reader.skip(2);
@@ -1274,7 +1279,7 @@ final class Parser {
       requireComma = true;
     }
 
-    reader.expect('rparen');
+    reader.expect(TokenType.rParen);
 
     return Calling(arguments: arguments, keywords: keywords);
   }
@@ -1301,15 +1306,15 @@ final class Parser {
   List<Filter> parseFilters(TokenReader reader, [bool startInline = false]) {
     var filters = <Filter>[];
 
-    while (reader.current.test('pipe') || startInline) {
+    while (reader.current.type == TokenType.pipe || startInline) {
       if (!startInline) {
         reader.next();
       }
 
-      var token = reader.expect('name');
+      var token = reader.expect(TokenType.name);
       var filter = Filter(name: token.value);
 
-      if (reader.current.test('lparen')) {
+      if (reader.current.type == TokenType.lParen) {
         var calling = parseCalling(reader);
         filter = filter.copyWith(calling: calling);
       }
@@ -1323,41 +1328,41 @@ final class Parser {
 
   Expression parseTest(TokenReader reader, Expression expression) {
     const allow = <(String, String?)>[
-      ('name', null),
-      ('string', null),
-      ('integer', null),
-      ('float', null),
-      ('lbracket', null),
-      ('lbrace', null),
+      (TokenType.name, null),
+      (TokenType.string, null),
+      (TokenType.integer, null),
+      (TokenType.float, null),
+      (TokenType.lBracket, null),
+      (TokenType.lBrace, null),
     ];
     const deny = <(String, String?)>[
-      ('name', 'else'),
-      ('name', 'or'),
-      ('name', 'and'),
+      (TokenType.name, 'else'),
+      (TokenType.name, 'or'),
+      (TokenType.name, 'and'),
     ];
 
-    reader.expect('name', 'is');
+    reader.expect(TokenType.name, 'is');
 
     var negated = false;
 
-    if (reader.current.test('name', 'not')) {
+    if (reader.current.match(TokenType.name, 'not')) {
       reader.next();
 
       negated = true;
     }
 
-    var token = reader.expect('name');
+    var token = reader.expect(TokenType.name);
     var current = reader.current;
 
     Calling calling;
 
-    if (current.test('lparen')) {
+    if (current.type == TokenType.lParen) {
       calling = parseCalling(reader);
 
       var arguments = <Expression>[expression, ...calling.arguments];
       calling = calling.copyWith(arguments: arguments);
-    } else if (current.testAny(allow) && !current.testAny(deny)) {
-      if (current.test('name', 'is')) {
+    } else if (current.matchAny(allow) && !current.matchAny(deny)) {
+      if (current.match(TokenType.name, 'is')) {
         fail('You cannot chain multiple tests with is.');
       }
 
@@ -1393,28 +1398,28 @@ final class Parser {
     }
 
     try {
-      while (!reader.current.test('eof')) {
+      while (reader.current.type != TokenType.eof) {
         var token = reader.current;
 
         switch (token.type) {
-          case 'data':
+          case TokenType.data:
             nodes.add(Data(data: token.value));
 
             reader.next();
             break;
 
-          case 'variable_start':
+          case TokenType.variableBegin:
             reader.next();
 
             nodes.add(Interpolation(value: parseTuple(reader)));
 
-            reader.expect('variable_end');
+            reader.expect(TokenType.variableEnd);
             break;
 
-          case 'block_start':
+          case TokenType.blockBegin:
             reader.next();
 
-            if (endTokens != null && reader.current.testAny(endTokens)) {
+            if (endTokens != null && reader.current.matchAny(endTokens)) {
               return nodes;
             }
 
@@ -1426,11 +1431,11 @@ final class Parser {
 
             nodes.add(node);
 
-            reader.expect('block_end');
+            reader.expect(TokenType.blockEnd);
             break;
 
           default:
-            assert(false, 'Unreachable');
+            assert(false);
         }
       }
     } finally {

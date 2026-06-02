@@ -2,235 +2,255 @@ import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/exceptions.dart';
 import 'package:string_scanner/string_scanner.dart';
 
-part 'token.dart';
+part 'lexer/identifier.dart';
+part 'lexer/token_reader.dart';
+part 'lexer/token_type.dart';
+part 'lexer/token.dart';
 
-const Map<String, String> operators = <String, String>{
-  '-': 'sub',
-  ',': 'comma',
-  ';': 'semicolon',
-  ':': 'colon',
-  '!=': 'ne',
-  '.': 'dot',
-  '(': 'lparen',
-  ')': 'rparen',
-  '[': 'lbracket',
-  ']': 'rbracket',
-  '{': 'lbrace',
-  '}': 'rbrace',
-  '*': 'mul',
-  '**': 'pow',
-  '/': 'div',
-  '//': 'floordiv',
-  '%': 'mod',
-  '+': 'add',
-  '<': 'lt',
-  '<=': 'lteq',
-  '=': 'assign',
-  '==': 'eq',
-  '>': 'gt',
-  '>=': 'gteq',
-  '|': 'pipe',
-  '~': 'tilde',
-  '??': 'nullcoalesce',
-  '?': 'question',
-};
+/// Cache for the [Lexer]s.
+///
+/// Exists in order to be able to have multiple environments with the same
+/// lexer.
+final Expando<Lexer> _lexerCache = Expando<Lexer>();
 
-const List<String> ignoredTokens = <String>[
-  'whitespace',
-  'comment_start',
-  'comment',
-  'comment_end',
-  'raw_start',
-  'raw_end',
-  'linecomment_start',
-  'linecomment_end',
-  'linecomment',
-];
+final RegExp _allWhiteSpaceRe = RegExp(r'^\s+$');
+final RegExp _whiteSpaceRe = RegExp(r'\s+');
+final RegExp _newLineRe = RegExp('(\r\n|\r|\n)');
 
-const List<String> ignoreIfEmpty = <String>[
-  'whitespace',
-  'data',
-  'comment',
-  'linecomment',
-];
+final RegExp _stringRe = RegExp(
+  "('([^'\\\\]*(?:\\\\.[^'\\\\]*)*)'"
+  '|"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)")',
+  dotAll: true,
+);
 
-enum RuleState { pop, group }
+final RegExp _integerRe = RegExp(
+  '(0x(_?[\\da-f])+' // hex
+  '|[1-9](_?\\d)*' // decimal
+  '|0(_?0)*)', // decimal zero
+  caseSensitive: false,
+);
 
-sealed class Rule {
-  Rule(this.regExp, [this.newState]);
+final RegExp _floatRe = RegExp(
+  '(?<!\\.)' // does not start with a `.`
+  '(\\d+_)*\\d+' // digits, possibly `_` separated
+  '((\\.(\\d+_)*\\d+)?' // optional fractional part
+  'e[+-]?(\\d+_)*\\d+' // exponent part
+  '|\\.(\\d+_)*\\d+)', // required fractional part
+  caseSensitive: false,
+);
+
+/// Class that throws a [TemplateSyntaxError] if called.
+///
+/// Used by [Lexer] to specify known errors.
+final class _Failure {
+  _Failure(this.message);
+
+  final String message;
+
+  Never call({String? name, String? path, int? line}) {
+    throw TemplateSyntaxError(message, name: name, path: path, line: line);
+  }
+}
+
+enum _RuleState { pop, byGroup }
+
+sealed class _Rule {
+  _Rule(this.regExp, [this.newState]);
 
   final RegExp regExp;
 
-  final RuleState? newState;
+  final _RuleState? newState;
 }
 
-final class SingleTokenRule extends Rule {
-  SingleTokenRule(super.regExp, this.token, [super.newState]);
+final class _SingleTokenRule extends _Rule {
+  _SingleTokenRule(super.regExp, this.token, [super.newState]);
 
   final String token;
 }
 
-final class MultiTokenRule extends Rule {
-  MultiTokenRule(super.regExp, this.tokens, [super.newState])
+final class _MultiTokenRule extends _Rule {
+  _MultiTokenRule(super.regExp, this.tokens, [super.newState])
     : optionalLStrip = false;
 
-  MultiTokenRule.optionalLStrip(super.regExp, this.tokens, [super.newState])
+  _MultiTokenRule.optionalLStrip(super.regExp, this.tokens, [super.newState])
     : optionalLStrip = true;
 
-  final List<String> tokens;
+  final List<Object> tokens;
 
+  /// A bool for marking a point in the state that can have lstrip applied.
   final bool optionalLStrip;
 }
 
+/// Class that implements a lexer for a given environment.
+///
+/// Automatically created by [Environment] class, usually you do not have to do that.
+/// Not that the lexer is not automatically bound to an environment. Multiple
+/// environments can share the same lexer.
 final class Lexer {
-  static final RegExp newLineRe = RegExp('(\r\n|\r|\n)');
-  static final RegExp leftStripUnlessRe = RegExp('[^ \\t]');
-  static final RegExp whitespaceRe = RegExp(r'\s+');
-  static final RegExp nameRe = RegExp('[a-zA-Z\$_#@][a-zA-Z0-9\$_#@]*');
-  static final RegExp stringRe = RegExp(
-    '(\'([^\'\\\\]*(?:\\\\.[^\'\\\\]*)*)\'|"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)")',
-  );
-  static final RegExp integerRe = RegExp('(0[xX](_?[\\da-fA-F])+|\\d(_?\\d)*)');
-  static final RegExp floatRe = RegExp(
-    '(?<!\\.)(\\d+_)*\\d+((\\.(\\d+_)*\\d+)?[eE][+\\-]?(\\d+_)*\\d+|\\.(\\d+_)*\\d+)',
-  );
-  static final RegExp operatorRe = RegExp(
-    '\\+|-|\\/\\/|\\/|\\*\\*|\\*|%|~|\\[|\\]|\\(|\\)|{|}|==|!=|<=|>=|=|<|>|\\.|:|\\||,|;|\\?\\?|\\?',
-  );
-
-  /// Cached [Lexer]'s
-  static final Expando<Lexer> lexers = Expando<Lexer>();
-
-  factory Lexer.cached(Environment environment) {
-    return lexers[environment] ??= Lexer(environment);
+  /// Return a lexer which is probably cached.
+  factory Lexer(Environment environment) {
+    return _lexerCache[environment] ??= Lexer._(environment);
   }
 
-  factory Lexer(Environment environment) {
+  Lexer._(Environment environment)
+    : _rules = <String, List<_Rule>>{},
+      leftStripBlocks = environment.leftStripBlocks,
+      keepTrailingNewLine = environment.keepTrailingNewLine,
+      newLine = environment.newLine {
+    String escape(String pattern) {
+      return RegExp.escape(pattern);
+    }
+
+    RegExp compile(String pattern) {
+      return RegExp(pattern, dotAll: true, multiLine: true);
+    }
+
+    // Lexing rules for tags.
+    var tagRules = <_Rule>[
+      _SingleTokenRule(_whiteSpaceRe, TokenType.whitespace),
+      _SingleTokenRule(_floatRe, TokenType.float),
+      _SingleTokenRule(_integerRe, TokenType.integer),
+      _SingleTokenRule(nameRe, TokenType.name),
+      _SingleTokenRule(_stringRe, TokenType.string),
+      _SingleTokenRule(_operatorRe, TokenType.operator),
+    ];
+
+    // Block suffix if trimming is enabled.
     var blockSuffixRe = environment.trimBlocks ? '\\n?' : '';
 
-    var commentStartRe = RegExp.escape(environment.commentStart);
-    var commentEndRe = RegExp.escape(environment.commentEnd);
-    var commentEnd = RegExp(
-      '(.*?)((?:\\+$commentEndRe|-$commentEndRe\\s*|$commentEndRe$blockSuffixRe))',
-      dotAll: true,
-    );
+    var commentStartRe = escape(environment.commentStart);
+    var commentEndRe = escape(environment.commentEnd);
 
-    var variableStartRe = RegExp.escape(environment.variableStart);
-    var variableEndRe = RegExp.escape(environment.variableEnd);
-    var variableEnd = RegExp('-$variableEndRe\\s*|$variableEndRe');
+    var variableStartRe = escape(environment.variableStart);
+    var variableEndRe = escape(environment.variableEnd);
 
-    var blockStartRe = RegExp.escape(environment.blockStart);
-    var blockEndRe = RegExp.escape(environment.blockEnd);
-    var blockEnd = RegExp(
-      '(?:\\+$blockEndRe|-$blockEndRe\\s*|$blockEndRe$blockSuffixRe)',
-    );
+    var blockStartRe = escape(environment.blockStart);
+    var blockEndRe = escape(environment.blockEnd);
 
-    var tagRules = <Rule>[
-      SingleTokenRule(whitespaceRe, 'whitespace'),
-      SingleTokenRule(floatRe, 'float'),
-      SingleTokenRule(integerRe, 'integer'),
-      SingleTokenRule(nameRe, 'name'),
-      SingleTokenRule(stringRe, 'string'),
-      SingleTokenRule(operatorRe, 'operator'),
-    ];
-
+    // Compile all the rules from the environment into a list of rules.
     var rootTagRules = <(String, String, Pattern?)>[
-      ('comment_start', environment.commentStart, commentStartRe),
-      ('variable_start', environment.variableStart, variableStartRe),
-      ('block_start', environment.blockStart, blockStartRe),
-      if (environment.lineCommentPrefix case var prefix?)
-        ('linecomment_start', prefix, '(?:^|(?<=\\S))[^\\S\r\n]*$prefix'),
-      if (environment.lineStatementPrefix case var prefix?)
-        ('linestatement_start', prefix, '^[ \t\v]*$prefix'),
+      (TokenType.commentBegin, environment.commentStart, commentStartRe),
+      (TokenType.variableBegin, environment.variableStart, variableStartRe),
+      (TokenType.blockBegin, environment.blockStart, blockStartRe),
     ];
 
+    if (environment.lineCommentPrefix case var prefix?) {
+      rootTagRules.add((
+        TokenType.lineCommentBegin,
+        prefix,
+        '(?:^|(?<=\\S))[^\\S\r\n]*$prefix',
+      ));
+    }
+
+    if (environment.lineStatementPrefix case var prefix?) {
+      rootTagRules.add((
+        TokenType.lineStatementBegin,
+        prefix,
+        '^[ \t\v]*$prefix',
+      ));
+    }
+
+    // Assemble the root lexing rules. Because '|' is ungreedy
     rootTagRules.sort((a, b) => b.$2.length.compareTo(a.$2.length));
 
-    var rawStart = RegExp(
-      '(?<raw_start>$blockStartRe(-|\\+|)\\s*raw\\s*(?:-$blockEndRe\\s*|$blockEndRe))',
-    );
-    var rawEnd = RegExp(
-      '(.*?)((?:$blockStartRe(-|\\+|))\\s*endraw\\s*'
-      '(?:\\+$blockEndRe|-$blockEndRe\\s*|$blockEndRe$blockSuffixRe))',
-      dotAll: true,
-    );
+    var rootRawRe =
+        '(?<raw_begin>$blockStartRe(-|\\+|)\\s*raw\\s*'
+        '(?:-$blockEndRe\\s*|$blockEndRe))';
 
-    var rootParts = <String>[
-      rawStart.pattern,
-      for (var rule in rootTagRules) '(?<${rule.$1}>${rule.$3}(-|\\+|))',
+    var rootPartsRe = <String>[
+      rootRawRe,
+      for (var (type, _, pattern) in rootTagRules) '(?<$type>$pattern(-|\\+|))',
+    ].join('|');
+
+    // Global lexing rules.
+    _rules['root'] = <_Rule>[
+      // Directives.
+      _MultiTokenRule.optionalLStrip(compile('(.*?)(?:$rootPartsRe)'), <Object>[
+        TokenType.data,
+        _RuleState.byGroup,
+      ], _RuleState.byGroup),
+      // Data.
+      _SingleTokenRule(compile('.+'), TokenType.data),
     ];
 
-    var rootPartsRe = rootParts.join('|');
-    var data = RegExp('(.*?)(?:$rootPartsRe)', dotAll: true, multiLine: true);
+    // Comments.
+    _rules[TokenType.commentBegin] = <_Rule>[
+      _MultiTokenRule(
+        compile(
+          '(.*?)((?:\\+$commentEndRe|-$commentEndRe\\s*'
+          '|$commentEndRe$blockSuffixRe))',
+        ),
+        <String>[TokenType.comment, TokenType.commentEnd],
+        _RuleState.pop,
+      ),
+      _MultiTokenRule(compile('(.)'), <Object>[
+        _Failure('Missing end of comment tag.'),
+      ]),
+    ];
 
-    var rules = <String, List<Rule>>{
-      'root': <Rule>[
-        MultiTokenRule.optionalLStrip(data, <String>[
-          'data',
-          '#group',
-        ], RuleState.group),
-        SingleTokenRule(RegExp('.+', dotAll: true), 'data'),
-      ],
-      'comment_start': <Rule>[
-        MultiTokenRule(commentEnd, <String>[
-          'comment',
-          'comment_end',
-        ], RuleState.pop),
-        MultiTokenRule(RegExp('(.)', dotAll: true), <String>[
-          '@missing end of comment tag',
-        ]),
-      ],
-      'variable_start': <Rule>[
-        SingleTokenRule(variableEnd, 'variable_end', RuleState.pop),
-        ...tagRules,
-      ],
-      'block_start': <Rule>[
-        SingleTokenRule(blockEnd, 'block_end', RuleState.pop),
-        ...tagRules,
-      ],
-      'raw_start': <Rule>[
-        MultiTokenRule.optionalLStrip(rawEnd, <String>[
-          'data',
-          'raw_end',
-        ], RuleState.pop),
-        MultiTokenRule(RegExp('(.)', dotAll: true), <String>[
-          '@missing end of raw directive',
-        ]),
-      ],
-      if (environment.lineCommentPrefix != null)
-        'linecomment_start': <Rule>[
-          MultiTokenRule(RegExp('(.*?)()(?=\n|\$)', dotAll: true), <String>[
-            'linecomment',
-            'linecomment_end',
-          ], RuleState.pop),
-        ],
-      if (environment.lineStatementPrefix != null)
-        'linestatement_start': <Rule>[
-          SingleTokenRule(
-            RegExp('\\s*(\n|\$)'),
-            'linestatement_end',
-            RuleState.pop,
-          ),
-          ...tagRules,
-        ],
-    };
+    // Blocks.
+    _rules[TokenType.blockBegin] = <_Rule>[
+      _SingleTokenRule(
+        compile(
+          '(?:\\+$blockEndRe|-$blockEndRe\\s*'
+          '|$blockEndRe$blockSuffixRe)',
+        ),
+        TokenType.blockEnd,
+        _RuleState.pop,
+      ),
+      ...tagRules,
+    ];
 
-    return Lexer.from(
-      rules: rules,
-      leftStripBlocks: environment.leftStripBlocks,
-      newLine: environment.newLine,
-      keepTrailingNewLine: environment.keepTrailingNewLine,
-    );
+    // Variables.
+    _rules[TokenType.variableBegin] = <_Rule>[
+      _SingleTokenRule(
+        compile('-$variableEndRe\\s*|$variableEndRe'),
+        TokenType.variableEnd,
+        _RuleState.pop,
+      ),
+      ...tagRules,
+    ];
+
+    // Raw block.
+    _rules[TokenType.rawBegin] = <_Rule>[
+      _MultiTokenRule.optionalLStrip(
+        compile(
+          '(.*?)((?:$blockStartRe(-|\\+|))\\s*endraw\\s*'
+          '(?:\\+$blockEndRe|-$blockEndRe\\s*'
+          '|$blockEndRe$blockSuffixRe))',
+        ),
+        <Object>[TokenType.data, TokenType.rawEnd],
+        _RuleState.pop,
+      ),
+      _MultiTokenRule(compile('(.)'), <Object>[
+        _Failure('Missing end of raw directive.'),
+      ]),
+    ];
+
+    // Line comments.
+    if (environment.lineCommentPrefix != null) {
+      _rules[TokenType.lineCommentBegin] = <_Rule>[
+        _MultiTokenRule(compile('(.*?)()(?=\n|\$)'), <Object>[
+          TokenType.lineComment,
+          TokenType.lineCommentEnd,
+        ], _RuleState.pop),
+      ];
+    }
+
+    // Line statements.
+    if (environment.lineStatementPrefix != null) {
+      _rules[TokenType.lineStatementBegin] = <_Rule>[
+        _SingleTokenRule(
+          compile('\\s*(\n|\$)'),
+          TokenType.lineStatementEnd,
+          _RuleState.pop,
+        ),
+        ...tagRules,
+      ];
+    }
   }
 
-  const Lexer.from({
-    required this.rules,
-    required this.newLine,
-    this.leftStripBlocks = false,
-    this.keepTrailingNewLine = false,
-  });
-
-  final Map<String, List<Rule>> rules;
+  final Map<String, List<_Rule>> _rules;
 
   final bool leftStripBlocks;
 
@@ -238,16 +258,34 @@ final class Lexer {
 
   final String newLine;
 
-  String normalizeNewLines(String value) {
-    return value.replaceAll(newLineRe, newLine);
+  String _normalizeNewLines(String value) {
+    return value.replaceAll(_newLineRe, newLine);
   }
 
-  List<Token> scan(StringScanner scanner, [String? state]) {
+  /// This method tokenizes the text and returns the tokens in a sync generator.
+  ///
+  /// Use this method if you just want to tokkenize a template.
+  Iterable<Token> scan(
+    String source, {
+    String? name,
+    String? path,
+    String? state,
+  }) sync* {
     const endTokens = <String>[
-      'variable_end',
-      'block_end',
-      'linestatement_end',
+      TokenType.variableEnd,
+      TokenType.blockEnd,
+      TokenType.lineStatementEnd,
     ];
+
+    var lines = split(_newLineRe, source);
+
+    if (!keepTrailingNewLine && lines.last.isEmpty) {
+      lines.removeLast();
+    }
+
+    source = lines.join('\n');
+
+    var scanner = StringScanner(source, sourceUrl: path ?? name);
 
     var stack = <String>['root'];
     var balancingStack = <String>[];
@@ -257,63 +295,65 @@ final class Lexer {
       stack.add('${state}_start');
     }
 
-    var stateRules = rules[stack.last]!;
+    var stateRules = _rules[stack.last]!;
     var position = 0;
     var line = 1;
     var newLinesStripped = 0;
     var lineStarting = true;
 
-    var tokens = <Token>[];
-
     while (true) {
-      var notBreak = true;
+      var breakLoop = false;
 
+      // Tokenizer loop.
       for (var rule in stateRules) {
+        // If no match we try again with the next rule.
         if (!scanner.scan(rule.regExp)) {
           continue;
         }
 
         var match = scanner.lastMatch as RegExpMatch;
 
-        if (rule is MultiTokenRule) {
-          var indexes = List<int>.generate(match.groupCount, (i) => i + 1);
-          var groups = match.groups(indexes);
+        if (rule is _MultiTokenRule) {
+          var groups = List<String?>.generate(
+            match.groupCount,
+            (i) => match.group(i + 1),
+          );
 
           if (rule.optionalLStrip) {
+            // Rule supports lStrip. Match will look like text, block type,
+            // whitespace control, type, control, ...
             var text = groups[0]!;
+
+            // Skipping the text and first type, every other group is the
+            // whitespace control for each type. One of the groups will be
+            // -, +, or empty string instead of null.
             String? stripSign;
 
             for (var i = 2; i < groups.length; i += 2) {
               if (groups[i] != null) {
-                stripSign = groups[i]!;
+                stripSign = groups[i];
+                break;
               }
             }
 
             if (stripSign == '-') {
+              // Strip all whitespace between the text and the tag.
               var stripped = text.trimRight();
-              var substring = text.substring(stripped.length);
-              newLinesStripped = 0;
-
-              for (var char in substring.split('')) {
-                if (char == '\n') {
-                  newLinesStripped += 1;
-                }
-              }
-
+              newLinesStripped = count(text, '\n', stripped.length);
               groups[0] = stripped;
-            } else if (stripSign != '+' &&
-                leftStripBlocks &&
-                (!match.groupNames.contains('variable_start') ||
-                    match.namedGroup('variable_start') == null)) {
-              var lastPosition = text.lastIndexOf('\n') + 1;
+            } else if (stripSign != '+' && leftStripBlocks) {
+              var isVariable =
+                  match.groupNames.contains(TokenType.variableBegin) &&
+                  match.namedGroup(TokenType.variableBegin) != null;
 
-              if (lastPosition > 0 || lineStarting) {
-                var index = text
-                    .substring(lastPosition)
-                    .indexOf(leftStripUnlessRe);
+              if (!isVariable) {
+                // The start of text between the last newline and the tag.
+                var lastPosition = text.lastIndexOf('\n') + 1;
 
-                if (index == -1) {
-                  groups[0] = groups[0]!.substring(0, lastPosition);
+                if (lastPosition > 0 || lineStarting) {
+                  if (_allWhiteSpaceRe.hasMatch(text.substring(lastPosition))) {
+                    groups[0] = text.substring(0, lastPosition);
+                  }
                 }
               }
             }
@@ -322,60 +362,63 @@ final class Lexer {
           for (var i = 0; i < rule.tokens.length; i += 1) {
             var token = rule.tokens[i];
 
-            if (token == '#group') {
-              var notFound = true;
+            // Failure group.
+            if (token is _Failure) {
+              token(line: line);
+            }
+
+            // #bygroup is a bit more complex, in that case we yield for the
+            // current token the first named group that matched.
+            if (token == _RuleState.byGroup) {
+              String? group;
 
               for (var name in match.groupNames) {
-                var group = match.namedGroup(name);
+                group = match.namedGroup(name);
 
                 if (group != null) {
-                  tokens.add(Token(line, name, group));
-                  notFound = false;
-
-                  for (var char in group.split('')) {
-                    if (char == '\n') {
-                      line += 1;
-                    }
-                  }
+                  yield Token(line, name, group);
+                  line += count(group, '\n');
+                  break;
                 }
               }
 
-              if (notFound) {
-                // TODO(lexer): update error
-                throw Exception(
-                  '${rule.regExp} wanted to resolve the token '
-                  'dynamically but no group matched',
+              if (group == null) {
+                throw StateError(
+                  "'${rule.regExp}' wanted to resolve the token dynamically "
+                  'but no group matched.',
                 );
               }
-            } else {
+            }
+            // Normal group.
+            else if (token is String) {
               if (groups[i] case var data?) {
-                if (data.isNotEmpty || !ignoreIfEmpty.contains(token)) {
-                  tokens.add(Token(line, token, data));
+                if (data.isNotEmpty || !_ignoreIfEmpty.contains(token)) {
+                  yield Token(line, token, data);
                 }
 
-                for (var char in data.split('')) {
-                  if (char == '\n') {
-                    line += 1;
-                  }
-                }
-
-                line += newLinesStripped;
+                line += count(data, '\n') + newLinesStripped;
                 newLinesStripped = 0;
-              } else {
-                tokens.add(Token.simple(line, token));
               }
+            } else {
+              assert(false, 'Unreachable.');
             }
           }
-        } else if (rule is SingleTokenRule) {
+        } else if (rule is _SingleTokenRule) {
+          // Strings as token just are yielded as it.
+
+          // We only match blocks and variables if braces / parentheses are
+          // balanced. Continue parsing with the lower rule which is the
+          // operator rule. Do this only if the end tags look like operators.
           if (balancingStack.isNotEmpty && endTokens.contains(rule.token)) {
             scanner.position = match.start;
             continue;
           }
 
-          var data = match[0];
+          var data = match[0]!;
           var token = rule.token;
 
-          if (token == 'operator') {
+          // Update brace/parentheses balance.
+          if (token == TokenType.operator) {
             if (data == '(') {
               balancingStack.add(')');
             } else if (data == '[') {
@@ -384,110 +427,141 @@ final class Lexer {
               balancingStack.add('}');
             } else if (data == ')' || data == ']' || data == '}') {
               if (balancingStack.isEmpty) {
-                throw TemplateSyntaxError("Unexpected '$data'");
+                throw TemplateSyntaxError("Unexpected '$data'.", line: line);
               }
 
               var expected = balancingStack.removeLast();
 
               if (data != expected) {
                 throw TemplateSyntaxError(
-                  "Unexpected '$data', expected '$expected'",
+                  "Unexpected '$data', expected '$expected'.",
+                  line: line,
                 );
               }
             }
           }
 
-          if (data == null) {
-            tokens.add(Token.simple(line, token));
-          } else {
-            if (data.isNotEmpty || !ignoreIfEmpty.contains(token)) {
-              tokens.add(Token(line, token, data));
-            }
-
-            for (var char in data.split('')) {
-              if (char == '\n') {
-                line += 1;
-              }
-            }
+          if (data.isNotEmpty || !_ignoreIfEmpty.contains(token)) {
+            // Yield items.
+            yield Token(line, token, data);
           }
-        } else {
-          // TODO(lexer): update error
-          throw Exception();
+
+          line += count(data, '\n');
         }
 
         lineStarting = match[0]!.endsWith('\n');
 
-        if (rule.newState == RuleState.pop) {
-          stack.removeLast();
-        } else if (rule.newState == RuleState.group) {
-          var names = <String>[
-            for (var name in match.groupNames)
-              if (match.namedGroup(name) != null) name,
-          ];
+        // Fetch new position into new variable so that we can check
+        // if there is a internal parsing error which would result in an
+        // infinite loop.
+        var position2 = match.end;
 
-          if (names.isEmpty) {
-            // TODO(lexer): add error message
-            throw TemplateSyntaxError('');
+        // Handle state changes.
+        if (rule.newState case var newState?) {
+          if (newState == _RuleState.pop) {
+            // Remove the uppermost state.
+            stack.removeLast();
+          } else if (newState == _RuleState.byGroup) {
+            // Resolve the new state by group checking.
+            String? newState;
+
+            for (var name in match.groupNames) {
+              if (match.namedGroup(name) != null) {
+                newState = name;
+                break;
+              }
+            }
+
+            if (newState == null) {
+              throw StateError(
+                "'${rule.regExp}' wanted to resolve the new state dynamically "
+                'but no group matched.',
+              );
+            }
+
+            stack.add(newState);
+          } else {
+            assert(false, 'Direct state name given.');
           }
 
-          stack.addAll(names);
-        } else if (position == match.end) {
-          // TODO(lexer): add error message
-          throw TemplateSyntaxError('');
+          stateRules = _rules[stack.last]!;
+        } else if (position2 == position) {
+          // We are still at the same position and no stack change.
+          // This means a loop without break condition, avoid that and throw
+          // error.
+          throw StateError(
+            "'${rule.regExp}' yielded empty string without stack change.",
+          );
         }
 
-        stateRules = rules[stack.last]!;
-        position = match.end;
-        notBreak = false;
+        // Publish new function and start again.
+        position = position2;
+        breakLoop = true;
         break;
       }
 
-      if (notBreak) {
+      // If loop terminated without break we have not found a single match
+      // either we are at the end of the file or we have a problme.
+      if (!breakLoop) {
+        // End of the text.
         if (scanner.isDone) {
-          return tokens;
+          yield Token.simple(line, TokenType.eof);
+          return;
         }
 
-        var char = scanner.rest[0];
-        var position = scanner.position;
-        throw TemplateSyntaxError('Unexpected char $char at $position');
+        // Something went wrong.
+        throw TemplateSyntaxError(
+          "Unexpected char '${scanner.rest[0]}' at $position.",
+          line: line,
+        );
       }
     }
   }
 
-  Iterable<Token> tokenize(String source, {String? path}) sync* {
-    var lines = split(newLineRe, source);
-
-    if (!keepTrailingNewLine && lines.last.isEmpty) {
-      lines.removeLast();
-    }
-
-    source = lines.join('\n');
-
-    var scanner = StringScanner(source, sourceUrl: path);
-
-    for (var token in scan(scanner)) {
-      if (ignoredTokens.any(token.test)) {
+  Iterable<Token> normalize(Iterable<Token> tokens) sync* {
+    for (var token in tokens) {
+      if (_ignoredTokens.contains(token.type)) {
         continue;
-      } else if (token.test('linestatement_start')) {
-        yield token.change(type: 'block_start');
-      } else if (token.test('linestatement_end')) {
-        yield token.change(type: 'block_end');
-      } else if (token.test('data')) {
-        yield token.change(value: normalizeNewLines(token.value));
-      } else if (token.test('string')) {
+      }
+
+      if (token.type == TokenType.lineStatementBegin) {
+        yield token.change(type: TokenType.blockBegin);
+      } else if (token.type == TokenType.lineStatementEnd) {
+        yield token.change(type: TokenType.blockEnd);
+      } else if (token.type case TokenType.rawBegin || TokenType.rawEnd) {
+        // We are not interested in those tokens in the parser.
+        continue;
+      } else if (token.type == TokenType.data) {
+        yield token.change(value: _normalizeNewLines(token.value));
+      } else if (token.type == TokenType.string) {
         var value = token.value;
-        value = normalizeNewLines(value.substring(1, value.length - 1));
-        yield token.change(value: value);
-      } else if (token.test('integer') || token.test('float')) {
+        var content = _normalizeNewLines(value.substring(1, value.length - 1));
+        yield token.change(value: content);
+      } else if (token.type case TokenType.integer || TokenType.float) {
         yield token.change(value: token.value.replaceAll('_', ''));
-      } else if (token.test('operator')) {
-        yield Token.simple(token.line, operators[token.value]!);
+      } else if (token.type == TokenType.operator) {
+        yield Token.simple(token.line, _operators[token.value]!);
       } else {
         yield token;
       }
     }
+  }
 
-    yield Token.simple(source.length, 'eof');
+  Iterable<Token> tokenize(String source, {String? name, String? path}) {
+    var tokens = scan(source, name: name, path: path);
+    return normalize(tokens);
+  }
+
+  static int count(String string, String char, [int offset = 0]) {
+    var count = 0;
+
+    for (var i = offset; i < string.length; i += 1) {
+      if (string[i] == char) {
+        count += 1;
+      }
+    }
+
+    return count;
   }
 
   static List<String> split(Pattern pattern, String text) {

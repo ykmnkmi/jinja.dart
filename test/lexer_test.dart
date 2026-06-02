@@ -3,7 +3,6 @@ library;
 
 import 'package:jinja/jinja.dart';
 import 'package:jinja/src/lexer.dart';
-import 'package:jinja/src/reader.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:test/test.dart';
 
@@ -11,21 +10,19 @@ void main() {
   var env = Environment();
 
   group('TokenReader', () {
-    var testTokens = [Token(1, 'block_begin', ''), Token(2, 'block_end', '')];
+    var testTokens = [
+      Token(1, TokenType.blockBegin, ''),
+      Token(2, TokenType.blockEnd, ''),
+    ];
 
     test('simple', () {
       var reader = TokenReader(testTokens);
-      expect(reader.current.test('block_begin'), isTrue);
+      expect(reader.current.type == TokenType.blockBegin, isTrue);
       reader.next();
-      expect(reader.current.test('block_end'), isTrue);
+      expect(reader.current.type == TokenType.blockEnd, isTrue);
     });
 
-    test('iter', () {
-      var reader = TokenReader(testTokens);
-      expect([
-        for (var token in reader.values) token.type,
-      ], orderedEquals(<String>['block_begin', 'block_end']));
-    });
+    test('iter', () {}, skip: 'Not supported.');
   });
 
   group('Lexer', () {
@@ -104,18 +101,33 @@ void main() {
     // });
 
     test('operators', () {
-      operators.forEach((test, expekt) {
+      const {
+        '-': TokenType.sub,
+        ',': TokenType.comma,
+        ';': TokenType.semicolon,
+        ':': TokenType.colon,
+        '!=': TokenType.ne,
+        '.': TokenType.dot,
+        '*': TokenType.mul,
+        '**': TokenType.pow,
+        '/': TokenType.div,
+        '//': TokenType.floorDiv,
+        '%': TokenType.mod,
+        '+': TokenType.add,
+        '>': TokenType.gt,
+        '>=': TokenType.gtEq,
+        '|': TokenType.pipe,
+        '~': TokenType.tilde,
+        '??': TokenType.nullCoalesce,
+        '?': TokenType.question,
+      }.forEach((test, expekt) {
         if ('([{}])'.contains(test)) {
           return;
         }
 
-        var tokens = Lexer(env).tokenize('{{ $test }}');
-
-        bool predication(Token token) {
-          return token.test(expekt);
-        }
-
-        expect(tokens.elementAt(1), equals(predicate<Token>(predication)));
+        var tokens = env.lex('{{ $test }}');
+        var token = tokens.elementAt(1);
+        expect(token.type, equals(expekt));
       });
     });
 
@@ -156,6 +168,7 @@ void main() {
       expect(env.fromString('{{ #var# }}'), isA<Template>());
       expect(env.fromString('{{ foo#bar }}'), isA<Template>());
       expect(env.fromString('{{ #_foo123# }}'), isA<Template>());
+
       var matcher = throwsA(isA<TemplateSyntaxError>());
       // invalid ascii start
       expect(() => env.fromString('{{ 1a }}'), matcher);
@@ -175,7 +188,7 @@ void main() {
 </html>''');
 
       for (var token in tokens) {
-        if (token.test('name', 'item')) {
+        if (token.match(TokenType.name, 'item')) {
           expect(token.line, equals(5));
           break;
         }

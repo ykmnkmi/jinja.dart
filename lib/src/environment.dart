@@ -255,7 +255,7 @@ base class Environment {
 
   /// The [Lexer] for this environment.
   Lexer get lexer {
-    return Lexer.cached(this);
+    return Lexer(this);
   }
 
   @override
