@@ -46,7 +46,7 @@ typedef ItemGetter = Object? Function(Object? key, Object? object);
 /// found.
 ///
 /// Used by `{{ user.field }}` expression when `user` not found.
-typedef UndefinedCallback = Object? Function(String name, [String? template]);
+typedef UndefinedCallback = Object? Function(String name, [String? path]);
 
 /// Pass the [Context] as the first argument to the applied function when
 /// called while rendering a template.
@@ -335,20 +335,20 @@ base class Environment {
   /// Lex the given source and return a list of tokens.
   ///
   /// This can be useful for extension development and debugging templates.
-  Iterable<Token> lex(String source, {String? name, String? path}) {
-    return lexer.tokenize(source, name: name, path: path);
+  Iterable<Token> lex(String source, {String? path}) {
+    return lexer.tokenize(source, path: path);
   }
 
   /// Parse the list of tokens and return the AST node.
   ///
   /// This can be useful for debugging or to extract information from templates.
-  Node scan(Iterable<Token> tokens, {String? name, String? path}) {
-    return Parser.fromTokens(this, tokens, name: name, path: path).scan();
+  Node scan(Iterable<Token> tokens, {String? path}) {
+    return Parser.fromTokens(this, tokens, path: path).scan();
   }
 
   /// Parse the source code and return the AST node.
-  Node parse(String source, {String? name, String? path}) {
-    return Parser(this, source, name: name, path: path).parse();
+  Node parse(String source, {String? path}) {
+    return Parser(this, source, path: path).parse();
   }
 
   /// Load a template from a source string without using [loader].
@@ -377,17 +377,17 @@ base class Environment {
     );
   }
 
-  /// Load a template by name with `loader` and return a [Template].
+  /// Load a template by path with `loader` and return a [Template].
   ///
   /// If the template does not exist a [TemplateNotFound] exception is thrown.
   /// If the loader is not specified a [StateError] is thrown.
-  Template getTemplate(String name) {
+  Template getTemplate(String path) {
     if (loader case var loader?) {
       if (autoReload) {
-        return templates[name] = loader.load(this, name, globals: globals);
+        return templates[path] = loader.load(this, path, globals: globals);
       }
 
-      return templates[name] ??= loader.load(this, name, globals: globals);
+      return templates[path] ??= loader.load(this, path, globals: globals);
     }
 
     throw StateError('No loader for this environment specified.');

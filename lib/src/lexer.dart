@@ -47,8 +47,8 @@ final class _Failure {
 
   final String message;
 
-  Never call({String? name, String? path, int? line}) {
-    throw TemplateSyntaxError(message, name: name, path: path, line: line);
+  Never call({String? path, int? line}) {
+    throw TemplateSyntaxError(message, path: path, line: line);
   }
 }
 
@@ -265,12 +265,7 @@ final class Lexer {
   /// This method tokenizes the text and returns the tokens in a sync generator.
   ///
   /// Use this method if you just want to tokkenize a template.
-  Iterable<Token> scan(
-    String source, {
-    String? name,
-    String? path,
-    String? state,
-  }) sync* {
+  Iterable<Token> scan(String source, {String? path, String? state}) sync* {
     const endTokens = <String>[
       TokenType.variableEnd,
       TokenType.blockEnd,
@@ -285,7 +280,7 @@ final class Lexer {
 
     source = lines.join('\n');
 
-    var scanner = StringScanner(source, sourceUrl: path ?? name);
+    var scanner = StringScanner(source, sourceUrl: path);
 
     var stack = <String>['root'];
     var balancingStack = <String>[];
@@ -547,8 +542,8 @@ final class Lexer {
     }
   }
 
-  Iterable<Token> tokenize(String source, {String? name, String? path}) {
-    var tokens = scan(source, name: name, path: path);
+  Iterable<Token> tokenize(String source, {String? path}) {
+    var tokens = scan(source, path: path);
     return normalize(tokens);
   }
 

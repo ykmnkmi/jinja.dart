@@ -19,10 +19,10 @@ abstract class TemplateError implements Exception {
 /// Thrown if a template does not exist.
 class TemplateNotFound extends TemplateError {
   /// Creates a new [TemplateNotFound].
-  TemplateNotFound({String? message, this.name}) : super(message);
+  TemplateNotFound({String? message, this.path}) : super(message);
 
   /// The name of the template that was not found.
-  final String? name;
+  final String? path;
 
   @override
   String toString() {
@@ -30,8 +30,8 @@ class TemplateNotFound extends TemplateError {
       return 'TemplateNotFound: $message';
     }
 
-    if (name != null) {
-      return 'TemplateNotFound: $name';
+    if (path != null) {
+      return 'TemplateNotFound: $path';
     }
 
     return 'TemplateNotFound';
@@ -41,7 +41,7 @@ class TemplateNotFound extends TemplateError {
 /// Like [TemplateNotFound], but thrown if multiple templates are selected.
 class TemplatesNotFound extends TemplateNotFound {
   /// Creates a new [TemplatesNotFound].
-  TemplatesNotFound({super.message, this.names}) : super(name: names?.last);
+  TemplatesNotFound({super.message, this.names}) : super(path: names?.last);
 
   /// The names of the templates that were not found.
   final List<String>? names;
@@ -64,10 +64,7 @@ class TemplatesNotFound extends TemplateNotFound {
 /// Thrown to tell the user that there is a problem with the template.
 class TemplateSyntaxError extends TemplateError {
   /// Creates a new [TemplateSyntaxError].
-  TemplateSyntaxError(super.message, {this.name, this.path, this.line});
-
-  /// The name of the template that caused the error.
-  final String? name;
+  TemplateSyntaxError(super.message, {this.path, this.line});
 
   /// The path to the template that caused the error.
   final String? path;
@@ -80,9 +77,6 @@ class TemplateSyntaxError extends TemplateError {
 
     if (path != null) {
       buffer.write(" path '$path'");
-    }
-    if (name != null) {
-      buffer.write(" name '$name'");
     }
 
     if (line != null) {
@@ -107,7 +101,7 @@ class TemplateSyntaxError extends TemplateError {
 /// by a syntax error.
 class TemplateAssertionError extends TemplateSyntaxError {
   /// Creates a new [TemplateAssertionError].
-  TemplateAssertionError(super.message, {super.name, super.path, super.line});
+  TemplateAssertionError(super.message, {super.path, super.line});
 
   @override
   String toString() {

@@ -5,33 +5,17 @@ import 'package:jinja/src/nodes.dart';
 import 'package:textwrap/textwrap.dart';
 
 final class Parser {
-  factory Parser(
-    Environment environment,
-    String source, {
-    String? name,
-    String? path,
-  }) {
-    return Parser.fromTokens(
-      environment,
-      environment.lex(source),
-      name: name,
-      path: path,
-    );
+  factory Parser(Environment environment, String source, {String? path}) {
+    return Parser.fromTokens(environment, environment.lex(source), path: path);
   }
 
-  Parser.fromTokens(
-    this.environment,
-    Iterable<Token> tokens, {
-    this.name,
-    this.path,
-  }) : reader = TokenReader(tokens),
-       endTokensStack = <List<(String, String?)>>[],
-       tagStack = <String>[],
-       blocks = <String>{};
+  Parser.fromTokens(this.environment, Iterable<Token> tokens, {this.path})
+    : reader = TokenReader(tokens),
+      endTokensStack = <List<(String, String?)>>[],
+      tagStack = <String>[],
+      blocks = <String>{};
 
   final Environment environment;
-
-  final String? name;
 
   final String? path;
 
@@ -46,7 +30,7 @@ final class Parser {
   Extends? extendsNode;
 
   Never fail(String message, [int? line]) {
-    throw TemplateSyntaxError(message, line: line, name: name, path: path);
+    throw TemplateSyntaxError(message, line: line, path: path);
   }
 
   Never failUnknownTagEof(
@@ -98,8 +82,8 @@ final class Parser {
     fail(messages.join(' '), line);
   }
 
-  Never failUnknownTag(String name, [int? line]) {
-    failUnknownTagEof(name, endTokensStack, line);
+  Never failUnknownTag(String tag, [int? line]) {
+    failUnknownTagEof(tag, endTokensStack, line);
   }
 
   Never failEof(List<(String, String?)> endTokens, [int? line]) {

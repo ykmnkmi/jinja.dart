@@ -70,7 +70,7 @@ class FileSystemLoader extends Loader {
     var file = findFile(path);
 
     if (file == null) {
-      throw TemplateNotFound(name: path);
+      throw TemplateNotFound(path: path);
     }
 
     return file.readAsStringSync(encoding: encoding);
