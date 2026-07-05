@@ -335,20 +335,20 @@ base class Environment {
   /// Lex the given source and return a list of tokens.
   ///
   /// This can be useful for extension development and debugging templates.
-  Iterable<Token> lex(String source, {String? path}) {
-    return lexer.tokenize(source, path: path);
+  Iterable<Token> lex(String source, {String? name, String? path}) {
+    return lexer.tokenize(source, name: name, path: path);
   }
 
   /// Parse the list of tokens and return the AST node.
   ///
   /// This can be useful for debugging or to extract information from templates.
-  Node scan(Iterable<Token> tokens, {String? path}) {
-    return Parser(this, path: path).scan(tokens);
+  Node scan(Iterable<Token> tokens, {String? name, String? path}) {
+    return Parser.fromTokens(this, tokens, name: name, path: path).scan();
   }
 
   /// Parse the source code and return the AST node.
-  Node parse(String source, {String? path}) {
-    return Parser(this, path: path).parse(source);
+  Node parse(String source, {String? name, String? path}) {
+    return Parser(this, source, name: name, path: path).parse();
   }
 
   /// Load a template from a source string without using [loader].
