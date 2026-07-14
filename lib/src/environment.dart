@@ -396,28 +396,28 @@ base class Environment {
   /// Load a template from a list of names.
   ///
   /// If the template does not exist a [TemplatesNotFound] exception is thrown.
-  Template selectTemplate(List<Object?> names) {
-    if (names.isEmpty) {
+  Template selectTemplate(List<Object?> templates) {
+    if (templates.isEmpty) {
       throw TemplatesNotFound(
         message: 'Tried to select from an empty list of templates.',
       );
     }
 
-    for (var template in names) {
+    for (var template in templates) {
       if (template is Template) {
         return template;
       }
 
-      if (template is String) {
+      if (template case String path) {
         try {
-          return getTemplate(template);
+          return getTemplate(path);
         } on TemplateNotFound {
           // ignore
         }
       }
     }
 
-    throw TemplatesNotFound(names: names.cast<String>());
+    throw TemplatesNotFound(paths: templates.cast<String>());
   }
 
   /// Returns a list of templates for this environment.

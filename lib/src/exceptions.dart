@@ -19,10 +19,19 @@ abstract class TemplateError implements Exception {
 /// Thrown if a template does not exist.
 class TemplateNotFound extends TemplateError {
   /// Creates a new [TemplateNotFound].
-  TemplateNotFound({String? message, this.path}) : super(message);
+  TemplateNotFound({
+    String? message,
+    @Deprecated("Use 'path' instead.") String? name,
+    String? path,
+  }) : path = path ?? name,
+       super(message);
+
+  /// The path to the template that was not found.
+  final String? path;
 
   /// The name of the template that was not found.
-  final String? path;
+  @Deprecated("Use 'path' instead.")
+  String? get name => path;
 
   @override
   String toString() {
@@ -41,10 +50,19 @@ class TemplateNotFound extends TemplateError {
 /// Like [TemplateNotFound], but thrown if multiple templates are selected.
 class TemplatesNotFound extends TemplateNotFound {
   /// Creates a new [TemplatesNotFound].
-  TemplatesNotFound({super.message, this.names}) : super(path: names?.last);
+  TemplatesNotFound({
+    super.message,
+    @Deprecated("Use 'paths' instead.") List<String>? names,
+    List<String>? paths,
+  }) : paths = paths ?? names,
+       super(path: paths?.last);
+
+  /// The paths of the templates that were not found.
+  final List<String>? paths;
 
   /// The names of the templates that were not found.
-  final List<String>? names;
+  @Deprecated("Use 'paths' instead.")
+  List<String>? get names => paths;
 
   @override
   String toString() {
@@ -52,9 +70,9 @@ class TemplatesNotFound extends TemplateNotFound {
       return 'TemplatesNotFound: $message';
     }
 
-    if (names != null) {
+    if (paths != null) {
       return 'TemplatesNotFound: none of the templates given were found: '
-          '${names!.join(', ')}';
+          '${paths!.join(', ')}';
     }
 
     return 'TemplatesNotFound: $message';
