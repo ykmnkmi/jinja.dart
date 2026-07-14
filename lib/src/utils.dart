@@ -150,8 +150,17 @@ String escape(String text) {
 /// The following characters are escaped: `<`, `>`, `&`, `'`.
 ///
 /// {@macro jinja.safestring}
-String htmlSafeJsonEncode(Object? value, [String? indent]) {
-  var encoder = indent == null ? json.encoder : JsonEncoder.withIndent(indent);
+String htmlSafeJsonEncode(Object? value, [Object? indent]) {
+  String? indentString;
+  if (indent is int) {
+    indentString = ' ' * indent;
+  } else if (indent is String) {
+    indentString = indent;
+  }
+
+  var encoder = indentString == null
+      ? json.encoder
+      : JsonEncoder.withIndent(indentString);
 
   return encoder
       .convert(value)
