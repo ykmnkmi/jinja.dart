@@ -105,6 +105,45 @@ String doReplace(String value, String from, String to, [int? count]) {
   return value;
 }
 
+/// Return a copy of the value with all matches of [pattern] replaced by
+/// [replacement].
+String doRegexReplace(
+  String value,
+  String pattern,
+  String replacement, {
+  int? count,
+  bool caseSensitive = true,
+  bool multiLine = false,
+  bool dotAll = false,
+  bool unicode = false,
+}) {
+  var regex = RegExp(
+    pattern,
+    caseSensitive: caseSensitive,
+    multiLine: multiLine,
+    dotAll: dotAll,
+    unicode: unicode,
+  );
+
+  if (count == null) {
+    return value.replaceAll(regex, replacement);
+  }
+
+  if (count <= 0) {
+    return value;
+  }
+
+  var replaced = 0;
+  return value.replaceAllMapped(regex, (match) {
+    if (replaced >= count) {
+      return match.group(0)!;
+    }
+
+    replaced += 1;
+    return replacement;
+  });
+}
+
 /// Convert a value to uppercase.
 String doUpper(String value) {
   return value.toUpperCase();
@@ -643,6 +682,7 @@ final Map<String, Function> filters = <String, Function>{
   'string': doString,
   // 'urlencode': doURLEncode,
   'replace': doReplace,
+  'regex_replace': doRegexReplace,
   'upper': doUpper,
   'lower': doLower,
   'items': doItems,

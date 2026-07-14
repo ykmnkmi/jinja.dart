@@ -443,6 +443,32 @@ void main() {
       expect(tmpl.render({'string': '<foo>'}), equals('<f4242>'));
     });
 
+    test('regex replace', () {
+      var tmpl = env.fromString(
+        '{{ string|regex_replace("[^A-Za-z0-9]+", "-") }}',
+      );
+      expect(
+        tmpl.render({'string': 'alpha, beta/gamma'}),
+        equals('alpha-beta-gamma'),
+      );
+
+      tmpl = env.fromString(
+        '{{ string|regex_replace("cat", "dog", caseSensitive=false) }}',
+      );
+      expect(
+        tmpl.render({'string': 'Cat cat catalog'}),
+        equals('dog dog dogalog'),
+      );
+
+      tmpl = env.fromString(r'{{ string|regex_replace("\d+", "#", count=2) }}');
+      expect(tmpl.render({'string': 'a1 b22 c333'}), equals('a# b# c333'));
+
+      tmpl = env.fromString(
+        '{{ string|regex_replace("^foo", "bar", multiLine=true) }}',
+      );
+      expect(tmpl.render({'string': 'foo\nfoo'}), equals('bar\nbar'));
+    });
+
     test('forceescape', () {}, skip: 'Not supported.');
 
     test('safe', () {}, skip: 'Not supported.');
