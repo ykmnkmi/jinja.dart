@@ -1,3 +1,18 @@
+## 0.7.0  ([diff](https://github.com/ykmnkmi/jinja.dart/compare/0.6.7..0.7.0))
+- Bump SDK version to 3.12.0.
+- Internal changes:
+  - `Lexer` rewrite
+- Renamed:
+  - `TemplateNotFound`:
+    - `name` to `path`
+  - `TemplatesNotFound`:
+    - `names` to `paths`
+- Deprecated:
+  - `TemplateNotFound`:
+    - `name`
+  - `TemplatesNotFound`:
+    - `names`
+
 ## 0.6.7 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/0.6.6..0.6.7))
 - Bump SDK version to 3.11.0.
 - Update dependencies.
@@ -7,10 +22,11 @@
 - Fixed:
   - Fix macro hoisting and runtime argument wrapping #40
 
-## 0.6.5 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/0.6.4..main))
+## 0.6.5 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/0.6.4..0.6.5))
 - Added:
   - Expressions:
-    - Ternary operator (`condition ? trueValue : falseValue`) as alternative to if-else expressions
+    - Ternary operator (`condition ? trueValue : falseValue`) as alternative to
+      if-else expressions
       ```jinja
       {{ user.isAdmin ? "Admin Panel" : "User Panel" }}
       {{ score > 60 ? "Pass" : "Fail" }}

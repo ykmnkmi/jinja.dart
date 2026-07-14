@@ -46,7 +46,7 @@ typedef ItemGetter = Object? Function(Object? key, Object? object);
 /// found.
 ///
 /// Used by `{{ user.field }}` expression when `user` not found.
-typedef UndefinedCallback = Object? Function(String name, [String? template]);
+typedef UndefinedCallback = Object? Function(String name, [String? path]);
 
 /// Pass the [Context] as the first argument to the applied function when
 /// called while rendering a template.
@@ -255,7 +255,7 @@ base class Environment {
 
   /// The [Lexer] for this environment.
   Lexer get lexer {
-    return Lexer.cached(this);
+    return Lexer(this);
   }
 
   @override
@@ -343,12 +343,12 @@ base class Environment {
   ///
   /// This can be useful for debugging or to extract information from templates.
   Node scan(Iterable<Token> tokens, {String? path}) {
-    return Parser(this, path: path).scan(tokens);
+    return Parser.fromTokens(this, tokens, path: path).scan();
   }
 
   /// Parse the source code and return the AST node.
   Node parse(String source, {String? path}) {
-    return Parser(this, path: path).parse(source);
+    return Parser(this, source, path: path).parse();
   }
 
   /// Load a template from a source string without using [loader].
@@ -377,17 +377,17 @@ base class Environment {
     );
   }
 
-  /// Load a template by name with `loader` and return a [Template].
+  /// Load a template by path with `loader` and return a [Template].
   ///
   /// If the template does not exist a [TemplateNotFound] exception is thrown.
   /// If the loader is not specified a [StateError] is thrown.
-  Template getTemplate(String name) {
+  Template getTemplate(String path) {
     if (loader case var loader?) {
       if (autoReload) {
-        return templates[name] = loader.load(this, name, globals: globals);
+        return templates[path] = loader.load(this, path, globals: globals);
       }
 
-      return templates[name] ??= loader.load(this, name, globals: globals);
+      return templates[path] ??= loader.load(this, path, globals: globals);
     }
 
     throw StateError('No loader for this environment specified.');
@@ -396,28 +396,28 @@ base class Environment {
   /// Load a template from a list of names.
   ///
   /// If the template does not exist a [TemplatesNotFound] exception is thrown.
-  Template selectTemplate(List<Object?> names) {
-    if (names.isEmpty) {
+  Template selectTemplate(List<Object?> templates) {
+    if (templates.isEmpty) {
       throw TemplatesNotFound(
         message: 'Tried to select from an empty list of templates.',
       );
     }
 
-    for (var template in names) {
+    for (var template in templates) {
       if (template is Template) {
         return template;
       }
 
-      if (template is String) {
+      if (template case String path) {
         try {
-          return getTemplate(template);
+          return getTemplate(path);
         } on TemplateNotFound {
           // ignore
         }
       }
     }
 
-    throw TemplatesNotFound(names: names.cast<String>());
+    throw TemplatesNotFound(paths: templates.cast<String>());
   }
 
   /// Returns a list of templates for this environment.

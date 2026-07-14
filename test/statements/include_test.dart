@@ -40,9 +40,9 @@ void main() {
       try {
         expect(tmpl.render({'foo': 42}), isA<Never>());
       } on TemplatesNotFound catch (error) {
-        expect(error.name, contains('missing2'));
-        expect(error.names, contains('missing'));
-        expect(error.names, contains('missing2'));
+        expect(error.path, contains('missing2'));
+        expect(error.paths, contains('missing'));
+        expect(error.paths, contains('missing2'));
       } catch (error) {
         expect(error, isA<TemplatesNotFound>());
       }

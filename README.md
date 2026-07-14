@@ -7,20 +7,14 @@
 [Jinja][jinja] (3.x) server-side template engine port for Dart 2.
 Variables, expressions, control structures and template inheritance.
 
-## Version 0.6.0 introduces breaking changes
-- `FilterArgumentError` error class removed
-- `*args` and `**kwargs` arguments support removed
-- Auto-escaping and related statements, filters and tests have been removed due to the impossibility of extending `String`.
-  Use the `escape` filter manually or escape values before passing them to the template.
-
-For more information, see `CHANGELOG.md`.
-
 ## Documentation
 It is mostly similar to [Jinja][jinja_templates] templates documentation, differences provided below.
 
 _work in progress_.
 
 ## Differences with Python version
+- Auto-escaping and related statements, filters and tests have been removed due to the impossibility of extending `String`.
+  Use the `escape` filter manually or escape values before passing them to the template.
 - The `default` filter compares values with `null`.
 - The `defined` and `undefined` tests compare values with `null`.
 - The `map` filter also compares values with `null`.
@@ -29,8 +23,9 @@ _work in progress_.
   This allows you to use `{{ map.key }}` as an expression equivalent to `{{ map['key'] }}`.
 - String slices and negative indexes are not supported.
 - Macro arguments without default values are required.
-- Not supported:
-  - Template module.
+- No `FilterArgumentError` error class.
+- No `*args` and `**kwargs` arguments.
+- No `Template` module.
 - _work in progress_
 
 ## Dynamically invoked members (can increase the size of the JS output)

@@ -25,7 +25,7 @@ abstract class Loader {
       throw UnsupportedError('This loader cannot provide access to the source');
     }
 
-    throw TemplateNotFound(name: path);
+    throw TemplateNotFound(path: path);
   }
 
   /// Iterates over all templates.
@@ -69,7 +69,7 @@ class MapLoader extends Loader {
       return sources[path]!;
     }
 
-    throw TemplateNotFound(name: path);
+    throw TemplateNotFound(path: path);
   }
 
   @override
