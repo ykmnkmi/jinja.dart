@@ -1,4 +1,4 @@
-$$ 0.7.1 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/0.7.0..0.7.1))
+## 0.7.1 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/0.7.0..0.7.1))
 - Bump the SDK to 3.13.0. Add new lints. Run the formatter. Use the new constructor syntax.
 
 ## 0.7.0  ([diff](https://github.com/ykmnkmi/jinja.dart/compare/0.6.7..0.7.0))
