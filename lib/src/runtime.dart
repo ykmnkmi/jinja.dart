@@ -315,8 +315,7 @@ final class CyclerIterator implements Iterator<Object?> {
 }
 
 base class Namespace {
-  new([Map<String, Object?>? data])
-    : context = <String, Object?>{...?data};
+  new([Map<String, Object?>? data]) : context = <String, Object?>{...?data};
 
   final Map<String, Object?> context;
 

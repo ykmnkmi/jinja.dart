@@ -211,11 +211,7 @@ final class Dict extends Literal {
 }
 
 final class Condition extends Expression {
-  const new({
-    required this.test,
-    required this.trueValue,
-    this.falseValue,
-  });
+  const new({required this.test, required this.trueValue, this.falseValue});
 
   final Expression test;
 
@@ -749,11 +745,7 @@ final class Unary extends Expression {
 }
 
 abstract final class Binary<E extends Enum> extends Expression {
-  const new({
-    required this.operator,
-    required this.left,
-    required this.right,
-  });
+  const new({required this.operator, required this.left, required this.right});
 
   final E operator;
 
