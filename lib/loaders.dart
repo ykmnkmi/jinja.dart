@@ -34,7 +34,7 @@ export 'package:jinja/src/loaders.dart';
 /// {@endtemplate}
 class FileSystemLoader extends Loader {
   /// {@macro jinja.FileSystemLoader}
-  FileSystemLoader({
+  new({
     List<String> paths = const <String>['templates'],
     this.recursive = true,
     this.followLinks = true,

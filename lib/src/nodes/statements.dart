@@ -5,7 +5,7 @@ abstract interface class ImportContext {
 }
 
 final class Extends extends Statement {
-  const Extends({required this.template});
+  const new({required this.template});
 
   final Expression template;
 
@@ -26,7 +26,7 @@ final class Extends extends Statement {
 }
 
 final class For extends Statement {
-  For({
+  new({
     required this.target,
     required this.iterable,
     this.test,
@@ -123,7 +123,7 @@ final class For extends Statement {
 }
 
 final class If extends Statement {
-  const If({required this.test, required this.body, this.orElse});
+  const new({required this.test, required this.body, this.orElse});
 
   final Expression test;
 
@@ -179,8 +179,10 @@ final class If extends Statement {
   }
 }
 
-typedef MacroFunction =
-    String Function(List<Object?> positional, Map<Symbol, Object?> named);
+typedef MacroFunction = String Function(
+  List<Object?> positional,
+  Map<Symbol, Object?> named,
+);
 
 typedef MacroSignature = ({
   List<Expression> arguments,
@@ -189,7 +191,7 @@ typedef MacroSignature = ({
 
 // TODO(nodes): change argument to String
 abstract final class MacroCall extends Statement {
-  const MacroCall({
+  const new({
     this.varargs = false,
     this.kwargs = false,
     this.positional = const <Expression>[],
@@ -240,7 +242,7 @@ abstract final class MacroCall extends Statement {
 }
 
 final class Macro extends MacroCall {
-  const Macro({
+  const new({
     required this.name,
     super.varargs,
     super.kwargs,
@@ -303,7 +305,7 @@ final class Macro extends MacroCall {
 }
 
 final class CallBlock extends MacroCall {
-  CallBlock({
+  new({
     required this.call,
     super.varargs,
     super.kwargs,
@@ -366,7 +368,7 @@ final class CallBlock extends MacroCall {
 }
 
 final class FilterBlock extends Statement {
-  const FilterBlock({required this.filters, required this.body});
+  const new({required this.filters, required this.body});
 
   final List<Filter> filters;
 
@@ -415,7 +417,7 @@ final class FilterBlock extends Statement {
 }
 
 final class With extends Statement {
-  const With({required this.targets, required this.values, required this.body});
+  const new({required this.targets, required this.values, required this.body});
 
   final List<Expression> targets;
 
@@ -482,7 +484,7 @@ final class With extends Statement {
 }
 
 final class Block extends Statement {
-  const Block({
+  const new({
     required this.name,
     required this.scoped,
     required this.required,
@@ -534,7 +536,7 @@ final class Block extends Statement {
 }
 
 final class Include extends Statement implements ImportContext {
-  const Include({
+  const new({
     required this.template,
     this.ignoreMissing = false,
     this.withContext = true,
@@ -577,7 +579,7 @@ final class Include extends Statement implements ImportContext {
 }
 
 final class Import extends Statement implements ImportContext {
-  const Import({
+  const new({
     required this.template,
     required this.target,
     this.withContext = true,
@@ -616,7 +618,7 @@ final class Import extends Statement implements ImportContext {
 }
 
 final class FromImport extends Statement implements ImportContext {
-  const FromImport({
+  const new({
     required this.template,
     required this.names,
     this.withContext = true,
@@ -659,7 +661,7 @@ final class FromImport extends Statement implements ImportContext {
 }
 
 final class Do extends Statement {
-  Do({required this.value});
+  new({required this.value});
 
   final Expression value;
 
@@ -689,7 +691,7 @@ final class Do extends Statement {
 }
 
 final class TryCatch extends Statement {
-  TryCatch({required this.body, this.exception, required this.catchBody});
+  new({required this.body, this.exception, required this.catchBody});
 
   final Node body;
 
@@ -743,7 +745,7 @@ final class TryCatch extends Statement {
 }
 
 final class Assign extends Statement {
-  const Assign({required this.target, required this.value});
+  const new({required this.target, required this.value});
 
   final Expression target;
 
@@ -785,7 +787,7 @@ final class Assign extends Statement {
 }
 
 final class AssignBlock extends Statement {
-  AssignBlock({
+  new({
     required this.target,
     this.filters = const <Filter>[],
     required this.body,

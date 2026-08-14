@@ -4,7 +4,7 @@ part of '/src/lexer.dart';
 ///
 /// The current active token is stored as [current].
 final class TokenReader {
-  TokenReader(Iterable<Token> tokens, {this.name, this.path})
+  new(Iterable<Token> tokens, {this.name, this.path})
     : _iterator = tokens.iterator,
       _pushed = <Token>[] {
     current = const Token.simple(0, TokenType.initial);

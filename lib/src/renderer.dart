@@ -10,7 +10,7 @@ import 'package:jinja/src/visitor.dart';
 import 'package:meta/dart2js.dart';
 
 abstract base class RenderContext extends Context {
-  RenderContext(
+  new(
     super.environment, {
     super.template,
     super.blocks,
@@ -57,7 +57,7 @@ abstract base class RenderContext extends Context {
 }
 
 base class StringSinkRenderContext extends RenderContext {
-  StringSinkRenderContext(
+  new(
     super.environment,
     this.sink, {
     super.template,
@@ -101,7 +101,7 @@ base class StringSinkRenderContext extends RenderContext {
 
 base class StringSinkRenderer
     implements Visitor<StringSinkRenderContext, Object?> {
-  const StringSinkRenderer();
+  const new();
 
   Map<String, Object?> getDataForTargets(Object? targets, Object? current) {
     if (targets is String) {

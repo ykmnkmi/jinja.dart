@@ -130,9 +130,9 @@ String describeTokenRecord((String, String?) expression) {
 }
 
 abstract final class Token {
-  const factory Token(int line, String type, String value) = _ValueToken;
+  const factory(int line, String type, String value) = _ValueToken;
 
-  const factory Token.simple(int line, String type) = _SimpleToken;
+  const factory simple(int line, String type) = _SimpleToken;
 
   int get line;
 
@@ -152,7 +152,7 @@ abstract final class Token {
 }
 
 abstract base class _BaseToken implements Token {
-  const _BaseToken();
+  const new();
 
   @override
   int get hashCode {
@@ -206,7 +206,7 @@ abstract base class _BaseToken implements Token {
 }
 
 final class _SimpleToken extends _BaseToken {
-  const _SimpleToken(this.line, this.type);
+  const new(this.line, this.type);
 
   @override
   final int line;
@@ -221,7 +221,7 @@ final class _SimpleToken extends _BaseToken {
 }
 
 final class _ValueToken extends _BaseToken {
-  const _ValueToken(this.line, this.type, this.value);
+  const new(this.line, this.type, this.value);
 
   @override
   final int line;

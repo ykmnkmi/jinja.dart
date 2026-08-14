@@ -9,7 +9,7 @@ import 'package:jinja/src/exceptions.dart';
 /// {@endtemplate}
 abstract class Loader {
   /// {@macro jinja.Loader}
-  const Loader();
+  const new();
 
   /// Returns `true` if this loader can provide access to the source.
   bool get hasSourceAccess {
@@ -54,7 +54,7 @@ class MapLoader extends Loader {
   /// {@macro jinja.MapLoader}
   // TODO(loaders): comment that the map keys should be URI paths,
   // like 'path/to/template.html'
-  const MapLoader(this.sources);
+  const new(this.sources);
 
   final Map<String, String> sources;
 

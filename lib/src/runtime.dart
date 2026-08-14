@@ -3,7 +3,7 @@ import 'package:jinja/src/environment.dart';
 typedef ContextCallback = void Function(Context context);
 
 base class Context {
-  Context(
+  new(
     this.environment, {
     this.template,
     Map<String, List<ContextCallback>>? blocks,
@@ -117,7 +117,7 @@ base class Context {
 }
 
 final class LoopContext extends Iterable<Object?> {
-  LoopContext(this.values, this.depth0, this.recurse)
+  new(this.values, this.depth0, this.recurse)
     : length = values.length,
       index0 = -1;
 
@@ -246,7 +246,7 @@ final class LoopContext extends Iterable<Object?> {
 }
 
 final class LoopIterator implements Iterator<Object?> {
-  LoopIterator(this.context);
+  new(this.context);
 
   final LoopContext context;
 
@@ -267,7 +267,7 @@ final class LoopIterator implements Iterator<Object?> {
 }
 
 final class Cycler extends Iterable<Object?> {
-  Cycler(Iterable<Object?> values)
+  new(Iterable<Object?> values)
     : values = List<Object?>.of(values),
       length = values.length,
       index = 0;
@@ -300,7 +300,7 @@ final class Cycler extends Iterable<Object?> {
 }
 
 final class CyclerIterator implements Iterator<Object?> {
-  CyclerIterator(this.cycler);
+  new(this.cycler);
 
   final Cycler cycler;
 
@@ -315,7 +315,7 @@ final class CyclerIterator implements Iterator<Object?> {
 }
 
 base class Namespace {
-  Namespace([Map<String, Object?>? data])
+  new([Map<String, Object?>? data])
     : context = <String, Object?>{...?data};
 
   final Map<String, Object?> context;
@@ -349,7 +349,7 @@ base class Namespace {
 }
 
 final class NamespaceValue {
-  NamespaceValue(this.name, this.item);
+  new(this.name, this.item);
 
   final String name;
 

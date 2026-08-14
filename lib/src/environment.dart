@@ -29,8 +29,10 @@ typedef ContextFinalizer = Object? Function(Context context, Object? value);
 /// {@macro jinja.finalizer}
 ///
 /// Takes [Environment] as first argument.
-typedef EnvironmentFinalizer =
-    Object? Function(Environment environment, Object? value);
+typedef EnvironmentFinalizer = Object? Function(
+  Environment environment,
+  Object? value,
+);
 
 /// A function that can be used to get object atribute.
 ///
@@ -76,7 +78,7 @@ Function passEnvironment(Function function) {
 /// Environment modifications can break templates that have been parsed or loaded.
 base class Environment {
   /// {@macro jinja.Environment}
-  Environment({
+  new({
     this.commentStart = '{#',
     this.commentEnd = '#}',
     this.variableStart = '{{',
@@ -486,7 +488,7 @@ base class Environment {
 // TODO(template): add module namespace
 base class Template {
   /// {@macro jinja.Template}
-  factory Template(
+  factory(
     String source, {
     Environment? environment,
     String? path,
@@ -548,7 +550,7 @@ base class Template {
   /// This is used internally by the [Environment.fromString] to create
   /// templates from parsed sources.
   @internal
-  Template.fromNode(
+  new fromNode(
     this.environment, {
     this.path,
     this.globals = const <String, Object?>{},

@@ -3,12 +3,12 @@ part of '../nodes.dart';
 enum AssignContext { load, store, parameter }
 
 final class Name extends Expression {
-  const Name({required this.name, this.context = AssignContext.load});
+  const new({required this.name, this.context = AssignContext.load});
 
-  const Name.store({required String name})
+  const new store({required String name})
     : this(name: name, context: AssignContext.store);
 
-  const Name.parameter({required String name})
+  const new parameter({required String name})
     : this(name: name, context: AssignContext.parameter);
 
   final String name;
@@ -36,7 +36,7 @@ final class Name extends Expression {
 }
 
 final class NamespaceRef extends Expression {
-  const NamespaceRef({required this.name, required this.attribute});
+  const new({required this.name, required this.attribute});
 
   final String name;
 
@@ -66,11 +66,11 @@ final class NamespaceRef extends Expression {
 }
 
 abstract base class Literal extends Expression {
-  const Literal();
+  const new();
 }
 
 final class Constant extends Literal {
-  const Constant({required this.value});
+  const new({required this.value});
 
   final Object? value;
 
@@ -91,7 +91,7 @@ final class Constant extends Literal {
 }
 
 final class Tuple extends Literal {
-  const Tuple({required this.values});
+  const new({required this.values});
 
   final List<Expression> values;
 
@@ -128,7 +128,7 @@ final class Tuple extends Literal {
 }
 
 final class Array extends Literal {
-  const Array({required this.values});
+  const new({required this.values});
 
   final List<Expression> values;
 
@@ -167,7 +167,7 @@ final class Array extends Literal {
 typedef Pair = ({Expression key, Expression value});
 
 final class Dict extends Literal {
-  const Dict({required this.pairs});
+  const new({required this.pairs});
 
   final List<Pair> pairs;
 
@@ -211,7 +211,7 @@ final class Dict extends Literal {
 }
 
 final class Condition extends Expression {
-  const Condition({
+  const new({
     required this.test,
     required this.trueValue,
     this.falseValue,
@@ -281,7 +281,7 @@ typedef Keyword = ({String key, Expression value});
 typedef Parameters = (List<Object?>, Map<Symbol, Object?>);
 
 final class Calling extends Expression {
-  const Calling({
+  const new({
     this.arguments = const <Expression>[],
     this.keywords = const <Keyword>[],
   });
@@ -343,7 +343,7 @@ final class Calling extends Expression {
 }
 
 final class Call extends Expression {
-  const Call({required this.value, this.calling = const Calling()});
+  const new({required this.value, this.calling = const Calling()});
 
   final Expression value;
 
@@ -385,7 +385,7 @@ final class Call extends Expression {
 }
 
 final class Filter extends Expression {
-  const Filter({required this.name, this.calling = const Calling()});
+  const new({required this.name, this.calling = const Calling()});
 
   final String name;
 
@@ -421,7 +421,7 @@ final class Filter extends Expression {
 }
 
 final class Test extends Expression {
-  const Test({required this.name, this.calling = const Calling()});
+  const new({required this.name, this.calling = const Calling()});
 
   final String name;
 
@@ -457,7 +457,7 @@ final class Test extends Expression {
 }
 
 final class Item extends Expression {
-  const Item({required this.key, required this.value});
+  const new({required this.key, required this.value});
 
   final Expression key;
 
@@ -499,7 +499,7 @@ final class Item extends Expression {
 }
 
 final class Slice extends Expression {
-  const Slice({required this.value, required this.start, this.stop});
+  const new({required this.value, required this.start, this.stop});
 
   final Expression value;
 
@@ -542,7 +542,7 @@ final class Slice extends Expression {
 }
 
 final class Attribute extends Expression {
-  const Attribute({required this.attribute, required this.value});
+  const new({required this.attribute, required this.value});
 
   final String attribute;
 
@@ -581,7 +581,7 @@ final class Attribute extends Expression {
 }
 
 final class Concat extends Expression {
-  const Concat({required this.values});
+  const new({required this.values});
 
   final List<Expression> values;
 
@@ -627,7 +627,7 @@ enum CompareOperator {
   contains('in'),
   notContains('not in');
 
-  const CompareOperator(this.symbol);
+  new(this.symbol);
 
   final String symbol;
 
@@ -650,7 +650,7 @@ enum CompareOperator {
 typedef Operand = (CompareOperator operator, Expression value);
 
 final class Compare extends Expression {
-  const Compare({required this.value, this.operands = const <Operand>[]});
+  const new({required this.value, this.operands = const <Operand>[]});
 
   final Expression value;
 
@@ -704,13 +704,13 @@ enum UnaryOperator {
   minus('-'),
   not('not');
 
-  const UnaryOperator(this.symbol);
+  new(this.symbol);
 
   final String symbol;
 }
 
 final class Unary extends Expression {
-  const Unary({required this.operator, required this.value});
+  const new({required this.operator, required this.value});
 
   final UnaryOperator operator;
 
@@ -749,7 +749,7 @@ final class Unary extends Expression {
 }
 
 abstract final class Binary<E extends Enum> extends Expression {
-  const Binary({
+  const new({
     required this.operator,
     required this.left,
     required this.right,
@@ -789,13 +789,13 @@ enum ScalarOperator {
   minus('-'),
   plus('+');
 
-  const ScalarOperator(this.symbol);
+  new(this.symbol);
 
   final String symbol;
 }
 
 final class Scalar extends Binary<ScalarOperator> {
-  const Scalar({
+  const new({
     required super.operator,
     required super.left,
     required super.right,
@@ -833,7 +833,7 @@ final class Scalar extends Binary<ScalarOperator> {
 enum LogicalOperator { or, and }
 
 final class Logical extends Binary<LogicalOperator> {
-  const Logical({
+  const new({
     required super.operator,
     required super.left,
     required super.right,

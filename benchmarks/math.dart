@@ -18,7 +18,7 @@ void main() {
 void doWork(String render) {}
 
 final class MathOperations extends BenchmarkBase {
-  const MathOperations(this.template) : super('Math Operations');
+  const new(this.template) : super('Math Operations');
 
   final Template template;
 

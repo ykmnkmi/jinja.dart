@@ -95,9 +95,9 @@ abstract final class Token {
     'tilde': '~',
   };
 
-  const factory Token(int line, String type, String value) = ValueToken;
+  const factory(int line, String type, String value) = ValueToken;
 
-  const factory Token.simple(int line, String type) = SimpleToken;
+  const factory simple(int line, String type) = SimpleToken;
 
   @override
   int get hashCode {
@@ -132,7 +132,7 @@ abstract final class Token {
 }
 
 abstract final class BaseToken implements Token {
-  const BaseToken();
+  const new();
 
   @override
   int get length {
@@ -173,7 +173,7 @@ abstract final class BaseToken implements Token {
 }
 
 final class SimpleToken extends BaseToken {
-  const SimpleToken(this.line, this.type);
+  const new(this.line, this.type);
 
   @override
   final int line;
@@ -188,7 +188,7 @@ final class SimpleToken extends BaseToken {
 }
 
 final class ValueToken extends BaseToken {
-  const ValueToken(this.line, this.type, this.value);
+  const new(this.line, this.type, this.value);
 
   @override
   final int line;

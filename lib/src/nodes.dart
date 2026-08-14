@@ -4,7 +4,7 @@ part 'nodes/expressions.dart';
 part 'nodes/statements.dart';
 
 abstract base class Node {
-  const Node();
+  const new();
 
   R accept<C, R>(Visitor<C, R> visitor, C context);
 
@@ -16,7 +16,7 @@ abstract base class Node {
 }
 
 final class Data extends Node {
-  const Data({this.data = ''});
+  const new({this.data = ''});
 
   final String data;
 
@@ -49,7 +49,7 @@ final class Data extends Node {
 }
 
 abstract base class Expression extends Node {
-  const Expression();
+  const new();
 
   @override
   Map<String, Object?> toJson() {
@@ -58,11 +58,11 @@ abstract base class Expression extends Node {
 }
 
 abstract base class Statement extends Node {
-  const Statement();
+  const new();
 }
 
 final class Interpolation extends Node {
-  const Interpolation({required this.value});
+  const new({required this.value});
 
   final Expression value;
 
@@ -92,7 +92,7 @@ final class Interpolation extends Node {
 }
 
 final class Output extends Node {
-  const Output({this.nodes = const <Node>[]});
+  const new({this.nodes = const <Node>[]});
 
   final List<Node> nodes;
 
@@ -127,7 +127,7 @@ final class Output extends Node {
 }
 
 final class TemplateNode extends Node {
-  TemplateNode({
+  new({
     this.blocks = const <Block>[],
     this.macros = const <Macro>[],
     required this.body,

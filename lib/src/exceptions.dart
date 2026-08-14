@@ -1,7 +1,7 @@
 /// Base class for all template errors.
 abstract class TemplateError implements Exception {
   /// Creates a new [TemplateError].
-  TemplateError([this.message]);
+  new([this.message]);
 
   /// The error message.
   final String? message;
@@ -19,7 +19,7 @@ abstract class TemplateError implements Exception {
 /// Thrown if a template does not exist.
 class TemplateNotFound extends TemplateError {
   /// Creates a new [TemplateNotFound].
-  TemplateNotFound({
+  new({
     String? message,
     @Deprecated("Use 'path' instead.") String? name,
     String? path,
@@ -50,7 +50,7 @@ class TemplateNotFound extends TemplateError {
 /// Like [TemplateNotFound], but thrown if multiple templates are selected.
 class TemplatesNotFound extends TemplateNotFound {
   /// Creates a new [TemplatesNotFound].
-  TemplatesNotFound({
+  new({
     super.message,
     @Deprecated("Use 'paths' instead.") List<String>? names,
     List<String>? paths,
@@ -82,7 +82,7 @@ class TemplatesNotFound extends TemplateNotFound {
 /// Thrown to tell the user that there is a problem with the template.
 class TemplateSyntaxError extends TemplateError {
   /// Creates a new [TemplateSyntaxError].
-  TemplateSyntaxError(super.message, {this.path, this.line});
+  new(super.message, {this.path, this.line});
 
   /// The path to the template that caused the error.
   final String? path;
@@ -119,7 +119,7 @@ class TemplateSyntaxError extends TemplateError {
 /// by a syntax error.
 class TemplateAssertionError extends TemplateSyntaxError {
   /// Creates a new [TemplateAssertionError].
-  TemplateAssertionError(super.message, {super.path, super.line});
+  new(super.message, {super.path, super.line});
 
   @override
   String toString() {
@@ -132,7 +132,7 @@ class TemplateAssertionError extends TemplateSyntaxError {
 /// Under some situations Jinja may throw this exception.
 class TemplateRuntimeError extends TemplateError {
   /// Creates a new [TemplateRuntimeError].
-  TemplateRuntimeError([super.message]);
+  new([super.message]);
 
   @override
   String toString() {
@@ -147,7 +147,7 @@ class TemplateRuntimeError extends TemplateError {
 /// Thrown if a variable is undefined.
 class UndefinedError extends TemplateRuntimeError {
   /// Creates a new [UndefinedError].
-  UndefinedError([super.message]);
+  new([super.message]);
 
   @override
   String toString() {

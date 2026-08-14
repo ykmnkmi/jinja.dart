@@ -5,11 +5,11 @@ import 'package:jinja/src/nodes.dart';
 import 'package:textwrap/textwrap.dart';
 
 final class Parser {
-  factory Parser(Environment environment, String source, {String? path}) {
+  factory(Environment environment, String source, {String? path}) {
     return Parser.fromTokens(environment, environment.lex(source), path: path);
   }
 
-  Parser.fromTokens(this.environment, Iterable<Token> tokens, {this.path})
+  new fromTokens(this.environment, Iterable<Token> tokens, {this.path})
     : reader = TokenReader(tokens),
       endTokensStack = <List<(String, String?)>>[],
       tagStack = <String>[],

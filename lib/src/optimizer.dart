@@ -8,7 +8,7 @@ import 'package:meta/meta.dart';
 
 @doNotStore
 class Optimizer implements Visitor<Context, Node> {
-  const Optimizer();
+  const new();
 
   T visitNode<T extends Node?>(Node? node, Context context) {
     return node?.accept(this, context) as T;

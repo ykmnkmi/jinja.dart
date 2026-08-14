@@ -2,9 +2,7 @@ include: package:lints/recommended.yaml
 
 analyzer:
   language:
-    strict-casts: true
     strict-inference: true
-    strict-raw-types: true
   errors:
     todo: ignore
 
@@ -12,15 +10,23 @@ linter:
   rules:
     - always_declare_return_types
     - always_put_control_body_on_new_line
+    - async_return_with_no_await
     - avoid_dynamic_calls
     - avoid_escaping_inner_quotes
     - avoid_final_parameters
     - avoid_print
     - avoid_void_async
     - directives_ordering
+    - empty_container_bodies
+    - initialize_in_field_declaration
+    - no_dynamic_casts
+    - no_raw_types
     - prefer_single_quotes
+    - unnecessary_const_in_enum_constructor
     - unnecessary_final
     - unnecessary_lambdas
     - unnecessary_parenthesis
+    - unnecessary_primary_constructor_body
+    - unnecessary_type_name_in_constructor
     - unnecessary_raw_strings
-    - use_super_parameters
+    - use_declaring_parameters

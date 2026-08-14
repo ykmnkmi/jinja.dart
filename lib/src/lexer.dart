@@ -43,7 +43,7 @@ final RegExp _floatRe = RegExp(
 ///
 /// Used by [Lexer] to specify known errors.
 final class _Failure {
-  _Failure(this.message);
+  new(this.message);
 
   final String message;
 
@@ -55,7 +55,7 @@ final class _Failure {
 enum _RuleState { pop, byGroup }
 
 sealed class _Rule {
-  _Rule(this.regExp, [this.newState]);
+  new(this.regExp, [this.newState]);
 
   final RegExp regExp;
 
@@ -63,16 +63,15 @@ sealed class _Rule {
 }
 
 final class _SingleTokenRule extends _Rule {
-  _SingleTokenRule(super.regExp, this.token, [super.newState]);
+  new(super.regExp, this.token, [super.newState]);
 
   final String token;
 }
 
 final class _MultiTokenRule extends _Rule {
-  _MultiTokenRule(super.regExp, this.tokens, [super.newState])
-    : optionalLStrip = false;
+  new(super.regExp, this.tokens, [super.newState]) : optionalLStrip = false;
 
-  _MultiTokenRule.optionalLStrip(super.regExp, this.tokens, [super.newState])
+  new optionalLStrip(super.regExp, this.tokens, [super.newState])
     : optionalLStrip = true;
 
   final List<Object> tokens;
@@ -88,11 +87,11 @@ final class _MultiTokenRule extends _Rule {
 /// environments can share the same lexer.
 final class Lexer {
   /// Return a lexer which is probably cached.
-  factory Lexer(Environment environment) {
+  factory(Environment environment) {
     return _lexerCache[environment] ??= Lexer._(environment);
   }
 
-  Lexer._(Environment environment)
+  new _(Environment environment)
     : _rules = <String, List<_Rule>>{},
       leftStripBlocks = environment.leftStripBlocks,
       keepTrailingNewLine = environment.keepTrailingNewLine,

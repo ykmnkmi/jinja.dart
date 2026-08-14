@@ -7,7 +7,7 @@ import 'package:meta/meta.dart';
 // and move to `renderer.dart`. Add `ContextNode` for `ContextCallback`s.
 @doNotStore
 class RuntimeCompiler implements Visitor<void, Node> {
-  RuntimeCompiler()
+  new()
     : _imports = <String>{},
       _macros = <String>{},
       _inMacro = false;

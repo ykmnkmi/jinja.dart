@@ -1,7 +1,7 @@
 import 'package:jinja/src/nodes.dart';
 
 abstract interface class Visitor<C, R> {
-  const Visitor();
+  const new();
 
   // Expressions
 
@@ -85,7 +85,7 @@ abstract interface class Visitor<C, R> {
 }
 
 base class ThrowingVisitor<C, R> implements Visitor<C, R> {
-  const ThrowingVisitor();
+  const new();
 
   // Expressions
 

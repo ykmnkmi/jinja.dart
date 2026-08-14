@@ -9,13 +9,13 @@ import 'package:jinja/src/utils.dart';
 import 'package:test/test.dart';
 
 class FirstName {
-  FirstName(this.first);
+  new(this.first);
 
   String? first;
 }
 
 class FullName {
-  FullName(this.first, this.last);
+  new(this.first, this.last);
 
   String? first;
 
@@ -23,7 +23,7 @@ class FullName {
 }
 
 class User {
-  User(this.name);
+  new(this.name);
 
   String? name;
 }
@@ -568,13 +568,9 @@ void main() {
       expect(tmpl.render(), equals('Null'));
     });
 
-    test(
-      'filter undefined',
-      () {
-        expect(() => env.fromString('{{ var|f }}'), aNoFilterNamedF);
-      },
-      skip: 'Enable after implementing compiler assert checks.',
-    );
+    test('filter undefined', () {
+      expect(() => env.fromString('{{ var|f }}'), aNoFilterNamedF);
+    }, skip: 'Enable after implementing compiler assert checks.');
 
     test('filter undefined in if', () {
       var t1 = env.fromString(
