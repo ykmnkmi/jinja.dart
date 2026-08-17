@@ -13,7 +13,7 @@ dependencies:
   meta: ^1.19.0
   path: ^1.9.1
   string_scanner: ^1.4.1
-  textwrap: ^2.2.0
+  textwrap: ^2.2.1
 
 dev_dependencies:
   benchmark_harness: ^2.4.0
