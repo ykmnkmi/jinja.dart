@@ -2,7 +2,6 @@ import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/exceptions.dart';
 import 'package:jinja/src/lexer.dart';
 import 'package:jinja/src/nodes.dart';
-import 'package:textwrap/textwrap.dart';
 
 final class Parser {
   factory(Environment environment, String source, {String? path}) {
@@ -1413,8 +1412,8 @@ final class Parser {
 
             var node = parseStatement();
 
-            if (extendsNode != null && node is! Block) {
-              fill('');
+            if (extendsNode != null && extendsNode != node && node is Extends) {
+              fail('Extended multiple times.');
             }
 
             nodes.add(node);
