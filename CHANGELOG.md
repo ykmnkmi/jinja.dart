@@ -1,3 +1,9 @@
+## 0.7.2 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/0.7.1..0.7.2))
+- Bump `textwrap` to `^2.2.1`.
+- Fix multiple `extends` error.
+- Fix `replace` filter.
+- Update `README.md`.
+
 ## 0.7.1 ([diff](https://github.com/ykmnkmi/jinja.dart/compare/0.7.0..0.7.1))
 - Bump the SDK to 3.13.0. Add new lints. Run the formatter. Use the new constructor syntax.
 
