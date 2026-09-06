@@ -4,7 +4,7 @@
 [![Test Status][test_ci_icon]][test_ci]
 [![CodeCov][codecov_icon]][codecov]
 
-[Jinja][jinja] (3.x) server-side template engine port for Dart 2.
+[Jinja][jinja] (3.x) server-side template engine port for Dart 3.
 Variables, expressions, control structures and template inheritance.
 
 ## Documentation
@@ -21,7 +21,7 @@ _work in progress_.
   Use `attribute` and `item` filters for `object.attribute` and `object[item]` expressions.
 - If `Environment({getAttribute})` is not passed, the `getItem` method will be used.
   This allows you to use `{{ map.key }}` as an expression equivalent to `{{ map['key'] }}`.
-- String slices and negative indexes are not supported.
+- String slices and negative indexes are not supported (list slicing `[start:stop]` with non-negative integers is supported).
 - Macro arguments without default values are required.
 - No `FilterArgumentError` error class.
 - No `*args` and `**kwargs` arguments.
@@ -130,6 +130,7 @@ See also examples with [conduit][conduit_example] and
   - Blocks
   - Include
   - Import
+  - Try / Catch
 - Import Context Behavior
 - Expressions with [filters][filters] and [tests][tests]
   - Literals
@@ -159,6 +160,7 @@ See also examples with [conduit][conduit_example] and
   - Logic
     - `and`
     - `or`
+    - `??` (null-coalescing / fallback)
     - `not`
     - `(expr)`
   - Other Operators
@@ -168,9 +170,11 @@ See also examples with [conduit][conduit_example] and
     - `~`
     - `()`
     - `.`/`[]`
-  - If Expression
+    - `[:]` (list slice)
+  - Conditional Expressions
     - `{{ list.last if list }}`
     - `{{ user.name if user else 'Guest' }}`
+    - `{{ condition ? 'yes' : 'no' }}` (ternary operator)
   - Dart Methods and Properties (if reflection is on)
     - `{{ string.toUpperCase() }}`
     - `{{ list.add(item) }}`
@@ -182,9 +186,9 @@ See also examples with [conduit][conduit_example] and
   - `namespace`
 - Loaders
   - `FileSystemLoader`
-  - `MapLoader` (`DictLoader`)
+  - `MapLoader` (equivalent to Jinja's `DictLoader`)
 - Extensions
-  - Expression Statement
+  - Expression Statement (`do`)
   - With Statement
 - ~~Autoescape Overrides~~
 
@@ -209,6 +213,6 @@ Post issues and feature requests on the GitHub [issue tracker][issues].
 [jinja_templates]: https://jinja.palletsprojects.com/en/3.0.x/templates
 [conduit_example]: https://github.com/ykmnkmi/jinja_conduit_example
 [reflectable_example]: https://github.com/ykmnkmi/jinja_reflectable_example
-[filters]: https://github.com/ykmnkmi/jinja.dart/blob/master/lib/src/filters.dart
-[tests]: https://github.com/ykmnkmi/jinja.dart/blob/master/lib/src/tests.dart
+[filters]: https://github.com/ykmnkmi/jinja.dart/blob/main/lib/src/filters.dart
+[tests]: https://github.com/ykmnkmi/jinja.dart/blob/main/lib/src/tests.dart
 [issues]: https://github.com/ykmnkmi/jinja.dart/issues
