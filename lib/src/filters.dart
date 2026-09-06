@@ -95,7 +95,7 @@ String doReplace(String value, String from, String to, [int? count]) {
     var n = 0;
 
     while (n < count && start != -1 && start < value.length) {
-      var start = value.indexOf(from);
+      start = value.indexOf(from);
       value = value.replaceRange(start, start + from.length, to);
       start = value.indexOf(from, start + to.length);
       n += 1;
