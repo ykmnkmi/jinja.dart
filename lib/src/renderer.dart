@@ -647,11 +647,14 @@ base class StringSinkRenderer
     }
 
     if (template != null) {
-      if (!node.withContext) {
-        context = context.derived(withContext: false);
+      if (node.withContext) {
+        template.renderTo(context.sink, <String, Object?>{
+          ...context.parent,
+          ...context.context,
+        });
+      } else {
+        template.renderTo(context.sink);
       }
-
-      template.body.accept(this, context);
     }
   }
 

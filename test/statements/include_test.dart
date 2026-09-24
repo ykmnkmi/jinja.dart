@@ -121,4 +121,59 @@ void main() {
       expect(tmpl.render(), equals('42'));
     });
   });
+
+  group('Include isolation', () {
+    test('assignments and macros stay local', () {
+      var env = Environment(
+        loader: MapLoader({
+          'included':
+              '{{ x }}{% set x = 2 %}'
+              '{% macro label() %}included{% endmacro %}{{ label() }}',
+        }),
+      );
+
+      var tmpl = env.fromString(
+        '{% set x = 1 %}{% macro label() %}caller{% endmacro %}'
+        '{% include "included" %}|{{ x }}|{{ label() }}',
+      );
+
+      expect(tmpl.render(), equals('1included|1|caller'));
+    });
+
+    for (var mode in ['with context', 'without context']) {
+      test('blocks and inheritance stay local $mode', () {
+        var env = Environment(
+          loader: MapLoader({
+            'base': '{% block body %}base{% endblock %}',
+            'a':
+                '{% extends "base" %}'
+                '{% block body %}A{{ super() }}{% endblock %}',
+            'b': '{% block body %}B{% endblock %}',
+          }),
+        );
+
+        var tmpl = env.fromString(
+          '{% block body %}caller{% endblock %}|'
+          '{% include "a" $mode %}|{% include "b" $mode %}|'
+          '{{ self.body() }}',
+        );
+
+        expect(tmpl.render(), equals('caller|Abase|B|caller'));
+      });
+    }
+
+    test('without context in a loop only sees template globals', () {
+      var env = Environment(
+        globals: {'global': 'G'},
+        loader: MapLoader({'included': '{{ secret }}{{ item }}{{ global }}'}),
+      );
+
+      var tmpl = env.fromString(
+        '{% for item in [1] %}'
+        '{% include "included" without context %}{% endfor %}',
+      );
+
+      expect(tmpl.render({'secret': 'private'}), equals('G'));
+    });
+  });
 }
