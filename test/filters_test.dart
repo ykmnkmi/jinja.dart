@@ -443,6 +443,27 @@ void main() {
       expect(tmpl.render({'string': '<foo>'}), equals('<f4242>'));
     });
 
+    test('regex_replace', () {
+      var tmpl = env.fromString(
+        r'{{ string|regex_replace("\s+", "-") }}',
+      );
+      expect(tmpl.render({'string': 'foo  bar'}), equals('foo-bar'));
+    });
+
+    test('regex_replace groups', () {
+      var tmpl = env.fromString(
+        r'{{ string|regex_replace("(\w+)-(\w+)", "\2/\1") }}',
+      );
+      expect(tmpl.render({'string': 'foo-bar'}), equals('bar/foo'));
+    });
+
+    test('regex_replace count', () {
+      var tmpl = env.fromString(
+        r'{{ string|regex_replace("a+", "x", 1) }}',
+      );
+      expect(tmpl.render({'string': 'aa-aaa'}), equals('x-aaa'));
+    });
+
     test('forceescape', () {}, skip: 'Not supported.');
 
     test('safe', () {}, skip: 'Not supported.');

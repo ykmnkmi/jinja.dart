@@ -105,6 +105,46 @@ String doReplace(String value, String from, String to, [int? count]) {
   return value;
 }
 
+/// Replace matches of [pattern] in [value] with [replacement].
+///
+/// [pattern] is a Dart [RegExp] pattern (not a literal substring; use
+/// [doReplace] for that).
+///
+/// [replacement] may contain `\1` / `$1` style backreferences to capture
+/// groups. Optional [count] limits how many matches are replaced, from the
+/// left. Invalid patterns throw [FormatException].
+String doRegexReplace(
+  String value,
+  String pattern,
+  String replacement, [
+  int? count,
+]) {
+  var re = RegExp(pattern);
+  String expand(Match match) {
+    return replacement.replaceAllMapped(RegExp(r'\\(\d+)|\$(\d+)'), (ref) {
+      var index = int.parse(ref[1] ?? ref[2]!);
+      return match.group(index) ?? '';
+    });
+  }
+
+  if (count == null) {
+    return value.replaceAllMapped(re, expand);
+  }
+
+  if (count <= 0) {
+    return value;
+  }
+
+  var n = 0;
+  return value.replaceAllMapped(re, (match) {
+    if (n >= count) {
+      return match.group(0)!;
+    }
+    n += 1;
+    return expand(match);
+  });
+}
+
 /// Convert a value to uppercase.
 String doUpper(String value) {
   return value.toUpperCase();
@@ -643,6 +683,7 @@ final Map<String, Function> filters = <String, Function>{
   'string': doString,
   // 'urlencode': doURLEncode,
   'replace': doReplace,
+  'regex_replace': doRegexReplace,
   'upper': doUpper,
   'lower': doLower,
   'items': doItems,
