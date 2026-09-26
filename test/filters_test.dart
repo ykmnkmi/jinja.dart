@@ -553,6 +553,12 @@ void main() {
       expect(tmpl.render({'x': '<bar>'}), equals('"\\u003cbar\\u003e"'));
     });
 
+    test('json dump indent', () {
+      var x = {'foo': 'bar'};
+      var tmpl = env.fromString('{{ x|tojson(indent=2) }}');
+      expect(tmpl.render({'x': x}), equals('{\n  "foo": "bar"\n}'));
+    });
+
     test('wordwrap', () {
       var env = Environment(newLine: '\n');
       var tmpl = env.fromString('{{ string|wordwrap(20) }}');
