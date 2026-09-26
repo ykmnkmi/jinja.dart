@@ -16,6 +16,31 @@ Object finalize(Context context, Object? value) {
 }
 
 Object? getItem(Object? item, dynamic object) {
+  if (object is List) {
+    if (item is int) {
+      if (item < 0) {
+        item = object.length + item;
+      }
+
+      if (item < 0 || item >= object.length) {
+        return null;
+      }
+    }
+
+    return (object as dynamic)[item];
+  }
+
+  if (object is String) {
+    if (item == 'split') {
+      return (Object? separator, [Object? limit]) {
+        if (separator is String) {
+          return object.split(separator);
+        }
+        return object.split(RegExp(r'\s+'));
+      };
+    }
+  }
+
   try {
     // TODO(dynamic): dynamic invocation
     // ignore: avoid_dynamic_calls
@@ -25,6 +50,8 @@ Object? getItem(Object? item, dynamic object) {
       rethrow;
     }
 
+    return null;
+  } on RangeError {
     return null;
   }
 }
