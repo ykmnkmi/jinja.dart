@@ -195,7 +195,9 @@ void main() {
       }
     });
 
-    // TODO: add test: string escapes
+    test('string escapes', () {}, skip: 'Not implemented.');
+
+    test('bytefallback', () {}, skip: 'Not supported.');
   });
 
   group('LStripBlocks', () {

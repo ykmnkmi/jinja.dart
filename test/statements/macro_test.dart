@@ -106,6 +106,43 @@ void main() {
 {{ m(1) }},{{ m(1, b=2) }},{{ m(1, b=2, x=3) }},{{ m(1, x=7) }}''');
       expect(tmpl.render(), equals('1||23,1|2|23,1|2|3,1|7|7'));
     });
+  });
+
+  group('Macro extra', () {
+    test('caller argument validation', () {
+      expect(
+        () =>
+            env.fromString('{% macro m(caller) %}{{ caller() }}{% endmacro %}'),
+        throwsA(
+          predicate<TemplateSyntaxError>(
+            (error) =>
+                error.message ==
+                'When defining macros or call blocks the special "caller" '
+                    'argument must be omitted or be given a default.',
+          ),
+        ),
+      );
+
+      var tmpl = env.fromString(
+        '{% macro m(caller=none) %}'
+        '{% if caller %}{{ caller() }}{% else %}no caller{% endif %}'
+        '{% endmacro %}'
+        '{{ m() }}|{% call m() %}called{% endcall %}',
+      );
+      expect(tmpl.render(), equals('no caller|called'));
+
+      tmpl = env.fromString(
+        '{% macro m() %}{{ kwargs.caller() }}{% endmacro %}'
+        '{% call m() %}via kwargs{% endcall %}',
+      );
+      expect(tmpl.render(), equals('via kwargs'));
+
+      tmpl = env.fromString(
+        '{% macro m() %}foo{% endmacro %}'
+        '{% call m() %}bar{% endcall %}',
+      );
+      expect(() => tmpl.render(), throwsA(isA<TypeError>()));
+    });
 
     test('recursive macro defined after caller works after hoisting', () {
       // 'render_list' calls 'render_item' which is defined later.

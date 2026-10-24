@@ -280,7 +280,7 @@ void main() {
       );
     });
 
-    test('triling comma', () {
+    test('trailing comma', () {
       // tuple is list
       var tmpl = env.fromString('{{ (1, 2,) }}|{{ [1, 2,] }}|{{ {1: 2,} }}');
       expect(tmpl.render(), equals('[1, 2]|[1, 2]|{1: 2}'));
@@ -315,37 +315,6 @@ void main() {
     test('raw2', () {
       var tmpl = env.fromString('{% raw %}{{ FOO }} and {% BAR %}{% endraw %}');
       expect(tmpl.render(), equals('{{ FOO }} and {% BAR %}'));
-    });
-
-    test('operator and', () {
-      var tmpl = env.fromString(
-        "<{% if page['next'] and page['next'].path %}ok{% endif %}>",
-      );
-      expect(tmpl.render({'page': {}}), equals('<>'));
-    });
-
-    test('operator or', () {
-      var tmpl = env.fromString(
-        "<{% if page['next'] or empty['test'] %}ok{% endif %}>",
-      );
-      var page = {'next': '5'};
-      expect(tmpl.render({'page': page}), equals('<ok>'));
-    });
-
-    test('operator ??', () {
-      // Test ?? as equivalent to 'or'
-      var tmpl = env.fromString('{{ variable ?? "default" }}');
-      expect(tmpl.render(), equals('default'));
-      expect(tmpl.render({'variable': false}), equals('default'));
-      expect(tmpl.render({'variable': 0}), equals('default'));
-      expect(tmpl.render({'variable': ''}), equals('default'));
-      expect(tmpl.render({'variable': 'value'}), equals('value'));
-
-      // Test chaining
-      tmpl = env.fromString('{{ var1 ?? var2 ?? "final" }}');
-      expect(tmpl.render(), equals('final'));
-      expect(tmpl.render({'var2': 'second'}), equals('second'));
-      expect(tmpl.render({'var1': 'first'}), equals('first'));
     });
 
     test('const', () {
@@ -403,6 +372,39 @@ void main() {
       expect(tmpl.render({'foo': foo}), equals('-42'));
       tmpl = env.fromString('{{ foo.bar }}');
       expect(tmpl.render({'foo': foo}), equals('42'));
+    });
+  });
+
+  group('Syntax extra', () {
+    test('operator and', () {
+      var tmpl = env.fromString(
+        "<{% if page['next'] and page['next'].path %}ok{% endif %}>",
+      );
+      expect(tmpl.render({'page': {}}), equals('<>'));
+    });
+
+    test('operator or', () {
+      var tmpl = env.fromString(
+        "<{% if page['next'] or empty['test'] %}ok{% endif %}>",
+      );
+      var page = {'next': '5'};
+      expect(tmpl.render({'page': page}), equals('<ok>'));
+    });
+
+    test('operator ??', () {
+      // Test ?? as equivalent to 'or'
+      var tmpl = env.fromString('{{ variable ?? "default" }}');
+      expect(tmpl.render(), equals('default'));
+      expect(tmpl.render({'variable': false}), equals('default'));
+      expect(tmpl.render({'variable': 0}), equals('default'));
+      expect(tmpl.render({'variable': ''}), equals('default'));
+      expect(tmpl.render({'variable': 'value'}), equals('value'));
+
+      // Test chaining
+      tmpl = env.fromString('{{ var1 ?? var2 ?? "final" }}');
+      expect(tmpl.render(), equals('final'));
+      expect(tmpl.render({'var2': 'second'}), equals('second'));
+      expect(tmpl.render({'var1': 'first'}), equals('first'));
     });
 
     test('mixed map literals', () {

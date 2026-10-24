@@ -60,14 +60,6 @@ void main() {
       expect(tmpl.render({'seq': []}), equals('<>'));
     });
 
-    test('map tuple', () {
-      var tmpl = env.fromString(
-        '{% for k, v in map %}<{{k}}:{{v}}>{% endfor %}',
-      );
-      var map = {'a': 1, 'b': 2};
-      expect(tmpl.render({'map': map}), equals('<a:1><b:2>'));
-    });
-
     test('context vars', () {
       var slist = [42, 24];
 
@@ -202,13 +194,13 @@ void main() {
       expect(tmpl.render({'table': table}), equals('[1|1][1|2][2|1][2|2]'));
     });
 
-    test('recursive bug', () {
+    test('reversed bug', () {
       var tmpl = env.fromString(
         '{% for i in items %}{{ i }}'
         '{% if not loop.last %}'
         ',{% endif %}{% endfor %}',
       );
-      var items = [1, 2, 3];
+      var items = [3, 2, 1].reversed;
       expect(tmpl.render({'items': items}), equals('1,2,3'));
     });
 
@@ -315,6 +307,27 @@ void main() {
         '{% set x = item %}{{ x }}{% endfor %}',
       );
       expect(tmpl.render(data), equals('919293'));
+    });
+  });
+
+  group('For extra', () {
+    test('map tuple', () {
+      var tmpl = env.fromString(
+        '{% for k, v in map %}<{{k}}:{{v}}>{% endfor %}',
+      );
+      var map = {'a': 1, 'b': 2};
+      expect(tmpl.render({'map': map}), equals('<a:1><b:2>'));
+    });
+
+    test('unpacked loop unassignable', () {
+      expect(
+        () => env.fromString('{% for a, loop in seq %}...{% endfor %}'),
+        throwsA(isA<TemplateSyntaxError>()),
+      );
+      expect(
+        () => env.fromString('{% for a, (b, loop) in seq %}...{% endfor %}'),
+        throwsA(isA<TemplateSyntaxError>()),
+      );
     });
   });
 }

@@ -321,6 +321,68 @@ void main() {
           ),
         ),
       );
+      expect(
+        () => env.fromString(
+          '{% extends "layout" %}{% if x %}{% extends "layout" %}{% endif %}',
+        ),
+        throwsA(
+          predicate<TemplateSyntaxError>(
+            (error) => error.message == 'Extended multiple times.',
+          ),
+        ),
+      );
+    });
+  });
+
+  group('Inheritance extra', () {
+    var env = Environment(
+      trimBlocks: true,
+      loader: MapLoader({'layout': layout}),
+    );
+
+    test('duplicate block', () {
+      expect(
+        () => env.fromString(
+          '{% block x %}{% endblock %}{% block x %}{% endblock %}',
+        ),
+        throwsA(
+          predicate<TemplateAssertionError>(
+            (error) => error.message == "Block 'x' defined twice.",
+          ),
+        ),
+      );
+    });
+
+    test('non top-level extends', () {
+      var matcher = throwsA(
+        predicate<TemplateSyntaxError>(
+          (error) =>
+              error.message == 'Cannot use extend from a non top-level scope.',
+        ),
+      );
+
+      expect(
+        () =>
+            env.fromString('{% block x %}{% extends "layout" %}{% endblock %}'),
+        matcher,
+      );
+      expect(
+        () => env.fromString(
+          '{% for x in [1] %}{% extends "layout" %}{% endfor %}',
+        ),
+        matcher,
+      );
+    });
+
+    test('ignore output after extends', () {
+      var tmpl = env.fromString(
+        '{% extends "layout" %}'
+        '{% set a = "1 level-1" %}'
+        'ignored text {{ 1 / 0 }}'
+        '{% filter upper %}ignored filter{% endfilter %}'
+        '{% block block1 %}{{ a }}{% endblock %}',
+      );
+      expect(tmpl.render(), equals('|1 level-1|2|nested 4|'));
     });
   });
 }

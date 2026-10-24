@@ -32,4 +32,14 @@ void main() {
       expect(tmpl.render({'b': 3, 'e': 4}), equals('1|2|3|4|5'));
     });
   });
+
+  group('With extra', () {
+    test('with tuple unpacking', () {
+      var tmpl = env.fromString('''
+        {%- with (a, b) = [1, 2], c = 3 -%}
+            {{ a }}|{{ b }}|{{ c }}
+        {%- endwith %}''');
+      expect(tmpl.render(), equals('1|2|3'));
+    });
+  });
 }

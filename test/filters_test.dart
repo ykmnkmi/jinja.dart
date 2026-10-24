@@ -188,10 +188,13 @@ void main() {
       expect(tmpl.render({'value': 'abc'}), equals('1.0'));
     });
 
-    // TODO: add format test
-    // TODO: add indent test
-    // TODO: add indent markup input test
-    // TODO: add indent width string test
+    test('format', () {}, skip: 'Not implemented.');
+
+    test('indent', () {}, skip: 'Not implemented.');
+
+    test('indent markup input', () {}, skip: 'Not implemented.');
+
+    test('indent width string', () {}, skip: 'Not implemented.');
 
     test('int', () {
       var tmpl = env.fromString('{{ value|int }}');
@@ -253,7 +256,7 @@ void main() {
       expect(tmpl.render(), equals('[]'));
     });
 
-    // TODO: add pprint test
+    test('pprint', () {}, skip: 'Not implemented.');
 
     test('random', () {
       var expected = '1234567890';
@@ -333,10 +336,13 @@ void main() {
       expect(tmpl.render(), equals('FOO'));
     });
 
-    // TODO: add urlize test
-    // TODO: add urlize rel policy test
-    // TODO: add urlize target parameter test
-    // TODO: add urlize extra schemes parameter test
+    test('urlize', () {}, skip: 'Not implemented.');
+
+    test('urlize rel policy', () {}, skip: 'Not implemented.');
+
+    test('urlize target parameter', () {}, skip: 'Not implemented.');
+
+    test('urlize extra schemes parameter', () {}, skip: 'Not implemented.');
 
     test('wordcount', () {
       var tmpl = env.fromString('{{ "foo bar baz"|wordcount }}');
@@ -409,27 +415,47 @@ void main() {
       expect(tmpl.render(), equals('1|1'));
     });
 
-    // TODO: add round positive test
-    // TODO: add round negative test
-    // TODO: add xmlattr test
-    // TODO: add sort1 test
-    // TODO: add sort2 test
-    // TODO: add sort3 test
-    // TODO: add sort4 test
-    // TODO: add sort5 test
-    // TODO: add sort6 test
-    // TODO: add sort7 test
-    // TODO: add sort8 test
-    // TODO: add unique test
-    // TODO: add unique case sensitive test
-    // TODO: add unique attribute test
-    // TODO: add min max test
-    // TODO: add min max attribute test
-    // TODO: add groupby test
-    // TODO: add groupby tuple index test
-    // TODO: add groupby multidot test
-    // TODO: add groupby default test
-    // TODO: add groupby case test
+    test('round positive', () {}, skip: 'Not implemented.');
+
+    test('round negative', () {}, skip: 'Not implemented.');
+
+    test('xmlattr', () {}, skip: 'Not implemented.');
+
+    test('sort1', () {}, skip: 'Not implemented.');
+
+    test('sort2', () {}, skip: 'Not implemented.');
+
+    test('sort3', () {}, skip: 'Not implemented.');
+
+    test('sort4', () {}, skip: 'Not implemented.');
+
+    test('sort5', () {}, skip: 'Not implemented.');
+
+    test('sort6', () {}, skip: 'Not implemented.');
+
+    test('sort7', () {}, skip: 'Not implemented.');
+
+    test('sort8', () {}, skip: 'Not implemented.');
+
+    test('unique', () {}, skip: 'Not implemented.');
+
+    test('unique case sensitive', () {}, skip: 'Not implemented.');
+
+    test('unique attribute', () {}, skip: 'Not implemented.');
+
+    test('min max', () {}, skip: 'Not implemented.');
+
+    test('min max attribute', () {}, skip: 'Not implemented.');
+
+    test('groupby', () {}, skip: 'Not implemented.');
+
+    test('groupby tuple index', () {}, skip: 'Not implemented.');
+
+    test('groupby multidot', () {}, skip: 'Not implemented.');
+
+    test('groupby default', () {}, skip: 'Not implemented.');
+
+    test('groupby case', () {}, skip: 'Not implemented.');
 
     test('filtertag', () {
       var tmpl = env.fromString(
@@ -447,8 +473,7 @@ void main() {
 
     test('safe', () {}, skip: 'Not supported.');
 
-    // TODO: add urlencode test
-    // test('urlencode', () {});
+    test('urlencode', () {}, skip: 'Not implemented.');
 
     test('simple map', () {
       var tmpl = env.fromString('{{ ["1", "2", "3"]|map("int")|sum }}');
@@ -514,29 +539,21 @@ void main() {
       expect(tmpl.render(data), equals('lennon, , '));
     });
 
-    // TODO: add simple select test
-    // test('simple select', () {});
+    test('simple select', () {}, skip: 'Not implemented.');
 
-    // TODO: add bool select test
-    // test('bool select', () {});
+    test('bool select', () {}, skip: 'Not implemented.');
 
-    // TODO: add simple reject test
-    // test('simple reject', () {});
+    test('simple reject', () {}, skip: 'Not implemented.');
 
-    // TODO: add bool reject test
-    // test('bool reject', () {});
+    test('bool reject', () {}, skip: 'Not implemented.');
 
-    // TODO: add simple select attr test
-    // test('simple select attr', () {});
+    test('simple select attr', () {}, skip: 'Not implemented.');
 
-    // TODO: add simple reject attr test
-    // test('simple reject attr', () {});
+    test('simple reject attr', () {}, skip: 'Not implemented.');
 
-    // TODO: add func select attr test
-    // test('func select attr', () {});
+    test('func select attr', () {}, skip: 'Not implemented.');
 
-    // TODO: add func reject attr test
-    // test('func reject attr', () {});
+    test('func reject attr', () {}, skip: 'Not implemented.');
 
     test('json dump', () {
       var tmpl = env.fromString('{{ x|tojson }}');
@@ -559,13 +576,6 @@ void main() {
       var data = {'string': 'Hello!\nThis is Jinja saying something.'};
       var result = tmpl.render(data);
       expect(result, equals('Hello!\nThis is Jinja saying\nsomething.'));
-    });
-
-    test('runtimetype', () {
-      var tmpl = env.fromString('{{ 1|runtimetype }}');
-      expect(tmpl.render(), equals('int'));
-      tmpl = env.fromString('{{ null|runtimetype }}');
-      expect(tmpl.render(), equals('Null'));
     });
 
     test('filter undefined', () {
@@ -619,6 +629,40 @@ void main() {
 
       expect(() => t1.render({'x': 42}), rNoFilterNamedF);
       expect(() => t2.render({'x': 42}), rNoFilterNamedF);
+    });
+  });
+
+  group('Filter extra', () {
+    test('runtimetype', () {
+      var tmpl = env.fromString('{{ 1|runtimetype }}');
+      expect(tmpl.render(), equals('int'));
+      tmpl = env.fromString('{{ null|runtimetype }}');
+      expect(tmpl.render(), equals('Null'));
+    });
+
+    test('filter block nested in loop', () {
+      var tmpl = env.fromString(
+        '{% for item in ["a", "b"] %}'
+        '{% filter upper %}{{ item }}{% endfilter %}'
+        '{% endfor %}',
+      );
+      expect(tmpl.render(), equals('AB'));
+    });
+
+    test('filter block undefined filter', () {
+      expect(
+        () => env.fromString('{% filter f %}hello{% endfilter %}'),
+        throwsA(
+          predicate<TemplateAssertionError>(
+            (error) => error.message == "No filter named 'f'.",
+          ),
+        ),
+      );
+
+      var tmpl = env.fromString(
+        '{% if false %}{% filter f %}hello{% endfilter %}{% endif %}',
+      );
+      expect(tmpl.render(), equals(''));
     });
   });
 }
