@@ -570,7 +570,7 @@ void main() {
 
     test('filter undefined', () {
       expect(() => env.fromString('{{ var|f }}'), aNoFilterNamedF);
-    }, skip: 'Enable after implementing compiler assert checks.');
+    });
 
     test('filter undefined in if', () {
       var t1 = env.fromString(

@@ -145,10 +145,10 @@ abstract final class Token {
   Token change({int line, String type, String value});
 
   /// Test a token against a token [type] and [value].
-  bool match(String type, String? value);
+  bool match(String type, [String? value]);
 
   /// Test against multiple token records.
-  bool matchAny(Iterable<(String, String?)> expressions);
+  bool matches(Iterable<Record> expressions);
 }
 
 abstract base class _BaseToken implements Token {
@@ -189,15 +189,23 @@ abstract base class _BaseToken implements Token {
   }
 
   @override
-  bool match(String type, String? value) {
-    return type == this.type && (value == null || value == this.value);
+  bool match(String type, [String? value]) {
+    return this.type == type && (value == null || this.value == value);
   }
 
   @override
-  bool matchAny(Iterable<(String, String?)> expressions) {
-    for (var (type, value) in expressions) {
-      if (match(type, value)) {
-        return true;
+  bool matches(Iterable<Record> expressions) {
+    for (var expression in expressions) {
+      if (expression case (String type,)) {
+        if (this.type == type) {
+          return true;
+        }
+      } else if (expression case (String type, String? value)) {
+        if (match(type, value)) {
+          return true;
+        }
+      } else {
+        assert(false, 'Unsupported object: $expression');
       }
     }
 

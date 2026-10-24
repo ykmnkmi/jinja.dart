@@ -61,12 +61,14 @@ void main() {
       expect(tmpl.render(), equals('bar'));
     });
 
-    // TODO: add test: start comment
-    // test('start comment', () {
-    //   var tmpl = env.fromString('{# foo comment\nand bar comment #}'
-    //       '{% macro blub() %}foo{% endmacro %}\n{{ blub() }}');
-    //   expect(tmpl.render().trim(), equals('foor'));
-    // });
+    test('start comment', () {
+      var env = Environment();
+      var tmpl = env.fromString(
+        '{# foo comment\nand bar comment #}'
+        '{% macro blub() %}foo{% endmacro %}\n{{ blub() }}',
+      );
+      expect(tmpl.render().trim(), equals('foo'));
+    });
 
     test('line syntax', () {
       var env = Environment(

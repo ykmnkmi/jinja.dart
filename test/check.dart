@@ -4,11 +4,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math' show max;
 
-import 'package:jinja/src/compiler.dart';
 import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/exceptions.dart';
 import 'package:jinja/src/optimizer.dart';
-import 'package:jinja/src/runtime.dart';
+import 'package:jinja/src/render/render_compiler.dart';
 
 const JsonEncoder jsonEncoder = JsonEncoder.withIndent('  ');
 
@@ -28,16 +27,13 @@ void main() {
   var body = environment.scan(tokens);
   var original = jsonEncoder.convert(body.toJson());
 
-  body = body.accept(const Optimizer(), Context(environment));
+  body = Optimizer.optimize(body, environment);
 
   var optimized = jsonEncoder.convert(body.toJson());
+  compare(original, optimized);
 
-  body = body.accept(RuntimeCompiler(), null);
-
-  var compiled = jsonEncoder.convert(body.toJson());
-  compare(original, optimized, compiled);
-
-  var template = Template.fromNode(environment, body: body);
+  var renderNode = RenderCompiler.compile(body, environment);
+  var template = Template.fromRNode(environment, renderNode: renderNode);
 
   try {
     print('render:');
@@ -49,22 +45,20 @@ void main() {
 
 const LineSplitter splitter = LineSplitter();
 
-void compare(String originalJson, String optimizedJson, String compiledJson) {
+void compare(String originalJson, String optimizedJson) {
   if (!stdout.hasTerminal) {
     return;
   }
 
   var original = <String?>['original:', ...splitter.convert(originalJson)];
   var optimized = <String?>['optimized:', ...splitter.convert(optimizedJson)];
-  var compiled = <String?>['compiled:', ...splitter.convert(compiledJson)];
 
-  var length = max(original.length, max(optimized.length, compiled.length));
+  var length = max(original.length, optimized.length);
 
   original.length = length;
   optimized.length = length;
-  compiled.length = length;
 
-  var width = (stdout.terminalColumns - 8) ~/ 3;
+  var width = (stdout.terminalColumns - 5) ~/ 2;
   var spaces = ' ' * width;
 
   void write(String? line) {
@@ -87,8 +81,6 @@ void compare(String originalJson, String optimizedJson, String compiledJson) {
     write(original[index]);
     stdout.write(' | ');
     write(optimized[index]);
-    stdout.write(' | ');
-    write(compiled[index]);
     stdout.writeln(' ');
   }
 }

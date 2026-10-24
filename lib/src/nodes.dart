@@ -1,18 +1,44 @@
 import 'package:jinja/src/visitor.dart';
 
-part 'nodes/expressions.dart';
-part 'nodes/statements.dart';
+part '/src/nodes/expressions.dart';
+part '/src/nodes/statements.dart';
 
 abstract base class Node {
   const new();
+
+  Iterable<Node> get childNodes {
+    return Iterable<Node>.empty();
+  }
 
   R accept<C, R>(Visitor<C, R> visitor, C context);
 
   Node copyWith();
 
-  Iterable<T> findAll<T extends Node>() sync* {}
+  T? find<T extends Node>() {
+    for (var node in findAll<T>()) {
+      return node;
+    }
+
+    return null;
+  }
+
+  Iterable<T> findAll<T extends Node>() sync* {
+    for (var child in childNodes) {
+      if (child is T) {
+        yield child;
+      }
+
+      yield* child.findAll<T>();
+    }
+  }
 
   Map<String, Object?> toJson();
+}
+
+extension NodeListToJson on List<Node> {
+  List<Map<String, Object?>> toJson() {
+    return <Map<String, Object?>>[for (var node in this) node.toJson()];
+  }
 }
 
 final class Data extends Node {
@@ -48,8 +74,16 @@ final class Data extends Node {
   }
 }
 
+abstract base class Helper extends Node {
+  const new();
+}
+
 abstract base class Expression extends Node {
   const new();
+
+  bool get canAssign {
+    return false;
+  }
 
   @override
   Map<String, Object?> toJson() {
@@ -61,40 +95,15 @@ abstract base class Statement extends Node {
   const new();
 }
 
-final class Interpolation extends Node {
-  const new({required this.value});
-
-  final Expression value;
-
-  @override
-  R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitInterpolation(this, context);
-  }
-
-  @override
-  Interpolation copyWith({Expression? value}) {
-    return Interpolation(value: value ?? this.value);
-  }
-
-  @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    if (value case T value) {
-      yield value;
-    }
-
-    yield* value.findAll<T>();
-  }
-
-  @override
-  Map<String, Object?> toJson() {
-    return <String, Object?>{'class': 'Interpolation', 'value': value.toJson()};
-  }
-}
-
 final class Output extends Node {
   const new({this.nodes = const <Node>[]});
 
   final List<Node> nodes;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield* nodes;
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -107,37 +116,20 @@ final class Output extends Node {
   }
 
   @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    for (var node in nodes) {
-      if (node is T) {
-        yield node;
-      }
-
-      yield* node.findAll<T>();
-    }
-  }
-
-  @override
   Map<String, Object?> toJson() {
-    return <String, Object?>{
-      'class': 'Output',
-      'nodes': <Map<String, Object?>>[for (var node in nodes) node.toJson()],
-    };
+    return <String, Object?>{'class': 'Output', 'nodes': nodes.toJson()};
   }
 }
 
 final class TemplateNode extends Node {
-  new({
-    this.blocks = const <Block>[],
-    this.macros = const <Macro>[],
-    required this.body,
-  });
+  const new({required this.nodes});
 
-  final List<Block> blocks;
+  final List<Node> nodes;
 
-  final List<Macro> macros;
-
-  final Node body;
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield* nodes;
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -145,38 +137,12 @@ final class TemplateNode extends Node {
   }
 
   @override
-  TemplateNode copyWith({
-    List<Block>? blocks,
-    List<Macro>? macros,
-    Node? body,
-  }) {
-    return TemplateNode(
-      blocks: blocks ?? this.blocks,
-      macros: macros ?? this.macros,
-      body: body ?? this.body,
-    );
-  }
-
-  @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    if (body case T body) {
-      yield body;
-    }
-
-    yield* body.findAll<T>();
+  TemplateNode copyWith({List<Node>? nodes}) {
+    return TemplateNode(nodes: nodes ?? this.nodes);
   }
 
   @override
   Map<String, Object?> toJson() {
-    return <String, Object?>{
-      'class': 'TemplateNode',
-      'blocks': <Map<String, Object?>>[
-        for (var block in blocks) block.toJson(),
-      ],
-      'macros': <Map<String, Object?>>[
-        for (var macro in macros) macro.toJson(),
-      ],
-      'body': body.toJson(),
-    };
+    return <String, Object?>{'class': 'TemplateNode', 'nodes': nodes.toJson()};
   }
 }

@@ -1,7 +1,5 @@
 // ignore_for_file: avoid_print, depend_on_referenced_packages
 
-import 'dart:convert';
-
 import 'package:jinja/jinja.dart';
 import 'package:stack_trace/stack_trace.dart';
 
@@ -32,7 +30,6 @@ void main() {
 
   try {
     Template page = environment.getTemplate('page.jinja');
-    print(const JsonEncoder.withIndent('  ').convert(page.body.toJson()));
     print(page.render());
   } catch (error, stackTrace) {
     print(error);

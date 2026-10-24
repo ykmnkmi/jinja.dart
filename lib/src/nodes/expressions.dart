@@ -1,4 +1,4 @@
-part of '../nodes.dart';
+part of '/src/nodes.dart';
 
 enum AssignContext { load, store, parameter }
 
@@ -14,6 +14,19 @@ final class Name extends Expression {
   final String name;
 
   final AssignContext context;
+
+  @override
+  bool get canAssign {
+    return !const <String>{
+      'null',
+      'none',
+      'None',
+      'true',
+      'True',
+      'false',
+      'False',
+    }.contains(name);
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -35,7 +48,7 @@ final class Name extends Expression {
   }
 }
 
-final class NamespaceRef extends Expression {
+final class NsRef extends Expression {
   const new({required this.name, required this.attribute});
 
   final String name;
@@ -44,12 +57,17 @@ final class NamespaceRef extends Expression {
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
-    return visitor.visitNamespaceRef(this, context);
+    return visitor.visitNsRef(this, context);
   }
 
   @override
-  NamespaceRef copyWith({String? name, String? attribute}) {
-    return NamespaceRef(
+  bool get canAssign {
+    return true;
+  }
+
+  @override
+  NsRef copyWith({String? name, String? attribute}) {
+    return NsRef(
       name: name ?? this.name,
       attribute: attribute ?? this.attribute,
     );
@@ -96,6 +114,22 @@ final class Tuple extends Literal {
   final List<Expression> values;
 
   @override
+  bool get canAssign {
+    for (var value in values) {
+      if (!value.canAssign) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield* values;
+  }
+
+  @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitTuple(this, context);
   }
@@ -106,24 +140,8 @@ final class Tuple extends Literal {
   }
 
   @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    for (var value in values) {
-      if (value case T value) {
-        yield value;
-      }
-
-      yield* value.findAll<T>();
-    }
-  }
-
-  @override
   Map<String, Object?> toJson() {
-    return <String, Object?>{
-      'class': 'Tuple',
-      'values': <Map<String, Object?>>[
-        for (var value in values) value.toJson(),
-      ],
-    };
+    return <String, Object?>{'class': 'Tuple', 'values': values.toJson()};
   }
 }
 
@@ -131,6 +149,11 @@ final class Array extends Literal {
   const new({required this.values});
 
   final List<Expression> values;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield* values;
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -143,33 +166,49 @@ final class Array extends Literal {
   }
 
   @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    for (var value in values) {
-      if (value case T value) {
-        yield value;
-      }
+  Map<String, Object?> toJson() {
+    return <String, Object?>{'class': 'Array', 'values': values.toJson()};
+  }
+}
 
-      yield* value.findAll<T>();
-    }
+final class Pair extends Helper {
+  const new({required this.key, required this.value});
+
+  final Expression key;
+
+  final Expression value;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield key;
+    yield value;
+  }
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitPair(this, context);
+  }
+
+  @override
+  Pair copyWith({Expression? key, Expression? value}) {
+    return Pair(key: key ?? this.key, value: value ?? this.value);
   }
 
   @override
   Map<String, Object?> toJson() {
-    return <String, Object?>{
-      'class': 'Array',
-      'values': <Map<String, Object?>>[
-        for (var value in values) value.toJson(),
-      ],
-    };
+    return <String, Object?>{'key': key.toJson(), 'value': value.toJson()};
   }
 }
-
-typedef Pair = ({Expression key, Expression value});
 
 final class Dict extends Literal {
   const new({required this.pairs});
 
   final List<Pair> pairs;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield* pairs;
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -182,31 +221,8 @@ final class Dict extends Literal {
   }
 
   @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    for (var (:key, :value) in pairs) {
-      if (key case T key) {
-        yield key;
-      }
-
-      yield* key.findAll<T>();
-
-      if (value case T value) {
-        yield value;
-      }
-
-      yield* value.findAll<T>();
-    }
-  }
-
-  @override
   Map<String, Object?> toJson() {
-    return <String, Object?>{
-      'class': 'Dict',
-      'values': <Map<String, Object?>>[
-        for (var (:key, :value) in pairs)
-          <String, Object?>{'key': key.toJson(), 'value': value.toJson()},
-      ],
-    };
+    return <String, Object?>{'class': 'Dict', 'pairs': pairs.toJson()};
   }
 }
 
@@ -218,6 +234,16 @@ final class Condition extends Expression {
   final Expression trueValue;
 
   final Expression? falseValue;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield test;
+    yield trueValue;
+
+    if (falseValue case var falseValue?) {
+      yield falseValue;
+    }
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -238,41 +264,50 @@ final class Condition extends Expression {
   }
 
   @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    if (test case T test) {
-      yield test;
-    }
-
-    yield* test.findAll<T>();
-
-    if (trueValue case T trueValue) {
-      yield trueValue;
-    }
-
-    yield* trueValue.findAll<T>();
-
-    if (falseValue case T falseValue) {
-      yield falseValue;
-    }
-
-    if (falseValue case Expression falseValue?) {
-      yield* falseValue.findAll<T>();
-    }
-  }
-
-  @override
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'class': 'Condition',
       'test': test.toJson(),
       'trueValue': trueValue.toJson(),
-      if (falseValue case Expression falseValue?)
-        'falseValue': falseValue.toJson(),
+      'falseValue': falseValue?.toJson(),
     };
   }
 }
 
-typedef Keyword = ({String key, Expression value});
+final class Keyword extends Helper {
+  const new({required this.key, required this.value});
+
+  final String key;
+
+  final Expression value;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield value;
+  }
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitKeyword(this, context);
+  }
+
+  @override
+  Keyword copyWith({String? key, Expression? value}) {
+    return Keyword(key: key ?? this.key, value: value ?? this.value);
+  }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{'key': key, 'value': value.toJson()};
+  }
+
+  Pair toPair() {
+    return Pair(
+      key: Constant(value: key),
+      value: value,
+    );
+  }
+}
 
 typedef Parameters = (List<Object?>, Map<Symbol, Object?>);
 
@@ -287,17 +322,18 @@ final class Calling extends Expression {
   final List<Keyword> keywords;
 
   @override
+  Iterable<Node> get childNodes sync* {
+    yield* arguments;
+    yield* keywords;
+  }
+
+  @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitCalling(this, context);
   }
 
   @override
-  Calling copyWith({
-    List<Expression>? arguments,
-    List<Keyword>? keywords,
-    Expression? dArguments,
-    Expression? dKeywords,
-  }) {
+  Calling copyWith({List<Expression>? arguments, List<Keyword>? keywords}) {
     return Calling(
       arguments: arguments ?? this.arguments,
       keywords: keywords ?? this.keywords,
@@ -305,35 +341,11 @@ final class Calling extends Expression {
   }
 
   @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    for (var argument in arguments) {
-      if (argument case T argument) {
-        yield argument;
-      }
-
-      yield* argument.findAll<T>();
-    }
-
-    for (var (key: _, :value) in keywords) {
-      if (value case T value) {
-        yield value;
-      }
-
-      yield* value.findAll<T>();
-    }
-  }
-
-  @override
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'class': 'Calling',
-      'arguments': <Map<String, Object?>>[
-        for (var argument in arguments) argument.toJson(),
-      ],
-      'keywords': <Map<String, Object?>>[
-        for (var (:key, :value) in keywords)
-          <String, Object?>{'key': key, 'value': value.toJson()},
-      ],
+      'arguments': arguments.toJson(),
+      'keywords': keywords.toJson(),
     };
   }
 }
@@ -346,6 +358,12 @@ final class Call extends Expression {
   final Calling calling;
 
   @override
+  Iterable<Node> get childNodes sync* {
+    yield value;
+    yield calling;
+  }
+
+  @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitCall(this, context);
   }
@@ -353,21 +371,6 @@ final class Call extends Expression {
   @override
   Call copyWith({Expression? value, Calling? calling}) {
     return Call(value: value ?? this.value, calling: calling ?? this.calling);
-  }
-
-  @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    if (value case T value) {
-      yield value;
-    }
-
-    yield* value.findAll<T>();
-
-    if (calling case T calling) {
-      yield calling;
-    }
-
-    yield* calling.findAll<T>();
   }
 
   @override
@@ -381,11 +384,26 @@ final class Call extends Expression {
 }
 
 final class Filter extends Expression {
-  const new({required this.name, this.calling = const Calling()});
+  const new({
+    required this.name,
+    this.expression,
+    this.calling = const Calling(),
+  });
 
   final String name;
 
+  final Expression? expression;
+
   final Calling calling;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    if (expression case var expression?) {
+      yield expression;
+    }
+
+    yield calling;
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -393,17 +411,12 @@ final class Filter extends Expression {
   }
 
   @override
-  Filter copyWith({String? name, Calling? calling}) {
-    return Filter(name: name ?? this.name, calling: calling ?? this.calling);
-  }
-
-  @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    if (calling case T calling) {
-      yield calling;
-    }
-
-    yield* calling.findAll<T>();
+  Filter copyWith({String? name, Expression? expression, Calling? calling}) {
+    return Filter(
+      name: name ?? this.name,
+      expression: expression ?? this.expression,
+      calling: calling ?? this.calling,
+    );
   }
 
   @override
@@ -411,17 +424,30 @@ final class Filter extends Expression {
     return <String, Object?>{
       'class': 'Filter',
       'name': name,
+      'expression': expression?.toJson(),
       'calling': calling.toJson(),
     };
   }
 }
 
 final class Test extends Expression {
-  const new({required this.name, this.calling = const Calling()});
+  const new({
+    required this.name,
+    required this.expression,
+    this.calling = const Calling(),
+  });
 
   final String name;
 
+  final Expression expression;
+
   final Calling calling;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield expression;
+    yield calling;
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -429,17 +455,12 @@ final class Test extends Expression {
   }
 
   @override
-  Test copyWith({String? name, Calling? calling}) {
-    return Test(name: name ?? this.name, calling: calling ?? this.calling);
-  }
-
-  @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    if (calling case T calling) {
-      yield calling;
-    }
-
-    yield* calling.findAll<T>();
+  Test copyWith({String? name, Expression? expression, Calling? calling}) {
+    return Test(
+      name: name ?? this.name,
+      expression: expression ?? this.expression,
+      calling: calling ?? this.calling,
+    );
   }
 
   @override
@@ -447,6 +468,7 @@ final class Test extends Expression {
     return <String, Object?>{
       'class': 'Test',
       'name': name,
+      'expression': expression.toJson(),
       'calling': calling.toJson(),
     };
   }
@@ -460,6 +482,12 @@ final class Item extends Expression {
   final Expression value;
 
   @override
+  Iterable<Node> get childNodes sync* {
+    yield key;
+    yield value;
+  }
+
+  @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitItem(this, context);
   }
@@ -467,21 +495,6 @@ final class Item extends Expression {
   @override
   Item copyWith({Expression? key, Expression? value}) {
     return Item(key: key ?? this.key, value: value ?? this.value);
-  }
-
-  @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    if (key case T key) {
-      yield key;
-    }
-
-    yield* key.findAll<T>();
-
-    if (value case T value) {
-      yield value;
-    }
-
-    yield* value.findAll<T>();
   }
 
   @override
@@ -495,13 +508,28 @@ final class Item extends Expression {
 }
 
 final class Slice extends Expression {
-  const new({required this.value, required this.start, this.stop});
-
-  final Expression value;
+  const new({this.start, this.stop, this.step});
 
   final Expression? start;
 
   final Expression? stop;
+
+  final Expression? step;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    if (start case var start?) {
+      yield start;
+    }
+
+    if (stop case var stop?) {
+      yield stop;
+    }
+
+    if (step case var step?) {
+      yield step;
+    }
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -509,21 +537,12 @@ final class Slice extends Expression {
   }
 
   @override
-  Slice copyWith({Expression? start, Expression? stop}) {
+  Slice copyWith({Expression? start, Expression? stop, Expression? step}) {
     return Slice(
-      value: value,
       start: start ?? this.start,
       stop: stop ?? this.stop,
+      step: step ?? this.step,
     );
-  }
-
-  @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    if (value case T value) {
-      yield value;
-    }
-
-    yield* value.findAll<T>();
   }
 
   @override
@@ -532,7 +551,7 @@ final class Slice extends Expression {
       'class': 'Slice',
       'start': start?.toJson(),
       'stop': stop?.toJson(),
-      'value': value.toJson(),
+      'step': step?.toJson(),
     };
   }
 }
@@ -545,6 +564,11 @@ final class Attribute extends Expression {
   final Expression value;
 
   @override
+  Iterable<Node> get childNodes sync* {
+    yield value;
+  }
+
+  @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitAttribute(this, context);
   }
@@ -555,15 +579,6 @@ final class Attribute extends Expression {
       attribute: attribute ?? this.attribute,
       value: value ?? this.value,
     );
-  }
-
-  @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    if (value case T value) {
-      yield value;
-    }
-
-    yield* value.findAll<T>();
   }
 
   @override
@@ -582,6 +597,11 @@ final class Concat extends Expression {
   final List<Expression> values;
 
   @override
+  Iterable<Node> get childNodes sync* {
+    yield* values;
+  }
+
+  @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitConcat(this, context);
   }
@@ -592,24 +612,8 @@ final class Concat extends Expression {
   }
 
   @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    for (var value in values) {
-      if (value case T value) {
-        yield value;
-      }
-
-      yield* value.findAll<T>();
-    }
-  }
-
-  @override
   Map<String, Object?> toJson() {
-    return <String, Object?>{
-      'class': 'Concat',
-      'values': <Map<String, Object?>>[
-        for (var value in values) value.toJson(),
-      ],
-    };
+    return <String, Object?>{'class': 'Concat', 'values': values.toJson()};
   }
 }
 
@@ -627,8 +631,8 @@ enum CompareOperator {
 
   final String symbol;
 
-  static CompareOperator parse(String operator) {
-    return switch (operator) {
+  static CompareOperator parse(String symbol) {
+    return switch (symbol) {
       'eq' => CompareOperator.equal,
       'ne' => CompareOperator.notEqual,
       'lt' => CompareOperator.lessThan,
@@ -637,13 +641,45 @@ enum CompareOperator {
       'gteq' => CompareOperator.greaterThanOrEqual,
       'in' => CompareOperator.contains,
       'notin' => CompareOperator.notContains,
-      // TODO(expressions): update error message
-      _ => throw UnsupportedError(operator),
+      // TODO(expressions): Update error message.
+      _ => throw UnsupportedError(symbol),
     };
   }
 }
 
-typedef Operand = (CompareOperator operator, Expression value);
+final class Operand extends Helper {
+  const new({required this.operator, required this.value});
+
+  final CompareOperator operator;
+
+  final Expression value;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield value;
+  }
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitOperand(this, context);
+  }
+
+  @override
+  Operand copyWith({CompareOperator? operator, Expression? value}) {
+    return Operand(
+      operator: operator ?? this.operator,
+      value: value ?? this.value,
+    );
+  }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'operator': operator.symbol,
+      'value': value.toJson(),
+    };
+  }
+}
 
 final class Compare extends Expression {
   const new({required this.value, this.operands = const <Operand>[]});
@@ -651,6 +687,12 @@ final class Compare extends Expression {
   final Expression value;
 
   final List<Operand> operands;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield value;
+    yield* operands;
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -666,31 +708,11 @@ final class Compare extends Expression {
   }
 
   @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    if (value case T value) {
-      yield value;
-    }
-
-    yield* value.findAll<T>();
-
-    for (var (_, value) in operands) {
-      if (value case T value) {
-        yield value;
-      }
-
-      yield* value.findAll<T>();
-    }
-  }
-
-  @override
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'class': 'Compare',
       'value': value.toJson(),
-      'operands': <Map<String, Object?>>[
-        for (var (operand, value) in operands)
-          <String, Object?>{'operand': operand.symbol, 'value': value.toJson()},
-      ],
+      'operands': operands.toJson(),
     };
   }
 }
@@ -703,6 +725,16 @@ enum UnaryOperator {
   new(this.symbol);
 
   final String symbol;
+
+  static UnaryOperator parse(String symbol) {
+    return switch (symbol) {
+      '+' => UnaryOperator.plus,
+      '-' => UnaryOperator.minus,
+      'not' => UnaryOperator.not,
+      // TODO(expressions): Update error message.
+      _ => throw UnsupportedError(symbol),
+    };
+  }
 }
 
 final class Unary extends Expression {
@@ -711,6 +743,11 @@ final class Unary extends Expression {
   final UnaryOperator operator;
 
   final Expression value;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield value;
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -723,15 +760,6 @@ final class Unary extends Expression {
       operator: operator ?? this.operator,
       value: value ?? this.value,
     );
-  }
-
-  @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    if (value case T value) {
-      yield value;
-    }
-
-    yield* value.findAll<T>();
   }
 
   @override
@@ -754,22 +782,13 @@ abstract final class Binary<E extends Enum> extends Expression {
   final Expression right;
 
   @override
-  Binary<E> copyWith({E? operator, Expression? left, Expression? right});
+  Iterable<Node> get childNodes sync* {
+    yield left;
+    yield right;
+  }
 
   @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    if (left case T left) {
-      yield left;
-    }
-
-    yield* left.findAll<T>();
-
-    if (right case T right) {
-      yield right;
-    }
-
-    yield* right.findAll<T>();
-  }
+  Binary<E> copyWith({E? operator, Expression? left, Expression? right});
 }
 
 enum ScalarOperator {
@@ -784,6 +803,20 @@ enum ScalarOperator {
   new(this.symbol);
 
   final String symbol;
+
+  static ScalarOperator parse(String symbol) {
+    return switch (symbol) {
+      '**' => ScalarOperator.power,
+      '%' => ScalarOperator.module,
+      '~/' => ScalarOperator.floorDivision,
+      '/' => ScalarOperator.division,
+      '*' => ScalarOperator.multiple,
+      '-' => ScalarOperator.minus,
+      '+' => ScalarOperator.plus,
+      // TODO(expressions): Update error message.
+      _ => throw UnsupportedError(symbol),
+    };
+  }
 }
 
 final class Scalar extends Binary<ScalarOperator> {

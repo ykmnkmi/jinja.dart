@@ -166,7 +166,7 @@ void main() {
       expect(tmpl.render(), equals('DEFAULT1CHILD'));
       expect(tmpl.render({'default': 'default1'}), equals('DEFAULT1CHILD'));
       expect(tmpl.render({'default': 'default2'}), equals('DEFAULT2CHILD'));
-    }, skip: true);
+    });
 
     test('scoped block', () {
       var env = Environment(
@@ -202,34 +202,36 @@ void main() {
       );
     });
 
-    // TODO: add test(import, from, macro): scoped block after inheritance
-    // test('scoped block after inheritance', () {
-    //   var env = Environment(
-    //     loader: MapLoader({
-    //       'layout.html': '''
-    //         {% block useless %}{% endblock %}
-    //         ''',
-    //       'index.html': '''
-    //         {%- extends 'layout.html' %}
-    //         {% from 'helpers.html' import foo with context %}
-    //         {% block useless %}
-    //             {% for x in [1, 2, 3] %}
-    //                 {% block testing scoped %}
-    //                     {{ foo(x) }}
-    //                 {% endblock %}
-    //             {% endfor %}
-    //         {% endblock %}
-    //         ''',
-    //       'helpers.html': '''
-    //         {% macro foo(x) %}{{ the_foo + x }}{% endmacro %}
-    //         ''',
-    //     }),
-    //   );
+    test('scoped block after inheritance', () {
+      var env = Environment(
+        loader: MapLoader({
+          'layout.html': '''
+            {% block useless %}{% endblock %}
+            ''',
+          'index.html': '''
+            {%- extends 'layout.html' %}
+            {% from 'helpers.html' import foo with context %}
+            {% block useless %}
+                {% for x in [1, 2, 3] %}
+                    {% block testing scoped %}
+                        {{ foo(x) }}
+                    {% endblock %}
+                {% endfor %}
+            {% endblock %}
+            ''',
+          'helpers.html': '''
+            {% macro foo(x) %}{{ the_foo + x }}{% endmacro %}
+            ''',
+        }),
+      );
 
-    //   var parts = const LineSplitter()
-    //       .convert(env.getTemplate('index.html').render({'the_foo': 42}));
-    //   expect(parts, orderedEquals(['43', '44', '45']));
-    // });
+      var parts = env
+          .getTemplate('index.html')
+          .render({'the_foo': 42})
+          .trim()
+          .split(RegExp(r'\s+'));
+      expect(parts, orderedEquals(['43', '44', '45']));
+    });
 
     test('level1 required', () {
       var env = Environment(

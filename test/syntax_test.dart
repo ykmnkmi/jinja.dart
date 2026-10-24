@@ -362,14 +362,20 @@ void main() {
     });
 
     test('neg filter priority', () {
-      var tmpl = env.fromString('{{ -1|foo }}');
-      var body = tmpl.body.body as Interpolation;
+      var node = env.parse('{{ -1|foo }}');
+      var output = node.nodes[0] as Output;
 
       expect(
-        body.value,
+        output.nodes[0],
         predicate<Filter>((filter) {
-          var argument = filter.calling.arguments[0];
-          return argument is Constant && argument.value == -1;
+          var expression = filter.expression;
+
+          if (expression is! Unary) {
+            return false;
+          }
+
+          var constant = expression.value;
+          return constant is Constant && constant.value == 1;
         }),
       );
     });

@@ -1,4 +1,4 @@
-part of '../nodes.dart';
+part of '/src/nodes.dart';
 
 abstract interface class ImportContext {
   bool get withContext;
@@ -8,6 +8,11 @@ final class Extends extends Statement {
   const new({required this.template});
 
   final Expression template;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield template;
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -31,8 +36,8 @@ final class For extends Statement {
     required this.iterable,
     this.test,
     this.recursive = false,
-    required this.body,
-    this.orElse,
+    required this.nodes,
+    this.elseNodes,
   });
 
   final Expression target;
@@ -43,9 +48,25 @@ final class For extends Statement {
 
   final bool recursive;
 
-  final Node body;
+  final List<Node> nodes;
 
-  final Node? orElse;
+  final List<Node>? elseNodes;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield target;
+    yield iterable;
+
+    if (test case var test?) {
+      yield test;
+    }
+
+    yield* nodes;
+
+    if (elseNodes case var elseNodes?) {
+      yield* elseNodes;
+    }
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -58,54 +79,17 @@ final class For extends Statement {
     Expression? iterable,
     Expression? test,
     bool? recursive,
-    Node? body,
-    Node? orElse,
+    List<Node>? nodes,
+    List<Node>? elseNodes,
   }) {
     return For(
       target: target ?? this.target,
       iterable: iterable ?? this.iterable,
       test: test ?? this.test,
       recursive: recursive ?? this.recursive,
-      body: body ?? this.body,
-      orElse: orElse ?? this.orElse,
+      nodes: nodes ?? this.nodes,
+      elseNodes: elseNodes ?? this.elseNodes,
     );
-  }
-
-  @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    if (target case T target) {
-      yield target;
-    }
-
-    yield* target.findAll<T>();
-
-    if (iterable case T iterable) {
-      yield iterable;
-    }
-
-    yield* iterable.findAll<T>();
-
-    if (test case Expression test?) {
-      if (test case T test) {
-        yield test;
-      }
-
-      yield* test.findAll<T>();
-    }
-
-    if (body case T body) {
-      yield body;
-    }
-
-    yield* body.findAll<T>();
-
-    if (orElse case Node orElse?) {
-      if (orElse case T orElse) {
-        yield orElse;
-      }
-
-      yield* orElse.findAll<T>();
-    }
   }
 
   @override
@@ -114,22 +98,43 @@ final class For extends Statement {
       'class': 'For',
       'target': target.toJson(),
       'iterable': iterable.toJson(),
-      if (test case var test?) 'test': test.toJson(),
-      if (recursive) 'recursive': recursive,
-      'body': body.toJson(),
-      if (orElse case var orElse?) 'orElse': orElse.toJson(),
+      'test': test?.toJson(),
+      'recursive': recursive,
+      'nodes': nodes.toJson(),
+      'elseNodes': elseNodes?.toJson(),
     };
   }
 }
 
 final class If extends Statement {
-  const new({required this.test, required this.body, this.orElse});
+  const new({
+    required this.test,
+    required this.nodes,
+    this.elseIfNodes,
+    this.elseNodes,
+  });
 
   final Expression test;
 
-  final Node body;
+  final List<Node> nodes;
 
-  final Node? orElse;
+  final List<If>? elseIfNodes;
+
+  final List<Node>? elseNodes;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield test;
+    yield* nodes;
+
+    if (elseIfNodes case var elseIfNodes?) {
+      yield* elseIfNodes;
+    }
+
+    if (elseNodes case var elseNodes?) {
+      yield* elseNodes;
+    }
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -137,35 +142,18 @@ final class If extends Statement {
   }
 
   @override
-  If copyWith({Expression? test, Node? body, Node? orElse}) {
+  If copyWith({
+    Expression? test,
+    List<Node>? nodes,
+    List<If>? elseIfNodes,
+    List<Node>? elseNodes,
+  }) {
     return If(
       test: test ?? this.test,
-      body: body ?? this.body,
-      orElse: orElse ?? this.orElse,
+      nodes: nodes ?? this.nodes,
+      elseIfNodes: elseIfNodes ?? this.elseIfNodes,
+      elseNodes: elseNodes ?? this.elseNodes,
     );
-  }
-
-  @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    if (test case T test) {
-      yield test;
-    }
-
-    yield* test.findAll<T>();
-
-    if (body case T body) {
-      yield body;
-    }
-
-    yield* body.findAll<T>();
-
-    if (orElse case Node orElse?) {
-      if (orElse case T orElse) {
-        yield orElse;
-      }
-
-      yield* orElse.findAll<T>();
-    }
   }
 
   @override
@@ -173,8 +161,9 @@ final class If extends Statement {
     return <String, Object?>{
       'class': 'If',
       'test': test.toJson(),
-      'body': body.toJson(),
-      if (orElse case var orElse?) 'orElse': orElse.toJson(),
+      'nodes': nodes.toJson(),
+      'elseIfNodes': elseIfNodes?.toJson(),
+      'elseNodes': elseNodes?.toJson(),
     };
   }
 }
@@ -189,72 +178,81 @@ typedef MacroSignature = ({
   List<Expression> defaults,
 });
 
-// TODO(nodes): change argument to String
+final class Named extends Helper {
+  const new({required this.argument, required this.defaultValue});
+
+  final Expression argument;
+
+  final Expression defaultValue;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield argument;
+    yield defaultValue;
+  }
+
+  @override
+  R accept<C, R>(Visitor<C, R> visitor, C context) {
+    return visitor.visitNamed(this, context);
+  }
+
+  @override
+  Named copyWith({Expression? argument, Expression? defaultValue}) {
+    return Named(
+      argument: argument ?? this.argument,
+      defaultValue: defaultValue ?? this.defaultValue,
+    );
+  }
+
+  @override
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'class': 'Named',
+      'argument': argument.toJson(),
+      'defaultValue': defaultValue.toJson(),
+    };
+  }
+}
+
+// TODO(nodes): change argument type to [String].
 abstract final class MacroCall extends Statement {
   const new({
-    this.varargs = false,
-    this.kwargs = false,
     this.positional = const <Expression>[],
-    this.named = const <(Expression, Expression)>[],
-    required this.body,
+    this.named = const <Named>[],
+    required this.nodes,
   });
-
-  final bool varargs;
-
-  final bool kwargs;
 
   final List<Expression> positional;
 
-  // TODO(nodes): split arguments and defaults
-  final List<(Expression, Expression)> named;
+  // TODO(nodes): split arguments and defaults.
+  final List<Named> named;
 
-  final Node body;
+  final List<Node> nodes;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield* positional;
+    yield* named;
+    yield* nodes;
+  }
 
   @override
   MacroCall copyWith({
     List<Expression>? positional,
-    List<(Expression, Expression)>? named,
-    Node? body,
+    List<Named>? named,
+    List<Node>? nodes,
   });
-
-  @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    for (var (argument, defaultValue) in named) {
-      if (argument case T argument) {
-        yield argument;
-      }
-
-      yield* argument.findAll<T>();
-
-      if (defaultValue case T defaultValue) {
-        yield defaultValue;
-      }
-
-      yield* defaultValue.findAll<T>();
-    }
-
-    if (body case T body) {
-      yield body;
-    }
-
-    yield* body.findAll<T>();
-  }
 }
 
 final class Macro extends MacroCall {
   const new({
     required this.name,
-    super.varargs,
-    super.kwargs,
-    this.caller = false,
     super.positional,
     super.named,
-    required super.body,
+    required super.nodes,
   });
 
   final String name;
-
-  final bool caller;
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -265,20 +263,14 @@ final class Macro extends MacroCall {
   Macro copyWith({
     String? name,
     List<Expression>? positional,
-    List<(Expression, Expression)>? named,
-    bool? varargs,
-    bool? kwargs,
-    bool? caller,
-    Node? body,
+    List<Named>? named,
+    List<Node>? nodes,
   }) {
     return Macro(
       name: name ?? this.name,
       positional: positional ?? this.positional,
       named: named ?? this.named,
-      varargs: varargs ?? this.varargs,
-      kwargs: kwargs ?? this.kwargs,
-      caller: caller ?? this.caller,
-      body: body ?? this.body,
+      nodes: nodes ?? this.nodes,
     );
   }
 
@@ -286,20 +278,10 @@ final class Macro extends MacroCall {
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'class': 'Macro',
-      if (varargs) 'varargs': varargs,
-      if (kwargs) 'kwargs': kwargs,
-      if (caller) 'caller': caller,
-      'positional': <Map<String, Object?>>[
-        for (var argument in positional) argument.toJson(),
-      ],
-      'named': <Map<String, Object?>>[
-        for (var (argument, defaultValue) in named)
-          <String, Object?>{
-            'argument': argument.toJson(),
-            'defaultValue': defaultValue.toJson(),
-          },
-      ],
-      'body': body.toJson(),
+      'name': name,
+      'positional': positional.toJson(),
+      'named': named.toJson(),
+      'nodes': nodes.toJson(),
     };
   }
 }
@@ -307,14 +289,18 @@ final class Macro extends MacroCall {
 final class CallBlock extends MacroCall {
   new({
     required this.call,
-    super.varargs,
-    super.kwargs,
     super.positional,
     super.named,
-    required super.body,
+    required super.nodes,
   });
 
   final Call call;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield call;
+    yield* super.childNodes;
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -325,54 +311,41 @@ final class CallBlock extends MacroCall {
   CallBlock copyWith({
     Call? call,
     List<Expression>? positional,
-    List<(Expression, Expression)>? named,
-    Node? body,
+    List<Named>? named,
+    List<Node>? nodes,
   }) {
     return CallBlock(
       call: call ?? this.call,
       positional: positional ?? this.positional,
       named: named ?? this.named,
-      body: body ?? this.body,
+      nodes: nodes ?? this.nodes,
     );
-  }
-
-  @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    if (call case T call) {
-      yield call;
-    }
-
-    yield* call.findAll<T>();
-    yield* super.findAll<T>();
   }
 
   @override
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'class': 'CallBlock',
-      if (varargs) 'varargs': varargs,
-      if (kwargs) 'kwargs': kwargs,
-      'positional': <Map<String, Object?>>[
-        for (var argument in positional) argument.toJson(),
-      ],
-      'named': <Map<String, Object?>>[
-        for (var (argument, defaultValue) in named)
-          <String, Object?>{
-            'argument': argument.toJson(),
-            'defaultValue': defaultValue.toJson(),
-          },
-      ],
-      'body': body.toJson(),
+      'call': call.toJson(),
+      'positional': positional.toJson(),
+      'named': named.toJson(),
+      'nodes': nodes.toJson(),
     };
   }
 }
 
 final class FilterBlock extends Statement {
-  const new({required this.filters, required this.body});
+  const new({required this.filter, required this.nodes});
 
-  final List<Filter> filters;
+  final Filter filter;
 
-  final Node body;
+  final List<Node> nodes;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield filter;
+    yield* nodes;
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -380,50 +353,38 @@ final class FilterBlock extends Statement {
   }
 
   @override
-  FilterBlock copyWith({List<Filter>? filters, Node? body}) {
+  FilterBlock copyWith({Filter? filter, List<Node>? nodes}) {
     return FilterBlock(
-      filters: filters ?? this.filters,
-      body: body ?? this.body,
+      filter: filter ?? this.filter,
+      nodes: nodes ?? this.nodes,
     );
-  }
-
-  @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    for (var filter in filters) {
-      if (filter case T filter) {
-        yield filter;
-      }
-
-      yield* filter.findAll<T>();
-    }
-
-    if (body case T body) {
-      yield body;
-    }
-
-    yield* body.findAll<T>();
   }
 
   @override
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'class': 'FilterBlock',
-      'filters': <Map<String, Object?>>[
-        for (var filter in filters) filter.toJson(),
-      ],
-      'body': body.toJson(),
+      'filter': filter.toJson(),
+      'nodes': nodes.toJson(),
     };
   }
 }
 
 final class With extends Statement {
-  const new({required this.targets, required this.values, required this.body});
+  const new({required this.targets, required this.values, required this.nodes});
 
   final List<Expression> targets;
 
   final List<Expression> values;
 
-  final Node body;
+  final List<Node> nodes;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield* targets;
+    yield* values;
+    yield* nodes;
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -434,51 +395,22 @@ final class With extends Statement {
   With copyWith({
     List<Expression>? targets,
     List<Expression>? values,
-    Node? body,
+    List<Node>? nodes,
   }) {
     return With(
       targets: targets ?? this.targets,
       values: values ?? this.values,
-      body: body ?? this.body,
+      nodes: nodes ?? this.nodes,
     );
-  }
-
-  @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    for (var target in targets) {
-      if (target case T target) {
-        yield target;
-      }
-
-      yield* target.findAll<T>();
-    }
-
-    for (var value in values) {
-      if (value case T vaue) {
-        yield vaue;
-      }
-
-      yield* value.findAll<T>();
-    }
-
-    if (body case T body) {
-      yield body;
-    }
-
-    yield* body.findAll<T>();
   }
 
   @override
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'class': 'With',
-      'targets': <Map<String, Object?>>[
-        for (var target in targets) target.toJson(),
-      ],
-      'values': <Map<String, Object?>>[
-        for (var value in values) value.toJson(),
-      ],
-      'body': body.toJson(),
+      'targets': targets.toJson(),
+      'values': values.toJson(),
+      'nodes': nodes.toJson(),
     };
   }
 }
@@ -488,7 +420,7 @@ final class Block extends Statement {
     required this.name,
     required this.scoped,
     required this.required,
-    required this.body,
+    required this.nodes,
   });
 
   final String name;
@@ -497,7 +429,12 @@ final class Block extends Statement {
 
   final bool required;
 
-  final Node body;
+  final List<Node> nodes;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield* nodes;
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -505,22 +442,18 @@ final class Block extends Statement {
   }
 
   @override
-  Block copyWith({String? name, bool? scoped, bool? required, Node? body}) {
+  Block copyWith({
+    String? name,
+    bool? scoped,
+    bool? required,
+    List<Node>? nodes,
+  }) {
     return Block(
       name: name ?? this.name,
       scoped: scoped ?? this.scoped,
       required: required ?? this.required,
-      body: body ?? this.body,
+      nodes: nodes ?? this.nodes,
     );
-  }
-
-  @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    if (body case T body) {
-      yield body;
-    }
-
-    yield* body.findAll<T>();
   }
 
   @override
@@ -528,9 +461,9 @@ final class Block extends Statement {
     return <String, Object?>{
       'class': 'Block',
       'name': name,
-      if (scoped) 'scoped': scoped,
-      if (required) 'required': required,
-      'body': body.toJson(),
+      'scoped': scoped,
+      'required': required,
+      'nodes': nodes.toJson(),
     };
   }
 }
@@ -548,6 +481,11 @@ final class Include extends Statement implements ImportContext {
 
   @override
   final bool withContext;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield template;
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -571,9 +509,9 @@ final class Include extends Statement implements ImportContext {
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'class': 'Include',
-      'template': template,
-      if (ignoreMissing) 'ignoreMissing': ignoreMissing,
-      if (withContext) 'withContext': withContext,
+      'template': template.toJson(),
+      'ignoreMissing': ignoreMissing,
+      'withContext': withContext,
     };
   }
 }
@@ -593,6 +531,11 @@ final class Import extends Statement implements ImportContext {
   final bool withContext;
 
   @override
+  Iterable<Node> get childNodes sync* {
+    yield template;
+  }
+
+  @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitImport(this, context);
   }
@@ -610,9 +553,9 @@ final class Import extends Statement implements ImportContext {
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'class': 'Import',
-      'template': template,
+      'template': template.toJson(),
       'target': target,
-      if (withContext) 'withContext': withContext,
+      'withContext': withContext,
     };
   }
 }
@@ -630,6 +573,11 @@ final class FromImport extends Statement implements ImportContext {
 
   @override
   final bool withContext;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield template;
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -653,17 +601,22 @@ final class FromImport extends Statement implements ImportContext {
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'class': 'FromImport',
-      'template': template,
+      'template': template.toJson(),
       'names': <String, String?>{for (var (name, alias) in names) name: alias},
-      if (withContext) 'withContext': withContext,
+      'withContext': withContext,
     };
   }
 }
 
 final class Do extends Statement {
-  new({required this.value});
+  new({required this.expressions});
 
-  final Expression value;
+  final List<Expression> expressions;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield* expressions;
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -671,34 +624,39 @@ final class Do extends Statement {
   }
 
   @override
-  Do copyWith({Expression? value}) {
-    return Do(value: value ?? this.value);
-  }
-
-  @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    if (value case T vaue) {
-      yield vaue;
-    }
-
-    yield* value.findAll<T>();
+  Do copyWith({List<Expression>? expressions}) {
+    return Do(expressions: expressions ?? this.expressions);
   }
 
   @override
   Map<String, Object?> toJson() {
-    return <String, Object?>{'class': 'Do', 'value': value};
+    return <String, Object?>{
+      'class': 'Do',
+      'expressions': expressions.toJson(),
+    };
   }
 }
 
 final class TryCatch extends Statement {
-  new({required this.body, this.exception, required this.catchBody});
+  new({required this.nodes, this.exception, required this.catchNodes});
 
-  final Node body;
+  final List<Node> nodes;
 
   // TODO(nodes): find better name. String?
-  final Expression? exception;
+  final Name? exception;
 
-  final Node catchBody;
+  final List<Node> catchNodes;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield* nodes;
+
+    if (exception case var exception?) {
+      yield exception;
+    }
+
+    yield* catchNodes;
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -706,40 +664,25 @@ final class TryCatch extends Statement {
   }
 
   @override
-  TryCatch copyWith({Node? body, Expression? exception, Node? catchBody}) {
+  TryCatch copyWith({
+    List<Node>? nodes,
+    Name? exception,
+    List<Node>? catchNodes,
+  }) {
     return TryCatch(
-      body: body ?? this.body,
+      nodes: nodes ?? this.nodes,
       exception: exception ?? this.exception,
-      catchBody: catchBody ?? this.catchBody,
+      catchNodes: catchNodes ?? this.catchNodes,
     );
-  }
-
-  @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    if (body case T body) {
-      yield body;
-    }
-
-    yield* body.findAll<T>();
-
-    if (exception case T exceptionName) {
-      yield exceptionName;
-    }
-
-    if (catchBody case T catchBody) {
-      yield catchBody;
-    }
-
-    yield* catchBody.findAll<T>();
   }
 
   @override
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'class': 'TryCatch',
-      'body': body.toJson(),
-      if (exception case var exception?) 'exception': exception.toJson(),
-      'catchBody': catchBody.toJson(),
+      'body': nodes.toJson(),
+      'exception': exception?.toJson(),
+      'catchNodes': catchNodes.toJson(),
     };
   }
 }
@@ -752,6 +695,12 @@ final class Assign extends Statement {
   final Expression value;
 
   @override
+  Iterable<Node> get childNodes sync* {
+    yield target;
+    yield value;
+  }
+
+  @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
     return visitor.visitAssign(this, context);
   }
@@ -759,21 +708,6 @@ final class Assign extends Statement {
   @override
   Assign copyWith({Expression? target, Expression? value}) {
     return Assign(target: target ?? this.target, value: value ?? this.value);
-  }
-
-  @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    if (target case T target) {
-      yield target;
-    }
-
-    yield* target.findAll<T>();
-
-    if (value case T vaue) {
-      yield vaue;
-    }
-
-    yield* value.findAll<T>();
   }
 
   @override
@@ -787,17 +721,24 @@ final class Assign extends Statement {
 }
 
 final class AssignBlock extends Statement {
-  new({
-    required this.target,
-    this.filters = const <Filter>[],
-    required this.body,
-  });
+  new({required this.target, this.filter, required this.nodes});
 
   final Expression target;
 
-  final List<Filter> filters;
+  final Filter? filter;
 
-  final Node body;
+  final List<Node> nodes;
+
+  @override
+  Iterable<Node> get childNodes sync* {
+    yield target;
+
+    if (filter case var filter?) {
+      yield filter;
+    }
+
+    yield* nodes;
+  }
 
   @override
   R accept<C, R>(Visitor<C, R> visitor, C context) {
@@ -807,37 +748,14 @@ final class AssignBlock extends Statement {
   @override
   AssignBlock copyWith({
     Expression? target,
-    List<Filter>? filters,
-    Node? body,
+    Filter? filter,
+    List<Node>? nodes,
   }) {
     return AssignBlock(
       target: target ?? this.target,
-      filters: filters ?? this.filters,
-      body: body ?? this.body,
+      filter: filter ?? this.filter,
+      nodes: nodes ?? this.nodes,
     );
-  }
-
-  @override
-  Iterable<T> findAll<T extends Node>() sync* {
-    if (target case T target) {
-      yield target;
-    }
-
-    yield* target.findAll<T>();
-
-    for (var filter in filters) {
-      if (filter case T filter) {
-        yield filter;
-      }
-
-      yield* filter.findAll<T>();
-    }
-
-    if (body case T body) {
-      yield body;
-    }
-
-    yield* body.findAll<T>();
   }
 
   @override
@@ -845,10 +763,8 @@ final class AssignBlock extends Statement {
     return <String, Object?>{
       'class': 'AssignBlock',
       'target': target.toJson(),
-      'filters': <Map<String, Object?>>[
-        for (var filter in filters) filter.toJson(),
-      ],
-      'body': body.toJson(),
+      'filter': filter?.toJson(),
+      'nodes': nodes.toJson(),
     };
   }
 }

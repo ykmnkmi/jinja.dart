@@ -387,7 +387,7 @@ void main() {
           ),
         ),
       );
-    }, skip: true);
+    });
 
     test('name undefined in if', () {
       var tmpl = env.fromString('{% if x is defined %}{{ x is f }}{% endif %}');
