@@ -18,13 +18,12 @@ _work in progress_.
 - The `default` filter compares values with `null`.
 - The `defined` and `undefined` tests compare values with `null`.
 - The `map` filter also compares values with `null`.
-  Use `attribute` and `item` filters for `object.attribute` and `object[item]` expressions.
+  Use `attribute` and `item` filters for `object.attribute` and `object[item]` expressions (or `map(attribute="...")` / `map(item="...")`).
 - If `Environment({getAttribute})` is not passed, the `getItem` method will be used.
   This allows you to use `{{ map.key }}` as an expression equivalent to `{{ map['key'] }}`.
 - String slices and negative indexes are not supported (list slicing `[start:stop]` with non-negative integers is supported).
-- Macro arguments without default values are required.
 - No `FilterArgumentError` error class.
-- No `*args` and `**kwargs` arguments.
+- No dynamic argument unpacking (`*args` and `**kwargs`) in call expressions.
 - No `Template` module.
 - _work in progress_
 
@@ -63,19 +62,23 @@ See also examples with [conduit][conduit_example] and
 - Template Inheritance
   - Super Blocks
     - `{{ super.super() }}`
-- List of Control Structures
-  - Extends
-    - Execute non-`block` statements and expressions
-      ```jinja
-      {% extends 'base.html' %}
-      {% set title = 'Index' %}
-      {% macro header() %}
-        <h1>{{ title }}</h1>
-      {% endmacro %}      ```
-      {% block body %}
-        {{ header() }}
-      {% endblock %}
-      ```
+- Pending Filters:
+  - `format`
+  - `groupby`
+  - `indent`
+  - `max`
+  - `min`
+  - `pprint`
+  - `reject`
+  - `rejectattr`
+  - `round`
+  - `select`
+  - `selectattr`
+  - `sort`
+  - `unique`
+  - `urlencode`
+  - `urlize`
+  - `xmlattr`
 - Expressions
   - Dart Methods and Properties
     - `!.`/`?.`
@@ -117,6 +120,7 @@ See also examples with [conduit][conduit_example] and
   - Block Nesting and Scope
   - Required Blocks
   - Template Objects
+  - Non-block statements and expressions in child templates
 - ~~HTML Escaping~~
 - List of Control Structures
   - For
