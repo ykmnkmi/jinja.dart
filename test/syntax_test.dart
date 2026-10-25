@@ -55,7 +55,7 @@ void main() {
       expect(tmpl.render(), equals('[1, 2, 3]|[3, 2, 1]'));
     });
 
-    test('attribute', () {
+    test('attr', () {
       var foo = {'bar': 42};
       var tmpl = env.fromString('{{ foo.bar }}|{{ foo["bar"] }}');
       expect(tmpl.render({'foo': foo}), equals('42|42'));
