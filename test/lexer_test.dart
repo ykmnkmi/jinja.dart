@@ -93,12 +93,9 @@ void main() {
       );
     });
 
-    // not supported
-    // test('bytefallback', () {
-    //   var environment = Environment();
-    //   var template = environment.fromString('{{ \'foo\'|pprint }}|{{ \'bär\'|pprint }}');
-    //   expect(template.render(), equals(pformat('foo') + '|' + pformat('bär')));
-    // });
+    test('string escapes', () {}, skip: 'Not implemented.');
+
+    test('bytefallback', () {}, skip: 'Not supported.');
 
     test('operators', () {
       const {
@@ -194,10 +191,6 @@ void main() {
         }
       }
     });
-
-    test('string escapes', () {}, skip: 'Not implemented.');
-
-    test('bytefallback', () {}, skip: 'Not supported.');
   });
 
   group('LStripBlocks', () {
