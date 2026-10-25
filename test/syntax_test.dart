@@ -50,6 +50,11 @@ void main() {
       expect(tmpl.render(), equals('ac'));
     });
 
+    test('slicing', () {
+      var tmpl = env.fromString('{{ [1, 2, 3][:] }}|{{ [1, 2, 3][::-1] }}');
+      expect(tmpl.render(), equals('[1, 2, 3]|[3, 2, 1]'));
+    });
+
     test('attribute', () {
       var foo = {'bar': 42};
       var tmpl = env.fromString('{{ foo.bar }}|{{ foo["bar"] }}');
@@ -430,6 +435,23 @@ void main() {
         }),
         equals('{key1: literal, key2: nested}'),
       );
+    });
+
+    test('items from the beginning through stop-1', () {
+      var tmpl = env.fromString('{% set foo = [0, 1, 2, 3, 4] %}{{ foo[:2] }}');
+      expect(tmpl.render(), equals('[0, 1]'));
+    });
+
+    test('items start through the rest of the array', () {
+      var tmpl = env.fromString('{% set foo = [0, 1, 2, 3, 4] %}{{ foo[2:] }}');
+      expect(tmpl.render(), equals('[2, 3, 4]'));
+    });
+
+    test('items start through stop-1', () {
+      var tmpl = env.fromString(
+        '{% set foo = [0, 1, 2, 3, 4] %}{{ foo[2:3] }}',
+      );
+      expect(tmpl.render(), equals('[2]'));
     });
   });
 }
