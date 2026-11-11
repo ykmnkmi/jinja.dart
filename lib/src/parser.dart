@@ -1125,25 +1125,24 @@ final class Parser {
 
     Expression? stop;
 
-    if (reader.current.type != TokenType.rBracket &&
+    if (reader.current.type != TokenType.colon &&
+        reader.current.type != TokenType.rBracket &&
         reader.current.type != TokenType.comma) {
       stop = parseExpression();
     }
 
+    Expression? step;
+
     if (reader.current.type == TokenType.colon) {
       reader.next();
-
-      Expression? step;
 
       if (reader.current.type != TokenType.rBracket &&
           reader.current.type != TokenType.comma) {
         step = parseExpression();
       }
-
-      return Slice(start: start, stop: stop, step: step);
     }
 
-    return Slice(start: start, stop: stop);
+    return Slice(start: start, stop: stop, step: step);
   }
 
   Calling parseCalling() {

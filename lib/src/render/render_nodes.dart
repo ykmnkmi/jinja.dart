@@ -399,18 +399,36 @@ final class RGetSlice extends RExpression {
       var result = <Object?>[];
 
       if (increment > 0) {
-        var begin = start ?? 0;
-        var end = stop ?? value.length;
+        var begin = start == null
+            ? 0
+            : start < 0
+            ? math.max(start + value.length, 0)
+            : math.min(start, value.length);
+
+        var end = stop == null
+            ? value.length
+            : stop < 0
+            ? math.max(stop + value.length, 0)
+            : math.min(stop, value.length);
 
         while (begin < end) {
           result.add(context.item(begin, value));
           begin += increment;
         }
       } else if (increment < 0) {
-        var begin = stop ?? value.length - 1;
-        var end = start ?? 0;
+        var begin = start == null
+            ? value.length - 1
+            : start < 0
+            ? math.max(start + value.length, -1)
+            : math.min(start, value.length - 1);
 
-        while (begin >= end) {
+        var end = stop == null
+            ? -1
+            : stop < 0
+            ? math.max(stop + value.length, -1)
+            : math.min(stop, value.length - 1);
+
+        while (begin > end) {
           result.add(context.item(begin, value));
           begin += increment;
         }

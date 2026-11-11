@@ -453,5 +453,104 @@ void main() {
       );
       expect(tmpl.render(), equals('[2]'));
     });
+
+    var data = <String, Object?>{
+      'xs': [0, 1, 2, 3, 4],
+    };
+
+    test('[::2]', () {
+      var tmpl = env.fromString('{{ xs[::2] }}');
+      expect(tmpl.render(data), equals('[0, 2, 4]'));
+    });
+
+    test('[1::2]', () {
+      var tmpl = env.fromString('{{ xs[1::2] }}');
+      expect(tmpl.render(data), equals('[1, 3]'));
+    });
+
+    test('[::]', () {
+      var tmpl = env.fromString('{{ xs[::] }}');
+      expect(tmpl.render(data), equals('[0, 1, 2, 3, 4]'));
+    });
+
+    test('[4:1:-1]', () {
+      var tmpl = env.fromString('{{ xs[4:1:-1] }}');
+      expect(tmpl.render(data), equals('[4, 3, 2]'));
+    });
+
+    test('[4:0:-2]', () {
+      var tmpl = env.fromString('{{ xs[4:0:-2] }}');
+      expect(tmpl.render(data), equals('[4, 2]'));
+    });
+
+    test('[1:4:-1]', () {
+      var tmpl = env.fromString('{{ xs[1:4:-1] }}');
+      expect(tmpl.render(data), equals('[]'));
+    });
+
+    test('[::-1]', () {
+      var tmpl = env.fromString('{{ xs[::-1] }}');
+      expect(tmpl.render(data), equals('[4, 3, 2, 1, 0]'));
+    });
+
+    test('[3::-1]', () {
+      var tmpl = env.fromString('{{ xs[3::-1] }}');
+      expect(tmpl.render(data), equals('[3, 2, 1, 0]'));
+    });
+
+    test('[:1:-1]', () {
+      var tmpl = env.fromString('{{ xs[:1:-1] }}');
+      expect(tmpl.render(data), equals('[4, 3, 2]'));
+    });
+
+    test('[-2:]', () {
+      var tmpl = env.fromString('{{ xs[-2:] }}');
+      expect(tmpl.render(data), equals('[3, 4]'));
+    });
+
+    test('[1:-1]', () {
+      var tmpl = env.fromString('{{ xs[1:-1] }}');
+      expect(tmpl.render(data), equals('[1, 2, 3]'));
+    });
+
+    test('[:10]', () {
+      var tmpl = env.fromString('{{ xs[:10] }}');
+      expect(tmpl.render(data), equals('[0, 1, 2, 3, 4]'));
+    });
+
+    test('[:-10]', () {
+      var tmpl = env.fromString('{{ xs[:-10] }}');
+      expect(tmpl.render(data), equals('[]'));
+    });
+
+    test('[10:0:-1]', () {
+      var tmpl = env.fromString('{{ xs[10:0:-1] }}');
+      expect(tmpl.render(data), equals('[4, 3, 2, 1]'));
+    });
+
+    test('[:-6:-1]', () {
+      var tmpl = env.fromString('{{ xs[:-6:-1] }}');
+      expect(tmpl.render(data), equals('[4, 3, 2, 1, 0]'));
+    });
+
+    test('[:-10:-1]', () {
+      var tmpl = env.fromString('{{ xs[:-10:-1] }}');
+      expect(tmpl.render(data), equals('[4, 3, 2, 1, 0]'));
+    });
+
+    test('[0:-6:-1]', () {
+      var tmpl = env.fromString('{{ xs[0:-6:-1] }}');
+      expect(tmpl.render(data), equals('[0]'));
+    });
+
+    test('[-6::-1]', () {
+      var tmpl = env.fromString('{{ xs[-6::-1] }}');
+      expect(tmpl.render(data), equals('[]'));
+    });
+
+    test('empty list slice', () {
+      var tmpl = env.fromString('{{ [][::-1] }}');
+      expect(tmpl.render(), equals('[]'));
+    });
   });
 }
