@@ -4,6 +4,22 @@ import 'package:jinja/src/runtime.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:meta/dart2js.dart';
 
+final class _VoidSink implements StringSink {
+  const new();
+
+  @override
+  void write(Object? object) {}
+
+  @override
+  void writeAll(Iterable<Object?> objects, [String separator = '']) {}
+
+  @override
+  void writeCharCode(int charCode) {}
+
+  @override
+  void writeln([Object? object = '']) {}
+}
+
 final class ParentTemplateRef {
   new([this.template]);
 
@@ -111,27 +127,42 @@ base class RenderContext extends Context {
     throw ArgumentError.value(targets, 'targets');
   }
 
-  @override
-  RenderContext derived({
-    StringSink? sink,
-    String? template,
-    Map<String, Object?>? data,
-    RenderContext? callerContext,
-    bool withContext = true,
-  }) {
+  RenderContext importContext({String? template, bool withContext = false}) {
     Map<String, Object?> parent;
 
     if (withContext) {
       parent = <String, Object?>{
         ...this.parent,
-        ...?this.callerContext?.parent,
-        ...?this.callerContext?.context,
+        ...?callerContext?.parent,
+        ...?callerContext?.context,
         ...context,
       };
     } else {
       parent = globals;
-      data = null;
     }
+
+    return RenderContext(
+      environment,
+      const _VoidSink(),
+      template: template,
+      globals: globals,
+      callerContext: withContext ? this : null,
+      parent: parent,
+    );
+  }
+
+  @override
+  RenderContext derived({
+    StringSink? sink,
+    String? template,
+    Map<String, Object?>? data,
+  }) {
+    var parent = <String, Object?>{
+      ...this.parent,
+      ...?callerContext?.parent,
+      ...?callerContext?.context,
+      ...context,
+    };
 
     return RenderContext(
       environment,
@@ -141,7 +172,7 @@ base class RenderContext extends Context {
       globals: globals,
       self: self,
       parentTemplateRef: _parentTemplateRef,
-      callerContext: callerContext ?? this.callerContext,
+      callerContext: callerContext,
       parent: parent,
       data: data,
     );

@@ -142,4 +142,84 @@ void main() {
       expect(tmpl.render(), equals('[42|23]'));
     });
   });
+
+  group('Import extra', () {
+    test('imported modules have independent inheritance state', () {
+      var templates = <String, String>{
+        'base': '{% block content %}BASE{% endblock %}',
+        'other': 'OTHER',
+        'block':
+            '{% block content %}MODULE{% endblock %}'
+            '{% macro m() %}M{% endmacro %}',
+        'extends': '{% extends "other" %}{% macro m() %}M{% endmacro %}',
+        'inactive':
+            '{% if false %}{% extends "other" %}{% endif %}'
+            '{% macro m() %}M{% endmacro %}',
+      };
+
+      var imports = <String, String Function(String)>{
+        'import': (name) => '{% import "$name" as mod %}',
+        'import with context': (name) =>
+            '{% import "$name" as mod with context %}',
+        'from import': (name) => '{% from "$name" import m %}',
+        'from import with context': (name) =>
+            '{% from "$name" import m with context %}',
+      };
+
+      var env = Environment(loader: MapLoader(templates));
+
+      imports.forEach((kind, statement) {
+        expect(
+          env.fromString('${statement('block')}{% extends "base" %}').render(),
+          equals('BASE'),
+          reason: '$kind: imported blocks do not override the caller',
+        );
+        expect(
+          env
+              .fromString('{% extends "base" %}${statement('extends')}')
+              .render(),
+          equals('BASE'),
+          reason: '$kind: imported extends does not reuse the pending parent',
+        );
+        expect(
+          env
+              .fromString('{% extends "base" %}${statement('inactive')}')
+              .render(),
+          equals('BASE'),
+          reason: '$kind: inactive imported extends does not consume parent',
+        );
+      });
+    });
+
+    test('without context clears the inherited caller context', () {
+      var env = Environment(
+        globals: {'g': 'G'},
+        loader: MapLoader({
+          'import':
+              '{% import "inner" as inner without context %}'
+              '{% macro show() %}{{ inner.show() }}{% endmacro %}',
+          'from import':
+              '{% from "inner" import show as inner_show without context %}'
+              '{% macro show() %}{{ inner_show() }}{% endmacro %}',
+          'inner':
+              '{% macro show() %}'
+              '{{ secret|default("MISSING") }}|{{ g }}{% endmacro %}',
+          'mod': '{% set y = x + 41 %}',
+        }),
+      );
+
+      for (var kind in ['import', 'from import']) {
+        var tmpl = env.fromString(
+          '{% set secret = "SECRET" %}'
+          '{% import "$kind" as outer with context %}{{ outer.show() }}',
+        );
+        expect(tmpl.render(), equals('MISSING|G'), reason: kind);
+      }
+
+      var tmpl = env.fromString(
+        '{% set x = 1 %}{% import "mod" as m with context %}{{ x }}|{{ m.y }}',
+      );
+      expect(tmpl.render(), equals('1|42'));
+    });
+  });
 }

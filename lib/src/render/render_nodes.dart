@@ -1033,10 +1033,8 @@ final class RFromImport extends RStatement {
       Object? value => throw ArgumentError.value(value, 'template'),
     };
 
-    var importContext = context.derived(
-      sink: StringBuffer(),
+    var importContext = context.importContext(
       template: template.path,
-      callerContext: withContext ? context : null,
       withContext: withContext,
     );
 
@@ -1112,10 +1110,8 @@ final class RImport extends RStatement {
       Object? value => throw ArgumentError.value(value, 'template'),
     };
 
-    var importContext = context.derived(
-      sink: StringBuffer(),
+    var importContext = context.importContext(
       template: template.path,
-      callerContext: withContext ? context : null,
       withContext: withContext,
     );
 
