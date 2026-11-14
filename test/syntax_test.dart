@@ -552,5 +552,40 @@ void main() {
       var tmpl = env.fromString('{{ [][::-1] }}');
       expect(tmpl.render(), equals('[]'));
     });
+
+    test('concatenation with empty string converts to string', () {
+      for (var optimize in [true, false]) {
+        var env = Environment(optimize: optimize);
+        expect(
+          env.fromString('{{ (value ~ "") + "!" }}').render({'value': 123}),
+          equals('123!'),
+        );
+        expect(
+          env.fromString('{{ ("" ~ value) + "!" }}').render({'value': 123}),
+          equals('123!'),
+        );
+
+        for (var value in <Object>[
+          123,
+          1.5,
+          true,
+          false,
+          <int>[1, 2],
+        ]) {
+          expect(
+            env.fromString('{{ (value ~ "") is string }}').render({
+              'value': value,
+            }),
+            equals('true'),
+            reason: 'optimize=$optimize value=$value',
+          );
+        }
+
+        expect(
+          env.fromString('{{ value ~ "" }}').render({'value': null}),
+          equals('null'),
+        );
+      }
+    });
   });
 }

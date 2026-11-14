@@ -133,7 +133,7 @@ class Optimizer implements Visitor<Environment, Node> {
     // The parser always returns a concatenation with at least two nodes.
     return switch (newValues.length) {
       0 => Constant(value: ''),
-      1 => newValues[0],
+      1 when newValues[0] is Constant => newValues[0],
       _ => node.copyWith(values: newValues),
     };
   }
