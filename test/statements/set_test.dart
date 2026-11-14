@@ -104,7 +104,7 @@ void main() {
       expect(tmpl.render(), equals('13|37'));
     });
 
-    test('block escapeing filtered', () {}, skip: 'Not supported.');
+    test('block escaping filtered', () {}, skip: 'Not supported.');
 
     test('block filtered', () {
       var tmpl = env.fromString(
@@ -128,6 +128,48 @@ void main() {
         '{{ foo }}',
       );
       expect(tmpl.render(), equals('11'));
+    });
+
+    test('namespace set tuple', () {
+      var env = Environment(trimBlocks: true);
+      var tmpl = env.fromString(
+        '{% set ns = namespace(a=12, b=36) %}'
+        '{% set ns.a, ns.b = ns.a + 1, ns.b + 1 %}'
+        '{{ ns.a }}|{{ ns.b }}',
+      );
+      expect(tmpl.render(), equals('13|37'));
+    });
+  });
+
+  group('Set extra', () {
+    test('tuple unpacking', () {
+      var tmpl = env.fromString('{% set a, b = 1, 2 %}{{ a }}|{{ b }}');
+      expect(tmpl.render(), equals('1|2'));
+
+      tmpl = env.fromString(
+        '{% set a, (b, c) = [1, [2, 3]] %}{{ a }}|{{ b }}|{{ c }}',
+      );
+      expect(tmpl.render(), equals('1|2|3'));
+    });
+
+    test('namespace unpacking', () {
+      var tmpl = env.fromString(
+        '{% set ns = namespace() %}'
+        '{% set ns.a, ns.b = 1, 2 %}'
+        '{{ ns.a }}|{{ ns.b }}',
+      );
+      expect(tmpl.render(), equals('1|2'));
+    });
+
+    test('unpacking errors', () {
+      var tmpl = env.fromString('{% set a, b = 1 %}');
+      expect(() => tmpl.render(), throwsA(isA<TypeError>()));
+
+      tmpl = env.fromString('{% set a, b, c = [1, 2] %}');
+      expect(() => tmpl.render(), throwsA(isA<StateError>()));
+
+      tmpl = env.fromString('{% set a, b = [1, 2, 3] %}');
+      expect(() => tmpl.render(), throwsA(isA<StateError>()));
     });
   });
 }

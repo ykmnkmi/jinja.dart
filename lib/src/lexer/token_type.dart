@@ -1,5 +1,6 @@
 part of '/src/lexer.dart';
 
+// TODO(lexer): convert to enum.
 abstract interface class TokenType {
   static const String add = 'add';
   static const String assign = 'assign';

@@ -50,7 +50,12 @@ void main() {
       expect(tmpl.render(), equals('ac'));
     });
 
-    test('attribute', () {
+    test('slicing', () {
+      var tmpl = env.fromString('{{ [1, 2, 3][:] }}|{{ [1, 2, 3][::-1] }}');
+      expect(tmpl.render(), equals('[1, 2, 3]|[3, 2, 1]'));
+    });
+
+    test('attr', () {
       var foo = {'bar': 42};
       var tmpl = env.fromString('{{ foo.bar }}|{{ foo["bar"] }}');
       expect(tmpl.render({'foo': foo}), equals('42|42'));
@@ -280,7 +285,7 @@ void main() {
       );
     });
 
-    test('triling comma', () {
+    test('trailing comma', () {
       // tuple is list
       var tmpl = env.fromString('{{ (1, 2,) }}|{{ [1, 2,] }}|{{ {1: 2,} }}');
       expect(tmpl.render(), equals('[1, 2]|[1, 2]|{1: 2}'));
@@ -317,6 +322,65 @@ void main() {
       expect(tmpl.render(), equals('{{ FOO }} and {% BAR %}'));
     });
 
+    test('const', () {
+      var tmpl = env.fromString('{{ true }}');
+      expect(tmpl.render(), equals('true'));
+      tmpl = env.fromString('{{ false }}');
+      expect(tmpl.render(), equals('false'));
+      tmpl = env.fromString('{{ none }}');
+      expect(tmpl.render(), equals(''));
+      tmpl = env.fromString('{{ none is defined }}');
+      expect(tmpl.render(), equals('false'));
+      tmpl = env.fromString('{{ missing is defined }}');
+      expect(tmpl.render(), equals('false'));
+    });
+
+    test('neg filter priority', () {
+      var node = env.parse('{{ -1|foo }}');
+      var output = node.nodes[0] as Output;
+
+      expect(
+        output.nodes[0],
+        predicate<Filter>((filter) {
+          var expression = filter.expression;
+
+          if (expression is! Unary) {
+            return false;
+          }
+
+          var constant = expression.value;
+          return constant is Constant && constant.value == 1;
+        }),
+      );
+    });
+
+    test('const assign', () {
+      var matcher = throwsA(isA<TemplateSyntaxError>());
+      expect(() => env.fromString('{% set true = 42 %}'), matcher);
+      expect(
+        () => env.fromString('{% for null in seq %}{% endfor %}'),
+        matcher,
+      );
+    });
+
+    test('localset', () {
+      var tmpl = env.fromString(
+        '{% set foo = 0 %}{% for item in [1, 2] %}{% set foo = 1 %}'
+        '{% endfor %}{{ foo }}',
+      );
+      expect(tmpl.render(), equals('0'));
+    });
+
+    test('parse unary', () {
+      var foo = {'bar': 42};
+      var tmpl = env.fromString('{{ -foo.bar }}');
+      expect(tmpl.render({'foo': foo}), equals('-42'));
+      tmpl = env.fromString('{{ foo.bar }}');
+      expect(tmpl.render({'foo': foo}), equals('42'));
+    });
+  });
+
+  group('Syntax extra', () {
     test('operator and', () {
       var tmpl = env.fromString(
         "<{% if page['next'] and page['next'].path %}ok{% endif %}>",
@@ -348,57 +412,6 @@ void main() {
       expect(tmpl.render({'var1': 'first'}), equals('first'));
     });
 
-    test('const', () {
-      var tmpl = env.fromString('{{ true }}');
-      expect(tmpl.render(), equals('true'));
-      tmpl = env.fromString('{{ false }}');
-      expect(tmpl.render(), equals('false'));
-      tmpl = env.fromString('{{ none }}');
-      expect(tmpl.render(), equals(''));
-      tmpl = env.fromString('{{ none is defined }}');
-      expect(tmpl.render(), equals('false'));
-      tmpl = env.fromString('{{ missing is defined }}');
-      expect(tmpl.render(), equals('false'));
-    });
-
-    test('neg filter priority', () {
-      var tmpl = env.fromString('{{ -1|foo }}');
-      var body = tmpl.body.body as Interpolation;
-
-      expect(
-        body.value,
-        predicate<Filter>((filter) {
-          var argument = filter.calling.arguments[0];
-          return argument is Constant && argument.value == -1;
-        }),
-      );
-    });
-
-    test('const assign', () {
-      var matcher = throwsA(isA<TemplateSyntaxError>());
-      expect(() => env.fromString('{% set true = 42 %}'), matcher);
-      expect(
-        () => env.fromString('{% for null in seq %}{% endfor %}'),
-        matcher,
-      );
-    });
-
-    test('localset', () {
-      var tmpl = env.fromString(
-        '{% set foo = 0 %}{% for item in [1, 2] %}{% set foo = 1 %}'
-        '{% endfor %}{{ foo }}',
-      );
-      expect(tmpl.render(), equals('0'));
-    });
-
-    test('parse unary', () {
-      var foo = {'bar': 42};
-      var tmpl = env.fromString('{{ -foo.bar }}');
-      expect(tmpl.render({'foo': foo}), equals('-42'));
-      tmpl = env.fromString('{{ foo.bar }}');
-      expect(tmpl.render({'foo': foo}), equals('42'));
-    });
-
     test('mixed map literals', () {
       // Test that maps with mixed constant and variable values work
       var tmpl = env.fromString('{{ {"static": 42, "dynamic": variable} }}');
@@ -422,6 +435,169 @@ void main() {
         }),
         equals('{key1: literal, key2: nested}'),
       );
+    });
+
+    test('items from the beginning through stop-1', () {
+      var tmpl = env.fromString('{% set foo = [0, 1, 2, 3, 4] %}{{ foo[:2] }}');
+      expect(tmpl.render(), equals('[0, 1]'));
+    });
+
+    test('items start through the rest of the array', () {
+      var tmpl = env.fromString('{% set foo = [0, 1, 2, 3, 4] %}{{ foo[2:] }}');
+      expect(tmpl.render(), equals('[2, 3, 4]'));
+    });
+
+    test('items start through stop-1', () {
+      var tmpl = env.fromString(
+        '{% set foo = [0, 1, 2, 3, 4] %}{{ foo[2:3] }}',
+      );
+      expect(tmpl.render(), equals('[2]'));
+    });
+
+    var data = <String, Object?>{
+      'xs': [0, 1, 2, 3, 4],
+    };
+
+    test('[::2]', () {
+      var tmpl = env.fromString('{{ xs[::2] }}');
+      expect(tmpl.render(data), equals('[0, 2, 4]'));
+    });
+
+    test('[1::2]', () {
+      var tmpl = env.fromString('{{ xs[1::2] }}');
+      expect(tmpl.render(data), equals('[1, 3]'));
+    });
+
+    test('[::]', () {
+      var tmpl = env.fromString('{{ xs[::] }}');
+      expect(tmpl.render(data), equals('[0, 1, 2, 3, 4]'));
+    });
+
+    test('[4:1:-1]', () {
+      var tmpl = env.fromString('{{ xs[4:1:-1] }}');
+      expect(tmpl.render(data), equals('[4, 3, 2]'));
+    });
+
+    test('[4:0:-2]', () {
+      var tmpl = env.fromString('{{ xs[4:0:-2] }}');
+      expect(tmpl.render(data), equals('[4, 2]'));
+    });
+
+    test('[1:4:-1]', () {
+      var tmpl = env.fromString('{{ xs[1:4:-1] }}');
+      expect(tmpl.render(data), equals('[]'));
+    });
+
+    test('[::-1]', () {
+      var tmpl = env.fromString('{{ xs[::-1] }}');
+      expect(tmpl.render(data), equals('[4, 3, 2, 1, 0]'));
+    });
+
+    test('[3::-1]', () {
+      var tmpl = env.fromString('{{ xs[3::-1] }}');
+      expect(tmpl.render(data), equals('[3, 2, 1, 0]'));
+    });
+
+    test('[:1:-1]', () {
+      var tmpl = env.fromString('{{ xs[:1:-1] }}');
+      expect(tmpl.render(data), equals('[4, 3, 2]'));
+    });
+
+    test('[-2:]', () {
+      var tmpl = env.fromString('{{ xs[-2:] }}');
+      expect(tmpl.render(data), equals('[3, 4]'));
+    });
+
+    test('[1:-1]', () {
+      var tmpl = env.fromString('{{ xs[1:-1] }}');
+      expect(tmpl.render(data), equals('[1, 2, 3]'));
+    });
+
+    test('[:10]', () {
+      var tmpl = env.fromString('{{ xs[:10] }}');
+      expect(tmpl.render(data), equals('[0, 1, 2, 3, 4]'));
+    });
+
+    test('[:-10]', () {
+      var tmpl = env.fromString('{{ xs[:-10] }}');
+      expect(tmpl.render(data), equals('[]'));
+    });
+
+    test('[10:0:-1]', () {
+      var tmpl = env.fromString('{{ xs[10:0:-1] }}');
+      expect(tmpl.render(data), equals('[4, 3, 2, 1]'));
+    });
+
+    test('[:-6:-1]', () {
+      var tmpl = env.fromString('{{ xs[:-6:-1] }}');
+      expect(tmpl.render(data), equals('[4, 3, 2, 1, 0]'));
+    });
+
+    test('[:-10:-1]', () {
+      var tmpl = env.fromString('{{ xs[:-10:-1] }}');
+      expect(tmpl.render(data), equals('[4, 3, 2, 1, 0]'));
+    });
+
+    test('[0:-6:-1]', () {
+      var tmpl = env.fromString('{{ xs[0:-6:-1] }}');
+      expect(tmpl.render(data), equals('[0]'));
+    });
+
+    test('[-6::-1]', () {
+      var tmpl = env.fromString('{{ xs[-6::-1] }}');
+      expect(tmpl.render(data), equals('[]'));
+    });
+
+    test('empty list slice', () {
+      var tmpl = env.fromString('{{ [][::-1] }}');
+      expect(tmpl.render(), equals('[]'));
+    });
+
+    test('concatenation with empty string converts to string', () {
+      for (var optimize in [true, false]) {
+        var env = Environment(optimize: optimize);
+        expect(
+          env.fromString('{{ (value ~ "") + "!" }}').render({'value': 123}),
+          equals('123!'),
+        );
+        expect(
+          env.fromString('{{ ("" ~ value) + "!" }}').render({'value': 123}),
+          equals('123!'),
+        );
+
+        for (var value in <Object>[
+          123,
+          1.5,
+          true,
+          false,
+          <int>[1, 2],
+        ]) {
+          expect(
+            env.fromString('{{ (value ~ "") is string }}').render({
+              'value': value,
+            }),
+            equals('true'),
+            reason: 'optimize=$optimize value=$value',
+          );
+        }
+
+        expect(
+          env.fromString('{{ value ~ "" }}').render({'value': null}),
+          equals('null'),
+        );
+      }
+    });
+
+    test('ternary operator in statements', () {
+      var tmpl = env.fromString(
+        '{% if true ? true : false %}YES{% else %}NO{% endif %}',
+      );
+      expect(tmpl.render(), equals('YES'));
+
+      tmpl = env.fromString(
+        '{% for x in true ? [1] : [2] %}{{ x }}{% endfor %}',
+      );
+      expect(tmpl.render(), equals('1'));
     });
   });
 }

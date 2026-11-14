@@ -1,6 +1,5 @@
 import 'dart:math' show Random;
 
-import 'package:jinja/src/compiler.dart';
 import 'package:jinja/src/defaults.dart' as defaults;
 import 'package:jinja/src/exceptions.dart';
 import 'package:jinja/src/lexer.dart';
@@ -8,7 +7,7 @@ import 'package:jinja/src/loaders.dart';
 import 'package:jinja/src/nodes.dart';
 import 'package:jinja/src/optimizer.dart';
 import 'package:jinja/src/parser.dart';
-import 'package:jinja/src/renderer.dart';
+import 'package:jinja/src/render.dart';
 import 'package:jinja/src/runtime.dart';
 import 'package:jinja/src/utils.dart';
 import 'package:meta/meta.dart';
@@ -344,12 +343,12 @@ base class Environment {
   /// Parse the list of tokens and return the AST node.
   ///
   /// This can be useful for debugging or to extract information from templates.
-  Node scan(Iterable<Token> tokens, {String? path}) {
-    return Parser.fromTokens(this, tokens, path: path).scan();
+  TemplateNode scan(Iterable<Token> tokens, {String? path}) {
+    return Parser.fromTokens(this, tokens, path: path).parse();
   }
 
   /// Parse the source code and return the AST node.
-  Node parse(String source, {String? path}) {
+  TemplateNode parse(String source, {String? path}) {
     return Parser(this, source, path: path).parse();
   }
 
@@ -361,21 +360,25 @@ base class Environment {
   }) {
     globals = <String, Object?>{...this.globals, ...?globals};
 
-    var body = parse(source, path: path);
+    Node body = parse(source, path: path);
 
     for (var modifier in modifiers) {
       body = modifier(body);
     }
 
     if (optimize) {
-      body = body.accept(const Optimizer(), Context(this, template: path));
+      body = Optimizer.optimize(body, this);
     }
 
-    return Template.fromNode(
+    var templateNode = body is TemplateNode
+        ? body
+        : TemplateNode(nodes: <Node>[body]);
+
+    return Template.fromRNode(
       this,
       path: path,
       globals: globals,
-      body: body.accept(RuntimeCompiler(), null),
+      renderNode: RenderCompiler.compile(templateNode, this, path: path),
     );
   }
 
@@ -550,12 +553,12 @@ base class Template {
   /// This is used internally by the [Environment.fromString] to create
   /// templates from parsed sources.
   @internal
-  new fromNode(
+  new fromRNode(
     this.environment, {
     this.path,
     this.globals = const <String, Object?>{},
-    required Node body,
-  }) : body = body is TemplateNode ? body : TemplateNode(body: body);
+    required this.renderNode,
+  });
 
   /// The environment used to parse and render template.
   final Environment environment;
@@ -568,7 +571,7 @@ base class Template {
 
   // @nodoc
   @internal
-  final TemplateNode body;
+  final RTemplateNode renderNode;
 
   /// If no arguments are given the context will be empty.
   String render([Map<String, Object?>? data]) {
@@ -579,7 +582,7 @@ base class Template {
 
   /// If no arguments are given the context will be empty.
   void renderTo(StringSink sink, [Map<String, Object?>? data]) {
-    var context = StringSinkRenderContext(
+    var context = RenderContext(
       environment,
       sink,
       template: path,
@@ -587,6 +590,6 @@ base class Template {
       data: data,
     );
 
-    body.accept(const StringSinkRenderer(), context);
+    renderNode.render(context);
   }
 }

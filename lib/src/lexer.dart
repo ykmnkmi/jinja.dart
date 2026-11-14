@@ -2,10 +2,10 @@ import 'package:jinja/src/environment.dart';
 import 'package:jinja/src/exceptions.dart';
 import 'package:string_scanner/string_scanner.dart';
 
-part 'lexer/identifier.dart';
-part 'lexer/token_reader.dart';
-part 'lexer/token_type.dart';
-part 'lexer/token.dart';
+part '/src/lexer/identifier.dart';
+part '/src/lexer/token_reader.dart';
+part '/src/lexer/token_type.dart';
+part '/src/lexer/token.dart';
 
 /// Cache for the [Lexer]s.
 ///

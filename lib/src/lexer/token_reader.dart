@@ -6,8 +6,8 @@ part of '/src/lexer.dart';
 final class TokenReader {
   new(Iterable<Token> tokens, {this.name, this.path})
     : _iterator = tokens.iterator,
-      _pushed = <Token>[] {
-    current = const Token.simple(0, TokenType.initial);
+      _pushed = <Token>[],
+      current = const Token.simple(0, TokenType.initial) {
     next();
   }
 
@@ -19,7 +19,7 @@ final class TokenReader {
 
   final List<Token> _pushed;
 
-  late Token current;
+  Token current;
 
   /// Are we at the end of the stream?
   bool get isEof {

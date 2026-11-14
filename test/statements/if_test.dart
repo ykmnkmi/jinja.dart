@@ -66,4 +66,13 @@ void main() {
       expect(tmpl.render(), equals('1'));
     });
   });
+
+  group('If extra', () {
+    test('ternary condition', () {
+      var tmpl = env.fromString(
+        '{% if true ? true : false %}YES{% else %}NO{% endif %}',
+      );
+      expect(tmpl.render(), equals('YES'));
+    });
+  });
 }
