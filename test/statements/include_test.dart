@@ -176,4 +176,25 @@ void main() {
       expect(tmpl.render({'secret': 'private'}), equals('G'));
     });
   });
+
+  group('Include extra', () {
+    test('included templates can access the surrounding loop', () {
+      var env = Environment(
+        loader: MapLoader({
+          'row': '{{ loop.index }}:{{ item }};',
+          'meta': '{{ loop.length }}{{ loop.last }};',
+        }),
+      );
+
+      var tmpl = env.fromString(
+        '{% for item in ["a", "b"] %}{% include "row" %}{% endfor %}',
+      );
+      expect(tmpl.render(), equals('1:a;2:b;'));
+
+      tmpl = env.fromString(
+        '{% for item in ["a", "b"] %}{% include "meta" %}{% endfor %}',
+      );
+      expect(tmpl.render(), equals('2false;2true;'));
+    });
+  });
 }

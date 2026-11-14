@@ -703,7 +703,8 @@ base class RenderCompiler extends ThrowingVisitor<Frame, RenderNode> {
     var extendedLoop =
         node.recursive ||
         findUndeclared(node.nodes, const <String>{'loop'}).contains('loop') ||
-        node.findAll<Block>().any((block) => block.scoped);
+        node.findAll<Block>().any((block) => block.scoped) ||
+        node.findAll<Include>().any((include) => include.withContext);
 
     var targetNames = <Name>[
       if (node.target case Name name) name,
