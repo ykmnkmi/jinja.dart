@@ -54,32 +54,178 @@ final class DependencyFinderVisitor extends ChildVisitor<void> {
 }
 
 final class UndeclaredNameVisitor extends ChildVisitor<void> {
-  new(Set<String> names) : names = names.toSet(), undeclared = <String>{};
+  new(Set<String> names)
+    : rootNames = names.toSet(),
+      names = names.toSet(),
+      undeclared = <String>{};
 
-  final Set<String> names;
+  final Set<String> rootNames;
+
+  Set<String> names;
 
   final Set<String> undeclared;
+
+  int _scopeDepth = 0;
+
+  void _visitScoped(void Function() body, {Set<String>? shadowed}) {
+    var saved = names.toSet();
+
+    if (shadowed != null) {
+      names.removeAll(shadowed);
+    }
+
+    _scopeDepth += 1;
+
+    try {
+      body();
+    } finally {
+      _scopeDepth -= 1;
+      names = saved;
+    }
+  }
+
+  // Helpers
+
+  @override
+  void visitNamed(Named node, void context) {
+    node.defaultValue.accept(this, context);
+    node.argument.accept(this, context);
+  }
 
   // Expressions
 
   @override
   void visitName(Name node, void context) {
-    if (node.context == AssignContext.load && names.contains(node.name)) {
-      undeclared.add(node.name);
+    if (node.context == .load) {
+      if (names.contains(node.name)) {
+        undeclared.add(node.name);
 
-      if (const SetEquality<String>().equals(names, undeclared)) {
-        throw VisitorExit();
+        if (const SetEquality<String>().equals(rootNames, undeclared)) {
+          throw VisitorExit();
+        }
       }
     } else {
       names.remove(node.name);
+
+      if (_scopeDepth == 0) {
+        rootNames.remove(node.name);
+      }
     }
   }
 
   // Statements
 
   @override
+  void visitAssign(Assign node, void context) {
+    node.value.accept(this, context);
+    node.target.accept(this, context);
+  }
+
+  @override
+  void visitAssignBlock(AssignBlock node, void context) {
+    for (var child in node.nodes) {
+      child.accept(this, context);
+    }
+
+    node.filter?.accept(this, context);
+    node.target.accept(this, context);
+  }
+
+  @override
   void visitBlock(Block node, void context) {
     // Stop visiting at blocks.
+  }
+
+  @override
+  void visitCallBlock(CallBlock node, void context) {
+    node.call.accept(this, context);
+
+    _visitScoped(() {
+      for (var argument in node.positional) {
+        argument.accept(this, context);
+      }
+
+      for (var named in node.named) {
+        named.accept(this, context);
+      }
+
+      for (var child in node.nodes) {
+        child.accept(this, context);
+      }
+    }, shadowed: const <String>{'caller', 'kwargs', 'varargs'});
+  }
+
+  @override
+  void visitFilterBlock(FilterBlock node, void context) {
+    node.filter.accept(this, context);
+
+    _visitScoped(() {
+      for (var child in node.nodes) {
+        child.accept(this, context);
+      }
+    });
+  }
+
+  @override
+  void visitFor(For node, void context) {
+    node.iterable.accept(this, context);
+
+    _visitScoped(() {
+      node.target.accept(this, context);
+      node.test?.accept(this, context);
+
+      for (var child in node.nodes) {
+        child.accept(this, context);
+      }
+    });
+
+    if (node.elseNodes case var elseNodes?) {
+      _visitScoped(() {
+        for (var child in elseNodes) {
+          child.accept(this, context);
+        }
+      });
+    }
+  }
+
+  @override
+  void visitMacro(Macro node, void context) {
+    _visitScoped(() {
+      for (var argument in node.positional) {
+        argument.accept(this, context);
+      }
+
+      for (var named in node.named) {
+        named.accept(this, context);
+      }
+
+      for (var child in node.nodes) {
+        child.accept(this, context);
+      }
+    }, shadowed: const <String>{'caller', 'kwargs', 'varargs'});
+
+    names.remove(node.name);
+
+    if (_scopeDepth == 0) {
+      rootNames.remove(node.name);
+    }
+  }
+
+  @override
+  void visitWith(With node, void context) {
+    for (var value in node.values) {
+      value.accept(this, context);
+    }
+
+    _visitScoped(() {
+      for (var target in node.targets) {
+        target.accept(this, context);
+      }
+
+      for (var child in node.nodes) {
+        child.accept(this, context);
+      }
+    });
   }
 }
 

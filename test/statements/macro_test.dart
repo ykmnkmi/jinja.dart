@@ -176,5 +176,49 @@ void main() {
 
       expect(tmpl.render({'data': data}).trim(), equals('AA1B'));
     });
+
+    test('nested bindings do not hide outer special macro names', () {
+      var tmpl = env.fromString(
+        '{% macro test(a) %}{{ a }}|{{ kwargs.b }}|{{ kwargs.c }}'
+        '{% endmacro %}{{ test(1, b=2, c=3) }}',
+      );
+      expect(tmpl.render(), equals('1|2|3'));
+
+      tmpl = env.fromString(
+        '{% macro outer() %}'
+        '{% with varargs=[] %}{% endwith %}'
+        '{{ varargs|join("|") }}{% endmacro %}{{ outer(1, 2) }}',
+      );
+      expect(tmpl.render(), equals('1|2'));
+
+      tmpl = env.fromString(
+        '{% macro outer() %}'
+        '{% macro inner(varargs) %}{{ varargs }}{% endmacro %}'
+        '{{ varargs|join("|") }}{% endmacro %}{{ outer(1, 2) }}',
+      );
+      expect(tmpl.render(), equals('1|2'));
+
+      tmpl = env.fromString(
+        '{% macro outer() %}'
+        '{% with kwargs={} %}{% endwith %}'
+        '{{ kwargs.a }}{% endmacro %}{{ outer(a=1) }}',
+      );
+      expect(tmpl.render(), equals('1'));
+
+      tmpl = env.fromString(
+        '{% macro outer() %}'
+        '{% macro inner(kwargs) %}{{ kwargs }}{% endmacro %}'
+        '{{ kwargs.a }}{% endmacro %}{{ outer(a=1) }}',
+      );
+      expect(tmpl.render(), equals('1'));
+
+      tmpl = env.fromString(
+        '{% macro outer() %}'
+        '{% with caller=none %}{% endwith %}'
+        '{{ caller() }}{% endmacro %}'
+        '{% call outer() %}C{% endcall %}',
+      );
+      expect(tmpl.render(), equals('C'));
+    });
   });
 }
