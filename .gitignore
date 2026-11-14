@@ -9,5 +9,6 @@ web/
 **.exe
 **.py
 **.pyc
+test/check.dart
 test/run.dart
 pubspec.lock
