@@ -587,5 +587,17 @@ void main() {
         );
       }
     });
+
+    test('ternary operator in statements', () {
+      var tmpl = env.fromString(
+        '{% if true ? true : false %}YES{% else %}NO{% endif %}',
+      );
+      expect(tmpl.render(), equals('YES'));
+
+      tmpl = env.fromString(
+        '{% for x in true ? [1] : [2] %}{{ x }}{% endfor %}',
+      );
+      expect(tmpl.render(), equals('1'));
+    });
   });
 }

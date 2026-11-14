@@ -329,5 +329,12 @@ void main() {
         throwsA(isA<TemplateSyntaxError>()),
       );
     });
+
+    test('ternary iterable', () {
+      var tmpl = env.fromString(
+        '{% for x in true ? [1] : [2] %}{{ x }}{% endfor %}',
+      );
+      expect(tmpl.render(), equals('1'));
+    });
   });
 }

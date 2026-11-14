@@ -654,27 +654,15 @@ final class Parser {
       return parseCondition();
     }
 
-    return parseOr();
+    return parseTernary();
   }
 
   Expression parseCondition() {
-    var expression = parseOr();
-
-    // Handle ternary operator: condition ? trueValue : falseValue
-    if (reader.skipIf(TokenType.question)) {
-      var trueValue = parseCondition();
-      reader.expect(TokenType.colon);
-
-      return Condition(
-        test: expression,
-        trueValue: trueValue,
-        falseValue: parseCondition(),
-      );
-    }
+    var expression = parseTernary();
 
     // Handle if-else syntax: trueValue if condition else falseValue
     while (reader.skipIf(TokenType.name, 'if')) {
-      var condition = parseOr();
+      var condition = parseTernary();
 
       if (reader.skipIf(TokenType.name, 'else')) {
         expression = Condition(
@@ -685,6 +673,24 @@ final class Parser {
       } else {
         expression = Condition(test: condition, trueValue: expression);
       }
+    }
+
+    return expression;
+  }
+
+  Expression parseTernary() {
+    var expression = parseOr();
+
+    // Handle ternary operator: condition ? trueValue : falseValue
+    if (reader.skipIf(TokenType.question)) {
+      var trueValue = parseCondition();
+      reader.expect(TokenType.colon);
+
+      return Condition(
+        test: expression,
+        trueValue: trueValue,
+        falseValue: parseTernary(),
+      );
     }
 
     return expression;
