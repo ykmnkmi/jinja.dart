@@ -11,11 +11,6 @@ import 'package:jinja/src/runtime.dart';
 import 'package:jinja/src/tests.dart';
 import 'package:jinja/src/utils.dart';
 
-String _symbolToName(Symbol symbol) {
-  var str = symbol.toString();
-  return str.substring(8, str.length - 2);
-}
-
 // Interfaces
 
 abstract base class RenderNode {
@@ -236,6 +231,16 @@ final class RBlockExpression extends RExpression {
   }
 }
 
+final class RKeyword {
+  const new(this.key, this.symbol, this.value);
+
+  final String key;
+
+  final Symbol symbol;
+
+  final RExpression value;
+}
+
 final class RCall extends RExpression {
   const new(this.function, this.positional, this.named);
 
@@ -243,7 +248,7 @@ final class RCall extends RExpression {
 
   final List<RExpression> positional;
 
-  final Map<Symbol, RExpression> named;
+  final List<RKeyword> named;
 
   @override
   Object? eval(RenderContext context) {
@@ -253,9 +258,18 @@ final class RCall extends RExpression {
       for (var argument in this.positional) argument.eval(context),
     ];
 
+    if (function is MacroFunction) {
+      var named = <String, Object?>{
+        for (var keyword in this.named)
+          keyword.key: keyword.value.eval(context),
+      };
+
+      return function(positional, named);
+    }
+
     var named = <Symbol, Object?>{
-      for (var entry in this.named.entries)
-        entry.key: entry.value.eval(context),
+      for (var keyword in this.named)
+        keyword.symbol: keyword.value.eval(context),
     };
 
     return context.call(function, positional, named);
@@ -734,7 +748,7 @@ final class RMacroDef {
   final List<RenderNode> nodes;
 
   MacroFunction createMacro(RenderContext context) {
-    String macro(List<Object?> positional_, Map<Symbol, Object?> named_) {
+    String macro(List<Object?> positional_, Map<String, Object?> named_) {
       var buffer = StringBuffer();
       var derived = context.derived(sink: buffer);
 
@@ -772,11 +786,7 @@ final class RMacroDef {
         derived.set('varargs', const <Object?>[]);
       }
 
-      var namedStrings = <String, Object?>{
-        for (var entry in named_.entries) _symbolToName(entry.key): entry.value,
-      };
-
-      var remaining = namedStrings.keys.toSet();
+      var remaining = named_.keys.toSet();
 
       for (var key in positional) {
         if (remaining.remove(key)) {
@@ -784,7 +794,7 @@ final class RMacroDef {
             throw TypeError();
           }
 
-          derived.set(key, namedStrings[key]);
+          derived.set(key, named_[key]);
           provided.add(key);
         } else if (!provided.contains(key)) {
           derived.set(key, context.undefined(key));
@@ -797,7 +807,7 @@ final class RMacroDef {
             throw TypeError();
           }
 
-          derived.set(key, namedStrings[key]);
+          derived.set(key, named_[key]);
           provided.add(key);
         }
       }
@@ -810,7 +820,7 @@ final class RMacroDef {
 
       if (kwargs) {
         derived.set('kwargs', <Object?, Object?>{
-          for (var key in remaining) key: namedStrings[key],
+          for (var key in remaining) key: named_[key],
         });
       } else if (remaining.isNotEmpty) {
         throw TypeError();
@@ -859,9 +869,20 @@ final class RCallerBlock extends RStatement {
       for (var argument in call.positional) argument.eval(context),
     ];
 
+    if (function is MacroFunction) {
+      var named = <String, Object?>{
+        for (var keyword in call.named)
+          keyword.key: keyword.value.eval(context),
+        'caller': callerDef.createMacro(context),
+      };
+
+      context.write(context.finalize(function(positional, named)));
+      return;
+    }
+
     var named = <Symbol, Object?>{
-      for (var entry in call.named.entries)
-        entry.key: entry.value.eval(context),
+      for (var keyword in call.named)
+        keyword.symbol: keyword.value.eval(context),
       #caller: callerDef.createMacro(context),
     };
 
@@ -1045,7 +1066,7 @@ final class RFromImport extends RStatement {
       if (importContext.context.containsKey(name)) {
         context.set(targetName, importContext.context[name]);
       } else {
-        Never missing(List<Object?> positional, Map<Symbol, Object?> named) {
+        Never missing(List<Object?> positional, Map<String, Object?> named) {
           throw TemplateRuntimeError(
             "The '${template.path}' does not export the requested name.",
           );

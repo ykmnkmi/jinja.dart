@@ -297,7 +297,7 @@ base class Environment {
     }
 
     if (function is MacroFunction) {
-      return function(positional, named.cast<Symbol, Object?>());
+      return function(positional, const <String, Object?>{});
     }
 
     return Function.apply(function, positional, named);

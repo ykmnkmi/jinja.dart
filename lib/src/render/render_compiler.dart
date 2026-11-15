@@ -500,7 +500,7 @@ base class RenderCompiler extends ThrowingVisitor<Frame, RenderNode> {
 
       return RCall(visitNode<RExpression>(node.value, context), <RExpression>[
         if (values.isNotEmpty) RList(values),
-      ], const <Symbol, RExpression>{});
+      ], const <RKeyword>[]);
     }
 
     var function = visitNode<RExpression>(node.value, context);
@@ -515,10 +515,14 @@ base class RenderCompiler extends ThrowingVisitor<Frame, RenderNode> {
       }
     }
 
-    var named = <Symbol, RExpression>{
+    var named = <RKeyword>[
       for (var keyword in node.calling.keywords)
-        Symbol(keyword.key): visitNode<RExpression>(keyword.value, context),
-    };
+        RKeyword(
+          keyword.key,
+          Symbol(keyword.key),
+          visitNode<RExpression>(keyword.value, context),
+        ),
+    ];
 
     return RCall(function, positional, named);
   }

@@ -170,7 +170,7 @@ final class If extends Statement {
 
 typedef MacroFunction = String Function(
   List<Object?> positional,
-  Map<Symbol, Object?> named,
+  Map<String, Object?> named,
 );
 
 typedef MacroSignature = ({
